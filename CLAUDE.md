@@ -1,41 +1,37 @@
-# Project: Finebank
+# Finebank
 
+Personal finance dashboard, desktop only (1440x1024). React SPA, NestJS API, SQLite. Requirements are final: build what the spec says, nothing more.
 
-Source of truth:
-- Spec: `docs/spec/` (requirements). If code and spec disagree, the spec wins. If the spec is unclear, STOP and ask.
-- No spec given: `/write-spec` drafts `docs/spec/brief.md` and `docs/spec/stories.md` from Figma. After human review they are the spec.
-- Saved Figma screenshots and inventory: `docs/figma/`. Reuse them, Figma calls are rate limited.
-- Design: Figma file https://www.figma.com/design/wZQT9xEAtFjkZtlxvVtpPu/Finebank---Financial-Management-Dashboard-UI-Kits--Community---Copy-
-  - Screens (the app): node 66:4728
-  - Components and design system (tokens source, no stories): node 56:1396
-  - Ignore (cover, archive, drafts): node 450:2678
-- Decisions made during clarification: `docs/decisions.md`
+## Where things are
+- Spec: `docs/spec/` (brief, stories US-NN, demo data). Spec wins over code.
+- Decisions: `docs/decisions.md`, cited as `#N`. Read the ones a story cites before building it.
+- Design: `docs/figma/`: screen PNGs (the visual reference), `components.md` (Figma name to code name), `tokens.md`, `assets/`. Figma file: https://www.figma.com/design/wZQT9xEAtFjkZtlxvVtpPu (screens 66:4728, components 56:1396).
+- Stack and versions: `docs/stack.md`, then `package.json`.
 
+## Rules you would otherwise get wrong
+- Money is integer cents everywhere, calculated only in the backend. Never decimal or float (#11).
+- API request and response shapes exist once, as Zod schemas in `shared/src/contract/`. Import them; never redeclare a type or validation rule (#74).
+- Every query is scoped to the signed-in user. Account and transaction data only through `BankDataProvider` (#75, #77).
+- "Now" only from the injected Clock; the user's time zone only from `X-Time-Zone` (#54, #80).
+- Database changes only through TypeORM migrations; `synchronize` is off outside tests (#79).
+- Styles use tokens only: no raw colors, sizes, spacing, radii or shadows (Stylelint enforces it).
+- Component names come from the Code name column in `docs/figma/components.md`. Reuse before creating.
+- Not designed means visual only: build it as drawn, no behavior (decisions, general rule).
+- No new dependency without asking.
 
-## Conventions
-- Use design tokens only. No hardcoded colors, font sizes, spacing or radii.
-- Reuse components from `{{src/components}}` before creating new ones.
-- Figma component map: `docs/figma/components.md`. Code components use the same names as their Figma components.
-- One component per file. Name files {{PascalCase.tsx}}.
-- Every acceptance criterion in a task maps to at least one test.
+## Commands
+{{filled by task 000: install, dev, test, e2e, lint, typecheck, build, migrate}}
 
-## Task workflow (mandatory)
-- Tasks live in `.claude/tasks/`. Index and status: `.claude/tasks/INDEX.md`.
-- Work on exactly ONE task per session. Never start the next task on your own.
-- Never touch anything listed under "Out of scope" in the current task.
-- Execute tasks only through `/next-task`. Human approval only through `/approve-task`.
-- A task is done only when every validation step passes AND its gate is satisfied.
-- Gate `auto`: you may mark done when all checks pass.
-- Gate `human`: stop, present evidence, set status `awaiting-human`. Do not mark done yourself.
+## Structure
+{{filled by task 000}}
 
-## Visual validation rules
-- Viewport: 1440x1024 desktop only. No mobile design exists.
-- Get the reference with Figma MCP (screenshot of the task's node ID), render the page with Playwright MCP at the same viewport.
-- Report differences in layout, spacing, typography, color and missing elements. Never claim "pixel perfect".
-- Save screenshots to `docs/figma/` (reference) and `.claude/tasks/evidence/{{task}}/` (actual).
+## Working on tasks
+- One task per session, via `/next-task`. Approval only via `/approve-task`. Never touch a task's "Out of scope".
+- Every acceptance criterion maps to at least one test.
+- Visual checks compare against the PNGs in `docs/figma/` at 1440x1024. Demo numbers may differ from Figma (#12). Never claim "pixel perfect".
 
 ## Never
-- Never call Figma MCP without asking me first. Budget is 20 calls per month. Use files in docs/figma/ (PNG exports, inventory.md, components.md) instead. Report every Figma call made.
+- Never call Figma MCP without asking me first. Use files in docs/figma/ (PNG exports, inventory.md, components.md) instead. Report every Figma call made.
 - Never skip, weaken or delete a failing test to make it pass.
 - Never mark a `human` gate task as done.
 - Never invent requirements. Ambiguity goes to `docs/decisions.md` as an open question and you STOP.

@@ -1,6 +1,6 @@
 # Finebank: demo dataset (APPROVED)
 
-Status: DRAFT written on 2026-10-22 per `docs/decisions.md` #53, for human review before the first backend task. It is not part of the spec until reviewed.
+Status: APPROVED by Marko on 2026-10-22. Written on 2026-10-22 per `docs/decisions.md` #53 and reviewed before the first backend task.
 Sources: the PNG exports in `docs/figma/` (no Figma calls) and decisions #1, #11, #12, #17 to #19, #24 to #28, #31, #32, #38, #43, #53 to #59, #62. Values that Figma does not show are marked "invented".
 
 ## Rules

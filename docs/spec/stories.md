@@ -46,10 +46,11 @@ Acceptance criteria:
 13. Given I click "Continue with Google", then I sign in with my Google account, with Google as the identity provider, and land as in criterion 8. A Google account is matched to a user by email; a new email creates a user with the demo dataset, the name from the Google profile and a generated username, as in Sign up (US-02, criterion 12) (decisions #2, #3, #62). The session lasts 30 days, the same as Login with "Keep me signed in" checked (decisions #63).
 14. Given I am already signed in, when I open the Login screen, then Overview opens (decisions #3).
 15. Given the Email or Password field is empty, then it shows no placeholder text, since none is designed (decisions #63).
+16. Given I clicked "Continue with Google", when I cancel the Google sign-in, then I return to Login with no message. When the Google sign-in fails, then I return to Login and "Google sign-in failed. Please try again." shows above the Login button (decisions #81).
 
 States:
 - Designed: default; email focused and filled (Input Active=Yes, the focus style, decisions #63); password filled and masked (Input Type=Password, normal border); checkbox checked (Remind me Active=Yes). Component variants also exist for Show Password and checkbox unchecked.
-- Missing from design: validation errors and wrong credentials (decisions #14), loading while signing in (decisions #6), Google sign-in flow and its session length (decisions #2, #63), empty fields (no placeholder, decisions #63)
+- Missing from design: validation errors and wrong credentials (decisions #14), loading while signing in (decisions #6), Google sign-in flow and its session length (decisions #2, #63), Google sign-in cancelled or failed (decisions #81), empty fields (no placeholder, decisions #63)
 
 Out of scope: brute-force protection such as lockout after failed attempts (decisions #14). The auth technology, chosen at /set-stack (decisions #2).
 Assumptions: none
@@ -87,10 +88,11 @@ Acceptance criteria:
 12. Given my account is created, then my username is made from the part of my email before `@`, lowercased (decisions #62). Characters the username rules do not allow are removed (`marko-d` becomes `markod`), the result is cut to 26 characters, and digits are added until it has at least 3 characters (`jo` becomes `jo1`). If that username is already taken, the uniqueness number is added (`marko`, then `marko2`). The result always passes the username rules in Settings (US-18), where I can change it later (decisions #62, #67).
 13. Given a field has focus, then it shows the active input style (darker border), as on Name in the design. A filled field without focus keeps the normal border (decisions #63).
 14. Given the Name or Password field is empty, then it shows no placeholder text, since none is designed. Email shows its designed placeholder "hello@example.com" (decisions #63).
+15. Given I clicked "Continue with Google", when I cancel the Google sign-in, then Login opens with no message. When the Google sign-in fails, then Login opens and "Google sign-in failed. Please try again." shows above the Login button (US-01) (decisions #81).
 
 States:
 - Designed: default with Name focused and filled (active border, the focus style, decisions #63; sample "Tanzir Rahman"); Email empty with placeholder; password masked
-- Missing from design: validation errors and email already registered (decisions #15), loading and server errors (decisions #6), success (Overview opens, decisions #3, #15), session length (30 days, decisions #63), the generated username (decisions #62, #67), empty Name and Password (no placeholder, decisions #63)
+- Missing from design: validation errors and email already registered (decisions #15), loading and server errors (decisions #6), success (Overview opens, decisions #3, #15), session length (30 days, decisions #63), the generated username (decisions #62, #67), Google sign-in cancelled or failed (back to Login, decisions #81), empty Name and Password (no placeholder, decisions #63)
 
 Out of scope: the terms of service page (decisions #15). Email verification (decisions #15).
 Assumptions: none
