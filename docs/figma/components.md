@@ -7,30 +7,30 @@ Limits of the usage count:
 - `get_metadata` does not expand an instance's children. Components nested inside other components (for example the Menu items inside Nav bar, or the Button inside Account Type) show 0 direct uses.
 - 104 and 104.1 are the same screen (104.1 adds a popup), so every instance on 104 is counted twice.
 
-Code components use these names (CLAUDE.md). Some names collide or are misspelled. See "Naming issues" and decisions #36.
+Code components use the names in the "Code name" column (CLAUDE.md, decisions #36): the Figma name in PascalCase, with spelling fixed. Where several components share a name, the code name adds the purpose seen in the screens; a component with no use found gets what tells it apart instead. Icons that share a name differ only in size, so they get the size as a suffix. See "Naming issues".
 
 ## Components used in screens (metadata verified)
 
 Sorted by use count, highest first.
 
-| Component | Node ID | Variants | Used in screens | Use count |
-|-----------|---------|----------|-----------------|-----------|
-| Expences Item † | `42:777` | - | 104, 104.1 (Expenses Breakdown) | 12 |
-| Item | `407:5649` | - | 104, 104.1 (Recent Transaction) | 10 |
-| chevron-right | `14:745` | - | 104, 104.1 (View All, Previous, Next) | 8 |
-| Account Type | `410:5353` | - | 105 | 5 |
-| Header | `411:6067` | - | 104, 104.1, 105 | 3 |
-| Nav bar | `411:6442` | - | 104, 104.1, 105 | 3 |
-| Input | `402:5191` (set) | Type=Name-Email, Password, Show Password, Phone number x Active=Yes/No (8) | 101 | 2 |
-| Mastercard | `408:5979` | - | 104, 104.1 (Total Balance card) | 2 |
-| edit | `27:450` | - | 104, 104.1 (Goals card) | 2 |
-| Award | `66:1698` | - | 104, 104.1 (Target Achieved) | 2 |
-| octicon:goal-16 | `38:535` | - | 104, 104.1 (This month Target) | 2 |
-| Button Big ‡ | `410:5537` | - | 105 (Add Accounts) | 1 |
-| Popup Input ‡ | `416:6381` | - | 104.1 | 1 |
-| Remind me | `402:5226` (set) | Active=Yes, Active=No | 101 | 1 |
-| Button/primary | `402:5239` (set) | Active=Yes, Active=No | 101 | 1 |
-| Button/secondary | `402:5233` (set) | Icon=Yes, Icon=No | 101 | 1 |
+| Component | Code name | Node ID | Variants | Used in screens | Use count |
+|-----------|-----------|---------|----------|-----------------|-----------|
+| Expences Item † | `ExpensesItem` | `42:777` | - | 104, 104.1 (Expenses Breakdown) | 12 |
+| Item | `RecentTransactionItem` | `407:5649` | - | 104, 104.1 (Recent Transaction) | 10 |
+| chevron-right | `ChevronRight` | `14:745` | - | 104, 104.1 (View All, Previous, Next) | 8 |
+| Account Type | `AccountType` | `410:5353` | - | 105 | 5 |
+| Header | `Header` | `411:6067` | - | 104, 104.1, 105 | 3 |
+| Nav bar | `NavBar` | `411:6442` | - | 104, 104.1, 105 | 3 |
+| Input | `Input` | `402:5191` (set) | Type=Name-Email, Password, Show Password, Phone number x Active=Yes/No (8) | 101 | 2 |
+| Mastercard | `Mastercard` | `408:5979` | - | 104, 104.1 (Total Balance card) | 2 |
+| edit | `Edit` | `27:450` | - | 104, 104.1 (Goals card) | 2 |
+| Award | `Award` | `66:1698` | - | 104, 104.1 (Target Achieved) | 2 |
+| octicon:goal-16 | `OcticonGoal16` | `38:535` | - | 104, 104.1 (This month Target) | 2 |
+| Button Big ‡ | `AddAccountsButtonBig` | `410:5537` | - | 105 (Add Accounts) | 1 |
+| Popup Input ‡ | `GoalPopupInput` | `416:6381` | - | 104.1 | 1 |
+| Remind me | `RemindMe` | `402:5226` (set) | Active=Yes, Active=No | 101 | 1 |
+| Button/primary | `ButtonPrimary` | `402:5239` (set) | Active=Yes, Active=No | 101 | 1 |
+| Button/secondary | `ButtonSecondary` | `402:5233` (set) | Icon=Yes, Icon=No | 101 | 1 |
 
 † The instances are named `Item` but are 200x74, the exact size of `Expences Item`. `Item` itself is 303x88. Matched by size, not by name. Verify before building.
 ‡ Two components share this name. Matched by exact size: Button Big 208x48 and Popup Input 488x392.
@@ -41,23 +41,23 @@ Used in 2+ screens: Expences Item, Item, chevron-right, Header, Nav bar, Masterc
 
 Matched by look and approximate size in the PNGs (pixel size / 2). Verify with `get_design_context` before relying on them.
 
-| Component | Node ID | Seen in screens (PNG) | Evidence |
-|-----------|---------|-----------------------|----------|
-| Header | `411:6067` | 106, 107, 108, 109, 110, 110.1, 110.2, 111, 112 | Same date, bell and search bar |
-| Nav bar | `411:6442` | 106, 107, 108, 109, 110, 110.1, 110.2, 111, 112 | Same sidebar |
-| Menu (set) | `2:112` | All app screens (inside Nav bar) | Items are 224x48, one per section, Active style on the current section |
-| Search | `404:5262` | All app screens (inside Header) | Search field is about 352x48 |
-| Input | `402:5191` | 102 (Name, Email, Password), 103 (Email) | Same field style, eye icon on password |
-| Button/primary | `402:5239` | 102 "Sign up", 103 "Password Reset" | 400x48 teal button |
-| Button/secondary | `402:5233` | 102 "Continue with Google" | 400x48 gray button with icon |
-| Transaction item | `411:5582` | 107 table rows | Row is about 1048x72 |
-| Bill item | `411:5746` | 108 table rows | Row is about 1046x162 |
-| Expenses Breakdown | `50:3852` | 109 category cards | Card is about 352x238 |
-| Goal Item | `413:8749` | 110 category cards | Card is about 352x104 |
-| Popup Input | `416:6381` | 110.1 | Same popup as 104.1 (Target Amounts, Present Amounts, Save) |
-| Settings Input | `54:2202` | 111, 112 fields | Label + value block, 540 wide |
-| Button | `43:1161` | 105 "Details >" (nested in Account Type) | About 110x36 |
-| Category icons (Housing, Food, Trasnport, Movie, Shopping, Others, gamepad-2) | see table below | 104, 107, 109, 110 | Same glyphs |
+| Component | Code name | Node ID | Seen in screens (PNG) | Evidence |
+|-----------|-----------|---------|-----------------------|----------|
+| Header | `Header` | `411:6067` | 106, 107, 108, 109, 110, 110.1, 110.2, 111, 112 | Same date, bell and search bar |
+| Nav bar | `NavBar` | `411:6442` | 106, 107, 108, 109, 110, 110.1, 110.2, 111, 112 | Same sidebar |
+| Menu (set) | `NavMenu` | `2:112` | All app screens (inside Nav bar) | Items are 224x48, one per section, Active style on the current section |
+| Search | `HeaderSearch` | `404:5262` | All app screens (inside Header) | Search field is about 352x48 |
+| Input | `Input` | `402:5191` | 102 (Name, Email, Password), 103 (Email) | Same field style, eye icon on password |
+| Button/primary | `ButtonPrimary` | `402:5239` | 102 "Sign up", 103 "Password Reset" | 400x48 teal button |
+| Button/secondary | `ButtonSecondary` | `402:5233` | 102 "Continue with Google" | 400x48 gray button with icon |
+| Transaction item | `TransactionItem` | `411:5582` | 107 table rows | Row is about 1048x72 |
+| Bill item | `BillItem` | `411:5746` | 108 table rows | Row is about 1046x162 |
+| Expenses Breakdown | `ExpensesBreakdown` | `50:3852` | 109 category cards | Card is about 352x238 |
+| Goal Item | `GoalItem` | `413:8749` | 110 category cards | Card is about 352x104 |
+| Popup Input | `GoalPopupInput` | `416:6381` | 110.1 | Same popup as 104.1 (Target Amounts, Present Amounts, Save) |
+| Settings Input | `SettingsInput` | `54:2202` | 111, 112 fields | Label + value block, 540 wide |
+| Button | `Button` | `43:1161` | 105 "Details >" (nested in Account Type) | About 110x36 |
+| Category icons (Housing, Food, Trasnport, Movie, Shopping, Others, gamepad-2) | `Housing`, `Food`, `Transport`, `Movie`, `Shopping`, `Others`, `Gamepad2` | see table below | 104, 107, 109, 110 | Same glyphs |
 
 The 110.2 popup (Target Amounts only) has no matching component size. It may be an unrecorded variant.
 
@@ -87,60 +87,62 @@ Many are likely nested inside other components (see "Limits" above) or used only
 
 ### Component sets
 
-| Component | Node ID | Variants |
-|-----------|---------|----------|
-| Menu | `2:112` | Type=Overview, Balances, Transactions, Bills, Expenses, Goals, Settings x Status=Active, Inactive, Hover (21) |
+| Component | Code name | Node ID | Variants |
+|-----------|-----------|---------|----------|
+| Menu | `NavMenu` | `2:112` | Type=Overview, Balances, Transactions, Bills, Expenses, Goals, Settings x Status=Active, Inactive, Hover (21) |
 
 ### UI components
 
-| Component | Node ID | Size |
-|-----------|---------|------|
-| Search (field) | `404:5262` | 352x48 |
-| Settings Input | `54:2202` | 540x88 |
-| Popup Input (small) | `416:6338` | 360x88 |
-| Transaction item | `411:5582` | 1048x72 |
-| Goal Item | `413:8749` | 352x104 |
-| Bill item | `411:5746` | 1046x162 |
-| Expenses Breakdown | `50:3852` | 352x238 |
-| Button | `43:1161` | 110x36 |
-| Button Big (small) | `2:40` | 121x48 |
-| Button small | `2:42` | 84x32 |
-| Profile | `403:5389` | 224x104 |
-| Menu (single) | `13:641` | 224x48 |
-| Logout | `13:612` | 192x48 |
+| Component | Code name | Node ID | Size |
+|-----------|-----------|---------|------|
+| Search (field) | `HeaderSearch` | `404:5262` | 352x48 |
+| Settings Input | `SettingsInput` | `54:2202` | 540x88 |
+| Popup Input (small) | `PopupInputSmall` | `416:6338` | 360x88 |
+| Transaction item | `TransactionItem` | `411:5582` | 1048x72 |
+| Goal Item | `GoalItem` | `413:8749` | 352x104 |
+| Bill item | `BillItem` | `411:5746` | 1046x162 |
+| Expenses Breakdown | `ExpensesBreakdown` | `50:3852` | 352x238 |
+| Button | `Button` | `43:1161` | 110x36 |
+| Button Big (small) | `ButtonBigCompact` | `2:40` | 121x48 |
+| Button small | `ButtonSmall` | `2:42` | 84x32 |
+| Profile | `Profile` | `403:5389` | 224x104 |
+| Menu (single) | `MenuSingle` | `13:641` | 224x48 |
+| Logout | `Logout` | `13:612` | 192x48 |
 
 ### Brand logos
 
-| Component | Node ID |
-|-----------|---------|
-| Figma | `411:5839` |
-| Adobe | `411:6038` |
-| Visacard | `410:5467` |
+| Component | Code name | Node ID |
+|-----------|-----------|---------|
+| Figma | `Figma` | `411:5839` |
+| Adobe | `Adobe` | `411:6038` |
+| Visacard | `Visacard` | `410:5467` |
 
 ### Icons (24x24 unless noted)
 
-| Component | Node ID | | Component | Node ID |
-|-----------|---------|-|-----------|---------|
-| Menu/Overview | `2:101` | | Clock | `2:67` |
-| Menu/Car | `2:97` | | Search (icon) | `2:110` |
-| Icon/eye | `402:5244` | | Down arrow | `2:44` |
-| Menu/Settings | `2:87` | | Notification icon | `2:621` |
-| Icon/eyeoff | `402:5247` | | Search (icon) | `43:614` |
-| Menu/Bell | `2:90` | | x (32x32) | `63:1960` |
-| Menu/Payment | `2:85` | | mdi:achievement-award | `38:534` |
-| Menu/Transaction | `2:83` | | Down arrow (16) | `28:470` |
-| Menu/Report | `2:76` | | Up arrow (16) | `28:469` |
-| wallet | `12:335` | | Housing | `42:903` |
-| Frame 39997 (20x20) | `13:630` | | Icon/separator (12x24) | `402:5296` |
-| Expencces | `12:369` | | x | `106:6851` |
-| Transaction | `12:334` | | Movie | `42:748` |
-| Target | `12:332` | | gamepad-2 | `14:764` |
-| Goal | `12:333` | | Others | `42:747` |
-| Bill | `12:370` | | Food | `42:751` |
-| arrow-right (16) | `18:454` | | Trasnport | `42:749` |
-| arrow-right | `42:642` | | Shopping | `42:750` |
-| Back arrow | `70:6239` | | arrow-up-right (16) | `18:416` |
-| Leftarrow | `402:5252` | | Arrow down 2 | `413:8604` |
+| Component | Code name | Node ID | | Component | Code name | Node ID |
+|-----------|-----------|---------|-|-----------|-----------|---------|
+| Menu/Overview | `MenuOverview` | `2:101` | | Clock | `Clock` | `2:67` |
+| Menu/Car | `MenuCar` | `2:97` | | Search (icon) | `SearchIcon` § | `2:110` |
+| Icon/eye | `IconEye` | `402:5244` | | Down arrow | `DownArrow24` | `2:44` |
+| Menu/Settings | `MenuSettings` | `2:87` | | Notification icon | `NotificationIcon` | `2:621` |
+| Icon/eyeoff | `IconEyeOff` | `402:5247` | | Search (icon) | `SearchIcon` § | `43:614` |
+| Menu/Bell | `MenuBell` | `2:90` | | x (32x32) | `X32` | `63:1960` |
+| Menu/Payment | `MenuPayment` | `2:85` | | mdi:achievement-award | `MdiAchievementAward` | `38:534` |
+| Menu/Transaction | `MenuTransaction` | `2:83` | | Down arrow (16) | `DownArrow16` | `28:470` |
+| Menu/Report | `MenuReport` | `2:76` | | Up arrow (16) | `UpArrow` | `28:469` |
+| wallet | `Wallet` | `12:335` | | Housing | `Housing` | `42:903` |
+| Frame 39997 (20x20) | `LogoutIcon` | `13:630` | | Icon/separator (12x24) | `IconSeparator` | `402:5296` |
+| Expencces | `Expenses` | `12:369` | | x | `X24` | `106:6851` |
+| Transaction | `Transaction` | `12:334` | | Movie | `Movie` | `42:748` |
+| Target | `Target` | `12:332` | | gamepad-2 | `Gamepad2` | `14:764` |
+| Goal | `Goal` | `12:333` | | Others | `Others` | `42:747` |
+| Bill | `Bill` | `12:370` | | Food | `Food` | `42:751` |
+| arrow-right (16) | `ArrowRight16` | `18:454` | | Trasnport | `Transport` | `42:749` |
+| arrow-right | `ArrowRight24` | `42:642` | | Shopping | `Shopping` | `42:750` |
+| Back arrow | `BackArrow` | `70:6239` | | arrow-up-right (16) | `ArrowUpRight` | `18:416` |
+| Leftarrow | `LeftArrow` | `402:5252` | | Arrow down 2 | `ArrowDown2` | `413:8604` |
+
+§ The two `Search` icons export to identical SVGs (`docs/figma/assets/icon/Search.svg` and `Search-1.svg`), so one code component, `SearchIcon`, covers both.
 
 The Components page also holds one instance, `chevron-right` `418:6456`, which is not a component.
 
