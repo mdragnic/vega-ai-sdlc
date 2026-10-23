@@ -84,7 +84,7 @@ Useful as targets for a later, focused `get_design_context` call.
 | Components | `66:1754` | Menu component set, nav parts, brand logos, 44 icons |
 | Components | `418:6433` | Input, Button and Remind me component sets, 17 UI components |
 
-Figma variables were not checked (`get_variable_defs` not called). The component list is in `components.md`.
+Figma variables were read once, in task 000 (call 5, `get_variable_defs` on frame `418:6459`): 12 colors and 10 text styles, no effects. The resulting design tokens are in `tokens.md`. The component list is in `components.md`.
 
 ## Figma call log
 
@@ -93,3 +93,5 @@ Figma variables were not checked (`get_variable_defs` not called). The component
 | 1 | 2026-10-22 | get_metadata | `450:2678` | Welcome Page cover frame only (node given in the request turned out to be the cover, not the screens page) |
 | 2 | 2026-10-22 | get_metadata | `66:4728` | Design page: 16 frames (approved by the user as an extra call) |
 | 3 | 2026-10-22 | get_metadata | `56:1396` | Components page |
+| 4 | 2026-10-23 | get_variable_defs | `56:1396` | Failed: "You currently have nothing selected. You need to select a layer first before using this tool." (Figma Debug UUID `7bba5c54-be9b-4028-b2c4-e9ccca29bf6f`). Task 000 step 7, no `create_session`, not retried |
+| 5 | 2026-10-23 | get_variable_defs | `418:6459` (Typography & Color) | 12 colors (Default Black, Primary color, Secondary, Gray/01 to 03, 05, 06, Special/Red, Green, BG, White) and 10 text styles (Inter: Regular 12-16, 14-20, 16-24; Exbold 18-24, 22-32; Semibold 20-28; Bold 24-28; `.doc / H3`, `.doc / H4`, `.doc / Regular`). No effects. Retarget approved by Marko after call 4 (decision #65) |

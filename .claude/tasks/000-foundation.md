@@ -1,6 +1,6 @@
 # Task 000: Foundation
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: none
 - Size: L
@@ -168,9 +168,148 @@ Before the approval commit (`/approve-task 000 approve`):
 ## Log
 <!-- Claude appends: date, what was done, decisions, issues, validation results, review findings -->
 
+### 2026-10-23, step 1 (stop for approval)
+- All decisions the task cites (#4 #5 #13 #45 #54 #65 #66 #70 #73 #74 #79 #80) are closed. Every package in `docs/stack.md` exists on npm at its listed version.
+- Approved by Marko: `unplugin-swc` 2.0.0 and `@swc/core` 1.16.18 (backend, dev; the SWC plugin for backend Vitest). Companions: `react-dom` 19.3.1, `react-is` 19.3.1 (Recharts peer), `@nestjs/common` and `@nestjs/core` 12.2.0, `reflect-metadata` 0.2.2, `rxjs` 7.8.2, `@testing-library/dom` 10.4.2, `@types/node` 24.19.2, `@types/react` 19.3.0, `@types/react-dom` 19.3.0, `@types/express` 5.0.6, `@types/supertest` 7.2.1, `@types/better-sqlite3` 9.6.0. Also approved: the Chromium download and the Google sign-in assets zip.
+- Approved: the single `get_variable_defs` call on `56:1396`. If the server requires `create_session` first, stop and report.
+- Change by Marko: the machine has Node 24.20.0 and npm 11.19.0, not 24.22.1 and 11.19.1. Stay on them: `engines` `>=24.20.0 <25`, `packageManager` `npm@11.19.0`, the same in README. Updated `docs/stack.md` (Runtime) and decision #79 to match. Scope step 2 and step 23 of this task still name 24.22.1 and 11.19.1; this entry overrides them.
+- Not added: `cross-env` (NODE_ENV comes from Playwright `webServer.env` and the Vitest config), `wait-on` (Playwright waits on the ports), `dotenv` (`process.loadEnvFile`).
+
+### 2026-10-23, steps 2 to 6 (scaffold)
+- Workspaces `shared`, `backend`, `frontend`, `e2e`, all ESM, every version exact. Written by hand, no scaffolders.
+- Install issues and decisions:
+  - `npm install` failed with ERESOLVE inside the optional peers of `@hookform/resolvers` 6.0.0 (`effect` ^4 against ^3 through `@typeschema/main`; none of them is installed). Added `legacy-peer-deps=true` to `.npmrc`, with a comment. Every peer the repo needs is a direct dependency.
+  - npm 11 `allowScripts` blocked the install scripts of `better-sqlite3` (native binary) and `@swc/core`. Approved both with `npm install-scripts approve`, which wrote `allowScripts` into the root `package.json`. Both native modules load.
+  - `zod` 4.6.7 (named in `docs/stack.md`) is also a dev dependency of `backend` and `frontend`, for schemas defined inside tests.
+  - `npm audit`: 5 high, all `braces` (stack-exhaustion DoS on crafted glob patterns) through `stylelint` 17.16.0's `globby`. Dev tool on our own files; the only fix npm offers is downgrading stylelint to 7.7.0. Left as is.
+- shared: error schema `{ message, fieldErrors? }` (field errors one message per field) and the `ContractEntry` type; `path` is relative to `/api`. Built with `tsc`, watch under `dev`. T1 (exact versions) lives in `shared/test` because it covers every workspace.
+- backend: Nest 12 ESM, Express, `/api` prefix, `StandardSchemaValidationPipe` as `APP_PIPE` (issues mapped to `fieldErrors`), `ApiExceptionFilter` as `APP_FILTER` (500 is a generic message, details only in the log). TypeORM over better-sqlite3, `synchronize: false`, entity and migration globs from `dist/`. `readConfig` is the only reader of env vars; `backend/.env` through `process.loadEnvFile`. `npm run migrate` passed on a fresh database ("No migrations are pending"). `start:e2e` resets `finebank.test.sqlite` and applies the migrations before starting.
+- T9 note: Vite 8's Oxc transformer also emits decorator metadata from the tsconfig, so T9 passes without SWC too; it fails with Oxc metadata switched off, so it does test metadata. SWC stays as the task and `docs/stack.md` require.
+- frontend: Vite on :5173 with the `/api` proxy, React Router data mode, TanStack Query provider, SVGR (`dimensions: false`), Inter imported once, typed client (`apiRequest`, throws `ApiError` with the parsed error shape). Root page styling waits for tokens (step 10).
+- e2e: Chromium only at 1440x1024, `constants.ts`, fixture with `timezoneId` and `page.clock`, `webServer` for backend and frontend with `NODE_ENV=test`. First run: servers start, T13 fails only because the unstyled `<main>` has no height (expected until step 10).
+- Tests so far: shared 10, backend 12, frontend 4, all passing.
+
+### 2026-10-23, step 7 (Figma call): STOPPED
+- Made the single `get_variable_defs` call on `56:1396` (no `create_session`, no `whoami`). It failed: "You currently have nothing selected. You need to select a layer first before using this tool." (Figma Debug UUID `7bba5c54-be9b-4028-b2c4-e9ccca29bf6f`). Not retried, as step 7 says. Logged in `docs/figma/inventory.md` (call 4) and `docs/metrics.md`.
+- Likely cause: `56:1396` is a page (canvas), not a layer, and the tool resolves variables for a layer subtree. Waiting for Marko's decision.
+
+### 2026-10-23, steps 7 to 9 (tokens): STOPPED for review
+- Marko chose option 1: one `get_variable_defs` call on frame `418:6459` (Typography & Color); if it returns no effects, measure shadows from the PNGs; if it fails, stop. Decision #65 updated with the retarget. Human interventions +1.
+- Call 5 succeeded: 12 color variables, 10 text styles (Inter), no effects. Logged in `docs/figma/inventory.md` and `docs/metrics.md` (5 calls used this month).
+- Measured from the PNGs with a scratch Node script (built-ins only, outside the repo): color runs along rows and columns, a circle fit for corner radii, and a least-squares Gaussian fit for shadows.
+- `docs/figma/tokens.md` written: 95 tokens (15 color, 25 typography, 17 spacing, 21 size, 9 radius, 5 border, 3 shadow), plus a list of colors seen in the PNGs that have no Figma source, kept out of the tokens until decided.
+
+### 2026-10-23, token review by Marko (before step 10)
+- Approved with corrections, applied to `docs/figma/tokens.md` (now 104 tokens). Human interventions +1.
+  - `--border-width-auth-divider` 1px, not 0.5px.
+  - Section title gap: both kept, `--space-section-title-gap` 8 (104) and new `--space-section-title-gap-lg` 16 (105).
+  - Page background: Gray/06 (the PNGs show `#F4F5F7`). Popup input border: Special/BG.
+  - New measured color tokens: `--color-form-label` `#191D23`, `--color-input-active` `#4B5768`, `--color-input-border` `#D0D5DD`, `--color-button-secondary` `#E4E7EB`, `--color-auth-divider` `#CACED3`, `--color-default-black-15`, `--color-logout-bg` `#262626`, `--color-chart-grid` `#F6F6F6`.
+- Note for the gate: `#F6F6F6` was measured on the Expenses Breakdown cell dividers, not on a chart. The Statistics chart grid lines are Gray/06 `#F3F3F3` (PNG 104, x 2200, y 1022 to 1311). The token keeps the approved name `--color-chart-grid`, and its source says where it was measured.
+
+### 2026-10-23, steps 10 to 23
+- Step 10: `frontend/src/styles/tokens.css` generated from `tokens.md` (104 tokens, one `:root` rule; scratch generator, not in the repo). T3 keeps both equal. `global.css` and the root page use Gray/06 and Inter. `tokens.css` is excluded from Prettier, which would lowercase the Figma hex values.
+- Step 11: `frontend/stylelint.config.js` with `stylelint-declaration-strict-value`, covering every property the step lists plus `letter-spacing`, `flex-basis` and `text-shadow`.
+  - `ignoreFunctions: false`, so raw `rgb()` and `calc()` are rejected; only `var()` and the listed keywords pass.
+  - `font` takes only a `var(--font-…)` text style token (core `declaration-property-value-allowed-list`), because the plugin cannot expand `size/line-height`.
+  - `var()` fallbacks are rejected.
+  - Outline is checked as `outline-width` and `outline-offset` (color through `/color$/`), because `outline-style` keywords like `solid` cannot be tokens.
+  - Not covered yet (decide when a screen needs them): `grid-template-*`, `flex` sizes inside `calc()`, `transform`, `filter`, `background-image`.
+- Step 12: `frontend/src/assets/logo.svg`, `fill="white"` becomes `currentColor`, exported as `Logo` (SVGR) from `src/assets/index.ts`.
+- Step 13: 43 icons in `frontend/src/assets/icons/<CodeName>.svg`, exported by code name from `icons/index.ts`.
+  - Every `fill` and `stroke` outside `<mask>` is `currentColor`; `Menu/Payment` keeps its mask values.
+  - `NotificationIcon`: both bell paths `currentColor`, dot `style="fill: var(--color-primary)"`. The export has no ring element; its white fill was a `<clipPath>` rect, which also became `currentColor` (it is never painted).
+  - `chevron-right-1` and `Search-1` are byte-identical to `chevron-right` and `Search`.
+  - Icons in `components.md` without an exported file: none. All 44 Figma icons have a file; the two Search icons share `SearchIcon`.
+  - Original colors replaced, for later screen tasks: Up arrow was `#FA0F00` and Down arrow 16 `#71EF9C` (not Special/Red and Special/Green). Both now take their color from CSS.
+- Step 14: Mastercard, Visacard, Figma and Adobe copied unchanged to `frontend/src/assets/brand/` and exported as image URLs. Vite inlines the small ones as `data:` URLs.
+  - Google G source: https://developers.google.com/static/identity/images/signin-assets.zip, linked from https://developers.google.com/identity/branding-guidelines. File used: `Android + Web/SVG/Neutral/Theme=Neutral, Show text=No, Shape=Square, Platform=Android+Web.svg`, with the `#F2F2F2` button background path removed and the viewBox cropped to the 20x20 G (`10 10 20 20`).
+  - The guidelines now require "the standard color gradient super G logo", and the bundle has no classic four-color G. So `Google.svg` is the gradient G, while PNG 101 shows the classic G. This is a visual difference from Figma, for the gate.
+- Steps 15 to 17: CLAUDE.md rule for `Relation<T>`. `npm run migrate` and `npm run migration:generate -- <Name>` build first and run the TypeORM CLI on `dist/database/data-source.js`.
+  - Checked with a throwaway entity: it generated `src/database/migrations/<ts>-ProbeTable.ts`, and `migrate` applied it on a fresh database. Without entities, TypeORM reports "No changes in database schema were found". The probe entity, migration and database were removed afterwards.
+  - Generated migrations are excluded from Prettier (TypeORM's own formatting).
+  - Backend Vitest uses `unplugin-swc`.
+- Step 18: `CLOCK` token, `SystemClock`, and with `NODE_ENV=test` a `FixedClock` from `TEST_NOW`. `TEST_NOW` must be ISO UTC with `Z`; it defaults to the e2e `FIXED_NOW`, and a test keeps the two equal. `TestClockController` (GET and PUT `/api/test/clock`, contract in `shared/src/contract/test-clock.ts`) is registered only in test mode.
+- Step 19: `@TimeZone()` decorator. Only IANA names pass (canonicalized through `Intl`); a missing value, an offset or an unknown zone gives 400 with the shared shape.
+- Steps 20 to 23: `.gitignore` stack section appended (base kept). Root scripts `dev`, `build`, `lint`, `format`, `typecheck`, `test`, `e2e`, `migrate`, `migration:generate`. CLAUDE.md Commands, Structure and the three rules. New README.
+- Changes outside the listed files, needed by the tooling: root `.oxlintrc.json`, `.prettierrc.json` (`endOfLine: auto`), `.prettierignore`, `tsconfig.base.json`.
+- Other fixes during the build:
+  - Vite's optimizer reloaded the page when the client module first pulled in `zod`, which broke T15. Fixed with `optimizeDeps.entries` over all sources; the cause was confirmed in the Vite log.
+  - Under jsdom, Node's `readFileSync` rejects jsdom's `URL` class, so tests use `import.meta.dirname`.
+  - MSW 3 renamed `onUnhandledRequest` to `onUnhandledFrame`.
+
+### 2026-10-23, code review (superpowers:requesting-code-review)
+Verdict "with fixes". Fixed, each test-first:
+- Critical: `core.autocrlf=true` would check the new files out as CRLF, which breaks `prettier --check` and T3. Fixed with Prettier `endOfLine: auto` and a T3 parser that accepts CRLF, both with tests. A root `.gitattributes` (`* text=auto eol=lf`) would be the cleaner fix, but the task does not list it: for the gate.
+- Important: the Stylelint `font` shorthand and `var()` fallbacks let raw values through. Fixed, with new T2 fixtures (step 11 above).
+- The exception filter answered body-parser 413 with 500. It now passes 4xx `http-errors` through (413 and 400 tests).
+- `TEST_NOW` without a zone was read in local time; it is now rejected.
+- T8 now also catches `new Date` without parentheses and a bare `Date()`.
+- T3 rejects anything besides the `:root` rule.
+- A new test fails on unknown tokens used in frontend CSS.
+- The e2e fixture resets the backend clock before every test; a new test proves a moved clock does not leak.
+- The backend listens on 127.0.0.1 only, and the Vite proxy targets 127.0.0.1:3000.
+- Stale line in `docs/figma/inventory.md` updated.
+Not changed, for the gate or later tasks:
+- `legacy-peer-deps=true` needs Marko's sign-off. `npm ls --all` shows `ajv-formats@3.0.1 invalid` against an unused optional peer of `@hookform/resolvers`.
+- Entity and migration globs load only compiled `.js` from `dist/`. Under Vitest none load, so `reset-database.test.ts` will not run real migrations once they exist. For task 007: list entity and migration classes explicitly.
+- SVG ids are not prefixed. They are unique per icon; a repeated icon repeats its ids (same content). Prefixing needs `@svgr/plugin-svgo`, a new dependency.
+- `docs/spec/brief.md:124` still names `56:1396` for the token call. It is spec text, so Marko's call.
+- Added tests so every acceptance criterion maps to a test: AC6 (every token has a source; measured sizes are on the 4px grid, borders excepted) and AC13 (`backend/data/` ignored with the base `.gitignore` kept; `.env.example` lists every variable the backend reads). Both were checked to fail when their input is broken.
+
+### 2026-10-23, validation (final run on the finished tree)
+- Rework loop 1, step 1: `npm run lint` failed on `unicorn(consistent-function-scoping)` in `frontend/test/styles/tokens.test.ts` (a helper added in the review round). Moved to module scope.
+- Step 1: `npm run lint` exit 0 (oxlint type-aware 0 warnings, Stylelint, Prettier). `npm run typecheck` exit 0 in all four workspaces.
+- Step 2: `npm test` exit 0: shared 10, backend 43, frontend 183 (236 tests), no warnings in the output.
+- Step 3: `npm run e2e` exit 0, 4 of 4 (T13, clock reset, T14, T15) with a cleared Vite cache.
+- Step 4: `npm run build` exit 0. `npm run migrate` exit 0 on a fresh `backend/data/finebank.sqlite` ("No migrations are pending").
+- Step 5: all 38 packages in `docs/stack.md` at their listed versions, plus `unplugin-swc` 2.0.0 and `@swc/core` 1.16.18. `npm ls` exit 0. Runtime Node 24.20.0, npm 11.19.0. Evidence: `evidence/000/stack-versions.txt`, `evidence/000/versions.txt`.
+- Step 6, visual:
+  - `evidence/000/root-1440x1024.png`: Gray/06 page, Inter, no other content. No designed screen to compare with.
+  - `evidence/000/icon-sheet-1440x1024.png`: all icons and the logo in two token colors; brand logos in their own colors.
+  - Differences from the PNGs: the page background is `#F3F3F3`, where the PNGs show `#F4F5F7` (decided in review); the Google G is the gradient G, where 101 shows the classic G.
+- Step 7, manual (Playwright MCP under `npm run dev`):
+  - `/` loads with 0 console errors and 0 warnings.
+  - An API call through the client goes to `localhost:5173/api/test/clock` with `x-time-zone: Europe/Belgrade`. It returns 404 `{ message }` because the test route does not exist in development, as intended; the only console error is Chrome logging that 404.
+  - After the review, rechecked with `npm run dev`: the backend listens on `127.0.0.1:3000`, and the proxy returns the backend's JSON 404.
+- `npm run format` changes no files. Every command in CLAUDE.md was run in this task.
+
+### 2026-10-23 12:14, rejected by Marko (`/approve-task 000 reject`)
+Human interventions +1, Rework loops +1. Feedback, verbatim:
+
+> 1. Add root .gitattributes with "* text=auto eol=lf" and renormalize line endings (git add --renormalize .). 2. Keep legacy-peer-deps=true. 3. Rename --color-chart-grid to --color-divider-light in tokens.md, tokens.css and every use. 4. Accept the official gradient Google G; note in the Log that it differs from 101 by Google's brand rules. 5. Update docs/spec/brief.md line 124 to name frame 418:6459, per the update to #65. Re-run all validation, then stop at the gate again.
+
+Done, only what the feedback asks:
+1. Root `.gitattributes` contains `* text=auto eol=lf`, and `git add --renormalize .` ran (exit 0).
+   - Every tracked text file is LF in the index (`git ls-files --eol`: `i/lf`).
+   - The command staged the 10 modified tracked files. Untracked files are not staged; nothing is committed.
+   - Older checkouts keep CRLF working copies until the next checkout, which Git compares as equal. `.gitignore`, mixed after the earlier append, was made LF in the working tree.
+   - The CRLF tolerance in Prettier (`endOfLine: auto`) and in T3 stays as it was.
+2. `legacy-peer-deps=true` stays in `.npmrc`, approved by Marko.
+3. `--color-chart-grid` renamed to `--color-divider-light` in `docs/figma/tokens.md` (token row and review list) and `frontend/src/styles/tokens.css`. No CSS used the token yet. Earlier Log entries keep the old name as history.
+4. The official gradient Google G is accepted. It differs from the classic four-color G in PNG 101 because Google's sign-in brand rules require "the standard color gradient super G logo" (https://developers.google.com/identity/branding-guidelines).
+5. `docs/spec/brief.md` line 124 names the Typography & Color frame `418:6459` instead of the components node `56:1396` (decision #65).
+
+Validation, re-run in full after the fixes:
+- Step 1: `npm run lint` exit 0, `npm run typecheck` exit 0.
+- Step 2: `npm test` exit 0: shared 10, backend 43, frontend 183 (236).
+- Step 3: `npm run e2e` exit 0, 4 of 4, cleared Vite cache.
+- Step 4: `npm run build` exit 0. `npm run migrate` exit 0 on a fresh database ("No migrations are pending").
+- Step 5: all 38 packages in `docs/stack.md` match, plus the two approved extras; `npm ls` exit 0. Evidence refreshed.
+- Step 6: `evidence/000/root-1440x1024.png` and `evidence/000/icon-sheet-1440x1024.png` re-taken, unchanged. In the page, `--color-divider-light` resolves to `#F6F6F6` and `--color-chart-grid` no longer exists.
+- Step 7: under `npm run dev`, `/` loads with 0 errors and 0 warnings. A client call goes through `localhost:5173/api/test/clock` with `x-time-zone: Europe/Belgrade` and gets the backend's 404 `{ message }` (no test route in development). The backend listens on `127.0.0.1:3000`.
+
+### 2026-10-23 14:02, approved by human
+- Approved by human (Marko, `/approve-task 000 approve`). Human interventions +1.
+- On approval steps:
+  - `docs/stack.md` deleted.
+  - The CLAUDE.md "Stack and versions" line now points to the `package.json` files (root, `frontend/`, `backend/`, `shared/`, `e2e/`).
+- Acceptance criteria 15 of 15. AC8 is met through the approved retarget: the call on `56:1396` failed, and the one successful call was on `418:6459` (decision #65 updated); both are logged.
+- Left as is: `.claude/commands/plan-tasks.md` still mentions `docs/stack.md`. The On approval steps do not cover command files.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-23 10:23 CEST
+- Finished: 2026-10-23 14:02 CEST
+- Human interventions: 5
+- Rework loops: 2
+- Notes on prompts that failed: step 7 call on page `56:1396` failed (get_variable_defs needs a layer); retargeted to frame `418:6459` after approval.

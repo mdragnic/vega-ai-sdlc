@@ -1,0 +1,39 @@
+{
+  "name": "finebank",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend",
+    "e2e"
+  ],
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "packageManager": "npm@11.19.0",
+  "scripts": {
+    "dev": "npm run build -w shared && concurrently --kill-others-on-fail -n shared,backend,frontend -c cyan,magenta,green \"npm run dev -w shared\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
+    "lint": "npm run build -w shared && oxlint --type-aware --deny-warnings && npm run lint:css -w frontend && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "npm run build -w shared && npm run typecheck --workspaces --if-present",
+    "test": "npm run build -w shared && npm run test --workspaces --if-present",
+    "e2e": "npm run build -w shared && npm run e2e -w e2e",
+    "migrate": "npm run build -w shared && npm run migrate -w backend",
+    "migration:generate": "npm run build -w shared && npm run migration:generate -w backend --"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "concurrently": "10.0.6",
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2004",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "@swc/core@1.16.18": true
+  }
+}

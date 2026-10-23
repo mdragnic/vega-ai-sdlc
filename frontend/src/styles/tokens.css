@@ -1,0 +1,121 @@
+/* Generated from docs/figma/tokens.md (task 000). The only frontend file with raw design values.
+   Change tokens.md first, then this file; test/styles/tokens.test.ts keeps both equal. */
+:root {
+  /* Color */
+  --color-default-black: #191919;
+  --color-primary: #299D91;
+  --color-secondary: #525256;
+  --color-gray-01: #666666;
+  --color-gray-02: #878787;
+  --color-gray-03: #9F9F9F;
+  --color-gray-05: #E8E8E8;
+  --color-gray-06: #F3F3F3;
+  --color-special-red: #E73D1C;
+  --color-special-green: #4DAF6E;
+  --color-special-bg: #D2D2D2;
+  --color-white: #FFFFFF;
+  --color-special-bg-25: rgb(210 210 210 / 25%);
+  --color-white-70: rgb(255 255 255 / 70%);
+  --color-white-8: rgb(255 255 255 / 8%);
+  --color-default-black-15: rgb(25 25 25 / 15%);
+  --color-form-label: #191D23;
+  --color-input-active: #4B5768;
+  --color-input-border: #D0D5DD;
+  --color-button-secondary: #E4E7EB;
+  --color-auth-divider: #CACED3;
+  --color-logout-bg: #262626;
+  --color-divider-light: #F6F6F6;
+
+  /* Typography */
+  --font-family-inter: 'Inter Variable', 'Inter', sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semi-bold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+  --font-size-12: 12px;
+  --font-size-14: 14px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
+  --font-size-20: 20px;
+  --font-size-22: 22px;
+  --font-size-24: 24px;
+  --line-height-16: 16px;
+  --line-height-20: 20px;
+  --line-height-24: 24px;
+  --line-height-28: 28px;
+  --line-height-32: 32px;
+  --font-regular-12-16: var(--font-weight-regular) var(--font-size-12)/var(--line-height-16) var(--font-family-inter);
+  --font-regular-14-20: var(--font-weight-regular) var(--font-size-14)/var(--line-height-20) var(--font-family-inter);
+  --font-regular-16-24: var(--font-weight-regular) var(--font-size-16)/var(--line-height-24) var(--font-family-inter);
+  --font-exbold-18-24: var(--font-weight-extra-bold) var(--font-size-18)/var(--line-height-24) var(--font-family-inter);
+  --font-semibold-20-28: var(--font-weight-semi-bold) var(--font-size-20)/var(--line-height-28) var(--font-family-inter);
+  --font-exbold-22-32: var(--font-weight-extra-bold) var(--font-size-22)/var(--line-height-32) var(--font-family-inter);
+  --font-bold-24-28: var(--font-weight-bold) var(--font-size-24)/var(--line-height-28) var(--font-family-inter);
+
+  /* Spacing */
+  --space-page-top: 16px;
+  --space-page-left: 24px;
+  --space-page-right: 32px;
+  --space-section-title-gap: 8px;
+  --space-section-title-gap-lg: 16px;
+  --space-card-gap: 24px;
+  --space-card-row-gap: 32px;
+  --space-card-padding: 24px;
+  --space-form-label-gap: 8px;
+  --space-form-field-gap: 24px;
+  --space-form-section-gap: 32px;
+  --space-form-small-gap: 16px;
+  --space-sidebar-x: 28px;
+  --space-nav-item-gap: 16px;
+  --space-nav-padding-x: 16px;
+  --space-nav-icon-gap: 12px;
+  --space-popup-padding-x: 64px;
+  --space-popup-padding-bottom: 48px;
+
+  /* Size */
+  --size-sidebar-width: 280px;
+  --size-header-height: 88px;
+  --size-auth-column-width: 400px;
+  --size-input-height: 48px;
+  --size-popup-input-height: 56px;
+  --size-button-height: 48px;
+  --size-nav-item-width: 224px;
+  --size-nav-item-height: 48px;
+  --size-search-width: 352px;
+  --size-search-height: 48px;
+  --size-card-width: 352px;
+  --size-popup-width: 488px;
+  --size-icon-sm: 16px;
+  --size-icon-md: 20px;
+  --size-icon: 24px;
+  --size-icon-lg: 32px;
+  --size-avatar: 32px;
+  --size-checkbox: 20px;
+  --size-date-box-width: 44px;
+  --size-date-box-height: 64px;
+  --size-amount-box-height: 40px;
+
+  /* Radius */
+  --radius-input: 8px;
+  --radius-button: 4px;
+  --radius-card: 8px;
+  --radius-nav-item: 4px;
+  --radius-search: 12px;
+  --radius-popup: 16px;
+  --radius-date-box: 8px;
+  --radius-amount-box: 8px;
+  --radius-account-card: 4px;
+
+  /* Border */
+  --border-width-input: 1px;
+  --border-width-divider: 1px;
+  --border-width-table-line: 1px;
+  --border-width-auth-divider: 1px;
+  --border-width-tab-indicator: 2px;
+
+  /* Shadow */
+  --shadow-card: 0 20px 24px rgb(76 103 100 / 10%);
+  --shadow-search: 0 28px 16px rgb(124 45 87 / 5%);
+  --shadow-popup: none;
+}

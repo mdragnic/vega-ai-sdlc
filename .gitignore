@@ -31,3 +31,18 @@ desktop.ini
 
 # Validation evidence is committed by default. Uncomment to ignore it.
 # .claude/tasks/evidence/
+
+# Stack (task 000): npm workspaces, NestJS, Vite, Vitest, Playwright
+node_modules/
+dist/
+backend/data/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+*.tsbuildinfo
+.vite/
+.eslintcache
+.stylelintcache
+.swc/

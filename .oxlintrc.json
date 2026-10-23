@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "import", "unicorn", "oxc", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": [
+      "error",
+      { "allow": ["**/*.css", "@fontsource-variable/*", "@testing-library/jest-dom/vitest"] }
+    ],
+    "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }]
+  },
+  "overrides": [
+    {
+      "files": ["**/test/**", "e2e/**"],
+      "rules": { "typescript/no-unsafe-type-assertion": "off" }
+    }
+  ],
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "backend/data/**",
+    "coverage/**",
+    "test-results/**",
+    "playwright-report/**",
+    "blob-report/**"
+  ]
+}
