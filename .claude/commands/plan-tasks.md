@@ -2,7 +2,7 @@
 description: Turn the clarified spec into a task outline and fully detail the next tasks
 ---
 Preconditions:
-- `docs/stack.md` exists and lists the locked stack. If it does not, tell me to run `/set-stack` and STOP.
+- The stack is locked in the `package.json` files (root, `frontend/`, `backend/`, `shared/`, `e2e/`). If there are none, tell me to run `/set-stack` and STOP.
 - `docs/decisions.md` has no open questions that affect planning. If it does, list them and STOP.
 
 1. Create the full task outline in `.claude/tasks/INDEX.md`: one row per task, vertical slices (one feature end to end per task), with gate and dependencies. Task 000 already exists, start features at 001.

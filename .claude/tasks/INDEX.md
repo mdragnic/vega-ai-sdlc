@@ -39,4 +39,4 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 029 | Settings: profile photo upload | US-18 (6, 8 photo rule, 10, 12, 13), #44 #76 | human | 028 | todo |
 | 030 | Settings: Security tab | US-19, #2 #34 | human | 028 | todo |
 
-Open questions: #82 blocks 001, #83 blocks 003 (`docs/decisions.md`).
+Open questions: none.
