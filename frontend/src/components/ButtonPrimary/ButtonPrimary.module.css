@@ -1,0 +1,43 @@
+.button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--size-button-height);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-button);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  cursor: pointer;
+}
+
+/* Keyboard focus (#87). */
+.button:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* Active=No from the component export: the disabled look, also while loading (#6). */
+.button:disabled {
+  background-color: var(--color-button-secondary);
+  color: var(--color-input-active);
+  cursor: default;
+}
+
+.hiddenLabel {
+  color: transparent;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

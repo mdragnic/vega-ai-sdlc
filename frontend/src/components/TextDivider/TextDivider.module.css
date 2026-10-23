@@ -1,0 +1,18 @@
+/* The lines have a fixed length and position in 101 and 102 whatever the text; the text is centered between them. */
+.divider {
+  display: grid;
+  grid-template-columns: var(--size-auth-divider-line-width) 1fr var(--size-auth-divider-line-width);
+  align-items: center;
+  padding: 0 var(--space-auth-divider-inset);
+}
+
+.line {
+  border-top: var(--border-width-auth-divider) solid var(--color-auth-divider);
+}
+
+.text {
+  color: var(--color-auth-muted);
+  font: var(--font-regular-14-20);
+  text-align: center;
+  white-space: nowrap;
+}

@@ -1,0 +1,20 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--color-gray-06);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  width: var(--size-auth-column-width);
+  margin: 0 auto;
+}
+
+/* The same size on 101, 102 and 103; the height follows the SVG viewBox. */
+.logo {
+  flex-shrink: 0;
+  align-self: center;
+  width: var(--size-auth-logo-width);
+  height: auto;
+  color: var(--color-primary);
+}

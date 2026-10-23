@@ -25,6 +25,7 @@
   --color-auth-divider: #CACED3;
   --color-logout-bg: #262626;
   --color-divider-light: #F6F6F6;
+  --color-auth-muted: #999DA3;
 
   /* Typography */
   --font-family-inter: 'Inter Variable', 'Inter', sans-serif;
@@ -66,6 +67,9 @@
   --space-form-field-gap: 24px;
   --space-form-section-gap: 32px;
   --space-form-small-gap: 16px;
+  --space-input-padding-x: 16px;
+  --space-auth-divider-inset: 28px;
+  --space-focus-ring-offset: 2px;
   --space-sidebar-x: 28px;
   --space-nav-item-gap: 16px;
   --space-nav-padding-x: 16px;
@@ -77,6 +81,8 @@
   --size-sidebar-width: 280px;
   --size-header-height: 88px;
   --size-auth-column-width: 400px;
+  --size-auth-logo-width: 272px;
+  --size-auth-divider-line-width: 108px;
   --size-input-height: 48px;
   --size-popup-input-height: 56px;
   --size-button-height: 48px;
@@ -106,6 +112,7 @@
   --radius-date-box: 8px;
   --radius-amount-box: 8px;
   --radius-account-card: 4px;
+  --radius-checkbox: 2px;
 
   /* Border */
   --border-width-input: 1px;
@@ -113,6 +120,7 @@
   --border-width-table-line: 1px;
   --border-width-auth-divider: 1px;
   --border-width-tab-indicator: 2px;
+  --border-width-focus-ring: 2px;
 
   /* Shadow */
   --shadow-card: 0 20px 24px rgb(76 103 100 / 10%);

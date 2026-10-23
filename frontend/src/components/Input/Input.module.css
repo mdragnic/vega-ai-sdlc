@@ -1,0 +1,98 @@
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-form-label-gap);
+}
+
+.label {
+  color: var(--color-form-label);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-24);
+}
+
+.labelAction {
+  color: var(--color-primary);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-16);
+}
+
+/* The action is usually a link: it takes the row's color and has no underline, as drawn in 101. */
+.labelAction a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The border is on the box around the input and the eye, so the eye sits inside it (Active=No).
+   The 16px inset of 101 is measured from the outer edge, so the padding leaves room for the border. */
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-input-padding-x);
+  height: var(--size-input-height);
+  padding: 0 calc(var(--space-input-padding-x) - var(--border-width-input));
+  border: var(--border-width-input) solid var(--color-input-border);
+  border-radius: var(--radius-input);
+  color: var(--color-auth-muted);
+}
+
+/* Active=Yes: only while the input itself has focus (#63). Text and eye darken with the border. */
+.control:has(.input:focus) {
+  border-color: var(--color-input-active);
+  color: var(--color-input-active);
+}
+
+/* While an error shows, the border is red, also with focus (#87). */
+.control.invalid,
+.control.invalid:has(.input:focus) {
+  border-color: var(--color-special-red);
+}
+
+.input {
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: var(--font-regular-16-24);
+  outline: none;
+}
+
+/* Masked, the browser draws the font's bullet at this size: 14px gives the dot spacing drawn in 101 and 102. */
+.input[type='password'] {
+  font-size: var(--font-size-14);
+}
+
+.input::placeholder {
+  color: var(--color-auth-muted);
+  opacity: 1;
+}
+
+.toggle {
+  display: flex;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.toggle svg {
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+.toggle:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

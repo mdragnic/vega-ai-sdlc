@@ -9,14 +9,14 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 |------|-------|--------|------|------------|--------|
 | 000 | Foundation: workspaces, tokens, assets, test harness, Clock and time zone | #4 #5 #54 #65 #66 #70 #73 #74 #79 #80 | human | - | done |
 | 001 | Shared display rules: money, dates, percentages, names, amount input | #11 #19 #61 #62 #64 #74 #82 #84 | auto | 000 | done |
-| 002 | Shared components: form controls, auth layout and dev gallery | US-01 to US-03 (controls), #6 #51 #63 | human | 000 | todo |
+| 002 | Shared components: form controls, auth layout and dev gallery | US-01 to US-03 (controls), #6 #51 #63 #86 #87 | human | 000 | done |
 | 003 | Shared components: app shell (sidebar, header, layout) | US-04 (visuals), #5 #38 #83 | human | 001, 002 | todo |
 | 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 (104 to 112) | human | 001, 002 | todo |
 | 005 | Shared components: Popup, amount input, Dropdown | #31 #35 #60 #64 #69 #71 (104.1, 110.1, 110.2; 106, 110, 111) | human | 001, 002 | todo |
 | 006 | Shared components: comparison bar chart and target vs achievement gauge | #11 #20 #29 #55 (104, 109, 110) | human | 001, 004 | todo |
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #14 #15 #46 #62 #63 #67 #75 | human | 000 | todo |
 | 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #24 #53 #56 #57 #77 #78, `demo-data.md` | human | 007 | todo |
-| 009 | Login screen and route protection | US-01 (1 to 12, 14, 15), US-04 (12), #3 #14 #39 | human | 002, 007 | todo |
+| 009 | Login screen and route protection | US-01 (1 to 12, 14, 15), US-04 (12), #3 #14 #39; links get the #87 teal :focus-visible ring | human | 002, 007 | todo |
 | 010 | Sign up and Forgot Password screens | US-02 (1 to 8, 10 to 14), US-03, #15 #16 | human | 008, 009 | todo |
 | 011 | App shell slice: signed-in user, date, greeting, navigation, logout, unknown URLs | US-04, #3 #9 #10 #38 #39 #47 #54 | human | 003, 009 | todo |
 | 012 | Google sign-in (needs the Google OAuth client, #75) | US-01 (13, 16), US-02 (9, 15), #2 #63 #75 #81 | human | 010, 011 | todo |

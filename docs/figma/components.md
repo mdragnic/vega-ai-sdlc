@@ -146,6 +146,19 @@ Many are likely nested inside other components (see "Limits" above) or used only
 
 The Components page also holds one instance, `chevron-right` `418:6456`, which is not a component.
 
+## Code-only components
+
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002.
+
+| Code name | Purpose | Decision |
+|-----------|---------|----------|
+| `FieldError` | The inline message under a form field, linked to it with `aria-describedby` | #6 |
+| `FormError` | The server error above a form's submit button, `role="alert"` | #6 |
+| `Spinner` | The loading indicator inside buttons while a form is saving | #6 |
+| `AuthLayout` | The Login, Sign up and Forgot Password frame: light gray page, centered 400px column, teal logo at the top | #66, #70 |
+| `TextDivider` | Centered gray text with a line on each side ("or sign in with", "or sign up with") | US-01, US-02 |
+| `IconCheck` | Icon: the white check mark in `RemindMe`. Not in the Figma export, so the Lucide `check` SVG is copied as a file. License notices (Lucide ISC; `check` is derived from Feather, MIT) in `frontend/src/assets/icons/LICENSE-lucide.txt` | #66 |
+
 ## Totals
 
 - Component sets: 5 (Menu, Input, Remind me, Button/primary, Button/secondary), 35 variants.

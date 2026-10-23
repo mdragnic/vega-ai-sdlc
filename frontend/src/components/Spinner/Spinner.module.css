@@ -1,0 +1,18 @@
+.spinner {
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+  animation: spinner-turn 0.8s linear infinite;
+}
+
+/* Still turning, so loading stays visible, but slower. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes spinner-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}

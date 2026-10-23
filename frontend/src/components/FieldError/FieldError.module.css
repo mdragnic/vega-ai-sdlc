@@ -1,0 +1,6 @@
+/* Not designed (#6): red text from the tokens, under the field. */
+.error {
+  margin: var(--space-form-label-gap) 0 0;
+  color: var(--color-special-red);
+  font: var(--font-regular-14-20);
+}

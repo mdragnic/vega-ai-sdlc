@@ -1,0 +1,47 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-form-small-gap);
+}
+
+/* Active=No: the light gray box from the component export. */
+.box {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-checkbox);
+  height: var(--size-checkbox);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-checkbox);
+  background-color: var(--color-input-border);
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+/* Active=Yes, as in 101. */
+.box[data-state='checked'] {
+  background-color: var(--color-primary);
+}
+
+/* Keyboard focus (#87). */
+.box:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.indicator {
+  display: flex;
+}
+
+.indicator svg {
+  width: var(--size-checkbox);
+  height: var(--size-checkbox);
+}
+
+.label {
+  color: var(--color-form-label);
+  font: var(--font-regular-16-24);
+  cursor: pointer;
+}

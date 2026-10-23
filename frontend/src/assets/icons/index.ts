@@ -17,6 +17,9 @@ export { default as Food } from './Food.svg?react';
 export { default as Gamepad2 } from './Gamepad2.svg?react';
 export { default as Goal } from './Goal.svg?react';
 export { default as Housing } from './Housing.svg?react';
+// Lucide `check`, copied as a file: the RemindMe check mark is not in the Figma export (#66).
+// Its license notices (Lucide ISC, Feather MIT) are in LICENSE-lucide.txt, unchanged.
+export { default as IconCheck } from './IconCheck.svg?react';
 export { default as IconEye } from './IconEye.svg?react';
 export { default as IconEyeOff } from './IconEyeOff.svg?react';
 export { default as IconSeparator } from './IconSeparator.svg?react';

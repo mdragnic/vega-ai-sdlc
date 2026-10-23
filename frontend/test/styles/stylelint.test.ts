@@ -35,6 +35,16 @@ describe('stylelint token rule', () => {
     ['a raw text shadow', 'a { text-shadow: 0 1px 2px #000; }'],
     ['a raw flex basis', 'a { flex-basis: 280px; }'],
     ['a raw letter spacing', 'a { letter-spacing: 0.5px; }'],
+    // Math functions are allowed over tokens and 0 only (task 002 review).
+    ['a raw number inside calc', 'a { margin-top: calc(var(--x) * 2); }'],
+    ['a raw size inside min', 'a { width: min(var(--x), 352px); }'],
+    ['a raw size inside max', 'a { height: max(0, 48px); }'],
+    ['a raw value inside clamp', 'a { font-size: clamp(var(--x), 2vw, var(--y)); }'],
+    ['a keyword inside calc', 'a { width: calc(100% - var(--x)); }'],
+    ['another function inside calc', 'a { top: calc(var(--x) + env(safe-area-inset-top)); }'],
+    ['a nested calc', 'a { top: calc(var(--x) - calc(var(--y))); }'],
+    ['a token with a raw fallback inside calc', 'a { padding-left: calc(var(--x, 12px) - var(--y)); }'],
+    ['an unknown function over tokens', 'a { width: fit-content(var(--x)); }'],
   ])('rejects %s', async (_, code) => {
     expect(await warnings(code)).not.toEqual([]);
   });
@@ -51,6 +61,13 @@ describe('stylelint token rule', () => {
     ['the reset keywords', 'a { padding: 0; inset: 0; outline: none; margin: initial; gap: unset; }'],
     ['a token outline shorthand', 'a { outline: var(--x) solid var(--y); outline-offset: var(--z); }'],
     ['token text shadow, flex basis and letter spacing', 'a { text-shadow: var(--x); flex-basis: var(--y); }'],
+    ['token math in calc', 'a { padding-left: calc(var(--x) - var(--y)); }'],
+    ['token math in a shorthand', 'a { padding: 0 calc(var(--x) - var(--y)); }'],
+    ['calc over a token and 0', 'a { margin-top: calc(0 - var(--x)); }'],
+    [
+      'min, max and clamp over tokens and 0',
+      'a { width: min(var(--x), var(--y)); height: max(0, var(--x)); margin-top: clamp(0, var(--x), var(--y)); }',
+    ],
   ])('accepts %s', async (_, code) => {
     expect(await warnings(code)).toEqual([]);
   });

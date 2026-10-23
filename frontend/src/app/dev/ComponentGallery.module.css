@@ -1,0 +1,56 @@
+/* Development-only page: built from the app tokens, no design of its own. */
+.page {
+  min-height: 100vh;
+  padding: var(--space-form-section-gap) 0;
+  background-color: var(--color-gray-06);
+}
+
+.title {
+  margin: 0 auto;
+  width: var(--size-auth-column-width);
+  color: var(--color-default-black);
+  font: var(--font-bold-24-28);
+}
+
+.note {
+  margin: var(--space-section-title-gap) auto 0;
+  width: var(--size-auth-column-width);
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+}
+
+.section {
+  margin-top: var(--space-form-section-gap);
+  padding-top: var(--space-form-field-gap);
+  border-top: var(--border-width-divider) solid var(--color-gray-05);
+}
+
+.sectionTitle {
+  margin: 0 auto var(--space-form-small-gap);
+  width: var(--size-auth-column-width);
+  color: var(--color-default-black);
+  font: var(--font-semibold-20-28);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-field-gap);
+  width: var(--size-auth-column-width);
+  margin: 0 auto;
+}
+
+.example {
+  margin: 0;
+}
+
+.caption {
+  width: var(--size-auth-column-width);
+  margin: 0 auto var(--space-section-title-gap);
+  color: var(--color-gray-02);
+  font: var(--font-regular-12-16);
+}
+
+.authOffset {
+  padding-top: var(--space-form-section-gap);
+}

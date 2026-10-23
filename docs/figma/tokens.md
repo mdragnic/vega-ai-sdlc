@@ -36,6 +36,7 @@ Names follow the Figma variable or style name in kebab-case. Measured tokens are
 | `--color-auth-divider` | `#CACED3` | measured: PNG 101 "or sign in with" lines (y 1203). Added in review |
 | `--color-logout-bg` | `#262626` | measured: PNG 104 Logout button fill (y 1560 to 1655). Added in review |
 | `--color-divider-light` | `#F6F6F6` | measured: PNG 104 Expenses Breakdown cell dividers (vertical x 1850 to 1851 and 2330 to 2331, horizontal y 1766 to 1767). The Statistics chart grid lines are Gray/06 `#F3F3F3`. Added in review |
+| `--color-auth-muted` | `#999DA3` | measured: PNG 101 masked password dots (y 828 to 834), eye icon (x 1762 to 1805) and "or sign in with" text (y 1193 to 1219); PNG 102 and 103 email placeholder (y 796 to 826, 968 to 998); export `docs/figma/components/418-6433.png` typed text and icons of every Input with Active=No. Added in task 002 (decision #86) |
 
 ## Typography
 
@@ -85,6 +86,9 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-form-field-gap` | `24px` | measured: PNG 101, email input bottom (y 672) to the "Password" line box top (y 720), 48 px, halved |
 | `--space-form-section-gap` | `32px` | measured: PNG 101, password input bottom (y 880) to the "Keep me signed in" row top (y 944), 64 px, halved. Login button bottom (y 1120) to the "or sign in with" row (y 1184), also 64 px |
 | `--space-form-small-gap` | `16px` | measured: PNG 101, "Keep me signed in" row bottom (y 992) to the Login button top (y 1024), 32 px, halved |
+| `--space-input-padding-x` | `16px` | measured: PNG 101, input left edge (x 1040) to the masked dots and typed text (x 1072), and the eye icon box right edge (x 1808) to the input right edge (x 1840), 32 px, halved. Added in task 002 |
+| `--space-auth-divider-inset` | `28px` | measured: PNG 101 and 102, column left edge (x 1040) to the "or sign in with" left line (x 1098), and the right line end (x 1782) to the column right edge (x 1840), 58 px, halved 29, rounded. Added in task 002 |
+| `--space-focus-ring-offset` | `2px` | decision #87: not measured, keyboard focus is not designed. Gap between a focused control and its focus ring. Added in task 002 |
 | `--space-sidebar-x` | `28px` | measured: PNG 104, sidebar left edge (x 0) to the nav item (x 56), 56 px, halved |
 | `--space-nav-item-gap` | `16px` | measured: PNG 104 and 105, Overview item bottom (y 336) to the Balances item top (y 368 in 105), 32 px, halved |
 | `--space-nav-padding-x` | `16px` | measured: PNG 104, nav item left edge (x 56) to the 24 px icon box (x 89; the 40 px glyph at x 94 to 133, centered in a 48 px box), 33 px, halved 16.5, rounded |
@@ -99,6 +103,8 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-sidebar-width` | `280px` | measured: PNG 104, sidebar x 0 to 559, 560 px, halved |
 | `--size-header-height` | `88px` | measured: PNG 104 and 105, header y 0 to 175 including its 2 px bottom border, 176 px, halved |
 | `--size-auth-column-width` | `400px` | measured: PNG 101, inputs and buttons x 1040 to 1839, 800 px, halved |
+| `--size-auth-logo-width` | `272px` | measured: PNG 101, 102 and 103, logo glyphs x 1169 to 1712, 544 px, halved. The height follows the SVG viewBox (163x18): 30px. Added in task 002 |
+| `--size-auth-divider-line-width` | `108px` | measured: PNG 101 and 102, "or sign in with" lines x 1098 to 1311 and 1568 to 1781, 214 px, halved 107, rounded. Added in task 002 |
 | `--size-input-height` | `48px` | measured: PNG 101, email and password inputs y 576 to 671 and 784 to 879, 96 px, halved |
 | `--size-popup-input-height` | `56px` | measured: PNG 104.1, popup inputs y 744 to 855, 112 px, halved |
 | `--size-button-height` | `48px` | measured: PNG 101 Login (y 1024 to 1119) and Google (y 1288 to 1383), PNG 104.1 Save (y 1144 to 1239), 96 px, halved |
@@ -133,6 +139,7 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-date-box` | `8px` | measured: PNG 104 Upcoming Bill date box, corner radius 16 px, halved |
 | `--radius-amount-box` | `8px` | measured: PNG 104 Upcoming Bill amount box, corner radius 16 px, halved |
 | `--radius-account-card` | `4px` | measured: PNG 104 teal account card in Total Balance, corner radius 8 px, halved |
+| `--radius-checkbox` | `2px` | measured: PNG 101 "Keep me signed in" checkbox and export `docs/figma/components/418-6433.png` Remind me, corner radius 4 px, halved. Kept at 2px, an exception to the 4px grid like border widths (decision #86). Added in task 002 |
 
 ## Border
 
@@ -145,6 +152,7 @@ Halved, not rounded.
 | `--border-width-table-line` | `1px` | measured: PNG 104 Recent Transaction row lines (y 1206 to 1207) and Expenses Breakdown grid lines (x 1850 to 1851), 2 px, halved |
 | `--border-width-auth-divider` | `1px` | measured: PNG 101 "or sign in with" lines (y 1203), 1 px, halved 0.5; set to 1px in review (Marko, 2026-10-23) |
 | `--border-width-tab-indicator` | `2px` | measured: PNG 104 active "All" tab underline (y 1004 to 1007), 4 px, halved |
+| `--border-width-focus-ring` | `2px` | decision #87: not measured, keyboard focus is not designed. Width of the `:focus-visible` outline. Added in task 002 |
 
 ## Shadow
 

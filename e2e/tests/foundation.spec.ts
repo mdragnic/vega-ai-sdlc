@@ -1,28 +1,6 @@
-import type { ConsoleMessage, Page } from '@playwright/test';
-
 import { FIXED_NOW, FRONTEND_URL, TIME_ZONE, VIEWPORT } from '../constants';
 import { expect, test } from '../fixtures';
-
-function collectErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (message: ConsoleMessage) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
-  page.on('pageerror', (error) => errors.push(error.message));
-  return errors;
-}
-
-/** The computed color a token resolves to, read through a probe element. */
-async function tokenColor(page: Page, token: string): Promise<string> {
-  return page.evaluate((name) => {
-    const probe = document.createElement('div');
-    probe.style.backgroundColor = `var(${name})`;
-    document.body.append(probe);
-    const color = getComputedStyle(probe).backgroundColor;
-    probe.remove();
-    return color;
-  }, token);
-}
+import { collectErrors, tokenColor } from '../helpers';
 
 // T13: the root page loads at 1440x1024, without console errors, on the page background token (AC2, AC5).
 test('root page loads at 1440x1024 on the page background without console errors', async ({ page }) => {

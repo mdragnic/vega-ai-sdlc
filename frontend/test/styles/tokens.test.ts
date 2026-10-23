@@ -51,18 +51,21 @@ function unknownTokens(css: string, known: Set<string>): string[] {
 
 const crlf = (text: string) => text.replaceAll('\r\n', '\n').replaceAll('\n', '\r\n');
 
+/** Measured tokens kept off the 4px grid: border widths, and the checkbox radius (decision #86). */
+const offGridAllowed = (name: string) => name.startsWith('--border-width') || name === '--radius-checkbox';
+
 // T3: tokens.css holds exactly the tokens in docs/figma/tokens.md (AC7).
 describe('design tokens', () => {
   const fromMarkdown = markdownTokens(tokensMd);
   const fromCss = cssTokens(tokensCss);
 
-  // AC6: every token has a source; measured values are halved and on the 4px grid, border widths excepted.
+  // AC6: every token has a source; measured values are halved and on the 4px grid, except offGridAllowed.
   it('gives every token a source and keeps measured sizes on the 4px grid', () => {
     const rows = [...tokensMd.matchAll(/^\| `(--[a-z0-9-]+)` \| `([^`]+)` \| (.*) \|\r?$/gm)];
     expect(rows).toHaveLength(fromMarkdown.length);
 
     const offGrid = rows
-      .filter(([, name, , source]) => source!.startsWith('measured') && !name!.startsWith('--border-width'))
+      .filter(([, name, , source]) => source!.startsWith('measured') && !offGridAllowed(name!))
       .flatMap(([, name, value]) =>
         [...value!.matchAll(/(\d+(?:\.\d+)?)px/g)].filter((m) => Number(m[1]) % 4 !== 0).map(() => `${name}: ${value}`),
       );
