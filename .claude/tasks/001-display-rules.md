@@ -1,6 +1,6 @@
 # Task 001: Shared display rules: money, dates, percentages, names, amount input
 
-- Status: todo
+- Status: done
 - Gate: auto
 - Depends on: 000
 - Size: S
@@ -80,9 +80,46 @@
 ## Log
 <!-- Claude appends: date, what was done, decisions, issues, validation results, review findings -->
 
+### 2026-10-23, decisions before building
+- #82 was closed before the task started; its cases are in T5. All other cited decisions (#11 #19 #31 #54 #61 #62 #64 #74) are closed.
+- Raised #84 and stopped: (a) a full date with a day under 10; (b) a lone `.` in an amount field, which AC 9 lists neither as allowed nor rejected, but which must stand while typing `.5`. Human interventions +1.
+- Marko answered: (b) a lone `.` is allowed while typing and counts as empty (no value); Target shows its required error, and an empty Present Amount saves 0 and then displays `$0`. (a) was first answered `01 May, 2023`, then corrected: full dates have no leading zero (`1 May, 2026`), month labels `May, 2026`, and only the chart short day (#42) has two digits (`01 May`). Human interventions +1. #84 is closed with both answers.
+- For Marko: `docs/spec/brief.md` "Money and dates" does not mention #84 yet. That is spec text, so it is left unchanged (as in task 000). The rule "an empty Present Amount saves 0" belongs to the goal form and contract (task 014).
+
+### 2026-10-23, build (TDD)
+- Each unit followed red, then green. Every new test file failed first because its function did not exist yet.
+- `shared/src/contract/money.ts`: `moneySchema` `{ cents: z.number().int(), currency: z.literal('USD') }`, with type `Money`. Zod 4's `int()` already accepts only safe integers (checked), so it has no extra bounds.
+- `shared/src/format/`:
+  - `cents.ts` is internal (not exported from the root). It checks for a safe integer and splits cents into dollar and cent digits as strings, so nothing is ever divided.
+  - `money.ts`: `formatMoney`, `formatSignedMoney`, `formatCompactMoney`. The k/M unit keeps the first dropped digit and ignores the rest, which rounds toward zero, so negatives behave like positives (#82).
+  - `percent.ts`: `formatPercent`.
+  - `date.ts`: `formatDate` and `formatMonthLabel`, using date-fns and @date-fns/tz (#79). Inputs are checked with `z.iso.date()` and `z.iso.datetime()`, the same shapes as the contract (#74).
+  - `name.ts`: `firstName` and `initials`. Names are NFC-normalized, so a letter typed with a combining mark still gives one initial (`Š`).
+- `shared/src/amount-input/index.ts`: `isAllowedAmountInput`, `parseAmountInput` (cents built from the digit string with one `Number()` call), `formatAmountInput`. Allowed text too long for exact cents parses to a value above the safe integer range, which every money schema rejects.
+- Choices beyond the AC text, all toward rejecting malformed input (the security focus in validation step 6):
+  - Formatters throw `RangeError` on cents or percentages that are not safe integers.
+  - `formatSignedMoney` rejects negative cents, because the direction gives the sign.
+  - `formatAmountInput` rejects negative cents, which the field could not show.
+  - `formatDate` throws on a timestamp without a zone, on an unknown zone, and on any other shape.
+  - `parseAmountInput` throws on text the field does not allow.
+- `formatMonthLabel(year, month)` takes month 1 to 12.
+- `formatDate` was also tested with the process time zone switched at runtime (`Pacific/Pago_Pago`, `Pacific/Kiritimati`). Setting `TZ` before Node starts has no effect on this Windows machine, so a startup-only check would prove nothing. Mutation check: with `new Date(value)` in place of `parseISO`, the Pago_Pago plain-date test fails.
+- T13 follows the `exact-versions` pattern: its detector is also tested against sample lines. Mutation check: adding `c / 100` to `format/money.ts` fails T13.
+
+### 2026-10-23, validation
+1. Lint: the first run failed on Prettier formatting in 3 new files (rework loop 1). Ran `prettier --write` on those 3 files. Re-run: `npm run lint` exit 0. `npm run typecheck` exit 0 in all 4 workspaces.
+2. `npm test`: shared 187/187 (177 new: T1 8, T2 to T5 49, T6 6, T7 and T8 37, T9 8, T10 to T12 54, T13 15), backend 43/43, frontend 183/183. No warnings.
+3. `npm run e2e`: 4/4 passed. No new e2e test, since there is no UI.
+4. and 5. Visual and manual checks: none (no UI). `npm run build` exit 0. A node import of the built `@finebank/shared` finds all 12 functions at the root, and none of the internal helpers.
+6. `security-review`: no findings, at any severity. The probes confirmed the following:
+   - `parseAmountInput` refuses signs, exponents, hex, separators, whitespace and non-ASCII digits.
+   - Overflow can never come back as a smaller safe value.
+   - `moneySchema` rejects 2^53, NaN, Infinity, 1e21 and numeric strings.
+   - Forward note for task 014: `moneySchema` allows negative cents on purpose (balances), so goal request schemas need their own non-negative and positive rules.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-23 14:14
+- Finished: 2026-10-23 14:33
+- Human interventions: 2
+- Rework loops: 1
+- Notes on prompts that failed: none. #84 stopped the task once; its date answer was corrected mid-build, so 1 date test changed before any implementation existed.

@@ -8,7 +8,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
 | 000 | Foundation: workspaces, tokens, assets, test harness, Clock and time zone | #4 #5 #54 #65 #66 #70 #73 #74 #79 #80 | human | - | done |
-| 001 | Shared display rules: money, dates, percentages, names, amount input | #11 #19 #61 #62 #64 #74 #82 | auto | 000 | todo |
+| 001 | Shared display rules: money, dates, percentages, names, amount input | #11 #19 #61 #62 #64 #74 #82 #84 | auto | 000 | done |
 | 002 | Shared components: form controls, auth layout and dev gallery | US-01 to US-03 (controls), #6 #51 #63 | human | 000 | todo |
 | 003 | Shared components: app shell (sidebar, header, layout) | US-04 (visuals), #5 #38 #83 | human | 001, 002 | todo |
 | 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 (104 to 112) | human | 001, 002 | todo |
