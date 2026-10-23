@@ -3,7 +3,7 @@
 Status values: todo | in-progress | awaiting-human | done | blocked
 `/next-task` picks the first task that is `todo` and whose dependencies are all `done`.
 
-Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 003; the rest are outline rows, detailed by `/next-task` when picked.
+Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 004; the rest are outline rows, detailed by `/next-task` when picked.
 
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
@@ -11,7 +11,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 001 | Shared display rules: money, dates, percentages, names, amount input | #11 #19 #61 #62 #64 #74 #82 #84 | auto | 000 | done |
 | 002 | Shared components: form controls, auth layout and dev gallery | US-01 to US-03 (controls), #6 #51 #63 #86 #87 | human | 000 | done |
 | 003 | Shared components: app shell (sidebar, header, layout) | US-04 (visuals), #5 #38 #83 | human | 001, 002 | done |
-| 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 (104 to 112) | human | 001, 002 | todo |
+| 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 #87 #88 (104 to 112); per-widget error boundary in the #6 error state | human | 001, 002 | todo |
 | 005 | Shared components: Popup, amount input, Dropdown | #31 #35 #60 #64 #69 #71 (104.1, 110.1, 110.2; 106, 110, 111) | human | 001, 002 | todo |
 | 006 | Shared components: comparison bar chart and target vs achievement gauge | #11 #20 #29 #55 (104, 109, 110) | human | 001, 004 | todo |
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #14 #15 #46 #62 #63 #67 #75 | human | 000 | todo |
@@ -35,7 +35,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 025 | Goals: Savings Goal card, month selector and Adjust Goal popup | US-16 (1, 2, 4 to 6, 9, 11), US-17 (110.1), #30 #58 #60 | human | 014 | todo |
 | 026 | Goals: Saving Summary chart | US-16 (3, 6, 12, 13), #42 #59 #68 #72 | human | 017, 025 | todo |
 | 027 | Goals: Expenses Goals by Category and Adjust popup | US-16 (7, 8, 10), US-17 (110.2), #32 | human | 025 | todo |
-| 028 | Settings: Account tab profile fields | US-18 (1 to 5, 7 to 9, 11, 14, 15), #33 #43 #52 #62 | human | 005, 011 | todo |
+| 028 | Settings: Account tab profile fields | US-18 (1 to 5, 7 to 9, 11, 14, 15), #33 #43 #52 #62 | human | 004, 005, 011 | todo |
 | 029 | Settings: profile photo upload | US-18 (6, 8 photo rule, 10, 12, 13), #44 #76 | human | 028 | todo |
 | 030 | Settings: Security tab | US-19, #2 #34 | human | 028 | todo |
 
