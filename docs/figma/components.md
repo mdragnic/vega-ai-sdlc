@@ -148,7 +148,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`.
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`.
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -162,6 +162,14 @@ Code components with no Figma component. They are built from tokens, and their n
 | `AppLayout` | The frame of every app screen: `NavBar` on the left, sticky so it stays in place while the page scrolls, and a main column with `Header` and then the content, which scroll together | #5, #83 |
 | `ChevronsRight` | Icon: the "»" before the header date. Not in the Figma export, so the Lucide `chevrons-right` SVG is copied as a file (derived from Feather, MIT; notices in `LICENSE-lucide.txt`) | #10, #66 |
 | `EllipsisVertical` | Icon: the three dots in `Profile`. Not in the Figma export, so the Lucide `ellipsis-vertical` SVG is copied as a file (Feather `more-vertical`, MIT; notices in `LICENSE-lucide.txt`) | #9, #66 |
+| `Section` | A titled block of an app screen: the `<h2>` in the section title style (104 "Total Balance") with, on the right, "View All" with the chevron (described by the title) or a note; the content follows at the gap the screen shows (8 on Overview, 16 elsewhere) | #6, #87 |
+| `Card` | The white content card: card radius, card shadow and 24px padding, or no padding for content that sets its own insets (tables, Settings) | #65 |
+| `MenuTab` | The All / Revenue / Expenses tabs of 104 and 107 (Figma frame `Menu Tab` `66:4755`, no component): an ARIA tablist with one tab stop; the selected tab has the designed Active style. The widget renders the tabpanel and labels it with `menuTabId`, imported from `components/MenuTab/MenuTab` (not the index, which holds components only) | #19, #87 |
+| `CategoryIcon` | The icon of an expense category, or the wallet for income, plain or on a gray tile sized and colored per context (104 Recent Transaction and Expenses Breakdown, 109 card header, 110 Goals, 107 rows) | #56, #61 |
+| `DateBox` | The gray date box of the bill rows, the 3-letter month over the two-digit day, compact (104) and large (108) | #11, #88 |
+| `AmountBox` | The bordered amount box of the bill rows, compact (104) and large (108); the Figma width is the minimum | #11 |
+| `Skeleton` | One placeholder shape of a widget loading skeleton (text line, block or circle), Gray/05 with a pulse that stops under reduced motion | #6 |
+| `DataState` | The shared states of one widget, list, table or chart: skeleton while loading, empty message, error state ("Something went wrong." above Retry) when there is no data to show, with a per-widget error boundary around the content. A failed background refetch keeps the data on screen | #6, #88, #89 |
 
 ## Totals
 

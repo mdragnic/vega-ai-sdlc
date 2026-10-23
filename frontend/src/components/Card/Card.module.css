@@ -1,0 +1,10 @@
+.card {
+  padding: var(--space-card-padding);
+  border-radius: var(--radius-card);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+.flush {
+  padding: 0;
+}

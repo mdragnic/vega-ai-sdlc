@@ -1,0 +1,31 @@
+/* Gray/05 1px border, the amount centered on one line. Styles chosen by rendering against the PNGs (task 004 Log). */
+.box {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width-input) solid var(--color-gray-05);
+  border-radius: var(--radius-amount-box);
+  white-space: nowrap;
+}
+
+/* 104 Upcoming Bill: at least 68x40, Secondary 16/24 Extra Bold. */
+.compact {
+  min-width: var(--size-amount-box-width);
+  height: var(--size-amount-box-height);
+  padding: 0 var(--space-amount-box-padding-x);
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-extra-bold);
+  line-height: var(--line-height-24);
+}
+
+/* 108 Bills: at least 108x48, Default Black Exbold 18/24. */
+.large {
+  min-width: var(--size-amount-box-width-lg);
+  height: var(--size-amount-box-height-lg);
+  padding: 0 var(--space-amount-box-padding-x-lg);
+  color: var(--color-default-black);
+  font: var(--font-exbold-18-24);
+}

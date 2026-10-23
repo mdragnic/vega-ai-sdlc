@@ -1,0 +1,45 @@
+.tablist {
+  display: flex;
+  gap: var(--space-tab-gap);
+}
+
+/* Inactive (104, 107): Secondary, Semibold 16/24, the label at the top of the 32px tab. The label and its
+   bold copy share one grid cell, so the tab is as wide as the bold label. */
+.tab {
+  display: inline-grid;
+  height: var(--size-tab-height);
+  padding: 0 var(--space-tab-padding-x);
+  border: none;
+  border-bottom: var(--border-width-tab-indicator) solid transparent;
+  background: none;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  cursor: pointer;
+}
+
+.label,
+.reserve {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+
+.reserve {
+  font-weight: var(--font-weight-bold);
+  visibility: hidden;
+}
+
+/* Active ("All" in 104 and 107, and Revenue or Expenses when selected, #19): teal Bold with the 2px underline. */
+.active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Keyboard focus (#87). */
+.tab:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

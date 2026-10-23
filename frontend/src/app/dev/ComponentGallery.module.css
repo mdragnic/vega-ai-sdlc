@@ -79,3 +79,133 @@
   color: var(--color-gray-01);
   font: var(--font-regular-14-20);
 }
+
+/* Content components (task 004): sections as wide as one 104 card, or two (Expenses Breakdown). */
+.sampleCard {
+  width: var(--size-card-width);
+  margin: 0 auto;
+}
+
+.sampleWide {
+  width: calc(var(--size-card-width) + var(--size-card-width) + var(--space-card-gap));
+  margin: 0 auto;
+}
+
+.panelText {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+}
+
+.panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-form-small-gap);
+}
+
+.iconRow {
+  display: flex;
+  gap: var(--space-form-small-gap);
+}
+
+/* The gray header of a 109 category card. */
+.cardHeader {
+  padding: var(--space-card-padding);
+  border-radius: var(--radius-card);
+  background-color: var(--color-gray-05);
+}
+
+.boxRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-form-small-gap);
+}
+
+.boxColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-form-small-gap);
+}
+
+/* The error and empty states are centered in the widget's content area; a skeleton may make it taller. */
+.stateCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-profile-height);
+}
+
+.widgetPair {
+  display: flex;
+  gap: var(--space-card-gap);
+  margin-top: var(--space-form-small-gap);
+}
+
+.widgetPair > * {
+  flex: 1;
+}
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-field-gap);
+}
+
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-form-small-gap);
+}
+
+.skeletonLines,
+.skeletonLinesEnd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section-title-gap);
+}
+
+.skeletonLinesEnd {
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.skeletonTile {
+  width: var(--size-category-tile);
+  height: var(--size-category-tile);
+}
+
+.skeletonTitle {
+  width: var(--size-amount-box-width-lg);
+  height: var(--line-height-20);
+}
+
+.skeletonDetail {
+  width: var(--size-amount-box-width);
+  height: var(--line-height-16);
+}
+
+.skeletonCircle {
+  width: var(--size-avatar);
+  height: var(--size-avatar);
+}
+
+.skeletonAmount {
+  width: var(--size-amount-box-width);
+  height: var(--size-amount-box-height);
+}
+
+.narrowSlot {
+  width: var(--size-amount-box-width);
+}
+
+.demoStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-form-small-gap);
+}
+
+.demoStack > .stateCard {
+  align-self: stretch;
+}

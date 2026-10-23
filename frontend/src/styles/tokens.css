@@ -86,6 +86,13 @@
   --space-header-actions-gap: 40px;
   --space-search-padding-left: 32px;
   --space-search-padding-right: 24px;
+  --space-view-all-gap: 8px;
+  --space-tab-padding-x: 8px;
+  --space-tab-gap: 20px;
+  --space-date-box-gap: 4px;
+  --space-amount-box-padding-x: 12px;
+  --space-amount-box-padding-x-lg: 16px;
+  --space-button-small-padding-x: 16px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -115,6 +122,17 @@
   --size-sidebar-brand-height: 72px;
   --size-profile-height: 104px;
   --size-profile-menu-icon-width: 4px;
+  --size-amount-box-width: 68px;
+  --size-amount-box-width-lg: 108px;
+  --size-amount-box-height-lg: 48px;
+  --size-date-box-width-lg: 72px;
+  --size-date-box-height-lg: 80px;
+  --size-category-tile: 40px;
+  --size-category-tile-tall: 56px;
+  --size-category-tile-medium: 48px;
+  --size-tab-height: 32px;
+  --size-button-small-width: 84px;
+  --size-button-small-height: 32px;
 
   /* Radius */
   --radius-input: 8px;
@@ -128,6 +146,7 @@
   --radius-account-card: 4px;
   --radius-checkbox: 2px;
   --radius-avatar: 50%;
+  --radius-category-tile: 8px;
 
   /* Border */
   --border-width-input: 1px;

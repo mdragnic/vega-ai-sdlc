@@ -1,0 +1,22 @@
+/* The "Details" button of the component export: white Regular 16/24 on teal, centered. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-button-small-width);
+  height: var(--size-button-small-height);
+  padding: 0 var(--space-button-small-padding-x);
+  border: none;
+  border-radius: var(--radius-button);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font: var(--font-regular-16-24);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Keyboard focus (#87). */
+.button:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

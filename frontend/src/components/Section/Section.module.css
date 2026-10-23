@@ -1,0 +1,55 @@
+/* The title row is the title's 32px line box; the content follows at the screen's gap. */
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionSm > .titleRow {
+  margin-bottom: var(--space-section-title-gap);
+}
+
+.sectionLg > .titleRow {
+  margin-bottom: var(--space-section-title-gap-lg);
+}
+
+/* 104 "Total Balance": Gray/02, Regular 22/32 (chosen by rendering against the PNG, task 004 Log). */
+.title {
+  margin: 0;
+  color: var(--color-gray-02);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-32);
+}
+
+/* 104: Gray/02 Regular 12/16 and the 16px chevron, centered on the title row, flush with the right edge. */
+.viewAll {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-view-all-gap);
+  color: var(--color-gray-02);
+  font: var(--font-regular-12-16);
+  text-decoration: none;
+}
+
+.chevron {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+/* Keyboard focus (#87). */
+.viewAll:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* 104 "*Compare to last month": Gray/03 Regular 12/16 on the bottom of the title row. */
+.note {
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin: 0;
+  color: var(--color-gray-03);
+  font: var(--font-regular-12-16);
+}

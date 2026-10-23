@@ -105,6 +105,13 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-header-actions-gap` | `40px` | measured: PNG 104 and 105, bell icon box right edge (x 2032; glyph x 1988 to 2030) to the search field (x 2112), 80 px, halved. Added in task 003 |
 | `--space-search-padding-left` | `32px` | measured: PNG 104 and 105, search field left edge (x 2112) to the placeholder text box (x 2176, glyph at 2178), 64 px, halved. Added in task 003 |
 | `--space-search-padding-right` | `24px` | measured: PNG 104 and 105, search icon box right edge (x 2770; the 40 px glyph at x 2724 to 2763) to the field right edge (x 2816), 46 px, halved 23, rounded. Added in task 003 |
+| `--space-view-all-gap` | `8px` | measured: PNG 104, end of the "View All" text (glyphs to x 2741) to the 16px chevron box (x 2759; its glyph x 2770 to 2781), 17 px including the side bearing of the "l", halved 8.5, rounded. A render with 8 puts the text within 1 px of 104 at 2x; Recent Transaction (x 1261 to 1279) is the same. Added in task 004 |
+| `--space-tab-padding-x` | `8px` | measured: PNG 104, the active "All" underline (x 656 to 729) reaches 16 px past the label text box (glyphs x 672 to 711) on each side, halved. PNG 107 the same (x 608 to 681). Added in task 004 |
+| `--space-tab-gap` | `20px` | measured: PNG 104, end of the "All" tab (underline end x 730) to the start of the "Revenue" tab (its text box at x 786 minus the 16 px padding), 40 px, halved. Rendered with 16, 20 and 24, 20 matched 104 best (mean diff 5.7, against 9.7 and 13.0). Added in task 004 |
+| `--space-date-box-gap` | `4px` | measured: PNG 108, month line box bottom (16/24 text, baseline y 907 in the Adobe box) to the day line box top (22/32 text, baseline y 977), 9.6 px, halved 4.8, rounded. PNG 104 shows 2.4 in its 66 px box. Added in task 004 |
+| `--space-amount-box-padding-x` | `12px` | measured: PNG 104, the "$150" text sits about 14 px inside the 68px box on each side (glyphs x 2661 to 2737 in x 2632 to 2767, 28.5 px at 2x); 14 is between 12 and 16, rounded down to stay within what the 68px box leaves on each side. The inset kept when a longer amount widens the box, as `$150.00` (#11) does. Added in task 004 |
+| `--space-amount-box-padding-x-lg` | `16px` | not measurable: in PNG 108 the "$150" text is centered in the 108px box, 31.5 px from each side, so only the upper bound shows. Chosen in task 004 as the inset kept when a longer amount widens the box; any value up to 31 keeps "$150" at 108px |
+| `--space-button-small-padding-x` | `16px` | measured: export docs/figma/components/418-6433.png, Button small "Details": the text 35 and 34 px inside the box (glyphs x 2363 to 2461 in x 2328 to 2495), halved 17.5 and 17, rounded. A longer label widens the button. Added in task 004 |
 
 ## Size
 
@@ -137,6 +144,17 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-sidebar-brand-height` | `72px` | measured: PNG 104 and 105, frame top (y 0) to the sidebar logo glyph bottom (y 144), 144 px, halved. The logo sits at the bottom of this block. Added in task 003 |
 | `--size-profile-height` | `104px` | Figma `Profile` 224x104 (`components.md`). Checked: PNG 104 and 105, divider (y 1744) to the avatar center (y 1848), 104 px, half the block at 2x; export `docs/figma/components/66-1754.png` shows the divider at the top of the component. Added in task 003 |
 | `--size-profile-menu-icon-width` | `4px` | measured: PNG 104 and 105 and export `66-1754.png`, three-dot glyph x 496 to 503 (640 to 647 in the export), 8 px, halved. Its right edge is the block right edge. Added in task 003 |
+| `--size-amount-box-width` | `68px` | measured: PNG 104, Upcoming Bill amount box x 2632 to 2767, 136 px, halved. The minimum: a longer amount widens the box. Added in task 004 |
+| `--size-amount-box-width-lg` | `108px` | measured: PNG 108, Bills amount box x 2532 to 2747, 216 px, halved. The minimum: a longer amount widens the box. Added in task 004 |
+| `--size-amount-box-height-lg` | `48px` | measured: PNG 108, Bills amount box y 562 to 657, 96 px, halved. Added in task 004 |
+| `--size-date-box-width-lg` | `72px` | measured: PNG 108, Bills date box x 656 to 799, 144 px, halved. Added in task 004 |
+| `--size-date-box-height-lg` | `80px` | measured: PNG 108, Bills date box y 528 to 691, 164 px, halved 82, rounded down like --size-date-box-height (82 is between 80 and 84). Added in task 004 |
+| `--size-category-tile` | `40px` | measured: PNG 104, Recent Transaction tiles x 656 to 735 and y 1080 to 1159, 80 px square, halved. Every tile in 104, 109 and 110 is 80 px wide. Added in task 004 |
+| `--size-category-tile-tall` | `56px` | measured: PNG 104, Expenses Breakdown tiles y 1612 to 1723, 112 px, halved. Added in task 004 |
+| `--size-category-tile-medium` | `48px` | measured: PNG 110, Goals tiles y 1104 to 1199, 96 px, halved. PNG 109, card header tiles y 1012 to 1103, 92 px, halved 46, rounded up to share this size (46 is between 44 and 48). Added in task 004 |
+| `--size-tab-height` | `32px` | measured: PNG 104, label line box top (y 944, the card content top; glyphs from y 956) to the bottom of the active underline (y 1007), 64 px, halved. PNG 107 the same (y 320 to 383). Added in task 004 |
+| `--size-button-small-width` | `84px` | Figma Button small 84x32 (components.md). Checked: export docs/figma/components/418-6433.png, x 2328 to 2495, 168 px, halved. The minimum: a longer label widens the button. Added in task 004 |
+| `--size-button-small-height` | `32px` | Figma Button small 84x32 (components.md). Checked: export docs/figma/components/418-6433.png, y 724 to 787, 64 px, halved. Added in task 004 |
 
 ## Radius
 
@@ -155,6 +173,7 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-account-card` | `4px` | measured: PNG 104 teal account card in Total Balance, corner radius 8 px, halved |
 | `--radius-checkbox` | `2px` | measured: PNG 101 "Keep me signed in" checkbox and export `docs/figma/components/418-6433.png` Remind me, corner radius 4 px, halved. Kept at 2px, an exception to the 4px grid like border widths (decision #86). Added in task 002 |
 | `--radius-avatar` | `50%` | measured: PNG 104 and 105, the sidebar profile photo is a circle. Added in task 003 |
+| `--radius-category-tile` | `8px` | measured: PNG 104, Recent Transaction and Expenses Breakdown tiles, corner radius 16 px; PNG 109 and 110 tiles fit about 18 px; halved and rounded. The date and amount boxes in 108 have the same radii as in 104 (--radius-date-box, --radius-amount-box). Added in task 004 |
 
 ## Border
 

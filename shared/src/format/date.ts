@@ -28,6 +28,18 @@ export function formatDate(value: string, timeZone?: string): string {
   return format(zoned, 'd MMM, yyyy');
 }
 
+/**
+ * The gray date box (Upcoming Bill, Bills): the month over the day, `May` over `15`, `Sep` over `05`.
+ * The month always has 3 letters and the day 2 digits (#88). Plain dates only, like due dates.
+ */
+export function formatDateBox(value: string): { month: string; day: string } {
+  if (!plainDateSchema.safeParse(value).success) {
+    throw new RangeError(`Not a plain date: ${value}`);
+  }
+  const date = parseISO(value);
+  return { month: format(date, 'MMM'), day: format(date, 'dd') };
+}
+
 /** Month labels: `May, 2023` (#11). `month` runs from 1 (January) to 12. */
 export function formatMonthLabel(year: number, month: number): string {
   const firstDay = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;

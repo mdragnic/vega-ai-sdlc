@@ -21,6 +21,15 @@ const sections = [
   'HeaderSearch',
   'Header',
   'AppLayout',
+  'Section',
+  'Card',
+  'MenuTab',
+  'CategoryIcon',
+  'DateBox',
+  'AmountBox',
+  'ButtonSmall',
+  'Skeleton',
+  'DataState',
 ];
 
 async function openGallery(page: Page) {

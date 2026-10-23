@@ -1,0 +1,46 @@
+/* Gray/06 box, the month over the day, centered. Styles chosen by rendering against the PNGs (task 004 Log). */
+.box {
+  display: inline-flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-date-box-gap);
+  border-radius: var(--radius-date-box);
+  background-color: var(--color-gray-06);
+}
+
+/* 104 Upcoming Bill: 44x64, Gray/01 Regular 12/16 over Default Black Exbold 22/32. */
+.compact {
+  width: var(--size-date-box-width);
+  height: var(--size-date-box-height);
+}
+
+.compact .month {
+  color: var(--color-gray-01);
+  font: var(--font-regular-12-16);
+}
+
+.compact .day {
+  color: var(--color-default-black);
+  font: var(--font-exbold-22-32);
+}
+
+/* 108 Bills: 72x80, Gray/02 Semibold 16/24 over Secondary Exbold 22/32. */
+.large {
+  width: var(--size-date-box-width-lg);
+  height: var(--size-date-box-height-lg);
+}
+
+.large .month {
+  color: var(--color-gray-02);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+.large .day {
+  color: var(--color-secondary);
+  font: var(--font-exbold-22-32);
+}

@@ -26,3 +26,18 @@ export async function tokenColor(page: Page, token: string): Promise<string> {
 export async function computed(locator: Locator, property: string): Promise<string> {
   return locator.evaluate((element, name) => getComputedStyle(element).getPropertyValue(name), property);
 }
+
+/** The computed value of `property` when set to `var(token)`, read through a probe element. */
+export async function tokenComputed(page: Page, property: string, token: string): Promise<string> {
+  return page.evaluate(
+    ([name, prop]) => {
+      const probe = document.createElement('div');
+      probe.style.setProperty(prop, `var(${name})`);
+      document.body.append(probe);
+      const value = getComputedStyle(probe).getPropertyValue(prop);
+      probe.remove();
+      return value;
+    },
+    [token, property] as const,
+  );
+}

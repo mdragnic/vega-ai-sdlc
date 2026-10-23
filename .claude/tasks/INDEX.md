@@ -11,7 +11,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 001 | Shared display rules: money, dates, percentages, names, amount input | #11 #19 #61 #62 #64 #74 #82 #84 | auto | 000 | done |
 | 002 | Shared components: form controls, auth layout and dev gallery | US-01 to US-03 (controls), #6 #51 #63 #86 #87 | human | 000 | done |
 | 003 | Shared components: app shell (sidebar, header, layout) | US-04 (visuals), #5 #38 #83 | human | 001, 002 | done |
-| 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 #87 #88 (104 to 112); per-widget error boundary in the #6 error state | human | 001, 002 | todo |
+| 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 #87 #88 (104 to 112); per-widget error boundary in the #6 error state | human | 001, 002 | done |
 | 005 | Shared components: Popup, amount input, Dropdown | #31 #35 #60 #64 #69 #71 (104.1, 110.1, 110.2; 106, 110, 111) | human | 001, 002 | todo |
 | 006 | Shared components: comparison bar chart and target vs achievement gauge | #11 #20 #29 #55 (104, 109, 110) | human | 001, 004 | todo |
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #14 #15 #46 #62 #63 #67 #75 | human | 000 | todo |

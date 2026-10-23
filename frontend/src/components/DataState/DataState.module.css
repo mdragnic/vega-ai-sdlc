@@ -1,0 +1,27 @@
+/* Not designed (#6): the message centered in the widget's content area, Retry below it. It fills a parent
+   with a fixed height, or grows in a flex column. */
+.message {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-form-small-gap);
+  height: 100%;
+  text-align: center;
+}
+
+.emptyText,
+.errorText {
+  margin: 0;
+  font: var(--font-regular-14-20);
+}
+
+/* Gray/01 rather than Gray/02, so 14px text keeps a 4.5:1 contrast on white. */
+.emptyText {
+  color: var(--color-gray-01);
+}
+
+.errorText {
+  color: var(--color-secondary);
+}

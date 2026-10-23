@@ -1,0 +1,27 @@
+/* Not designed (#6): Gray/05, visible on the white cards and on the page background, with a slow pulse. */
+.skeleton {
+  display: block;
+  background-color: var(--color-gray-05);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.text,
+.block {
+  border-radius: var(--radius-button);
+}
+
+.circle {
+  border-radius: var(--radius-avatar);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}

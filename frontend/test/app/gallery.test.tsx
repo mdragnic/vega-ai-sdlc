@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -86,5 +87,81 @@ describe('component gallery', () => {
     const like105 = figure('AppLayout', 'Like 105: Balances active, no greeting');
     expect(within(like105).getByRole('link', { name: 'Balances' })).toHaveAttribute('aria-current', 'page');
     expect(within(like105).queryByText(/Hello/)).toBeNull();
+  });
+
+  // Task 004 Scope: the content components.
+  it('shows the content components in every listed state', async () => {
+    await renderGallery();
+
+    expect(
+      within(figure('Section', 'Plain, like 104 Total Balance')).getByRole('region', { name: 'Total Balance' }),
+    ).toBeInTheDocument();
+    expect(
+      within(figure('Section', 'With View All, like 104 Upcoming Bill')).getByRole('link', { name: 'View All' }),
+    ).toHaveAccessibleDescription('Upcoming Bill');
+    expect(
+      within(figure('Section', 'With the note, like 104 Expenses Breakdown')).getByText('*Compare to last month'),
+    ).toBeInTheDocument();
+
+    for (const [name, label] of [
+      ['All active', 'All'],
+      ['Revenue active', 'Revenue'],
+      ['Expenses active', 'Expenses'],
+    ] as const) {
+      expect(within(figure('MenuTab', name)).getByRole('tab', { name: label })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+    }
+    expect(within(figure('MenuTab', 'Interactive')).getAllByRole('tab')).toHaveLength(3);
+
+    for (const variant of [
+      'Recent Transaction (104)',
+      'Expenses Breakdown (104)',
+      'Card header (109)',
+      'Goals (110)',
+    ]) {
+      const icons = within(figure('CategoryIcon', variant)).getAllByRole('img');
+      expect(icons.map((icon) => icon.getAttribute('aria-label'))).toEqual([
+        'Housing',
+        'Food',
+        'Transportation',
+        'Entertainment',
+        'Shopping',
+        'Others',
+        'Income',
+      ]);
+    }
+    expect(within(figure('CategoryIcon', 'Table row (107)')).getAllByRole('img')).toHaveLength(7);
+
+    for (const size of ['Compact (104)', 'Large (108)']) {
+      const dates = [...figure('DateBox', size).querySelectorAll('time')];
+      expect(dates.map((time) => time.getAttribute('datetime'))).toEqual(['2023-05-15', '2023-06-16', '2023-09-05']);
+      expect(within(figure('AmountBox', size)).getByText('$1,000,000,000.00')).toBeInTheDocument();
+    }
+
+    expect(figure('DataState', 'Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(figure('DataState', 'Empty')).findByText('No transactions yet')).toBeInTheDocument();
+    expect(await within(figure('DataState', 'Error')).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(await within(figure('DataState', 'Ready')).findByText('$150.00')).toBeInTheDocument();
+
+    const demo = figure('DataState', 'Error boundary: one widget breaks, the other keeps working');
+    expect(within(demo).getByRole('button', { name: 'Render a bad amount' })).toBeInTheDocument();
+    expect(await within(demo).findAllByText(/^\$\d/)).toHaveLength(2);
+  });
+
+  // #89: a failed background refetch keeps the data on screen, with no error state and no indicator.
+  it('keeps the amount on screen when its background refetch fails', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+    const example = figure('DataState', 'Background refetch fails: the data stays');
+    expect(await within(example).findByText('$150.00')).toBeInTheDocument();
+    expect(within(example).getByText('Query status: success')).toBeInTheDocument();
+
+    await user.click(within(example).getByRole('button', { name: 'Refetch and fail' }));
+
+    expect(await within(example).findByText('Query status: error')).toBeInTheDocument();
+    expect(within(example).getByText('$150.00')).toBeInTheDocument();
+    expect(within(example).queryByRole('alert')).toBeNull();
   });
 });
