@@ -13,6 +13,14 @@ const sections = [
   'Spinner',
   'TextDivider',
   'AuthLayout',
+  'NavMenu',
+  'Logout',
+  'Avatar',
+  'Profile',
+  'NavBar',
+  'HeaderSearch',
+  'Header',
+  'AppLayout',
 ];
 
 async function openGallery(page: Page) {
@@ -31,7 +39,7 @@ test('the gallery shows every component section without console errors', async (
   await openGallery(page);
 
   for (const name of sections) {
-    await expect(page.getByRole('region', { name })).toBeVisible();
+    await expect(page.getByRole('region', { name, exact: true })).toBeVisible();
   }
   await expect(
     page.getByRole('figure', { name: 'Show Password' }).getByLabel('Password', { exact: true }),

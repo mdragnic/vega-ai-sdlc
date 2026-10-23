@@ -1,0 +1,39 @@
+/* Status=Inactive. Text and icon are white at 70% (#BABABA on Default Black in 104). */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-nav-icon-gap);
+  width: var(--size-nav-item-width);
+  height: var(--size-nav-item-height);
+  padding: 0 var(--space-nav-padding-x);
+  border-radius: var(--radius-nav-item);
+  color: var(--color-white-70);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-24);
+  text-decoration: none;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+/* Status=Hover, from the component export (66-1754.png): the Inactive item on white at 8%. */
+.item:hover {
+  background-color: var(--color-white-8);
+}
+
+/* Status=Active, also under the pointer. Semibold, as measured on 104 and 105. */
+.item.active {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: var(--font-weight-semi-bold);
+}
+
+/* Keyboard focus (#87). */
+.item:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

@@ -76,6 +76,16 @@
   --space-nav-icon-gap: 12px;
   --space-popup-padding-x: 64px;
   --space-popup-padding-bottom: 48px;
+  --space-sidebar-logo-gap: 48px;
+  --space-sidebar-logout-gap: 44px;
+  --space-sidebar-bottom: 48px;
+  --space-logout-icon-gap: 16px;
+  --space-profile-gap: 16px;
+  --space-header-greeting-gap: 24px;
+  --space-header-date-gap: 4px;
+  --space-header-actions-gap: 40px;
+  --space-search-padding-left: 32px;
+  --space-search-padding-right: 24px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -101,6 +111,10 @@
   --size-date-box-width: 44px;
   --size-date-box-height: 64px;
   --size-amount-box-height: 40px;
+  --size-sidebar-logo-width: 164px;
+  --size-sidebar-brand-height: 72px;
+  --size-profile-height: 104px;
+  --size-profile-menu-icon-width: 4px;
 
   /* Radius */
   --radius-input: 8px;
@@ -113,6 +127,7 @@
   --radius-amount-box: 8px;
   --radius-account-card: 4px;
   --radius-checkbox: 2px;
+  --radius-avatar: 50%;
 
   /* Border */
   --border-width-input: 1px;

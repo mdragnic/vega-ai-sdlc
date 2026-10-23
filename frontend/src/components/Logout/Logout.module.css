@@ -1,0 +1,30 @@
+/* Text and icon measure #C5C5C5 on 104; white at 70% (#BEBEBE here) is the nearest token. */
+.button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-logout-icon-gap);
+  width: var(--size-nav-item-width);
+  height: var(--size-nav-item-height);
+  padding: 0 var(--space-nav-padding-x);
+  border: none;
+  border-radius: var(--radius-nav-item);
+  background-color: var(--color-logout-bg);
+  color: var(--color-white-70);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  cursor: pointer;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+/* Keyboard focus (#87). */
+.button:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

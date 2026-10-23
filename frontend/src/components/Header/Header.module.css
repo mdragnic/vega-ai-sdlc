@@ -1,0 +1,53 @@
+/* 88px including the bottom line. The line is drawn over the bottom edge, so the content is centered
+   on the whole 88px, as in 104 and 105 (search y 20 to 68). */
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--size-header-height);
+  padding: 0 var(--space-page-right) 0 var(--space-page-left);
+}
+
+.header::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--border-width-divider);
+  background-color: var(--color-gray-05);
+  content: '';
+}
+
+/* A first name too long for the row is cut with an ellipsis, so the page never scrolls sideways. */
+.greeting {
+  min-width: 0;
+  margin: 0 var(--space-header-greeting-gap) 0 0;
+  overflow: hidden;
+  color: var(--color-default-black);
+  font: var(--font-bold-24-28);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  color: var(--color-gray-03);
+}
+
+.date {
+  margin-left: var(--space-header-date-gap);
+  color: var(--color-gray-03);
+  font: var(--font-regular-14-20);
+}
+
+/* The bell and the search field sit at the right. */
+.bell {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  margin-right: var(--space-header-actions-gap);
+  margin-left: auto;
+  color: var(--color-gray-01);
+}

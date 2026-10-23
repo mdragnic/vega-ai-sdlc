@@ -95,6 +95,16 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-nav-icon-gap` | `12px` | measured: PNG 104, icon box right edge (x 137) to the label (x 160), 23 px, halved 11.5, rounded |
 | `--space-popup-padding-x` | `64px` | measured: PNG 104.1, popup left edge (x 1208) to the input (x 1336), 128 px, halved |
 | `--space-popup-padding-bottom` | `48px` | measured: PNG 104.1, Save button bottom (y 1240) to the popup bottom (y 1336), 96 px, halved |
+| `--space-sidebar-logo-gap` | `48px` | measured: PNG 104 and 105, sidebar logo glyph bottom (y 144) to the Overview item top (y 240), 96 px, halved. Added in task 003 |
+| `--space-sidebar-logout-gap` | `44px` | measured: PNG 104 and 105, Logout bottom (y 1656) to the sidebar divider (y 1744), 88 px, halved. Added in task 003 |
+| `--space-sidebar-bottom` | `48px` | measured: PNG 104 and 105, profile block bottom (y 1952: the divider at y 1744 plus the 208 px block) to the frame bottom (y 2048), 96 px, halved. Added in task 003 |
+| `--space-logout-icon-gap` | `16px` | measured: PNG 104 and 105, Logout icon box right edge (x 128; the 34 px glyph at x 91 to 124 in a 40 px box) to the label (x 160, glyph at 162), 32 px, halved. Added in task 003 |
+| `--space-profile-gap` | `16px` | measured: PNG 104 and 105, avatar right edge (x 120) to the name and "View profile" (x 152, glyphs at 153), 32 px, halved. Added in task 003 |
+| `--space-header-greeting-gap` | `24px` | measured: PNG 104, end of the "Hello Tanzir" text box (x 888, glyphs to 884) to the "»" icon box (x 936; the 28 px glyph at x 946 to 973), 48 px, halved. Added in task 003 |
+| `--space-header-date-gap` | `4px` | measured: PNG 104 and 105, "»" icon box right edge (x 984; 656 in 105) to the date text box (x 992; 664 in 105, glyphs 2 px later), 8 px, halved. Added in task 003 |
+| `--space-header-actions-gap` | `40px` | measured: PNG 104 and 105, bell icon box right edge (x 2032; glyph x 1988 to 2030) to the search field (x 2112), 80 px, halved. Added in task 003 |
+| `--space-search-padding-left` | `32px` | measured: PNG 104 and 105, search field left edge (x 2112) to the placeholder text box (x 2176, glyph at 2178), 64 px, halved. Added in task 003 |
+| `--space-search-padding-right` | `24px` | measured: PNG 104 and 105, search icon box right edge (x 2770; the 40 px glyph at x 2724 to 2763) to the field right edge (x 2816), 46 px, halved 23, rounded. Added in task 003 |
 
 ## Size
 
@@ -123,6 +133,10 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-date-box-width` | `44px` | measured: PNG 104, Upcoming Bill date box x 2160 to 2247, 88 px, halved |
 | `--size-date-box-height` | `64px` | measured: PNG 104, Upcoming Bill date box y 352 to 483, 132 px, halved 66, rounded down (66 is between 64 and 68) |
 | `--size-amount-box-height` | `40px` | measured: PNG 104, Upcoming Bill amount box y 378 to 457, 80 px, halved |
+| `--size-sidebar-logo-width` | `164px` | measured: PNG 104 and 105, sidebar logo glyphs x 117 to 443, 327 px, halved 163.5, rounded. The height follows the SVG viewBox (163x18). Added in task 003 |
+| `--size-sidebar-brand-height` | `72px` | measured: PNG 104 and 105, frame top (y 0) to the sidebar logo glyph bottom (y 144), 144 px, halved. The logo sits at the bottom of this block. Added in task 003 |
+| `--size-profile-height` | `104px` | Figma `Profile` 224x104 (`components.md`). Checked: PNG 104 and 105, divider (y 1744) to the avatar center (y 1848), 104 px, half the block at 2x; export `docs/figma/components/66-1754.png` shows the divider at the top of the component. Added in task 003 |
+| `--size-profile-menu-icon-width` | `4px` | measured: PNG 104 and 105 and export `66-1754.png`, three-dot glyph x 496 to 503 (640 to 647 in the export), 8 px, halved. Its right edge is the block right edge. Added in task 003 |
 
 ## Radius
 
@@ -140,6 +154,7 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-amount-box` | `8px` | measured: PNG 104 Upcoming Bill amount box, corner radius 16 px, halved |
 | `--radius-account-card` | `4px` | measured: PNG 104 teal account card in Total Balance, corner radius 8 px, halved |
 | `--radius-checkbox` | `2px` | measured: PNG 101 "Keep me signed in" checkbox and export `docs/figma/components/418-6433.png` Remind me, corner radius 4 px, halved. Kept at 2px, an exception to the 4px grid like border widths (decision #86). Added in task 002 |
+| `--radius-avatar` | `50%` | measured: PNG 104 and 105, the sidebar profile photo is a circle. Added in task 003 |
 
 ## Border
 

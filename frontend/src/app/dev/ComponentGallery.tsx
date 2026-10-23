@@ -2,17 +2,28 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 import { googleUrl } from '../../assets/brand';
 import {
+  AppLayout,
   AuthLayout,
+  Avatar,
   ButtonPrimary,
   ButtonSecondary,
   FieldError,
   FormError,
+  Header,
+  HeaderSearch,
   Input,
+  Logout,
+  NavBar,
+  NavMenu,
+  Profile,
   RemindMe,
   Spinner,
   TextDivider,
 } from '../../components';
+import { navSections } from '../../components/NavMenu/NavMenu';
 import styles from './ComponentGallery.module.css';
+// A local photo for the photo examples: the profile photo cropped from docs/figma/104. Overview.png.
+import sampleAvatarUrl from './sample-avatar.png';
 
 function Section({ name, wide = false, children }: { name: string; wide?: boolean; children: ReactNode }) {
   const headingId = useId();
@@ -52,6 +63,26 @@ function ShowPasswordExample() {
     <div ref={wrapper}>
       <Input label="Password" type="password" defaultValue="152@@##PAss" />
     </div>
+  );
+}
+
+// Logging out is task 011; here the button does nothing.
+const noLogout = () => undefined;
+
+/** The sidebar parts are drawn for the dark sidebar, so they are shown on it. */
+function SidebarPanel({ children }: { children: ReactNode }) {
+  return <div className={styles.sidebarPanel}>{children}</div>;
+}
+
+/** Screen content taller than the viewport, so the frame scrolls. */
+function TallContent() {
+  return (
+    <>
+      <div className={styles.tallBlock}>
+        Screen content (tasks 013 onward). Taller than the viewport, so the page scrolls.
+      </div>
+      <div className={styles.tallBlock}>More screen content.</div>
+    </>
   );
 }
 
@@ -156,6 +187,119 @@ export function ComponentGallery() {
           <AuthLayout className={styles.authOffset}>
             <p className={styles.note}>The screen content goes here.</p>
           </AuthLayout>
+        </Example>
+      </Section>
+
+      <Section name="NavMenu">
+        <Example name="Active">
+          <SidebarPanel>
+            {navSections.map((section) => (
+              <NavMenu key={section} section={section} active />
+            ))}
+          </SidebarPanel>
+        </Example>
+        <Example name="Inactive">
+          <SidebarPanel>
+            {navSections.map((section) => (
+              <NavMenu key={section} section={section} />
+            ))}
+          </SidebarPanel>
+        </Example>
+        <Example name="Hover">
+          <p className={styles.note}>Point at an item: Inactive items show Hover, as in the Figma component set.</p>
+          <SidebarPanel>
+            {navSections.map((section) => (
+              <NavMenu key={section} section={section} />
+            ))}
+          </SidebarPanel>
+        </Example>
+      </Section>
+
+      <Section name="Logout">
+        <Example name="Default">
+          <SidebarPanel>
+            <Logout onLogout={noLogout} />
+          </SidebarPanel>
+        </Example>
+      </Section>
+
+      <Section name="Avatar">
+        <Example name="Photo">
+          <SidebarPanel>
+            <Avatar fullName="Tanzir Rahman" photoUrl={sampleAvatarUrl} />
+          </SidebarPanel>
+        </Example>
+        <Example name="Initials, two words">
+          <SidebarPanel>
+            <Avatar fullName="Tanzir Rahman" />
+          </SidebarPanel>
+        </Example>
+        <Example name="Initials, one word">
+          <SidebarPanel>
+            <Avatar fullName="Marko" />
+          </SidebarPanel>
+        </Example>
+      </Section>
+
+      <Section name="Profile">
+        <Example name="With photo">
+          <SidebarPanel>
+            <Profile fullName="Tanzir Rahman" photoUrl={sampleAvatarUrl} />
+          </SidebarPanel>
+        </Example>
+        <Example name="Initials, two words">
+          <SidebarPanel>
+            <Profile fullName="Tanzir Rahman" />
+          </SidebarPanel>
+        </Example>
+        <Example name="Initials, one word">
+          <SidebarPanel>
+            <Profile fullName="Marko" />
+          </SidebarPanel>
+        </Example>
+      </Section>
+
+      <Section name="NavBar">
+        <Example name="Overview active">
+          <NavBar activeSection="overview" fullName="Tanzir Rahman" onLogout={noLogout} />
+        </Example>
+      </Section>
+
+      <Section name="HeaderSearch">
+        <Example name="Empty">
+          <HeaderSearch />
+        </Example>
+      </Section>
+
+      <Section name="Header" wide>
+        <Example name="With greeting">
+          <div className={styles.headerFrame}>
+            <Header greetingName="Tanzir" today="2023-05-19" />
+          </div>
+        </Example>
+        <Example name="Without greeting">
+          <div className={styles.headerFrame}>
+            <Header today="2023-05-19" />
+          </div>
+        </Example>
+      </Section>
+
+      <Section name="AppLayout" wide>
+        <Example name="Like 104: Overview active, with greeting">
+          <AppLayout
+            navBar={<NavBar activeSection="overview" fullName="Tanzir Rahman" onLogout={noLogout} />}
+            header={<Header greetingName="Tanzir" today="2023-05-19" />}
+          >
+            <TallContent />
+          </AppLayout>
+        </Example>
+        <Example name="Like 105: Balances active, no greeting">
+          <AppLayout
+            navBar={<NavBar activeSection="balances" fullName="Tanzir Rahman" onLogout={noLogout} />}
+            header={<Header today="2023-05-19" />}
+          >
+            <TallContent />
+          </AppLayout>
         </Example>
       </Section>
     </div>

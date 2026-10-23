@@ -1,0 +1,20 @@
+.avatar {
+  display: block;
+  flex-shrink: 0;
+  width: var(--size-avatar);
+  height: var(--size-avatar);
+  border-radius: var(--radius-avatar);
+  object-fit: cover;
+}
+
+/* Not designed (#38): a Gray/01 circle, about the weight of the gray photo in 104, with white letters. */
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-gray-01);
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-20);
+}

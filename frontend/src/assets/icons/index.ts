@@ -8,10 +8,14 @@ export { default as Award } from './Award.svg?react';
 export { default as BackArrow } from './BackArrow.svg?react';
 export { default as Bill } from './Bill.svg?react';
 export { default as ChevronRight } from './ChevronRight.svg?react';
+// Lucide `chevrons-right` and `ellipsis-vertical`, copied as files: the header's "»" and the profile's three dots
+// are not in the Figma export (#66). License notices in LICENSE-lucide.txt (both derived from Feather).
+export { default as ChevronsRight } from './ChevronsRight.svg?react';
 export { default as Clock } from './Clock.svg?react';
 export { default as DownArrow16 } from './DownArrow16.svg?react';
 export { default as DownArrow24 } from './DownArrow24.svg?react';
 export { default as Edit } from './Edit.svg?react';
+export { default as EllipsisVertical } from './EllipsisVertical.svg?react';
 export { default as Expenses } from './Expenses.svg?react';
 export { default as Food } from './Food.svg?react';
 export { default as Gamepad2 } from './Gamepad2.svg?react';

@@ -1,0 +1,28 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-gray-06);
+}
+
+/* Sticky at the top with the viewport's height: the sidebar stays in place while the page scrolls (#5).
+   Sticky rather than fixed keeps it in the flow, so the main column needs no offset. On a window shorter
+   than the sidebar, the sidebar scrolls on its own, so Logout and the profile block stay reachable. */
+.sidebar {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* min-width: 0 lets the column shrink to the space left, so nothing scrolls sideways. */
+.column {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* The content inset shared by the app screens (tokens.md: page top, left and right). */
+.content {
+  padding: var(--space-page-top) var(--space-page-right) 0 var(--space-page-left);
+}

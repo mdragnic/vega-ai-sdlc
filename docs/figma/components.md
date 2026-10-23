@@ -148,7 +148,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002.
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`.
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -158,6 +158,10 @@ Code components with no Figma component. They are built from tokens, and their n
 | `AuthLayout` | The Login, Sign up and Forgot Password frame: light gray page, centered 400px column, teal logo at the top | #66, #70 |
 | `TextDivider` | Centered gray text with a line on each side ("or sign in with", "or sign up with") | US-01, US-02 |
 | `IconCheck` | Icon: the white check mark in `RemindMe`. Not in the Figma export, so the Lucide `check` SVG is copied as a file. License notices (Lucide ISC; `check` is derived from Feather, MIT) in `frontend/src/assets/icons/LICENSE-lucide.txt` | #66 |
+| `Avatar` | The user's photo in a 32px circle, or without a photo a circle with the initials (`initials()` from task 001). The initials circle is not designed: Gray/01 with white Semibold 14/20 letters, chosen in task 003 | #38, #62 |
+| `AppLayout` | The frame of every app screen: `NavBar` on the left, sticky so it stays in place while the page scrolls, and a main column with `Header` and then the content, which scroll together | #5, #83 |
+| `ChevronsRight` | Icon: the "»" before the header date. Not in the Figma export, so the Lucide `chevrons-right` SVG is copied as a file (derived from Feather, MIT; notices in `LICENSE-lucide.txt`) | #10, #66 |
+| `EllipsisVertical` | Icon: the three dots in `Profile`. Not in the Figma export, so the Lucide `ellipsis-vertical` SVG is copied as a file (Feather `more-vertical`, MIT; notices in `LICENSE-lucide.txt`) | #9, #66 |
 
 ## Totals
 

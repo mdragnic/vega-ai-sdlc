@@ -1,0 +1,45 @@
+.navBar {
+  display: flex;
+  flex-direction: column;
+  width: var(--size-sidebar-width);
+  min-height: 100vh;
+  padding: 0 var(--space-sidebar-x) var(--space-sidebar-bottom);
+  background-color: var(--color-default-black);
+}
+
+/* The logo sits at the bottom of this block, so its top lands at 54 in 104 without an off-grid value. */
+.brand {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: center;
+  height: var(--size-sidebar-brand-height);
+}
+
+.logo {
+  display: block;
+  width: var(--size-sidebar-logo-width);
+  height: auto;
+  color: var(--color-white);
+}
+
+.nav {
+  margin-top: var(--space-sidebar-logo-gap);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-nav-item-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Logout and the profile block stay at the bottom of the viewport. */
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sidebar-logout-gap);
+  margin-top: auto;
+}

@@ -1,0 +1,48 @@
+.search {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: var(--size-search-width);
+  height: var(--size-search-height);
+  padding: 0 var(--space-search-padding-right) 0 var(--space-search-padding-left);
+  border-radius: var(--radius-search);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-search);
+}
+
+/* Keyboard focus (#87), drawn on the whole field. */
+.search:has(.input:focus-visible) {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* Typed text is not designed: Default Black, the header's text color, apart from the Gray/03 placeholder. */
+.input {
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-default-black);
+  font: var(--font-regular-16-24);
+  outline: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--color-gray-03);
+  opacity: 1;
+}
+
+/* No clear button: it is not in the design. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  color: var(--color-secondary);
+}

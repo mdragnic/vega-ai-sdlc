@@ -19,6 +19,10 @@ const codeNames = [
   'BackArrow',
   'Bill',
   'ChevronRight',
+  // Not in the Figma export: the Lucide `chevrons-right` and `ellipsis-vertical` (see LICENSE-lucide.txt),
+  // for the header's "»" and the profile's three dots (task 003, #66).
+  'ChevronsRight',
+  'EllipsisVertical',
   'Clock',
   'DownArrow24',
   'DownArrow16',

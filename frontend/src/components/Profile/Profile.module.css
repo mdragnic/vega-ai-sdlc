@@ -1,0 +1,57 @@
+/* The content is centered on the whole 104px block; the divider lies over its top edge, as in the export. */
+.profile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-profile-gap);
+  width: var(--size-nav-item-width);
+  height: var(--size-profile-height);
+}
+
+.divider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--border-width-divider);
+  margin: 0;
+  border: none;
+  background-color: var(--color-white-8);
+}
+
+.text {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--color-white);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link {
+  align-self: flex-start;
+  color: var(--color-white-70);
+  font: var(--font-regular-12-16);
+  text-decoration: none;
+}
+
+/* Keyboard focus (#87). */
+.link:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.dots {
+  flex-shrink: 0;
+  width: var(--size-profile-menu-icon-width);
+  height: var(--size-icon);
+  color: var(--color-white);
+}
