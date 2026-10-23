@@ -4,13 +4,14 @@
 - Gate: auto | human
 - Depends on: {{000}}
 - Size: S | M | L
+- Skills: {{from the list in /plan-tasks step 4}}
 
 ## Goal
 {{One sentence. What exists after this task that did not exist before.}}
 
 ## References
-- Spec: `docs/spec/{{file}}` sections {{x.y}} or stories US-{{NN}}
-- Figma: {{frame name}} desktop node `{{node-id}}`, mobile node `{{node-id}}`
+- Spec: `docs/spec/{{file}}` stories US-{{NN}}
+- Figma: {{frame name}} node `{{node-id}}`, PNG `docs/figma/{{file}}.png`
 - Decisions: `docs/decisions.md` #{{n}}
 
 ## Scope
@@ -34,14 +35,14 @@ Numbered and testable. Tests reference these numbers.
 1. Lint + typecheck pass.
 2. Unit tests pass.
 3. E2E tests pass.
-4. Visual: Figma MCP screenshot of each node vs Playwright MCP screenshot at the same viewport. List every difference.
+4. Visual: Playwright MCP screenshot at 1440x1024 vs the PNG in `docs/figma/`. List every difference.
 5. Manual browser checks with Playwright MCP: {{interactions to click through}}.
 
 ## Human checkpoint (only if Gate: human)
 - {{What exactly the human confirms}}
 
 ## Log
-<!-- Claude appends: date, what was done, decisions, issues, validation results -->
+<!-- Claude appends: date, what was done, decisions, issues, validation results, review findings -->
 
 ## Metrics
 - Started:
