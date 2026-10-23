@@ -21,7 +21,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 011 | App shell slice: signed-in user, date, greeting, navigation, logout, unknown URLs | US-04, #3 #9 #10 #38 #39 #47 #54 | human | 003, 009 | todo |
 | 012 | Google sign-in (needs the Google OAuth client, #75) | US-01 (13, 16), US-02 (9, 15), #2 #63 #75 #81 | human | 010, 011 | todo |
 | 013 | Overview: page grid and Total Balance | US-05, #17 #25 #57 | human | 004, 008, 011 | todo |
-| 014 | Overview: Goals card and edit goal popup | US-06, #18 #31 #58 #64 #69 #71 | human | 005, 006, 013 | todo |
+| 014 | Overview: Goals card and edit goal popup | US-06, #18 #31 #58 #64 #69 #71 #85; goal request schemas must reject negative amounts (moneySchema allows negatives) | human | 005, 006, 013 | todo |
 | 015 | Overview: Upcoming Bill | US-07, #28 #48 | human | 004, 013 | todo |
 | 016 | Overview: Recent Transaction | US-08, #19 #40 #49 #56 | human | 004, 013 | todo |
 | 017 | Overview: Statistics (y-axis ticks in the backend) | US-09, #20 #55 | human | 006, 013 | todo |
