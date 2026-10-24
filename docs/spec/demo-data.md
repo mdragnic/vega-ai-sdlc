@@ -187,7 +187,7 @@ Calculated from the rules above for 22 Oct 2026, with dates read in UTC. These v
 - Goals card: Oct, 2026, target $20,000.00, present $16,250.00, gauge center `$16.2k`.
 - Upcoming Bill: Figma - Yearly Plan due 15 May 2027 ($150.00) and Adobe Inc - Yearly Plan due 16 Jun 2027 ($559.00), the same days as Figma. The Bills page lists 4 bills (2027 and 2028 for each biller).
 - Recent Transaction (All): Jeans -$266.00 (22 Oct), Movie ticket -$17.64, Pizza -$24.64, Taxi fare -$10.64, Restaurant bill -$147.84.
-- Statistics: bars for Mon 19 to Thu 22 Oct, no teal bars for Fri to Sun. The highest bar is last Thursday's $322.00, so the y-axis is $0, $125, $250, $375, $500 (decisions #55).
+- Statistics: bars for Mon 19 to Thu 22 Oct, no teal bars for Fri to Sun. The highest bar is last Thursday's $322.00, so the y-axis is $0, $100, $200, $300, $400 (decisions #55, #91).
 - Expenses Breakdown (1 to 22 Oct vs all of Sep): Housing $252.00 down 17%, Food $510.04 up 7%, Transportation $53.20 down 32%, Entertainment $282.24 up 16%, Shopping $658.00 up 14%, Others $138.32 down 31%.
 - Saving Summary, Oct 2026: daily values from -$283.36 to +$552.16. Most days are small negative values, with spikes on income days, so the y-axis extends below $0 (decisions #59).
 

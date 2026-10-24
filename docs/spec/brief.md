@@ -155,7 +155,7 @@ Popups close with X, Esc or a click on the dimmed backdrop, and unsaved changes 
 ### Charts
 - Applies to Statistics (decisions #20), the Expenses chart (decisions #29) and Saving Summary (decisions #42) (decisions #55):
   - Days or months after today show no bar or point. Their axis labels stay, and earlier periods are drawn in full.
-  - Y-axis: 5 labels, $0 and 4 equal steps. The top is the smallest "nice" value (1, 2, 2.5 or 5 times a power of 10) at or above the highest value. Compact format (decisions #11).
+  - Y-axis: 5 labels, $0 and 4 equal steps. The top is the smallest "nice" value (1, 2, 2.5, 4, 5, 6 or 8 times a power of 10) at or above the highest value, with whole-cent steps and 5 exact compact labels (decisions #91). Compact format (decisions #11).
   - Exception: Saving Summary extends below $0 when a day is negative (decisions #59). The same step size as above $0 continues downward, so there can be more than 5 labels (e.g. -$500, $0, $500) (decisions #68). When no day is above $0 but not all are $0, the top label is $0 and the steps go downward, sized from the lowest value with the "nice" value rule above (decisions #72).
   - If all values in the period are 0, the chart shows the empty state (decisions #6).
   - Month labels are always 3 letters (Jan ... Jul ... Dec).
