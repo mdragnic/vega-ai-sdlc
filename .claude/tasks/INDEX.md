@@ -3,7 +3,7 @@
 Status values: todo | in-progress | awaiting-human | done | blocked
 `/next-task` picks the first task that is `todo` and whose dependencies are all `done`.
 
-Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 005; the rest are outline rows, detailed by `/next-task` when picked.
+Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 006; the rest are outline rows, detailed by `/next-task` when picked.
 
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
@@ -13,7 +13,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 003 | Shared components: app shell (sidebar, header, layout) | US-04 (visuals), #5 #38 #83 | human | 001, 002 | done |
 | 004 | Shared components: section cards, tabs, data states, category icons, date and amount boxes | #6 #19 #56 #87 #88 (104 to 112); per-widget error boundary in the #6 error state | human | 001, 002 | done |
 | 005 | Shared components: Popup, amount input, Dropdown | #31 #35 #60 #64 #69 #71 #84 #87 #90 (104.1, 110.1, 110.2; 106, 110, 111) | human | 001, 002, 003, 004 | done |
-| 006 | Shared components: comparison bar chart and target vs achievement gauge | #11 #20 #29 #55 (104, 109, 110) | human | 001, 004 | todo |
+| 006 | Shared components: comparison bar chart and target vs achievement gauge | #6 #11 #18 #20 #29 #31 #55 #82 #87 #89 #91 (104, 109, 110) | human | 001, 004 | todo |
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #14 #15 #46 #62 #63 #67 #75 | human | 000 | todo |
 | 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #24 #53 #56 #57 #77 #78, `demo-data.md` | human | 007 | todo |
 | 009 | Login screen and route protection | US-01 (1 to 12, 14, 15), US-04 (12), #3 #14 #39; links get the #87 teal :focus-visible ring; ButtonPrimary loading keeps keyboard focus on the button (task 005 review: focus moved to the page body while saving) | human | 002, 007 | todo |
@@ -24,14 +24,14 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 014 | Overview: Goals card and edit goal popup | US-06, #18 #31 #58 #64 #69 #71 #85; goal request schemas must reject negative amounts (moneySchema allows negatives) | human | 005, 006, 013 | todo |
 | 015 | Overview: Upcoming Bill | US-07, #28 #48 | human | 004, 013 | todo |
 | 016 | Overview: Recent Transaction | US-08, #19 #40 #49 #56 | human | 004, 013 | todo |
-| 017 | Overview: Statistics (y-axis ticks in the backend) | US-09, #20 #55 | human | 006, 013 | todo |
+| 017 | Overview: Statistics (y-axis ticks in the backend) | US-09, #20 #55 #91 (empty message) | human | 006, 013 | todo |
 | 018 | Overview: Expenses Breakdown | US-10, #21 #61 | human | 004, 013 | todo |
 | 019 | Balances: account list | US-11, #22 #23 #24 #50 | human | 013 | todo |
 | 020 | Transactions: list, tabs and Load More | US-13, #19 #27 #57 | human | 016 | todo |
 | 021 | Account Details: details and transaction history | US-12 (1 to 3, 10 to 17), #27 #39 #47 | human | 019, 020 | todo |
 | 022 | Account Details: edit details | US-12 (4 to 9, 18), #26 #60; Dropdown id prop for a visible label (task 005 review) | human | 005, 021 | todo |
 | 023 | Bills: upcoming bills table | US-14, #28 #41 | human | 015 | todo |
-| 024 | Expenses: monthly comparison chart and category cards | US-15, #29 #55 #61 | human | 017, 018 | todo |
+| 024 | Expenses: monthly comparison chart and category cards | US-15, #29 #55 #61 #91 (empty message) | human | 017, 018 | todo |
 | 025 | Goals: Savings Goal card, month selector and Adjust Goal popup | US-16 (1, 2, 4 to 6, 9, 11), US-17 (110.1), #30 #58 #60 | human | 014 | todo |
 | 026 | Goals: Saving Summary chart | US-16 (3, 6, 12, 13), #42 #59 #68 #72 | human | 017, 025 | todo |
 | 027 | Goals: Expenses Goals by Category and Adjust popup | US-16 (7, 8, 10), US-17 (110.2), #32 | human | 025 | todo |
