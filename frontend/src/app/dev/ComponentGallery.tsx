@@ -1,6 +1,14 @@
-import { expenseCategorySchema, type ExpenseCategory, type Money } from '@finebank/shared';
+import {
+  expenseCategorySchema,
+  formatAmountInput,
+  formatMonthLabel,
+  parseAmountInput,
+  type ExpenseCategory,
+  type Money,
+} from '@finebank/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 
 import { googleUrl } from '../../assets/brand';
 import {
@@ -15,6 +23,8 @@ import {
   CategoryIcon,
   DataState,
   DateBox,
+  Dropdown,
+  type DropdownOption,
   FieldError,
   FormError,
   Header,
@@ -24,6 +34,7 @@ import {
   MenuTab,
   NavBar,
   NavMenu,
+  PopupInputSmall,
   Profile,
   RemindMe,
   Section,
@@ -332,6 +343,55 @@ function ErrorBoundaryDemo() {
       </div>
     </>
   );
+}
+
+/** The amount field that shows what `parseAmountInput` reads from its text (#84). */
+function InteractiveAmount() {
+  const [text, setText] = useState('');
+  const cents = parseAmountInput(text);
+  return (
+    <div className={styles.demoStack}>
+      <PopupInputSmall label="Target Amounts" value={text} onChange={(event) => setText(event.target.value)} />
+      <p className={styles.panelText}>Cents: {cents ?? 'empty'}</p>
+    </div>
+  );
+}
+
+// The month list of the Goals selectors (#60): newest first, `formatMonthLabel` labels. A fixed sample from
+// Oct 2026; the screens list from the current month back to the user's earliest data (tasks 025, 026).
+function monthOptions(count: number): DropdownOption[] {
+  return Array.from({ length: count }, (_, index) => {
+    const monthIndex = 2026 * 12 + 9 - index;
+    const year = Math.floor(monthIndex / 12);
+    const month = (monthIndex % 12) + 1;
+    return { value: `${year}-${String(month).padStart(2, '0')}`, label: formatMonthLabel(year, month) };
+  });
+}
+
+// The Account Type values of #26 and sample country codes (#43); the full code list is task 028's.
+const accountTypes: DropdownOption[] = [
+  { value: 'credit-card', label: 'Credit Card' },
+  { value: 'checking', label: 'Checking' },
+  { value: 'savings', label: 'Savings' },
+  { value: 'investment', label: 'Investment' },
+  { value: 'loan', label: 'Loan' },
+];
+const countryCodes: DropdownOption[] = ['+1', '+44', '+880'].map((code) => ({ value: code, label: code }));
+
+/** A Dropdown that keeps its own selection, so every example can be tried. */
+function DropdownExample({
+  variant,
+  options,
+  initial,
+  label,
+}: {
+  variant: 'box' | 'plain' | 'inline' | 'input';
+  options: DropdownOption[];
+  initial: string;
+  label: string;
+}) {
+  const [value, setValue] = useState(initial);
+  return <Dropdown variant={variant} options={options} value={value} onValueChange={setValue} aria-label={label} />;
 }
 
 /**
@@ -735,6 +795,95 @@ export function ComponentGallery() {
           <div className={styles.sampleWide}>
             <ErrorBoundaryDemo />
           </div>
+        </Example>
+      </GallerySection>
+      <GallerySection name="Popup">
+        <Example name="Over the app shell">
+          <p className={styles.panelText}>
+            The popup dims the content area of the real app shell, so it has its own page.{' '}
+            <Link className={styles.devLink} to="/dev/popup">
+              Open /dev/popup
+            </Link>
+          </p>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="GoalPopupInput">
+        <Example name="104.1, 110.1 and 110.2">
+          <p className={styles.panelText}>
+            The two-field and the one-field popup, with Save, saving and the server error.{' '}
+            <Link className={styles.devLink} to="/dev/popup">
+              Open /dev/popup
+            </Link>
+          </p>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="PopupInputSmall" wide>
+        <Example name="Prefilled 500000">
+          <div className={styles.popupSurface}>
+            <PopupInputSmall label="Target Amounts" defaultValue={formatAmountInput(50000000)} />
+          </div>
+        </Example>
+        <Example name="Prefilled 1250.50">
+          <div className={styles.popupSurface}>
+            <PopupInputSmall label="Target Amounts" defaultValue={formatAmountInput(125050)} />
+          </div>
+        </Example>
+        <Example name="Empty, no placeholder (Target)">
+          <div className={styles.popupSurface}>
+            <PopupInputSmall label="Target Amounts" />
+          </div>
+        </Example>
+        <Example name="Empty, with the placeholder (Present)">
+          <div className={styles.popupSurface}>
+            <PopupInputSmall label="Present Amounts" placeholder="Write present amount here" />
+          </div>
+        </Example>
+        <Example name="With an error">
+          <div className={styles.popupSurface}>
+            <PopupInputSmall label="Target Amounts" error="Enter a target amount" />
+          </div>
+        </Example>
+        <Example name="Interactive: the cents read from the text">
+          <div className={styles.popupSurface}>
+            <InteractiveAmount />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="Dropdown">
+        <Example name="box, like 110 Savings Goal">
+          <Card>
+            <DropdownExample variant="box" options={monthOptions(12)} initial="2026-03" label="Savings Goal month" />
+          </Card>
+        </Example>
+        <Example name="plain, like 110 Saving Summary">
+          <Card>
+            <DropdownExample
+              variant="plain"
+              options={monthOptions(12)}
+              initial="2026-03"
+              label="Saving Summary month"
+            />
+          </Card>
+        </Example>
+        <Example name="inline, like 111 country code">
+          <Card>
+            <div className={styles.inlineField}>
+              <DropdownExample variant="inline" options={countryCodes} initial="+880" label="Country code" />
+            </div>
+          </Card>
+        </Example>
+        <Example name="input, Account Type (#26, not designed)">
+          <Card>
+            <DropdownExample variant="input" options={accountTypes} initial="checking" label="Account Type" />
+          </Card>
+        </Example>
+        <Example name="60 months">
+          <Card>
+            <DropdownExample variant="box" options={monthOptions(60)} initial="2026-10" label="Month" />
+          </Card>
         </Example>
       </GallerySection>
     </div>

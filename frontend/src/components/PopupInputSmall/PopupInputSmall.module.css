@@ -1,0 +1,62 @@
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* "Target Amounts" in 104.1, 110.1 and 110.2. Semibold measured: rendered at 500, 600 and 700, Semibold matches the
+   104.1 label ink ("Target Amounts" 122.5 px wide against 120.5, 123 and 124.5). */
+.label {
+  margin-bottom: var(--space-form-label-gap);
+  color: var(--color-secondary);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+/* The 24px inset of 104.1 is measured from the outer edge, so the padding leaves room for the border.
+   The value and the placeholder are both Gray/02 in 104.1. */
+.control {
+  display: flex;
+  align-items: center;
+  height: var(--size-popup-input-height);
+  padding: 0 calc(var(--space-popup-input-padding-x) - var(--border-width-input));
+  border: var(--border-width-input) solid var(--color-special-bg);
+  border-radius: var(--radius-input);
+  background-color: var(--color-white);
+  color: var(--color-gray-02);
+  font: var(--font-regular-16-24);
+  cursor: text;
+}
+
+/* Not designed: the darker border while the field has focus, like Input Active=Yes (#63). */
+.control:has(.input:focus) {
+  border-color: var(--color-secondary);
+}
+
+/* While an error shows, the border is red, also with focus (#87). */
+.control.invalid,
+.control.invalid:has(.input:focus) {
+  border-color: var(--color-special-red);
+}
+
+/* An empty field with a placeholder shows the placeholder alone, where the `$` would start (#90 b). */
+.control:has(.input:placeholder-shown) .prefix {
+  display: none;
+}
+
+.input {
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-gray-02);
+  opacity: 1;
+}

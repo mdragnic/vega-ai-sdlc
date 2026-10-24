@@ -1,0 +1,28 @@
+/* Development-only page: built from the app tokens, no design of its own. */
+.row {
+  display: flex;
+  gap: var(--space-card-gap);
+  margin-bottom: var(--space-card-row-gap);
+}
+
+.row > * {
+  flex: 1;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-form-small-gap);
+}
+
+/* Taller than the window, so the page scrolls behind the popup. */
+.tallCard {
+  height: 100vh;
+}
+
+.text {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+}

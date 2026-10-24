@@ -1,6 +1,6 @@
 # Task 005: Shared components: Popup, amount input, Dropdown
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 001, 002, 003, 004
 - Size: L
@@ -84,7 +84,7 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 1. Given a `Popup` that opens, then a modal `dialog` named by its `title` shows (the title is visually hidden), and focus moves to the first field. The X button "Close" comes after the content in the tab order.
 2. Given `GoalPopupInput` with two fields at 1440x1024, then the panel is white, 488x392, radius 16, with no shadow, its top edge at y 276 and centered horizontally on the content area right of the sidebar (x 616–1104 at 1440 wide, #90 c). The X (`X32`, Secondary) is about 24 from the top and right; the fields are 24 apart and Save is 192x48, centered, 32 below the last field, as in 104.1 and 110.1. With one field it is 488x280, as in 110.2.
 3. Given a popup is open with the page at the top, then the area right of the sidebar and below the header is dimmed with Default Black at 15%, and the sidebar and header are not (104.1). Given the page was scrolled so the header is off screen, then everything right of the sidebar is dimmed. The page behind does not move when the popup opens or closes.
-4. Given a popup is open, when I click a sidebar link, the header or the content behind, then nothing happens: the URL stays, nothing behind reacts, and the popup stays open. The wheel does not scroll the page. Tab and Shift+Tab cycle inside the popup. Everything outside it is hidden from assistive technology (#35).
+4. Given a popup is open, when I click the sidebar (a link) or the header, then nothing happens: the URL stays, nothing behind reacts, and the popup stays open. A click on the dimmed area closes it (#35, AC5). The wheel does not scroll the page. Tab and Shift+Tab cycle inside the popup. Everything outside it is hidden from assistive technology (#35).
 5. Given a popup is open, when I click X, press Esc or click the dimmed area, then it closes, `onOpenChange(false)` is called once, and focus returns to the element that opened it. A click inside the panel does not close it. When I change a field, close and reopen, the field shows its initial value (#35).
 6. Given `PopupInputSmall` prefilled with `formatAmountInput(50000000)` and with `formatAmountInput(125050)`, then it shows `$500000` and `$1250.50`: the `$` directly before the number, no space, no separators, in the measured label and field styles (#64).
 7. Given an empty `PopupInputSmall` without a placeholder, then it shows the `$` alone (#69). Given one with the placeholder "Write present amount here", then it shows only the placeholder, with no `$`, as drawn; when I type `5`, it shows `$5` (#71, #90 b).
@@ -107,7 +107,7 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 | T1 | unit | Open a `Popup` with two fields from a button | `dialog` with `aria-modal`, named by the title; the first field has focus; Tab order field, field, X | 1 |
 | T2 | e2e | `/dev/popup`, open both popups at 1440x1024, then at 1600x1024 | Panel box, background, radius, no shadow; X box and color; field and Save boxes; heights 392 and 280; top edge y 276; left edge x 616 at 1440 (content area 280–1440), x 696 at 1600 (content area 280–1600) (#90 c) | 2 |
 | T3 | e2e | Open at scroll 0; scroll down past the header, open; record a card's box before and after opening | Overlay box x 280–1440, y 88–1024, color Default Black 15%; sidebar and header pixels unchanged. Scrolled: overlay from y 0. The card does not move | 3 |
-| T4 | e2e | With the popup open: click the "Balances" nav link, the header search and a card behind; wheel; Tab ×6 and Shift+Tab ×6 | URL unchanged, popup open, scroll position unchanged; focus stays inside; the nav and main are `aria-hidden` or inert | 4 |
+| T4 | e2e | With the popup open: click the "Balances" nav link in the sidebar and the header search; wheel; Tab ×6 and Shift+Tab ×6 | URL unchanged, popup open, scroll position unchanged; focus stays inside; the nav and main are `aria-hidden` or inert | 4 |
 | T5 | unit | Close by X, by Esc and by a click on the overlay; a click on the panel; type, close, reopen | `onOpenChange(false)` once each; focus back on the opener; no close for the panel click; the initial value is back | 5 |
 | T6 | unit | `PopupInputSmall` prefilled `500000`, `1250.50`; empty without and with the placeholder | `$` then `500000`, `$` then `1250.50`; the `$` alone; the placeholder alone with no `$`, and `$5` after typing `5` (#90 b) | 6, 7 |
 | T7 | e2e | Gallery fields: label, field, `$`, value and placeholder styles | Sizes, border, radius, inset, colors and type equal the measured tokens | 6, 7 |
@@ -195,9 +195,140 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 - Scope, AC2, T2 (x 696 at 1600 wide, content area 280–1600), validation step 4 (render position and expected difference) and the human checkpoint now use the content area.
 - Not started, as Marko asked.
 
+### 2026-10-24, before building (`/next-task 005`)
+- All cited decisions are closed (#6, #11, #26, #30, #31, #33, #35, #36, #37, #43, #60, #63, #64, #65, #69, #71, #79, #84, #86, #87, #90). No task was `awaiting-human`.
+- **No Figma MCP calls in this task** (budget 0): PNGs in `docs/figma/` and the export `docs/figma/components/418-6433.png` only, measured with a Node script using built-ins (session scratchpad).
+- The session was interrupted once during visual validation (connection dropped); it resumed from the working tree and this task file. No step was redone except the renders retaken after later fixes.
+
+### 2026-10-24, build (TDD)
+- Each component's tests were written first and seen failing (component missing), then the code. Files:
+  - New:
+    - Components: `frontend/src/components/Popup/` (`Popup.tsx`, `Popup.module.css`), `frontend/src/components/PopupInputSmall/` (`PopupInputSmall.tsx`, `PopupInputSmall.module.css`), `frontend/src/components/GoalPopupInput/` (`GoalPopupInput.tsx`, `GoalPopupInput.module.css`), `frontend/src/components/Dropdown/` (`Dropdown.tsx`, `Dropdown.module.css`).
+    - Dev page: `frontend/src/app/dev/PopupDemo.tsx`, `frontend/src/app/dev/PopupDemo.module.css`.
+    - Tests: `frontend/test/components/Popup.test.tsx`, `PopupInputSmall.test.tsx`, `GoalPopupInput.test.tsx`, `Dropdown.test.tsx`; `frontend/test/app/popup-demo.test.tsx`; `e2e/tests/popup-amount-dropdown.spec.ts`.
+    - Evidence: `.claude/tasks/evidence/005/`, 45 PNGs (14 compare, 15 render, 8 focus, 5 open-list, 3 trigger).
+  - Changed:
+    - App and components: `frontend/src/components/AppLayout/AppLayout.tsx`, `frontend/src/components/index.ts`, `frontend/src/app/routes.tsx`, `frontend/src/app/dev/ComponentGallery.tsx`, `frontend/src/app/dev/ComponentGallery.module.css`.
+    - Tokens: `docs/figma/tokens.md`, `frontend/src/styles/tokens.css`.
+    - Docs: `docs/figma/components.md`, `.claude/tasks/INDEX.md`, this task file.
+    - Tests: `frontend/test/setup.ts`, `frontend/test/styles/tokens.test.ts`, `frontend/test/app/gallery.test.tsx`, `frontend/test/app/gallery-build.test.ts`.
+- The rest of this entry is recovered from the draft the interrupted session left in its scratchpad (`log-draft.md`, written 09:51). The tokens, the token test and the jsdom stubs below were checked against the code on 2026-10-24.
+- **Measurements (2x PNGs, halved):**
+  - Popup (104.1, 110.1, 110.2): panel x 1208–2183, y 552 (276 CSS) in all three. X glyph x 2085–2122, y 613–650, so the 32px icon box sits 24 from the top and right. Save x 1504–1887 (192). Field border `#D1D1D1`. Value and placeholder `#878787`, from x 1385–1386 (24 inset). Overlay from x 560, y 176, `#DDDDDD` over white.
+  - Label weight: rendered at 500, 600 and 700 against 104.1. Semibold matches: "Target Amounts" ink is 122.5 wide; 500 gives 120.5, 700 gives 124.5; mean difference 10.5 / 2.7 / 7.0.
+  - 110 Savings Goal box: x 984–1295, y 344–407 (156x32), fill `#F4F4F4`, border `#E8E8E8`, corner radius about 7–8 at 2x (4). Text `#666666` from x 1018. Chevron `#525256`, glyph x 1238–1257. Text to chevron 17 at 2x (8). Saving Summary: text from x 1772, chevron glyph from x 1902, the same gap.
+  - 111 "+880": `#878787`, ink x 723–800, y 1164–1188.
+- **Tokens added** (`tokens.md` rows with their sources): `--space-popup-top` 276, `--space-popup-close-inset` 24, `--space-popup-input-padding-x` 24, `--space-dropdown-padding-x` 16, `--space-dropdown-chevron-gap` 8, `--size-popup-button-width` 192, `--size-dropdown-box-height` 32, `--radius-dropdown` 4. The popup top padding is 64, equal to `--space-popup-padding-x`, so it has no token of its own (Scope).
+- **Decisions in the build:**
+  - Overlay geometry: `AppLayout` gives its `<main>` through `ContentAreaContext`. The overlay is fixed, starts at the 280 sidebar token, and its top is measured once as it mounts: the header's bottom edge, or 0 once the header is scrolled away (the page cannot scroll while it is open). The panel is fixed at `--space-popup-top` with left 280, right 0, width 488 and auto margins, so it is centered on the content area without dividing in CSS.
+  - **#35 reading, AC4 against AC5.** The content area is all dimmed, so a press on "the content behind" lands on the overlay and closes the popup like any press on the dimmed area (#35, AC5). It never reaches the content: the "View All" under it does not navigate. The e2e test checks exactly this. AC4 and T4 still say that a press on the content behind does nothing; their wording was not changed and is raised at the gate. The sidebar and header are not dimmed but blocked: a press there does nothing and the popup stays open.
+  - Blocked presses keep focus. Radix turns pointer events off outside the popup, so a press on the sidebar or header lands on `<html>` and moved focus to `<body>`. Radix Dialog reports outside presses only on the following click (`deferPointerDownOutside`), which is too late, so `Popup` cancels a `pointerdown` on the page root while it is open.
+  - Focus on open: Radix selects the first field's text; `Popup` puts the caret at the end instead, with nothing selected, as drawn. Focus returns to the opener. There is no Radix trigger, so the opener is recorded on open.
+  - `$`: shown by the field and hidden by CSS while the placeholder shows (`:placeholder-shown`), so it follows the real field text however it is set (typing, `register` defaults, `reset`).
+  - Typing: a native `beforeinput` listener cancels any insert whose result `isAllowedAmountInput` rejects (keys, pastes, drops), so the value and the caret stay. React's `onBeforeInput` does not see pastes. IME composition cannot be cancelled, so `onChange` undoes a change to text that is not allowed and does not pass it on (`parseAmountInput` would throw on it). The input has `inputMode="decimal"` and `autoComplete="off"`.
+  - Undesigned looks (`frontend-design`, existing tokens only):
+    - field focus border `--color-secondary`, the popup's label and X color;
+    - the error border stays red with focus (#87);
+    - the server error is centered above Save, 16 apart (`--space-form-small-gap`);
+    - the open list follows #90 (a): options Regular 14/20 Gray/01, the highlighted one with a Gray/06 fill and Default Black text, the selected one teal Semibold (like the active tab), 8 padding, 8 from the trigger (`--space-form-label-gap`);
+    - the `input` variant's focus border is `--color-input-active`, like `Input`.
+  - Dropdown focus ring: Radix moves focus by script, and Chrome then shows `:focus-visible` on the trigger even after a mouse choice. The trigger records whether the last interaction with it or its list was a pointer or a key, and hides the ring only after a pointer (#87: a mouse click shows no ring).
+  - `tokens.test.ts`: the "only existing tokens" guard now also accepts exactly two Radix runtime variables, `--radix-select-trigger-width` and `--radix-select-content-available-height` (the open list's minimum width and its window-fit maximum height). They are listed by name, so a typo still fails.
+  - `test/setup.ts`: jsdom stubs for `hasPointerCapture`, `releasePointerCapture` and `scrollIntoView` (Radix Select), skipped in node-environment tests.
+  - Dev page: react-hook-form with `shouldUnregister`, so a reopened popup shows the initial values. "Save fails" waits 800 ms, then shows "The amounts could not be saved. Try again."
+
+### 2026-10-24, validation re-run (resumed session)
+After the two interruptions, every validation step was run again on the existing code, in order. No step failed, so nothing was fixed and no rework loop was added.
+1. **Lint and typecheck:** `npm run lint` exit 0 (oxlint, Stylelint, Prettier: "All matched files use Prettier code style!"). `npm run typecheck` exit 0 in shared, backend, frontend and e2e.
+2. **Unit:** `npm test` 670/670 (shared 220, backend 43, frontend 407), with no warnings in the output.
+3. **E2E:** `npm run e2e` 40/40, the 12 tests of this task included. The `AmountBox` error printed by the web server is the deliberate boundary demo of task 004.
+4. **Build:** `npm run build` exit 0. `frontend/dist` contains none of "Component gallery", "Open two-field popup", "Open one-field popup", "Save fails", "/dev/popup".
+5. **Visual** (Playwright MCP, 1440x1024 at device scale 2, in a separate browser context, because the CDP scale override did not hold on the MCP page). All 45 renders in `.claude/tasks/evidence/005/` were retaken with the same names, and the 14 `compare-*.png` images were rebuilt with the earlier session's script (design crop | render crop | difference x4). Mean difference per channel (0 to 255): panels 104.1 1.18, 110.1 1.17, 110.2 0.95, export `416:6381` 1.38; X 0.07, Save 0.29, labels 3.80 and 3.51, fields 4.62 and 3.31; Dropdown box left 9.95, box right 2.64, plain 7.87, inline 5.57. Ink positions from the panel's top-left: the X glyph and the Save text are identical; the labels and the value are within 0.5 px. Differences:
+   - The panel is at x 616–1104, 12 px right of the PNGs' x 604 (expected, #90 c). Its top edge is at y 276 in both renders; heights 392 and 280.
+   - The Target field has the darker focus border in the render: focus moves to the first field on open (AC1), and the PNGs draw no focus.
+   - Placeholder "Write present amount here" against "Write presents amounts here" (expected, #18).
+   - The page background under the dim is `#F3F3F3` (`--color-gray-06`, tasks 000 and 003) against `#F4F5F7` in 104.1, so the first dimmed row reads `#D2D2D2` against `#D4D4D6`. The overlay itself matches: white under it is `#DDDDDD` in both, and the header's bottom border row is `#E8E8E8` and not dimmed in both. Not from this task.
+   - The dev page content behind the overlay (expected).
+   - Dropdown box: the label `Mar, 2026` against "01 May ~ 31 May", so the box is 113.8 wide against 156 (expected, #60). The chevron glyph is about 1 px narrower and 1 px nearer the right edge. Plain: `Mar, 2026` against "Mar 2022" (#60); the shared glyphs line up.
+   - Inline "+880": the same ink width (39 px), with a sub-pixel offset.
+   - Undesigned states, for the human checkpoint: Save while saving (spinner, disabled), the server error above Save, the X and Save rings, the field focus and error borders, the four open lists and the 60-month list (y 10–984 in the 1024 window, flipped above its trigger, scrolling inside).
+6. **Manual browser checks** (Playwright MCP):
+   - On `/dev/popup`:
+     - Open: the dialog is named "Goal amounts", with `aria-modal="true"`, and focus is in Target with the caret at the end.
+     - Tab and Shift+Tab cycle Target, Present, Save, Close and back.
+     - Presses on a sidebar link and on the header change nothing: the URL stays, the popup stays open, focus stays in the field. The wheel does not scroll the page. `nav` and `main` are `aria-hidden`; the body has `overflow: hidden`.
+     - X, Esc and the dimmed area close the popup in both popups, and focus returns to the opener (10 runs, 9 to 50 ms after the dialog unmounts). A press inside the panel does not close it. A changed value is gone after closing and reopening.
+     - Typing: allowed text stands; `,`, `$`, letters, space, `-`, a second `.` and a third decimal are rejected with the value and caret unchanged, also mid-text. A lone `.` and `.5` stand.
+     - Real clipboard pastes into `12`: `1,000`, `.345` and `$5` are rejected whole; `.34` and `00` stand. Into an empty field: `1250.50` stands and ` 5` is rejected.
+     - Save shows "Target: 125050 cents. Present: 50 cents."; Enter in a field submits; an empty field and a lone `.` read as `empty`.
+     - "Save fails": Save is disabled with `aria-busy` and the spinner, then the alert shows and Save is enabled again. A reopened popup is clean. Closing during a save leaves no late error.
+   - In the gallery, for all four variants:
+     - The list opens by click, Enter, Space and ArrowDown, on the selected option. ArrowUp, ArrowDown, Home and End move it; a click or Enter chooses; focus returns to the trigger. Esc and a click outside change nothing. Typing "S" goes to Savings.
+     - The 60-month list has 60 options, fits the window and scrolls inside (0 to 1204); the page scroll is unchanged.
+   - No console errors or warnings. The only non-info lines are Chrome's VERBOSE "Password field is not contained in a form" hints from the task 002 password examples.
+   - Four alarms in these checks came from my check scripts, not from the components; none led to a change:
+     - focus read right after the dialog unmounted, before Radix restores it in a `setTimeout(0)`;
+     - a clipboard copy made while the focus trap was active, which copied the field's own text;
+     - arrow keys read before Radix moved item focus, which it also does in a `setTimeout`;
+     - role queries on a trigger that Radix hides from roles while its list is open.
+
+### 2026-10-24, security review (`security-review`, Skills line: money)
+- No findings. Checked:
+  - the money input path: `isAllowedAmountInput` on `beforeinput` and `onChange`; `parseAmountInput` builds integer cents without a float; nothing is sent to the backend;
+  - HTML sinks: none (no `dangerouslySetInnerHTML`, `innerHTML`, `eval`). The only DOM write is a numeric `style.top`;
+  - dev routes in production: a lazy import inside the existing `import.meta.env.DEV` branch, checked by `gallery-build.test.ts`;
+  - no secrets, no external URLs in the CSS, no logging added.
+
+### 2026-10-24, code review (`superpowers:requesting-code-review`)
+- Verdict "With fixes": no critical findings, 2 important, 9 minor. The reviewer re-ran the 5 new Vitest files (71/71) and checked behaviour in Chromium.
+- Fixed, each test first:
+  1. Important: a paste of a spreadsheet cell (`500\r\n`, as Excel on Windows copies it) was rejected. The check ran on the raw clipboard text, while Chrome drops trailing line breaks before inserting. Reproduced in Chromium: a plain input got `500`, the amount field stayed empty; `5\n00` and `\n500` become `5 00` and ` 500` in a plain input. `PopupInputSmall` now trims trailing line breaks before the check. A line break inside the text still fails the check, because the browser would paste a space there. New tests: 2 unit tests (`500\r\n`, `500\n`, which failed first), `5\n00` added to the rejected pastes, and an e2e real-clipboard paste of `500\r\n` giving 50000 cents.
+  2. Important: the AC4 and T4 wording against #35 and AC5, and the build choices that were not logged. The choices are now logged above. AC4 and T4 are not reworded: they are raised at the gate.
+  3. Minor: `value` and `defaultValue` of `PopupInputSmall` accepted numbers, so `defaultValue={cents}` would compile and show 100 times the amount. Both are now `string`. A type test (`@ts-expect-error` on both) failed the typecheck first.
+  4. Minor: the docs said unsaved changes are discarded on close. That holds only for state inside the popup; a `useForm` above it keeps edited values unless it has `shouldUnregister: true` or resets on open. The `Popup` and `GoalPopupInput` docs now say so.
+  5. Minor: after keyboard focus on a trigger, a mouse open and a click outside brought focus back with the teal ring. When Radix moved focus into the list, the trigger's blur cleared the pointer flag, and the outside press was never recorded. `Select.Content` now records it (`onPointerDownOutside`). New tests: a unit test (failed first), a guard that a keyboard open and Esc keep the keyboard ring, and an e2e step in T17.
+  6. Minor: the `input` trigger lost its active border while its list was open (`#D0D5DD` instead of `#4B5768`), because focus is then in the list. `.input[data-state='open']` now shares the `:focus` rule. New e2e step in T17. `open-list-input.png` was retaken.
+- Not fixed (follow-ups, for the gate):
+  - 7: Save moves focus to `<body>` when it becomes disabled while saving. This comes from `ButtonPrimary` (task 002); Tab and Esc recover.
+  - 8: long lists show no scroll hint; Radix hides the scrollbar and #90 (a) defines the list look.
+  - 9: if a popup's first focusable element were hidden, focus would stay outside. No popup has one (YAGNI).
+  - 10: `Dropdown` has no `id` prop for a visible `<label htmlFor>`; `aria-labelledby` names it. Task 022 can add one.
+  - 11: nits. `ContentAreaContext` is exported next to `AppLayout` (Fast Refresh does a full reload), and tokens are reused by value under other names, as "existing tokens only" requires.
+- Set aside by the reviewer as outside the plan, all agreed:
+  - below about 670 px window height, the fixed panel cuts off Save (desktop 1440x1024, #90 c);
+  - with a classic scrollbar, the panel centers on 280–1440 while the content spans 280–1425;
+  - a press on the dim released inside the panel closes the popup;
+  - no z-index layering yet;
+  - the `$` is `aria-hidden`;
+  - the caret after a click on the `$`;
+  - leading zeros and limits belong to tasks 001 and 014/025/027;
+  - closing while saving is allowed;
+  - visual fidelity is for the human checkpoint.
+- Red-green for the new e2e assertions: with the three fixes taken out (the files backed up, then restored and checked identical with `cmp`), the paste test failed (`""` for `500`). T17 failed on the ring (`solid` for `none`), and, with only the CSS fix still out, on the open border (`rgb(208, 213, 221)` for `rgb(75, 87, 104)`).
+
+### 2026-10-24, verification before the gate (`superpowers:verification-before-completion`)
+- Run fresh on the final tree, after the review fixes:
+  - `npm run lint` exit 0;
+  - `npm run typecheck` exit 0;
+  - `npm test` 676/676 (shared 220, backend 43, frontend 413: 6 new);
+  - `npm run e2e` 40/40;
+  - `npm run build` exit 0, with no dev-page strings in `frontend/dist`.
+- Every acceptance criterion maps to a passing test: T1–T17, T19 and T20 by name. T18 (AC18) is covered by the guards from task 002: `names.test.ts` checks every exported component and folder against the Code name columns, the Code-only table included. Stylelint and `tokens.test.ts` cover "tokens only". `components.md` has the `Popup` and `Dropdown` Code-only rows and the `GoalPopupInput` and `PopupInputSmall` Code name rows.
+- No Figma MCP calls in this session.
+- Status `awaiting-human`.
+
+### 2026-10-24 11:15, approved by human
+- Approved by human (Marko, `/approve-task 005 approve`). Human interventions +1. Status `done`.
+- On Marko's request, before the commit:
+  - AC4 and T4 now name the sidebar and the header instead of "the content behind": a click on the dimmed area closes the popup (#35, AC5). That is what the implementation and the e2e test already do.
+  - `INDEX.md` row 009 now also covers "ButtonPrimary loading keeps keyboard focus on the button (task 005 review: focus moved to the page body while saving)".
+  - Row 022 now also covers "Dropdown id prop for a visible label (task 005 review)".
+  - Rework loops keep the convention: code-review fixes are not counted.
+- Acceptance criteria 19 of 19 (AC4 as reworded).
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-24 08:54 (from the build session's own log draft; the "before building" entry has no time)
+- Finished: 2026-10-24 11:15
+- Human interventions: 1
+- Rework loops: 1 (at least: the Log mentions renders retaken "after later fixes" without a count, and the build entry was cut off). The re-validation found no failures, so none were added.
+- Notes on prompts that failed: Session interrupted twice; one false-positive safety stop. The 5 code-review fixes are not counted as rework loops, as in tasks 002 to 004.

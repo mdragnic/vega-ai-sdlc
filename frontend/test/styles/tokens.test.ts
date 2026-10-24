@@ -49,6 +49,9 @@ function unknownTokens(css: string, known: Set<string>): string[] {
   return [...new Set(used)].filter((name) => !known.has(name) && !local.has(name));
 }
 
+/** Set at runtime by Radix Select on its open list (radix-ui docs), not design values. Listed by name, so a typo still fails. */
+const radixRuntime = ['--radix-select-trigger-width', '--radix-select-content-available-height'];
+
 const crlf = (text: string) => text.replaceAll('\r\n', '\n').replaceAll('\n', '\r\n');
 
 /** Measured tokens kept off the 4px grid: border widths, and the checkbox radius (decision #86). */
@@ -91,7 +94,7 @@ describe('design tokens', () => {
   });
 
   it('uses only existing tokens in frontend CSS', () => {
-    const known = new Set(fromCss.map(([name]) => name));
+    const known = new Set([...fromCss.map(([name]) => name), ...radixRuntime]);
     const unknown = cssFiles(srcDir)
       .filter((file) => !file.endsWith('tokens.css'))
       .flatMap((file) =>

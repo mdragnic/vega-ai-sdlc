@@ -1,0 +1,20 @@
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-field-gap);
+}
+
+/* Save is centered 32 below the last field (104.1, 110.1, 110.2). Not designed (#6): the server error sits
+   centered above Save, 16 apart, like the row above Login on 101. */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-form-small-gap);
+  margin-top: var(--space-form-section-gap);
+  text-align: center;
+}
+
+.save {
+  width: var(--size-popup-button-width);
+}

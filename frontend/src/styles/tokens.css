@@ -93,6 +93,11 @@
   --space-amount-box-padding-x: 12px;
   --space-amount-box-padding-x-lg: 16px;
   --space-button-small-padding-x: 16px;
+  --space-popup-top: 276px;
+  --space-popup-close-inset: 24px;
+  --space-popup-input-padding-x: 24px;
+  --space-dropdown-padding-x: 16px;
+  --space-dropdown-chevron-gap: 8px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -133,6 +138,8 @@
   --size-tab-height: 32px;
   --size-button-small-width: 84px;
   --size-button-small-height: 32px;
+  --size-popup-button-width: 192px;
+  --size-dropdown-box-height: 32px;
 
   /* Radius */
   --radius-input: 8px;
@@ -147,6 +154,7 @@
   --radius-checkbox: 2px;
   --radius-avatar: 50%;
   --radius-category-tile: 8px;
+  --radius-dropdown: 4px;
 
   /* Border */
   --border-width-input: 1px;

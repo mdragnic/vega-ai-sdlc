@@ -112,6 +112,11 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-amount-box-padding-x` | `12px` | measured: PNG 104, the "$150" text sits about 14 px inside the 68px box on each side (glyphs x 2661 to 2737 in x 2632 to 2767, 28.5 px at 2x); 14 is between 12 and 16, rounded down to stay within what the 68px box leaves on each side. The inset kept when a longer amount widens the box, as `$150.00` (#11) does. Added in task 004 |
 | `--space-amount-box-padding-x-lg` | `16px` | not measurable: in PNG 108 the "$150" text is centered in the 108px box, 31.5 px from each side, so only the upper bound shows. Chosen in task 004 as the inset kept when a longer amount widens the box; any value up to 31 keeps "$150" at 108px |
 | `--space-button-small-padding-x` | `16px` | measured: export docs/figma/components/418-6433.png, Button small "Details": the text 35 and 34 px inside the box (glyphs x 2363 to 2461 in x 2328 to 2495), halved 17.5 and 17, rounded. A longer label widens the button. Added in task 004 |
+| `--space-popup-top` | `276px` | measured: PNG 104.1, 110.1 and 110.2, frame top (y 0) to the popup panel top (y 552), 552 px, halved. The same top edge for the 392-high and the 280-high popup, so the panel is not centered vertically (decision #90 c). Added in task 005 |
+| `--space-popup-close-inset` | `24px` | measured: PNG 104.1, the X glyph (x 2085 to 2122, y 613 to 650) is the stroke of the 32px `x` icon (path 8 to 24, 3 px round stroke, so 6.5 px inside each icon edge); the icon box then sits 48 px from the panel right edge (x 2184) and top (y 552), halved. Added in task 005 |
+| `--space-popup-input-padding-x` | `24px` | measured: PNG 104.1, field left edge (x 1336) to the `$500000` glyphs (x 1386) and the placeholder glyphs (x 1385), 49 to 50 px including the side bearing of the first glyph, halved, rounded. Added in task 005 |
+| `--space-dropdown-padding-x` | `16px` | measured: PNG 110, Savings Goal period box left edge (x 984) to its text glyphs (x 1018, 1 to 2 px of side bearing), 33 px, and the 16px chevron box (glyph x 1238 to 1257) to the box right edge (x 1296), 32 px, halved, rounded. Added in task 005 |
+| `--space-dropdown-chevron-gap` | `8px` | measured: PNG 110, end of the period text (glyphs to x 1213) to the 16px chevron box (its 9 px glyph at x 1238 to 1257 sits 3.3 px inside the box), 17 px, halved 8.5, rounded; Saving Summary the same (text to x 1877, glyph from x 1902). Added in task 005 |
 
 ## Size
 
@@ -155,6 +160,8 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-tab-height` | `32px` | measured: PNG 104, label line box top (y 944, the card content top; glyphs from y 956) to the bottom of the active underline (y 1007), 64 px, halved. PNG 107 the same (y 320 to 383). Added in task 004 |
 | `--size-button-small-width` | `84px` | Figma Button small 84x32 (components.md). Checked: export docs/figma/components/418-6433.png, x 2328 to 2495, 168 px, halved. The minimum: a longer label widens the button. Added in task 004 |
 | `--size-button-small-height` | `32px` | Figma Button small 84x32 (components.md). Checked: export docs/figma/components/418-6433.png, y 724 to 787, 64 px, halved. Added in task 004 |
+| `--size-popup-button-width` | `192px` | measured: PNG 104.1, Save x 1504 to 1887, 384 px, halved; centered in the panel (x 1208 to 2183). PNG 110.1 and 110.2 the same. Added in task 005 |
+| `--size-dropdown-box-height` | `32px` | measured: PNG 110, Savings Goal period box y 344 to 407, 64 px, halved. Added in task 005 |
 
 ## Radius
 
@@ -174,6 +181,7 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-checkbox` | `2px` | measured: PNG 101 "Keep me signed in" checkbox and export `docs/figma/components/418-6433.png` Remind me, corner radius 4 px, halved. Kept at 2px, an exception to the 4px grid like border widths (decision #86). Added in task 002 |
 | `--radius-avatar` | `50%` | measured: PNG 104 and 105, the sidebar profile photo is a circle. Added in task 003 |
 | `--radius-category-tile` | `8px` | measured: PNG 104, Recent Transaction and Expenses Breakdown tiles, corner radius 16 px; PNG 109 and 110 tiles fit about 18 px; halved and rounded. The date and amount boxes in 108 have the same radii as in 104 (--radius-date-box, --radius-amount-box). Added in task 004 |
+| `--radius-dropdown` | `4px` | measured: PNG 110, Savings Goal period box corners: the straight border starts 7 px from the corner on both sides, radius about 7 to 8 px, halved and rounded. Added in task 005 |
 
 ## Border
 

@@ -209,3 +209,22 @@
 .demoStack > .stateCard {
   align-self: stretch;
 }
+
+/* Task 005: the amount fields on the white of a popup, at the popup's width and side padding. */
+.popupSurface {
+  width: var(--size-popup-width);
+  margin: 0 auto;
+  padding: var(--space-form-field-gap) var(--space-popup-padding-x);
+  border-radius: var(--radius-popup);
+  background-color: var(--color-white);
+}
+
+/* The text of the 111 phone field, which the inline Dropdown takes on. */
+.inlineField {
+  color: var(--color-gray-02);
+  font: var(--font-regular-16-24);
+}
+
+.devLink {
+  color: var(--color-primary);
+}

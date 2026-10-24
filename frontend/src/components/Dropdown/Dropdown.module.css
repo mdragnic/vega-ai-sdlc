@@ -1,0 +1,124 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  /* The browser ring is replaced by the teal one below, or by the darker border of the input variant. */
+  outline: none;
+}
+
+/* Keyboard focus on the box, plain and inline triggers (#87); none when focus returns after a pointer choice. */
+.box:focus-visible:not([data-pointer-focus]),
+.plain:focus-visible:not([data-pointer-focus]),
+.inline:focus-visible:not([data-pointer-focus]) {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* 110 Savings Goal: a gray box that hugs its label, the chevron after it. */
+.box {
+  gap: var(--space-dropdown-chevron-gap);
+  height: var(--size-dropdown-box-height);
+  padding: 0 calc(var(--space-dropdown-padding-x) - var(--border-width-input));
+  border: var(--border-width-input) solid var(--color-gray-05);
+  border-radius: var(--radius-dropdown);
+  background-color: var(--color-gray-06);
+  color: var(--color-gray-01);
+  font: var(--font-regular-12-16);
+}
+
+/* 110 Saving Summary: the same text and chevron, with no box. */
+.plain {
+  gap: var(--space-dropdown-chevron-gap);
+  color: var(--color-gray-01);
+  font: var(--font-regular-12-16);
+}
+
+/* ArrowDown2 at 16px in Secondary, a 9x5 glyph as in 110. */
+.chevron {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+  color: var(--color-secondary);
+}
+
+/* 111 country code: the label alone, in the font and color of the field around it (.trigger inherits). */
+
+/* Account Type in 106 edit mode (#26), not designed: the closed Input of 101, with DownArrow24 in place of
+   the eye. The darker border while it has focus (#63) replaces the focus ring. */
+.input {
+  justify-content: space-between;
+  gap: var(--space-input-padding-x);
+  width: 100%;
+  height: var(--size-input-height);
+  padding: 0 calc(var(--space-input-padding-x) - var(--border-width-input));
+  border: var(--border-width-input) solid var(--color-input-border);
+  border-radius: var(--radius-input);
+  color: var(--color-auth-muted);
+  font: var(--font-regular-16-24);
+}
+
+/* Also while its list is open: focus is then in the list, and the field stays active. */
+.input:focus,
+.input[data-state='open'] {
+  border-color: var(--color-input-active);
+  color: var(--color-input-active);
+}
+
+.inputChevron {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+/* Not designed: one open list for every variant (#60, #90 a). It sits 8 below the trigger (8 above when it
+   flips), at least as wide, and no taller than the room left in the window; the options scroll inside. */
+.list {
+  min-width: var(--radix-select-trigger-width);
+  max-height: calc(var(--radix-select-content-available-height) - var(--space-form-label-gap));
+  overflow: hidden;
+  border: var(--border-width-input) solid var(--color-gray-05);
+  border-radius: var(--radius-popup);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+.list[data-side='bottom'] {
+  margin-top: var(--space-form-label-gap);
+}
+
+.list[data-side='top'] {
+  margin-bottom: var(--space-form-label-gap);
+}
+
+.viewport {
+  padding: var(--space-form-label-gap);
+}
+
+/* Regular 14/20 in Gray/01, the trigger text color of 110. The highlighted option takes the Gray/06 fill of
+   the period box; the selected one is teal and semibold, like the active tab (#19). */
+.option {
+  padding: var(--space-tab-padding-x) var(--space-input-padding-x);
+  border-radius: var(--radius-button);
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+
+.option[data-highlighted] {
+  background-color: var(--color-gray-06);
+  color: var(--color-default-black);
+}
+
+.option[data-state='checked'] {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semi-bold);
+}

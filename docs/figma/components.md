@@ -33,7 +33,7 @@ Sorted by use count, highest first.
 | Button/secondary | `ButtonSecondary` | `402:5233` (set) | Icon=Yes, Icon=No | 101 | 1 |
 
 † The instances are named `Item` but are 200x74, the exact size of `Expences Item`. `Item` itself is 303x88. Matched by size, not by name. Verify before building.
-‡ Two components share this name. Matched by exact size: Button Big 208x48 and Popup Input 488x392.
+‡ Two components share this name. Matched by exact size: Button Big 208x48 and Popup Input 488x392. `GoalPopupInput` holds `PopupInputSmall` fields (`Popup Input (small)` `416:6338`): two in 104.1 and 110.1, one in 110.2 (task 005).
 
 Used in 2+ screens: Expences Item, Item, chevron-right, Header, Nav bar, Mastercard, edit, Award and octicon:goal-16 (9). Only Header and Nav bar appear in 2 distinct screens (Overview and Balances) when 104 and 104.1 count as one screen.
 
@@ -59,7 +59,7 @@ Matched by look and approximate size in the PNGs (pixel size / 2). Verify with `
 | Button | `Button` | `43:1161` | 105 "Details >" (nested in Account Type) | About 110x36 |
 | Category icons (Housing, Food, Trasnport, Movie, Shopping, Others, gamepad-2) | `Housing`, `Food`, `Transport`, `Movie`, `Shopping`, `Others`, `Gamepad2` | see table below | 104, 107, 109, 110 | Same glyphs |
 
-The 110.2 popup (Target Amounts only) has no matching component size. It may be an unrecorded variant.
+The 110.2 popup (Target Amounts only) has no matching component size. In code it is `GoalPopupInput` with one `PopupInputSmall` field, 280 high (task 005).
 
 ## Possible detached components
 
@@ -148,7 +148,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`.
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`.
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -170,6 +170,8 @@ Code components with no Figma component. They are built from tokens, and their n
 | `AmountBox` | The bordered amount box of the bill rows, compact (104) and large (108); the Figma width is the minimum | #11 |
 | `Skeleton` | One placeholder shape of a widget loading skeleton (text line, block or circle), Gray/05 with a pulse that stops under reduced motion | #6 |
 | `DataState` | The shared states of one widget, list, table or chart: skeleton while loading, empty message, error state ("Something went wrong." above Retry) when there is no data to show, with a per-widget error boundary around the content. A failed background refetch keeps the data on screen | #6, #88, #89 |
+| `Popup` | The modal shell of every popup, on Radix Dialog: the white 488px panel with its top edge at y 276, centered on the content area, and the X. The overlay dims the content area only (right of the sidebar, below the header), but the whole page is blocked: focus stays inside, the page does not scroll and the rest is hidden from assistive technology. Closes with the X, Esc or a click on the dimmed area; focus returns to the opener. Rendered inside `AppLayout`, which gives it the content area to dim. `GoalPopupInput` is built on it | #35, #87, #90 |
+| `Dropdown` | The one shared select, on Radix Select. Closed looks: `box` (110 Savings Goal period), `plain` (110 Saving Summary period), `inline` (111 country code, the label only) and `input` (Account Type in 106 edit mode, styled like `Input`). One open list for all: Popup radius, card shadow, 1px Gray/05 border | #26, #30, #33, #43, #60, #87, #90 |
 
 ## Totals
 

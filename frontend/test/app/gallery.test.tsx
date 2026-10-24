@@ -20,6 +20,9 @@ async function renderGallery() {
 const figure = (region: string, name: string) =>
   within(screen.getByRole('region', { name: region })).getByRole('figure', { name });
 
+const amountField = (name: string) => within(figure('PopupInputSmall', name)).getByRole('textbox');
+const dropdownTrigger = (name: string) => within(figure('Dropdown', name)).getByRole('combobox');
+
 // The dev gallery (AC12): one section per shared component. Vitest runs in development mode.
 describe('component gallery', () => {
   it('has a section for every exported component', async () => {
@@ -148,6 +151,91 @@ describe('component gallery', () => {
     const demo = figure('DataState', 'Error boundary: one widget breaks, the other keeps working');
     expect(within(demo).getByRole('button', { name: 'Render a bad amount' })).toBeInTheDocument();
     expect(await within(demo).findAllByText(/^\$\d/)).toHaveLength(2);
+  });
+
+  // Task 005 Scope: the amount field states (T6, T10, AC19).
+  it('shows every amount field state', async () => {
+    await renderGallery();
+
+    expect(amountField('Prefilled 500000')).toHaveValue('500000');
+    expect(amountField('Prefilled 1250.50')).toHaveValue('1250.50');
+    expect(amountField('Empty, no placeholder (Target)')).toHaveValue('');
+    expect(amountField('Empty, no placeholder (Target)')).not.toHaveAttribute('placeholder');
+    expect(amountField('Empty, with the placeholder (Present)')).toHaveAttribute(
+      'placeholder',
+      'Write present amount here',
+    );
+    expect(amountField('With an error')).toHaveAttribute('aria-invalid', 'true');
+    expect(amountField('With an error')).toHaveAccessibleDescription('Enter a target amount');
+  });
+
+  // T9: the interactive field shows what parseAmountInput reads from its text (AC9, #84).
+  it('shows the cents read from the interactive field', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+    const example = figure('PopupInputSmall', 'Interactive: the cents read from the text');
+    const field = within(example).getByRole('textbox', { name: 'Target Amounts' });
+    expect(within(example).getByText('Cents: empty')).toBeInTheDocument();
+
+    for (const [text, shown] of [
+      ['1250.5', 'Cents: 125050'],
+      ['.5', 'Cents: 50'],
+      ['.', 'Cents: empty'],
+      ['500000', 'Cents: 50000000'],
+    ] as const) {
+      await user.clear(field);
+      await user.type(field, text);
+      expect(within(example).getByText(shown)).toBeInTheDocument();
+    }
+
+    await user.clear(field);
+    expect(within(example).getByText('Cents: empty')).toBeInTheDocument();
+  });
+
+  // Task 005 Scope: the Dropdown variants and their sample options (T13, AC19).
+  it('shows every Dropdown variant with its sample options', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    expect(dropdownTrigger('box, like 110 Savings Goal')).toHaveTextContent('Mar, 2026');
+    expect(dropdownTrigger('plain, like 110 Saving Summary')).toHaveTextContent('Mar, 2026');
+    expect(dropdownTrigger('inline, like 111 country code')).toHaveTextContent('+880');
+    expect(dropdownTrigger('input, Account Type (#26, not designed)')).toHaveTextContent('Checking');
+
+    await user.click(dropdownTrigger('box, like 110 Savings Goal'));
+    const months = screen.getAllByRole('option').map((option) => option.textContent);
+    expect(months.slice(0, 3)).toEqual(['Oct, 2026', 'Sep, 2026', 'Aug, 2026']);
+    expect(months).toContain('Mar, 2026');
+    await user.keyboard('{Escape}');
+
+    await user.click(dropdownTrigger('inline, like 111 country code'));
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['+1', '+44', '+880']);
+    await user.keyboard('{Escape}');
+
+    await user.click(dropdownTrigger('input, Account Type (#26, not designed)'));
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Credit Card',
+      'Checking',
+      'Savings',
+      'Investment',
+      'Loan',
+    ]);
+    await user.keyboard('{Escape}');
+
+    await user.click(dropdownTrigger('60 months'));
+    const long = screen.getAllByRole('option').map((option) => option.textContent);
+    expect(long).toHaveLength(60);
+    expect([long[0], long[59]]).toEqual(['Oct, 2026', 'Nov, 2021']);
+  });
+
+  it('links the popup sections to /dev/popup', async () => {
+    await renderGallery();
+
+    for (const region of ['Popup', 'GoalPopupInput']) {
+      expect(
+        within(screen.getByRole('region', { name: region })).getByRole('link', { name: 'Open /dev/popup' }),
+      ).toHaveAttribute('href', '/dev/popup');
+    }
   });
 
   // #89: a failed background refetch keeps the data on screen, with no error state and no indicator.

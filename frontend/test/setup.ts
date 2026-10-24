@@ -14,3 +14,18 @@ class ResizeObserverStub {
   disconnect() {}
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+
+// jsdom has no pointer capture and no scrolling. Radix Select uses both: it checks pointer capture when its
+// trigger is pressed and scrolls the selected option into view. Node-environment tests have no Element.
+const radixStubs = {
+  hasPointerCapture: () => false,
+  releasePointerCapture: () => undefined,
+  scrollIntoView: () => undefined,
+};
+if (typeof Element !== 'undefined') {
+  for (const [name, stub] of Object.entries(radixStubs)) {
+    if (!(name in Element.prototype)) {
+      Object.defineProperty(Element.prototype, name, { value: stub, configurable: true, writable: true });
+    }
+  }
+}
