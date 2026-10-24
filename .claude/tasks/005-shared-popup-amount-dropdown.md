@@ -22,7 +22,7 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 ## Scope
 - Components in `frontend/src/components/<CodeName>/`, CSS Modules with tokens only. Every value is measured on the PNGs at 2x and halved (#65); new tokens go to `tokens.md` and `tokens.css` with their source. Radix Dialog and Select come from `radix-ui` 1.8.1, already a dependency (#79): no new dependency.
   - `Popup` (code-only): the modal shell on Radix Dialog, used by every popup (#35).
-    - Panel: white, `--size-popup-width` (488), `--radius-popup` (16), `--shadow-popup` (none). Position (#90 c): the top edge at y 276, as in all three PNGs, and centered horizontally on the viewport, not on the content area: x 476–964 at 1440 wide (the PNGs draw it at x 604). Its height follows the content: 392 with two fields (104.1, 110.1), 280 with one (110.2).
+    - Panel: white, `--size-popup-width` (488), `--radius-popup` (16), `--shadow-popup` (none). Position (#90 c): the top edge at y 276, as in all three PNGs, and centered horizontally on the content area (right of the 280px sidebar, the area the dim covers): x 616–1104 at 1440 wide (the PNGs draw it at x 604). Its height follows the content: 392 with two fields (104.1, 110.1), 280 with one (110.2).
     - Close button: `X32` in Secondary, a 32px button about 24 from the top and right edges, named "Close".
     - Content padding: 64 top and sides (`--space-popup-padding-x`), 48 bottom (`--space-popup-padding-bottom`).
     - Overlay: `--color-default-black-15` over the content area only, as in 104.1: right of the sidebar (x 280) and below the header (y 88, the header's bottom border is not dimmed). When the page is scrolled so that the header is off screen, it covers everything right of the sidebar.
@@ -82,7 +82,7 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 
 ## Acceptance criteria
 1. Given a `Popup` that opens, then a modal `dialog` named by its `title` shows (the title is visually hidden), and focus moves to the first field. The X button "Close" comes after the content in the tab order.
-2. Given `GoalPopupInput` with two fields at 1440x1024, then the panel is white, 488x392, radius 16, with no shadow, its top edge at y 276 and centered horizontally on the viewport (x 476–964 at 1440 wide, #90 c). The X (`X32`, Secondary) is about 24 from the top and right; the fields are 24 apart and Save is 192x48, centered, 32 below the last field, as in 104.1 and 110.1. With one field it is 488x280, as in 110.2.
+2. Given `GoalPopupInput` with two fields at 1440x1024, then the panel is white, 488x392, radius 16, with no shadow, its top edge at y 276 and centered horizontally on the content area right of the sidebar (x 616–1104 at 1440 wide, #90 c). The X (`X32`, Secondary) is about 24 from the top and right; the fields are 24 apart and Save is 192x48, centered, 32 below the last field, as in 104.1 and 110.1. With one field it is 488x280, as in 110.2.
 3. Given a popup is open with the page at the top, then the area right of the sidebar and below the header is dimmed with Default Black at 15%, and the sidebar and header are not (104.1). Given the page was scrolled so the header is off screen, then everything right of the sidebar is dimmed. The page behind does not move when the popup opens or closes.
 4. Given a popup is open, when I click a sidebar link, the header or the content behind, then nothing happens: the URL stays, nothing behind reacts, and the popup stays open. The wheel does not scroll the page. Tab and Shift+Tab cycle inside the popup. Everything outside it is hidden from assistive technology (#35).
 5. Given a popup is open, when I click X, press Esc or click the dimmed area, then it closes, `onOpenChange(false)` is called once, and focus returns to the element that opened it. A click inside the panel does not close it. When I change a field, close and reopen, the field shows its initial value (#35).
@@ -105,7 +105,7 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 | ID | Type | Scenario | Expected | Covers AC |
 |----|------|----------|----------|-----------|
 | T1 | unit | Open a `Popup` with two fields from a button | `dialog` with `aria-modal`, named by the title; the first field has focus; Tab order field, field, X | 1 |
-| T2 | e2e | `/dev/popup`, open both popups at 1440x1024, then at 1600x1024 | Panel box, background, radius, no shadow; X box and color; field and Save boxes; heights 392 and 280; top edge y 276 and left edge x 476 at 1440, x 556 at 1600 (#90 c) | 2 |
+| T2 | e2e | `/dev/popup`, open both popups at 1440x1024, then at 1600x1024 | Panel box, background, radius, no shadow; X box and color; field and Save boxes; heights 392 and 280; top edge y 276; left edge x 616 at 1440 (content area 280–1440), x 696 at 1600 (content area 280–1600) (#90 c) | 2 |
 | T3 | e2e | Open at scroll 0; scroll down past the header, open; record a card's box before and after opening | Overlay box x 280–1440, y 88–1024, color Default Black 15%; sidebar and header pixels unchanged. Scrolled: overlay from y 0. The card does not move | 3 |
 | T4 | e2e | With the popup open: click the "Balances" nav link, the header search and a card behind; wheel; Tab ×6 and Shift+Tab ×6 | URL unchanged, popup open, scroll position unchanged; focus stays inside; the nav and main are `aria-hidden` or inert | 4 |
 | T5 | unit | Close by X, by Esc and by a click on the overlay; a click on the panel; type, close, reopen | `onOpenChange(false)` once each; focus back on the opener; no close for the panel click; the initial value is back | 5 |
@@ -130,7 +130,7 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 2. Unit tests pass.
 3. E2E tests pass.
 4. Visual: Playwright MCP screenshots at 1440x1024 and device scale 2, compared element by element with crops of the PNGs. Positions are CSS px after halving and approximate; measure them exactly:
-   - `104.1. Overview.png`, from `/dev/popup` with the two-field popup open. The x positions below are the PNG's; the render's panel sits at x 476–964 (#90 c), so compare everything inside it relative to the panel's edges:
+   - `104.1. Overview.png`, from `/dev/popup` with the two-field popup open. The x positions below are the PNG's; the render's panel sits at x 616–1104 (#90 c), so compare everything inside it relative to the panel's edges:
      - panel x 604–1092, y 276–668;
      - X glyph about x 1042–1061, y 306–325;
      - "Target Amounts" label glyphs x 668–790, y 346–361, field y 372–428;
@@ -142,13 +142,13 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
    - `110. Goals.png`: Savings Goal box x 492–648, y 172–204 (text glyphs from x 509, chevron glyph x 620–628); Saving Summary text glyphs from x 886, chevron glyph x 952–960.
    - `111. Settings.png`: "+880" glyphs from x 362, y about 582–594 (the divider after it spans y 579–598).
    - Export `418-6433.png`: `Popup Input` and `Popup Input (small)`.
-   Save the screenshots and the comparison images to `.claude/tasks/evidence/005/` and list every difference. Expected differences: the period label `Mar, 2026` instead of "01 May ~ 31 May" and "Mar 2022" (#60, so the box is narrower), the placeholder text "Write present amount here" instead of "Write presents amounts here" (#18), the dev page content behind the overlay, and the panel 128 px further left than in the PNGs (centered on the viewport, #90 c).
+   Save the screenshots and the comparison images to `.claude/tasks/evidence/005/` and list every difference. Expected differences: the period label `Mar, 2026` instead of "01 May ~ 31 May" and "Mar 2022" (#60, so the box is narrower), the placeholder text "Write present amount here" instead of "Write presents amounts here" (#18), the dev page content behind the overlay, and the panel 12 px further right than in the PNGs (centered on the content area, #90 c).
 5. Manual browser checks with Playwright MCP:
    - On `/dev/popup`: open each popup; tab around; try the sidebar, header and wheel while it is open; close with X, Esc and the overlay; type allowed and rejected text; Save; try "Save fails".
    - In the gallery: open each Dropdown by mouse and keyboard, scroll the 60-month list, and use Esc and a click outside.
 
 ## Human checkpoint (only if Gate: human)
-- The popup over the app shell matches 104.1, 110.1 and 110.2: panel, X, fields, Save, the overlay on the content area only, and the position from #90 (c): top edge at y 276, centered on the viewport.
+- The popup over the app shell matches 104.1, 110.1 and 110.2: panel, X, fields, Save, the overlay on the content area only, and the position from #90 (c): top edge at y 276, centered on the content area right of the sidebar.
 - The whole page is blocked while a popup is open: sidebar and header clicks do nothing and do not close it (the reading of #35 used here). Focus stays inside; X, Esc and the overlay close it; reopening discards changes.
 - Amount field typing: allowed and rejected keys and pastes, the lone `.`, the `$` with and without the placeholder (#90 b), and the parsed cents.
 - Each Dropdown trigger against 110 and 111, and the `input` look for Account Type (#26, not designed).
@@ -189,6 +189,11 @@ The popup of 104.1, 110.1 and 110.2, its amount fields and the shared Dropdown e
 - Scope, AC2, AC7, AC16, T2, T6, T16, validation step 4 (expected differences) and the human checkpoint now use these answers. T2 also checks the centering at 1600 wide.
 - INDEX: open questions none.
 - The task is ready to start. Not started, as Marko asked.
+
+### 2026-10-24, #90 (c) corrected
+- Marko corrected (c): the panel is centered horizontally on the content area, right of the 280px sidebar (the area the dim covers), not on the viewport. At 1440 wide it is at x 616–1104, 12 px right of the PNGs' x 604. The top edge stays at y 276. `docs/decisions.md` #90 notes "corrected 2026-10-24: content area, not viewport".
+- Scope, AC2, T2 (x 696 at 1600 wide, content area 280–1600), validation step 4 (render position and expected difference) and the human checkpoint now use the content area.
+- Not started, as Marko asked.
 
 ## Metrics
 - Started:
