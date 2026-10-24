@@ -10,7 +10,7 @@
 The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 104 Goals and 110 Savings Goal exist as tested, presentational components drawn in SVG from tokens. The chart draws the values and y-axis ticks it is given; the gauge draws the progress it is given. The two rules behind them, the #55 ticks and the #18/#31 progress, are pure functions in `shared/` that the backend will use (#11). The gallery shows every chart state, inside `DataState`. Screen tasks use them and never rebuild them.
 
 ## References
-- Spec: `docs/spec/brief.md` Global rules (compact format), Charts, States, Not designed (Charts); `docs/spec/stories.md` US-09 criteria 1 to 3 and 5 to 7, US-15 criteria 1, 2, 8 and 9 (the chart), US-06 criteria 3 and 4, US-16 criterion 2 (the gauge); `docs/spec/demo-data.md` "What a first login shows" (Statistics axis $0 to $500, gauge $16,250 of $20,000)
+- Spec: `docs/spec/brief.md` Global rules (compact format), Charts, States, Not designed (Charts); `docs/spec/stories.md` US-09 criteria 1 to 3 and 5 to 7, US-15 criteria 1, 2, 8 and 9 (the chart), US-06 criteria 3 and 4, US-16 criterion 2 (the gauge); `docs/spec/demo-data.md` "What a first login shows" (Statistics highest bar $322.00, which #91 amended puts on a $0 to $400 axis where the file says $0 to $500; gauge $16,250 of $20,000)
 - Figma (budget 0, no MCP calls: PNGs and `docs/figma/components/` only; neither export holds a chart):
   - 104. Overview `66:4732`: Statistics section `66:4933` (bars `Graph bar 01` / `Bar` `411:7368` and siblings, no component), Goals section `405:5491` with the frame `Target vs Achievement Meter` `407:5628` (no component). PNG `docs/figma/104. Overview.png`
   - Flattened (#37): 109. Expenses `66:5698` (Monthly Comparison chart), 110. Goals `66:5829` (the same gauge in Savings Goal). PNGs with the same names in `docs/figma/`
@@ -19,9 +19,9 @@ The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 10
 
 ## Scope
 - **Shared rules** in `shared/src/chart/`, exported from the package root, pure and tested in `shared/test/`. The backend uses them in tasks 014, 017, 024 and 025; the frontend never calls them (#11).
-  - `axisTicks(highest: Money): Money[]`: the five y-axis ticks of a bar chart (#55, #91): $0 and 4 equal steps up to the top. The top is the smallest "nice" value (1, 2, 2.5 or 5 times a power of 10) at or above `highest` whose step (top / 4) is a whole number of cents (#91 a) and whose 5 labels are exact in the compact format (#91 b): `formatCompactMoney` shows each tick without rounding (under $1,000 always; with k a multiple of $100; with M a multiple of $100,000; #11, #82). `highest` is the largest value of both series. It throws a `RangeError` for a highest of 0 or less (all zero is the empty state, never an axis, #55) and for anything that is not integer cents.
-    - The tops this allows, checked against `formatCompactMoney` while detailing: $0.20, $1, $2, $5, $10, $20, $25, $50, $100, $200, $250, $500, $1k, $2k, $10k, $20k, $50k, $100k, $200k, $250k, $500k, $1M, $2M, $10M, $20M, $50M, $100M, $200M, $250M, $500M, then every nice value from $1,000M up.
-    - The nice values it skips: below $0.20, $0.25, $0.50 and $2.50 (steps not whole cents); $2.5k and $5k (a `$1.2k` label), $25k (`$6.2k`), $2.5M and $5M (`$1.2M`), $25M (`$6.2M`).
+  - `axisTicks(highest: Money): Money[]`: the five y-axis ticks of a bar chart (#55, #91): $0 and 4 equal steps up to the top. The top is the smallest "nice" value (1, 2, 2.5, 4, 5, 6 or 8 times a power of 10, #91 amended) at or above `highest` whose step (top / 4) is a whole number of cents (#91 a) and whose 5 labels are exact in the compact format (#91 b): `formatCompactMoney` shows each tick without rounding (under $1,000 always; with k a multiple of $100; with M a multiple of $100,000; #11, #82). `highest` is the largest value of both series. It throws a `RangeError` for a highest of 0 or less (all zero is the empty state, never an axis, #55) and for anything that is not integer cents.
+    - The tops this allows, checked against `formatCompactMoney` while detailing: $0.04, $0.08, $0.20, $0.40, $0.60, $0.80; then 1, 2, 4, 6 and 8 times every power of 10 from $1 up; 5 times every power of 10 from $5 up except $5k and $5M; and 2.5 times a power of 10 at $25, $250, $250k, $250M, $2,500M and up.
+    - The nice values it skips: $0.01, $0.02, $0.05, $0.06, $0.10, $0.25, $0.50 and $2.50 (steps not whole cents); $2.5k and $5k (a `$1.2k` label), $25k (`$6.2k`), $2.5M and $5M (`$1.2M`), $25M (`$6.2M`).
   - `goalProgress(present: Money, target: Money): number`: Present / Target as a fraction from 0 to 1, capped at 1 when Present exceeds Target (#18, #31). It throws a `RangeError` for a Target of 0 or less, a negative Present, or anything that is not integer cents. It is a fraction for drawing, never shown as a number.
   - Integer money (#11): ticks are built from integer cents without a float. The guard `shared/test/integer-money-source.test.ts` also checks `chart/`.
 - **Components** in `frontend/src/components/<CodeName>/`, CSS Modules and SVG attributes from tokens only. Every value is measured on the PNGs at 2x and halved (#65); new tokens go to `tokens.md` and `tokens.css` with their source. No new dependency: the SVG is written by hand.
@@ -48,7 +48,7 @@ The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 10
 - Gallery sections (sample data written in the gallery, ticks included, so the frontend computes nothing; no network):
   - `ChartLegend`: "This week" / "Last week" and "This year" / "Last year".
   - `ComparisonBarChart`, each in a white `Card` with a header row (a plain text stand-in for the screen's control, then `ChartLegend`):
-    - Statistics sample, 728 wide like 104 (two card widths and a gap): `19 Mon` to `25 Sun`, last week's highest $322.00, ticks $0, $125, $250, $375, $500, this week `null` from Fri to Sun (as on the demo first login).
+    - Statistics sample, 728 wide like 104 (two card widths and a gap): `19 Mon` to `25 Sun`, last week's highest $322.00, ticks $0, $100, $200, $300, $400 (#91 amended; `demo-data.md` still says $0 to $500), this week `null` from Fri to Sun (as on the demo first login).
     - Expenses sample, 1104 wide like 109 (three card widths, two gaps): `Jan` to `Dec`, this year `null` for Nov and Dec.
     - `DataState` states of the Statistics sample: loading (the skeleton), all zero (the empty message "No expenses this week or last week", #91 c), error (Retry), and ready.
   - `TargetVsAchievementMeter`: $12,500 of $20,000 (104), $16,250 of $20,000 (demo), $0 of $20,000, $25,000 of $20,000 (over-achieved, full arc), $1,000,000,000 of $1,000,000,000 (`$1,000M`).
@@ -61,8 +61,8 @@ The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 10
 - Tooltips, hover styles and any chart interaction (#20, general rule).
 
 ## Acceptance criteria
-1. Given `axisTicks`, then a highest value of $322.00 gives $0, $125, $250, $375, $500; $500.00 gives a top of $500; $1.00 gives $0, $0.25, $0.50, $0.75, $1; $20,000.00 gives a top of $20,000. The top is the smallest allowed nice value at or above the highest (#55, #91).
-2. Given a highest value whose #55 top has a step that is not a whole cent, then the next nice value is taken (#91 a): $2.30 gives $0, $1.25, $2.50, $3.75, $5; $0.40 gives $0, $0.25, $0.50, $0.75, $1; $0.01 gives $0, $0.05, $0.10, $0.15, $0.20. Given a highest value whose top would have a label the compact format cannot show exactly, then the next nice value is taken (#91 b): $22,000 gives $0, $12,500, $25,000, $37,500, $50,000 (`$0`, `$12.5k`, `$25k`, `$37.5k`, `$50k`); $2,000.01 gives a top of $10,000 ($2,500 and $5,000 are skipped); $2,000,000.01 gives a top of $10,000,000. Every tick is integer cents. Given a highest of 0, a negative one or one that is not integer cents, then it throws a `RangeError` (#11, #55).
+1. Given `axisTicks`, then a highest value of $322.00 gives $0, $100, $200, $300, $400; $500.00 gives $0, $125, $250, $375, $500; $500.01 gives a top of $600; $1.00 gives $0, $0.25, $0.50, $0.75, $1; $5,500 gives $0, $1,500, $3,000, $4,500, $6,000 (`$1.5k` to `$6k`); $7,000 gives a top of $8,000; $20,000.00 gives a top of $20,000. The top is the smallest allowed nice value (1, 2, 2.5, 4, 5, 6 or 8 times a power of 10) at or above the highest (#55, #91 amended).
+2. Given a highest value whose next nice value has a step that is not a whole cent, then that value is skipped (#91 a): $2.30 gives $0, $1, $2, $3, $4 ($2.50 skipped); $0.45 gives $0, $0.15, $0.30, $0.45, $0.60 ($0.50 skipped); $0.01 gives $0, $0.01, $0.02, $0.03, $0.04. Given a highest value whose next nice value would have a label the compact format cannot show exactly, then that value is skipped (#91 b): $2,100 gives $0, $1,000, $2,000, $3,000, $4,000 (`$1k` to `$4k`; $2,500 skipped); $4,500 gives a top of $6,000 ($5,000 skipped); $22,000 gives $0, `$10k`, `$20k`, `$30k`, `$40k` ($25,000 skipped); $2,000,000.01 gives a top of $4,000,000 ($2,500,000 skipped). Every tick is integer cents. Given a highest of 0, a negative one or one that is not integer cents, then it throws a `RangeError` (#11, #55).
 3. Given `goalProgress`, then $12,500 of $20,000 gives 0.625, $16,250 of $20,000 gives 0.8125, $0 gives 0, and $25,000 of $20,000 gives 1 (#18, #31). Given a Target of 0 or less, a negative Present or an amount that is not integer cents, then it throws a `RangeError`.
 4. Given the `shared/src/chart/` source, then the integer money guard finds no float money (#11).
 5. Given `ComparisonBarChart` with the ticks $0, $125, $250, $375, $500, then the y labels read `$0`, `$125`, `$250`, `$375`, `$500` from the bottom, right-aligned in Gray/03 and centered on five 1px Gray/06 grid lines 36 apart, as in 104 and 109. Given ticks up to $50,000, then they read `$0`, `$12.5k`, `$25k`, `$37.5k`, `$50k`; given ticks up to $250, `$0`, `$62.50`, `$125`, `$187.50`, `$250` (#11, #82, #91).
@@ -82,8 +82,8 @@ The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 10
 ## Test scenarios
 | ID | Type | Scenario | Expected | Covers AC |
 |----|------|----------|----------|-----------|
-| T1 | unit | `axisTicks` on $322.00, $500.00, $1.00, $20,000.00; then each allowed top in Scope, exactly and one cent above it, from $0.20 to $5,000M | The listed ticks; 5 ticks, $0 first, equal steps; a highest equal to an allowed top gives that top, one cent more gives the next allowed top | 1 |
-| T2 | unit | `axisTicks` on the #91 cases: $2.30, $0.40, $0.07, $0.01 (a); $22,000, $2,000.01, $5,000, $25,000, $2,000,000.01 (b); and every tick of every case | The ticks AC2 lists ($5,000 and $25,000 give $10,000 and $50,000); every tick integer cents, and `formatCompactMoney` of every tick reads back to that amount exactly | 2 |
+| T1 | unit | `axisTicks` on $322.00, $500.00, $500.01, $1.00, $5,500, $7,000, $20,000.00; then each allowed top in Scope, exactly and one cent above it, from $0.04 to $8,000M | The ticks AC1 lists ($5,500 gives `$6k`, $7,000 gives `$8k`); 5 ticks, $0 first, equal steps; a highest equal to an allowed top gives that top, one cent more gives the next allowed top | 1 |
+| T2 | unit | `axisTicks` on the #91 cases: $2.30, $0.45, $0.09, $0.05, $0.01 (a); $2,100, $4,500, $22,000, $25,000, $2,000,000.01 (b); and every tick of every case | The ticks AC2 lists ($2,100 gives `$4k`; $0.09 gives $0.20, $0.05 gives $0.08, $25,000 gives $40,000); every tick integer cents, and `formatCompactMoney` of every tick reads back to that amount exactly | 2 |
 | T3 | unit | `axisTicks` on 0, -1, 1.5 cents | `RangeError` | 2 |
 | T4 | unit | `goalProgress` on the listed pairs; Target 0 and -1; Present -1; 1.5 cents | 0.625, 0.8125, 0, 1; `RangeError` for the rest | 3 |
 | T5 | unit | Integer money guard with `chart/` added | No match in `chart/` | 4 |
@@ -125,7 +125,7 @@ The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 10
 
 ## Human checkpoint (only if Gate: human)
 - The bar chart against 104 Statistics and 109 Monthly Comparison: axis column, grid, bars, group spacing, labels and legend; future periods without a teal bar (#55).
-- The y-axis rule (#55, #91): the demo axis $0 to $500, whole-cent steps for small values (#91 a), and only exact compact labels (#91 b), so a highest just over $2,000 gets a $10,000 top.
+- The y-axis rule (#55, #91 amended): nice values 1, 2, 2.5, 4, 5, 6 and 8, whole-cent steps for small values (#91 a), and only exact compact labels (#91 b), so a highest of $2,100 gets a $4,000 top. The demo axis is now $0 to $400 ($322 highest), while US-09 criterion 3 and `demo-data.md` still say $0 to $500.
 - The gauge against 104 and 110: arc, needle, labels and caption, at 0, 62.5%, 81.25% and over-achieved (#18, #31).
 - That progress and ticks come from the backend through the shared functions, and the components only draw them (#11).
 - Undesigned visuals: the chart skeleton, and the empty and error states in the chart's box with the header row kept.
@@ -167,6 +167,16 @@ The bar chart of 104 Statistics and 109 Expenses, its legend and the gauge of 10
 - The rule was checked against `formatCompactMoney` from `shared/dist` with a scratch script. Nice values it skips: below $0.20, $0.25, $0.50 and $2.50 (steps not whole cents); $2.5k, $5k, $25k, $2.5M, $5M and $25M (labels `$1.2k`, `$6.2k`, `$1.2M`, `$6.2M`). From $1,000M up every nice value is allowed. A consequence now in AC2 and the human checkpoint: a highest from $2,000.01 to $10,000 gets a $10,000 top.
 - Updated: Scope (`axisTicks` rule, the allowed and skipped tops, the gallery empty text), Out of scope, AC1, AC2, AC5, T1, T2, T8 and the human checkpoint. The demo axis ($322 gives $0 to $500) is unchanged.
 - INDEX: open questions none; rows 017 and 024 now cite #91 (the empty message texts).
+- Not started, as Marko asked. No Figma calls.
+
+### 2026-10-24, #91 amended
+- Marko extended the nice values to 1, 2, 2.5, 4, 5, 6 and 8 times a power of 10, filtered by the same rule (whole-cent steps, all 5 labels exact in the compact format). `docs/decisions.md` #91 now has the amended rule and examples, and the note "(amended 2026-10-24: nice values 1, 2, 2.5, 4, 5, 6, 8)".
+- Checked again against `formatCompactMoney` from `shared/dist` with the scratch script; every example in AC1 and AC2 was printed from it.
+  - The new values fill the gaps: $2,100 gets $4k (was $10k), $5,500 gets $6k, $7,000 gets $8k, $22,000 gets $40k (was $50k).
+  - Skipped now: $0.01, $0.02, $0.05, $0.06, $0.10, $0.25, $0.50 and $2.50 (steps not whole cents); $2.5k, $5k, $25k, $2.5M, $5M and $25M (labels). The smallest top is $0.04.
+  - This supersedes the skip list and the "$2,000.01 to $10,000 gets a $10,000 top" consequence in the previous entry.
+- **The demo axis changes:** the highest bar of $322.00 now gets $0, $100, $200, $300, $400 (4 × $100 is a nice value), not $0 to $500. US-09 criterion 3 and `docs/spec/demo-data.md` ("What a first login shows") still say $0, $125, $250, $375, $500. `docs/spec/` was not changed (not asked); raised in the report so Marko can decide whether the spec follows.
+- Updated: References (demo data), Scope (`axisTicks` nice values, the allowed and skipped tops, the gallery Statistics ticks), AC1, AC2, T1, T2 and the human checkpoint. AC5 keeps $0 to $500 as given ticks (still a valid axis, for a highest from $400.01 to $500).
 - Not started, as Marko asked. No Figma calls.
 
 ## Metrics
