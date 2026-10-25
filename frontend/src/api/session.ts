@@ -1,4 +1,4 @@
-import { authContract, type CurrentUser, type LoginRequest } from '@finebank/shared';
+import { authContract, type CurrentUser, type LoginRequest, type SignUpRequest } from '@finebank/shared';
 import {
   matchMutation,
   MutationCache,
@@ -15,6 +15,7 @@ import { ApiError, apiRequest } from './client';
 
 const sessionQueryKey = ['session'] as const;
 const loginMutationKey = ['session', 'login'] as const;
+const signUpMutationKey = ['session', 'signUp'] as const;
 
 /** Who is signed in, from `GET /api/auth/me` (#3). */
 export type Session = { status: 'checking' } | { status: 'signedIn'; user: CurrentUser } | { status: 'signedOut' };
@@ -50,13 +51,19 @@ export function useSession(): Session {
   return query.isError ? { status: 'signedOut' } : { status: 'checking' };
 }
 
-/** `POST /api/auth/login`. On success the user goes into the session, and earlier cached data is removed (#39). */
-export function useLogin() {
+/**
+ * A request that starts a session: login or sign up. On success the user goes into the session, and earlier
+ * cached data is removed (#39).
+ */
+function useSessionStart<Request>(
+  mutationKey: readonly string[],
+  mutationFn: (request: Request) => Promise<CurrentUser>,
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationKey: loginMutationKey,
-    mutationFn: (request: LoginRequest) => apiRequest(authContract.login, request),
-    // The variables hold the password: drop them as soon as the Login screen is gone.
+    mutationKey,
+    mutationFn,
+    // The variables hold the password: drop them as soon as the screen is gone.
     gcTime: 0,
     // A session check still running was sent without the new cookie: its 401 must not end the new session.
     onMutate: () => queryClient.cancelQueries({ queryKey: sessionQueryKey }),
@@ -64,13 +71,28 @@ export function useLogin() {
   });
 }
 
+/** `POST /api/auth/login` (#14). */
+export function useLogin() {
+  return useSessionStart(loginMutationKey, (request: LoginRequest) => apiRequest(authContract.login, request));
+}
+
+/** `POST /api/auth/signup`: the new account is signed in for 30 days, with the demo dataset (#15, #63, #78). */
+export function useSignUp() {
+  return useSessionStart(signUpMutationKey, (request: SignUpRequest) => apiRequest(authContract.signUp, request));
+}
+
+const sessionStartMutationKeys = [loginMutationKey, signUpMutationKey];
+
 /**
- * True once a login on this screen started or succeeded. The screen then opens the return target itself, so
- * the guard does not race it to Overview.
+ * True once a login or a sign up on its screen started or succeeded. The screen then opens its target itself
+ * (the return target, or Overview), so the guard does not race it there.
  */
-export function useLoginInProgress(): boolean {
+export function useSessionStartInProgress(): boolean {
   const statuses = useMutationState({
-    filters: { mutationKey: loginMutationKey },
+    filters: {
+      predicate: (mutation) =>
+        sessionStartMutationKeys.some((mutationKey) => matchMutation({ mutationKey, exact: true }, mutation)),
+    },
     select: (mutation) => mutation.state.status,
   });
   return statuses.some((status) => status === 'pending' || status === 'success');

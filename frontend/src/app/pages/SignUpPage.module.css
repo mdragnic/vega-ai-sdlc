@@ -1,0 +1,64 @@
+/* The offsets and gaps measured on 102. Without a server error the form matches it; the error, not designed
+   (#6), sits above Sign up with the 16 gap of Login, left-aligned like the field errors. */
+.column {
+  padding-top: var(--space-sign-up-top);
+}
+
+/* Bold 24 as drawn. The 32px line keeps the gaps measured around it on the 4px grid (tokens.md). */
+.heading {
+  margin: var(--space-sign-up-logo-gap) 0 0;
+  color: var(--color-form-label);
+  font-size: var(--font-size-24);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-32);
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-sign-up-heading-gap);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-field-gap);
+}
+
+.terms {
+  margin: var(--space-form-section-gap) 0 0;
+  color: var(--color-input-active);
+  font: var(--font-regular-14-20);
+}
+
+/* Visual only (#15): teal text as drawn, no link. */
+.termsLink {
+  color: var(--color-primary);
+}
+
+.submit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-small-gap);
+  margin-top: var(--space-sign-up-terms-gap);
+}
+
+.divider,
+.google {
+  margin-top: var(--space-form-section-gap);
+}
+
+/* "Already have an account? Sign in here" as drawn on 102: gray, with the link in teal, centered. */
+.signIn {
+  margin: var(--space-sign-up-link-gap) 0 0;
+  color: var(--color-auth-muted);
+  font: var(--font-regular-16-24);
+  text-align: center;
+}
+
+.signInLink {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semi-bold);
+  text-decoration: none;
+}

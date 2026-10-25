@@ -3,7 +3,9 @@ import type { RouteObject } from 'react-router';
 import { GuestOnly } from '../routes/GuestOnly';
 import { paths } from '../routes/paths';
 import { RequireAuth } from '../routes/RequireAuth';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
+import { SignUpPage } from './pages/SignUpPage';
 import { RootPage } from './RootPage';
 
 // The component gallery and the popup page exist in development only. Vite replaces import.meta.env.DEV with
@@ -41,7 +43,14 @@ const appPaths = [
 /** Route table for React Router data mode. Screens are added by later tasks. */
 export const routes: RouteObject[] = [
   { path: '/', element: <RootPage /> },
-  { element: <GuestOnly />, children: [{ path: paths.login, element: <LoginPage /> }] },
+  {
+    element: <GuestOnly />,
+    children: [
+      { path: paths.login, element: <LoginPage /> },
+      { path: paths.signUp, element: <SignUpPage /> },
+      { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
+    ],
+  },
   { element: <RequireAuth />, children: appPaths.map((path) => ({ path, element: <RootPage /> })) },
   ...devRoutes,
 ];

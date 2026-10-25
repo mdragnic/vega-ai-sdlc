@@ -72,6 +72,16 @@
   --space-login-top: 160px;
   --space-login-logo-gap: 64px;
   --space-login-link-gap: 40px;
+  --space-sign-up-top: 112px;
+  --space-sign-up-logo-gap: 36px;
+  --space-sign-up-heading-gap: 32px;
+  --space-sign-up-terms-gap: 20px;
+  --space-sign-up-link-gap: 40px;
+  --space-forgot-password-top: 228px;
+  --space-forgot-password-logo-gap: 44px;
+  --space-forgot-password-heading-gap: 16px;
+  --space-forgot-password-text-gap: 36px;
+  --space-forgot-password-link-gap: 24px;
   --space-focus-ring-offset: 2px;
   --space-sidebar-x: 28px;
   --space-nav-item-gap: 16px;

@@ -1,23 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
-import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { FIXED_NOW, FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { computed, tokenColor } from '../helpers';
+import { box, computed, control, sessionCookie, signUp, tokenColor, within2 } from '../helpers';
 
-const SESSION_COOKIE = 'finebank_session';
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60;
-
-type User = { fullName: string; email: string; password: string };
-
-/** A registered user with an email no other test uses: the test database is shared by the run. */
-async function signUp(request: APIRequestContext): Promise<User> {
-  const user = { fullName: 'Tanzir Rahman', email: `${randomUUID()}@example.com`, password: 'abcdef12' };
-  const response = await request.post('/api/auth/signup', { data: user });
-  expect(response.status()).toBe(201);
-  return user;
-}
 
 const emailField = (page: Page) => page.getByRole('textbox', { name: 'Email Address' });
 const passwordField = (page: Page) => page.getByLabel('Password', { exact: true });
@@ -28,21 +17,6 @@ async function logIn(page: Page, email: string, password: string) {
   await emailField(page).fill(email);
   await passwordField(page).fill(password);
   await loginButton(page).click();
-}
-
-const box = async (locator: Locator) => (await locator.boundingBox())!;
-
-/** A measured position, within 2px. */
-const within2 = (actual: number, expected: number, what: string) =>
-  expect(Math.abs(actual - expected), `${what}: ${actual} vs ${expected}`).toBeLessThanOrEqual(2);
-
-/** The box with the border around an `Input` field. */
-const control = (field: Locator) => field.locator('..');
-
-/** The session cookie as the browser stores it. */
-async function sessionCookie(page: Page) {
-  const cookies = await page.context().cookies(`${FRONTEND_URL}/api/auth/me`);
-  return cookies.find((cookie) => cookie.name === SESSION_COOKIE);
 }
 
 // T17: a signed-out visitor returns to the page asked for, with its query and hash (AC6, AC13, #3).

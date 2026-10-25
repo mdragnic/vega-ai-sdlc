@@ -1,14 +1,8 @@
-import { randomUUID } from 'node:crypto';
-
 import type { APIRequestContext } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-
-/** Sign up fields with an email no other test uses: the test database is shared by the run. */
-function newUser() {
-  return { fullName: 'Tanzir Rahman', email: `${randomUUID()}@example.com`, password: 'abcdef12' };
-}
+import { newUser } from '../helpers';
 
 // T18: AC15, sign ups seed the demo dataset through the Vite proxy, also when they run at the same time (#73, #78).
 test('signs up 3 users at the same time, each with their own session', async ({ playwright }) => {

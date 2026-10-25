@@ -10,6 +10,13 @@
   margin: 0 auto;
 }
 
+/* Keyboard focus on every link in the column (#87): "Create an account", "Sign in here", "Back to login".
+   A mouse click shows no ring. */
+.column a:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
 /* The same size on 101, 102 and 103; the height follows the SVG viewBox. */
 .logo {
   flex-shrink: 0;

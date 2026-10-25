@@ -1,0 +1,54 @@
+Task 010 visual check, 2026-10-25. Rows with ink, measured on the 2x PNGs and on 2x renders at 1440x1024 (deviceScaleFactor 2), in CSS px (halved). Script: Node built-ins only, outside the repo. No Figma calls.
+
+102. Signup.png (left) vs 102-sign-up-2x.png (right): Name focused, "Tanzir Rahman", Email empty, Password 14 masked
+  y 224-284 (css 112-142.5)  x 1169-1712 (css 584.5-856.5)   | y 224-283 (css 112-142)  x 1168-1711 (css 584-856)
+  y 370-406 (css 185-203.5)  x 1227-1653 (css 613.5-827)     | y 368-404 (css 184-202.5)  x 1227-1653 (css 613.5-827)
+  y 500-524 (css 250-262.5)  x 1042-1127 (css 521-564)       | y 496-520 (css 248-260.5)  x 1042-1128 (css 521-564.5)
+  y 552-647 (css 276-324)  x 1040-1839 (css 520-920)         | y 548-643 (css 274-322)  x 1040-1839 (css 520-920)
+  y 707-732 (css 353.5-366.5)  x 1042-1255 (css 521-628)     | y 703-728 (css 351.5-364.5)  x 1042-1256 (css 521-628.5)
+  y 760-855 (css 380-428)  x 1040-1839 (css 520-920)         | y 756-851 (css 378-426)  x 1040-1839 (css 520-920)
+  y 916-940 (css 458-470.5)  x 1042-1187 (css 521-594)       | y 912-936 (css 456-468.5)  x 1042-1187 (css 521-594)
+  y 968-1063 (css 484-532)  x 1040-1839 (css 520-920)        | y 964-1059 (css 482-530)  x 1040-1839 (css 520-920)
+  y 1136-1163 (css 568-582)  x 1042-1675 (css 521-838)       | y 1132-1159 (css 566-580)  x 1042-1683 (css 521-842)
+  y 1208-1303 (css 604-652)  x 1040-1839 (css 520-920)       | y 1204-1299 (css 602-650)  x 1040-1839 (css 520-920)
+  y 1377-1403 (css 688.5-702)  x 1098-1781 (css 549-891)     | y 1373-1399 (css 686.5-700)  x 1096-1783 (css 548-892)
+  y 1472-1567 (css 736-784)  x 1040-1839 (css 520-920)       | y 1468-1563 (css 734-782)  x 1040-1839 (css 520-920)
+  y 1659-1690 (css 829.5-845.5)  x 1151-1728 (css 575.5-864.5) | y 1655-1686 (css 827.5-843.5)  x 1149-1729 (css 574.5-865)
+
+103. Forgot Password.png (left) vs 103-forgot-password-2x.png (right): empty
+  y 460-520 (css 230-260.5)  x 1169-1712 (css 584.5-856.5)   | y 456-515 (css 228-258)  x 1168-1711 (css 584-856)
+  y 618-664 (css 309-332.5)  x 1232-1648 (css 616-824.5)     | y 616-662 (css 308-331.5)  x 1232-1648 (css 616-824.5)
+  y 705-739 (css 352.5-370)  x 1144-1736 (css 572-868.5)     | y 709-743 (css 354.5-372)  x 1145-1735 (css 572.5-868)
+  y 757-791 (css 378.5-396)  x 1273-1607 (css 636.5-804)     | y 757-791 (css 378.5-396)  x 1272-1607 (css 636-804)
+  y 879-904 (css 439.5-452.5)  x 1042-1255 (css 521-628)     | y 879-904 (css 439.5-452.5)  x 1042-1256 (css 521-628.5)
+  y 932-1027 (css 466-514)  x 1040-1839 (css 520-920)        | y 932-1027 (css 466-514)  x 1040-1839 (css 520-920)
+  y 1092-1187 (css 546-594)  x 1040-1839 (css 520-920)       | y 1092-1187 (css 546-594)  x 1040-1839 (css 520-920)
+  y 1247-1278 (css 623.5-639.5)  x 1342-1537 (css 671-769)   | y 1247-1278 (css 623.5-639.5)  x 1342-1537 (css 671-769)
+
+Rows in order. 102: logo, "Create an account", Name label, Name input, Email label, Email input, Password label,
+Password input, terms line, Sign up, "or sign up with", Google, "Already have an account? Sign in here".
+103: logo, "Forgot Password?", text line 1, text line 2, Email label, Email input, Password Reset, "Back to login".
+
+Diff images: 102-sign-up-diff.png, 103-forgot-password-diff.png (PNG faded to gray; red = ink only in the render,
+blue = ink only in the PNG).
+
+Differences, 102 (Sign up):
+1. Everything from the Name label down is 2px higher, the heading 1px higher. The measured gaps from the logo to
+   the Name label total 102px, not on the 4px grid; the rounded gaps (36 and 32 around a 32px heading line) give 100.
+2. The terms line renders 4px wider (x 521-842 against 521-838) and heavier. Same color (#4B5768 sampled in both).
+   Likely a lighter weight in Figma; no type token below Regular (400), so no change.
+3. Page background #F3F3F3 (--color-gray-06) against #F4F5F7 in the PNG (token review, task 000; same as Login).
+4. Chrome on Windows draws text with subpixel antialiasing, slightly heavier than the Figma export.
+5. Text widths otherwise within 1px: heading 613.5-827 both, "Already have an account? Sign in here"
+   574.5-865 against 575.5-864.5, labels and placeholder equal.
+
+Differences, 103 (Forgot Password):
+1. Logo top 228 against 230 (#99 b).
+2. "Forgot Password?" 1px higher.
+3. The text lines are 24px apart, 103 draws 26 (no type token has that line height): line 2 sits where 103 draws
+   it, line 1 2px lower (354.5 against 352.5).
+4. Email field, Password Reset and "Back to login" at the drawn y (0px).
+5. Page background as on 102. Text widths within 1px.
+
+Rerun after the gate rejection: 102-sign-up-2x-rerun.png and 103-forgot-password-2x-rerun.png have 0 differing
+pixels from 102-sign-up-2x.png and 103-forgot-password-2x.png, so the differences above stand.

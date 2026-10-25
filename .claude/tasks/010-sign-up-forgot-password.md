@@ -1,6 +1,6 @@
 # Task 010: Sign up and Forgot Password screens
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 008, 009
 - Size: L
@@ -46,11 +46,11 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
     - The request sends the parsed values: Name and Email trimmed, Email lowercased, the password as typed (#15, #95).
   - Responses (#6, #15, #74, #97 a):
     - 201: the new user goes into the session query, every other cached query is removed (#39), and Overview opens, replacing Sign up in the history. The session cookie lasts 30 days (#63, set by task 007). The demo dataset was seeded in the same request (task 008); Overview shows it from task 013.
-    - 409 email taken: `authMessages.emailTaken` ("An account with this email already exists") under Email, with the red border and `aria-invalid`; nothing above "Sign up". "Sign in here" stays where it is drawn: the message is text only (#15 "with the Login link as designed": 102 draws that link at the bottom, not in the message). The typed values stay. The message goes when Email changes or the next submit starts.
+    - 409 email taken: `authMessages.emailTaken` ("An account with this email already exists") under Email, with the red border and `aria-invalid`; nothing above "Sign up". "Sign in here" stays where it is drawn: the message is text only (#15 "with the Login link as designed": 102 draws that link at the bottom, not in the message). The typed values stay. Focus moves to Email, the field with the error, so a screen reader reads the message through `aria-describedby` (the task 009 rule: focus goes to the first field with an error; no live region, `FieldError` unchanged; task 010 gate, Marko, 2026-10-25). The message goes when Email changes or the next submit starts.
     - 400 with `fieldErrors`: each message under its field (Name, Email, Password).
     - Any other 4xx in the shared shape: the server's `message` above "Sign up".
     - A 5xx, a network failure, or a response without the shared shape: "Something went wrong." above "Sign up", never the server's text.
-    - Server field errors do not move focus: "Sign up" keeps it (as on Login).
+    - A 400's server field errors do not move focus: "Sign up" keeps it (as on Login). After a 409 focus moves to Email (above).
   - While the request runs (US-02 criterion 8): "Sign up" shows the spinner (`ButtonPrimary` `loading`, which keeps focus, task 009), and a second click or Enter in a field sends nothing. It stays loading after the 201 until Overview opens.
 - **Forgot Password screen** at `paths.forgotPassword` (`/forgot-password`), `frontend/src/app/pages/ForgotPasswordPage.tsx` with `ForgotPasswordPage.module.css`, tokens only, under `GuestOnly` (#99 a):
   - Inside `AuthLayout`, as in 103 (US-03 criterion 1):
@@ -64,7 +64,7 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
   - No behavior (#16, US-03 criterion 3): "Password Reset", by click or by Enter in the field, with or without an email, sends no request, shows no validation, confirmation or error, does not navigate, and keeps the typed email. `noValidate`, so the browser's own bubble for an invalid email never shows.
   - Built so a reset flow can be added later without reworking the screen (#16): a `<form>` with react-hook-form like Login and Sign up, the Email field registered as `email`, "Password Reset" its submit button, and one submit handler that does nothing yet. A later flow adds the shared `emailSchema` as the resolver, the request and its states in that handler; the markup stays.
   - Signed-in users (#99 a): a signed-in user who opens it goes to Overview, as on Login and Sign up, and only the page background shows while the session check runs (#97 c).
-- **Routes** (`frontend/src/app/routes.tsx`): `paths.signUp` and `paths.forgotPassword` join Login under `GuestOnly` (#3, #99 a). `GuestOnly` is unchanged: after a successful sign up it sends to Overview, the same target the screen opens itself.
+- **Routes** (`frontend/src/app/routes.tsx`): `paths.signUp` and `paths.forgotPassword` join Login under `GuestOnly` (#3, #99 a). `GuestOnly` treats a sign up in progress like a login in progress (`useSessionStartInProgress`, both mutation keys): after a successful sign up the screen finishes and opens Overview itself, so no empty background shows if routes become lazy-loaded (task 010 gate, Marko, 2026-10-25).
 - **Tests** in `frontend/test/` (Vitest, Testing Library, MSW, `test/support/app.tsx`) and `e2e/tests/sign-up.spec.ts` and `e2e/tests/forgot-password.spec.ts` (Playwright, real stack). E2E sign ups use a unique email per test, from `e2e/helpers.ts`.
 
 ## Out of scope
@@ -80,7 +80,7 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
 3. Given I click "Sign in here", then `/login` opens without a page reload. Given keyboard focus on it, then the 2px teal ring with a 2px offset shows; a mouse click shows no ring (US-02 criterion 3; #87).
 4. Given a Name, an email that is not registered (in any case, with spaces around it) and a valid password, when I click "Sign up" or press Enter in a field, then one `POST /api/auth/signup` is sent with the trimmed Name, the trimmed lowercased email and the password as typed. It answers 201: I am signed in, Overview opens, and Back does not show Sign up. The session cookie expires 30 days later. The queries cached before are gone (US-02 criteria 4 and 7; #1, #3, #15, #39, #63, #78, #95).
 5. Given a field breaks its rule, when I submit, then no request is sent. Each failing field shows its first failing message under it (the texts in Scope) with the red border, `aria-invalid` and `aria-describedby`, and focus moves to the first failing field. After that the messages follow my typing. A Name of only spaces is "Name is required"; a 101-character Name, a 7-character password, a password of letters only and a 129-character password each give their message (US-02 criterion 5; #15, #87, #95).
-6. Given the email is already registered, when I click "Sign up", then I stay on Sign up and "An account with this email already exists" shows under Email with the red border and `aria-invalid`, and nothing shows above "Sign up". My values stay, "Sign in here" is where it is drawn, and "Sign up" keeps focus. The message goes when I change Email (US-02 criterion 6; #15).
+6. Given the email is already registered, when I click "Sign up", then I stay on Sign up and "An account with this email already exists" shows under Email with the red border and `aria-invalid`, and nothing shows above "Sign up". My values stay, "Sign in here" is where it is drawn, and focus moves to Email, so a screen reader reads the message through `aria-describedby`. The message goes when I change Email (US-02 criterion 6; #15; task 010 gate).
 7. Given I submitted, while the request runs, then "Sign up" shows the spinner, has `aria-busy="true"` and `aria-disabled="true"` and the disabled look, and keeps keyboard focus; clicking again or pressing Enter sends no second request. Given the request fails, then the error shows by #97 (a): a 4xx's server message above "Sign up" (a 400's field errors under their fields); for a 5xx, a network failure or a response without the shared shape "Something went wrong.", never "Internal server error". The button works again and still has focus (US-02 criterion 8; #6, #74, #97).
 8. Given I click "terms of service.", then nothing happens: no navigation, no request. Tab never stops on it (US-02 criterion 10; #15).
 9. Given I am signed in, when I open `/sign-up`, then Overview opens and the Sign up form never shows. While the session check runs, only the page background shows (US-02 criterion 11; #3, #97 c).
@@ -101,8 +101,8 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
 | T2 | unit | Type a password, click the eye twice, with a request spy | `type` password, text, password; no request; no submit | 2 |
 | T3 | unit | Submit `{ "  Tanzir Rahman ", " Marko@X.com ", "abcdef12" }` against MSW 201 from `/sign-up` with an earlier query in the cache | One request, body `{ fullName: "Tanzir Rahman", email: "marko@x.com", password: "abcdef12" }`; URL `/overview`; the session holds the user; the earlier query is gone; history has no Sign up entry | 4 |
 | T4 | unit | Submit empty; Name of spaces; 101-character Name; `a@b`; 7-character password; `abcdefgh`; 129-character password | Each AC5 message under its field, `aria-invalid`, focus on the first failing field, no request; fixing a field clears its message | 5, 18 |
-| T5 | unit | MSW 409 `{ message, fieldErrors: { email } }` with `authMessages.emailTaken`; then edit Email | Message under Email, `aria-invalid` on Email only; no alert above "Sign up"; values kept; focus on "Sign up"; editing Email to a valid one removes the message | 6 |
-| T6 | unit | Delayed sign up: click, click again, Enter in Password | Spinner, `aria-busy` and `aria-disabled`, not natively disabled; focus on the button; one request; focus kept after the response | 7 |
+| T5 | unit | MSW 409 `{ message, fieldErrors: { email } }` with `authMessages.emailTaken`; then edit Email | Message under Email, `aria-invalid` on Email only; no alert above "Sign up"; values kept; focus on Email, whose accessible description is the message; editing Email to a valid one removes the message | 6 |
+| T6 | unit | Delayed sign up answered 500: click, click again, Enter in Password | Spinner, `aria-busy` and `aria-disabled`, not natively disabled; focus on the button; one request; focus kept after the response | 7 |
 | T7 | unit | Sign up fails with 500 `{ message: "Internal server error" }`, 502 plain text, a network error, 403 `{ message: "<server text>" }`, 400 `{ message, fieldErrors: { fullName, password } }` | "Something went wrong." for 500, 502 and the network error, never "Internal server error"; the 403's text above "Sign up"; the 400's messages under Name and Password | 7 |
 | T8 | unit | Click "terms of service." and "Continue with Google", with a request spy | URL unchanged; no request | 8, 11 |
 | T9 | unit | `me` 200: `/sign-up`; `me` pending: `/sign-up`; `me` 500 on the first check: `/sign-up` | Overview; nothing but the page background while pending; the form after the failed first check (#97 b) | 9 |
@@ -112,7 +112,7 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
 | T13 | unit | `serverFieldErrors` and the form error rule in `client.ts`: 400 and 409 with `fieldErrors` for the screen's fields, a 409 with a field not on the screen, a 401, a 500 | Field errors for 400 and 409; the message above the button when no field matches; Login's tests pass unchanged | 6, 7, 17 |
 | T14 | unit | Source guard over `frontend/src` (as `login-source.test.ts`, extended to `signUpRequestSchema`'s messages and `authMessages.emailTaken`) | No literal match outside `@finebank/shared` (the dev gallery excluded, as in task 009) | 18 |
 | T15 | e2e | Sign up through the UI with a new email in mixed case | One `POST /api/auth/signup` answered 201; URL `/overview`; `GET /api/auth/me` gives the user with the lowercased email; `finebank_session` expires about 30 days later; Back does not show the Sign up form | 4 |
-| T16 | e2e | Sign up with an email registered through `e2e/helpers.ts` | Still `/sign-up`; the message under Email; the Email box border is the red token | 6 |
+| T16 | e2e | Sign up with an email registered through `e2e/helpers.ts` | Still `/sign-up`; the message under Email; focus on Email; the Email box border is the red token | 6 |
 | T17 | e2e | Signed in: open `/sign-up` and `/forgot-password` | `/overview` both times; neither form ever visible | 9, 16 |
 | T18 | e2e | Keyboard on Sign up: Tab through; click "Sign in here" with the mouse. Delay the sign up with `page.route` and press Enter | Focus order Name, Email, Password, eye, Sign up, Google, Sign in here (never "terms of service."); teal 2px ring with 2px offset on "Sign in here"; no ring after a mouse click; "Sign up" keeps focus while loading | 3, 7, 8 |
 | T19 | e2e | Keyboard on Forgot Password: Tab through; press Enter in Email with `abc`, and click "Password Reset" with a valid email, recording requests | Focus order Email, Password Reset, Back to login; ring on "Back to login"; no request to `/api` after the page load; no message; URL unchanged | 13, 14 |
@@ -164,6 +164,7 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
   - Forgot Password is a react-hook-form form whose submit does nothing, with `noValidate`;
   - the moved helpers: `serverFieldErrors` in `client.ts` (now also for a 409), the link ring in `AuthLayout`, the E2E helpers in `e2e/helpers.ts`.
 - The security review findings and their fixes.
+- Gate rework (Marko, 2026-10-25): after a successful sign up the screen opens Overview itself (`GuestOnly` waits for a sign up in progress, as for a login); after a 409 focus moves to Email and a screen reader reads the message.
 
 ## Log
 <!-- Claude appends: date, what was done, decisions, issues, validation results, review findings -->
@@ -201,9 +202,103 @@ The Sign up screen of 102 works end to end against the task 007 API: the shared 
 - INDEX: row 010 cites #99 as closed; the open questions line lists #94 only.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-10-25, built (`/next-task 010`)
+- **Reuse first**, as Scope asks:
+  - `serverFieldErrors(error, fieldNames)` moved from `LoginPage.tsx` to `frontend/src/api/client.ts`. It now reads the `fieldErrors` of any 4xx in the shared shape (the 400 of #74, the 409 of #15). `formErrorFor(error, fieldNames)` beside it gives the text above the submit button only when no field error is for the screen. Login uses both; its 32 unit tests and `login.spec.ts` pass unchanged.
+  - `session.ts`: `useLogin` and `useSignUp` share one `useSessionStart` (mutation key, `gcTime: 0`, `onMutate` cancels a running session check, `onSuccess` calls `setSessionUser`).
+  - The link ring moved from `LoginPage.module.css` to `AuthLayout.module.css` (`.column a:focus-visible`).
+  - E2E: `newUser`, `signUp`, `box`, `within2`, `control`, `sessionCookie`, plus `expectRing` and `expectNoRingOnMouseFocus` (review item 4), in `e2e/helpers.ts`; `login.spec.ts` and `demo-seeding.spec.ts` import them.
+- **Screens:**
+  - `SignUpPage.tsx` and `ForgotPasswordPage.tsx`, with their CSS modules, both under `GuestOnly` in `routes.tsx`. No new component. `GuestOnly`'s doc comment now names all three screens (review item 5); its code is unchanged.
+  - Forgot Password: a react-hook-form `form` (`noValidate`), Email registered as `email`, one submit handler that does nothing yet (#16).
+- **Tokens** (`docs/figma/tokens.md`, `tokens.css`), all measured on the 2x PNGs (Node built-ins script outside the repo, no Figma calls):
+  - Sign up: `--space-sign-up-top` 112, `-logo-gap` 36, `-heading-gap` 32, `-terms-gap` 20, `-link-gap` 40.
+  - Forgot Password: `--space-forgot-password-top` 228 (#99 b), `-logo-gap` 44, `-heading-gap` 16, `-text-gap` 36, `-link-gap` 24.
+  - The other gaps reuse `--space-form-field-gap`, `--space-form-section-gap` and `--space-form-small-gap`.
+- **Decisions made while building** (for Marko at the gate):
+  - **Heading line height 32.** Both headings are Bold 24 as drawn: a render matches the glyph widths of 102 and 103 exactly. With the 28px line of the Bold 24-28 style, the gaps round either to 40 and 36 (fields 2.04px low, outside the 2px check) or to 36 and 36 (heading 3px high). The 32px line rounds them to 36 and 32: heading 1px high, fields 2px high. My first estimate of the cap offset was wrong (5.3 for 3.96); a render showed the heading 3px high and corrected it.
+  - **Forgot Password text gap 16.** With the 24px line height (#99 detailing), the shorter pitch goes above the text: line 2, the field and the button sit where 103 draws them, line 1 is 2px low. With 12, line 1 would be 2px high and line 2 4px high.
+- **TDD:** each test file was written first and run red (a stub page or no route; the two ring tests in E2E before the ring moved), then green.
+  - Unit: `test/app/sign-up.test.tsx` (33), `test/app/forgot-password.test.tsx` (13); `test/api/client.test.ts` extended (T13); the source guard renamed `login-source.test.ts` > `auth-source.test.ts` and extended to the sign up messages (T14).
+  - E2E: `e2e/tests/sign-up.spec.ts` (10), `e2e/tests/forgot-password.spec.ts` (5).
+  - Every AC 1 to 18 maps to at least one test: T1 to T22 as in the table.
+- **Validation** (final run after the review fixes):
+  1. `npm run lint` exit 0; `npm run typecheck` exit 0.
+     - Rework loop 1: oxlint `consistent-function-scoping` on a test helper inside a test (moved to module scope).
+     - Rework loop 2: Prettier formatting in `sign-up.test.tsx` (applied).
+  2. `npm test`: shared 503/503, backend 331/331, frontend 655/655.
+  3. `npm run e2e`: 79/79 (15 new). The only console line is the gallery's expected "Money must be integer cents" demo (task 004).
+  4. Visual: `/sign-up` (Name focused, "Tanzir Rahman", Password 14 masked) and `/forgot-password` at 1440x1024.
+     - Files: `102-sign-up-1440x1024.png`, `103-forgot-password-1440x1024.png`, the 2x renders, `*-diff.png`, and the row table in `visual-differences.txt`.
+     - Differences on 102:
+       - (1) everything from the Name label down is 2px higher, the heading 1px (the measured gaps total 102, not on the grid);
+       - (2) the terms line is 4px wider and heavier, same color `#4B5768` (likely a lighter weight in Figma; no type token below Regular);
+       - (3) page background `#F3F3F3` against `#F4F5F7` (token review, as on Login);
+       - (4) Chrome on Windows draws text slightly heavier.
+     - Differences on 103:
+       - (1) logo top 228 against 230 (#99 b);
+       - (2) heading 1px higher;
+       - (3) text line 1 2px lower, line 2 at the drawn y (24 against 26 line pitch);
+       - (4) background as on 102;
+       - Email, Password Reset and "Back to login" at the drawn y.
+  5. Manual, Playwright MCP on `npm run dev` (`manual-checks.txt`):
+     - sign up from Login, then Overview, Back and reload (still signed in); cookie 30.00 days, httpOnly, SameSite Lax;
+     - the email in upper case again, field errors, loading with a held request (focus stays on Sign up), a 500 and a refused connection ("Something went wrong.");
+     - tab order and rings on both screens; "terms of service." and Google do nothing;
+     - Forgot Password sends no `/api` request in five tries;
+     - signed in, `/sign-up` and `/forgot-password` give Overview;
+     - screenshots `state-*.png`.
+     - The dev-server node processes left on ports 3000 and 5173 were stopped before each E2E run.
+- **Security review** (`evidence/010/security-review.md`): no findings. Checked XSS from server messages, the redirect after sign up, the cache clearing (#39), the password in the mutation cache (`gcTime: 0`), a 401 from sign up, the guards, CSRF and Forgot Password. The email-taken message is the discovery #15 accepts.
+- **Code review** (`superpowers:requesting-code-review`): ready with fixes; 0 critical, 1 important, 5 minor.
+  - Important 1, not changed, **for Marko**:
+    - `GuestOnly` lets a login finish on its screen (`useLoginInProgress`), but not a sign up. After a 201 it sends the now signed-in user to Overview itself, so if Overview were lazy-loaded the form would give way to the empty background until Overview loads, instead of the busy "Sign up".
+    - No user sees it today: all app routes are eager, and both navigations land together.
+    - The fix is small (the in-progress check covers both mutation keys, and the unit test goes through `GuestOnly`), but Scope says "`GuestOnly` is unchanged", so it is not mine to change.
+    - The unit test's comment now says it covers the screen alone.
+  - Minor 2, not changed, **for Marko**: the email-taken message is not announced to screen readers. Focus stays on Sign up and `FieldError` is not a live region; AC6 rules out an alert above Sign up, and a live region would change the shared `FieldError`.
+  - Minor 3, fixed: a unit test that the message above Sign up stays while typing and goes when the next submit starts, also when that submit stops at a field error. Mutation-checked: without `signUp.reset()` it fails.
+  - Minor 4, fixed: the ring assertions are shared helpers in `e2e/helpers.ts`.
+  - Minor 5, fixed: `GuestOnly`'s doc comment.
+  - Minor 6, not changed: the 401 exemption names only login. A sign up 401 cannot happen, and if it did it fails safe (signed out, cache cleared).
+- Also fixed after the manual check: the E2E Forgot Password test asserted an empty `validationMessage` after a valid value, which proved nothing. It now counts `invalid` events while submitting "abc"; on the live page that count is 2 without `noValidate` and 0 with it.
+- Undesigned states reuse the existing #6 and #87 patterns (`FieldError`, `FormError`, `ButtonPrimary` loading, the teal ring), so no new visual decision was needed.
+- No Figma calls. Gate: human, status `awaiting-human`.
+
+### 2026-10-25, gate: rejected (`/approve-task 010`)
+- Feedback, verbatim: "1. GuestOnly: treat a sign up in progress like a login in progress, so after a successful sign up the page finishes and opens Overview itself (no blank background if routes become lazy-loaded). 2. After a 409, move focus to the Email field (the task 009 rule: focus goes to the first field with an error), so screen readers announce the message through aria-describedby; no live region, no change to FieldError. Update AC6 and T5. Accept the 32px heading line height and the Forgot Password line pitch. Everything else at the gate is approved. Re-run all validation, then stop at the gate again."
+- Status back to `in-progress`; Human interventions 1, Rework loops 3.
+
+### 2026-10-25, gate feedback applied, validation and back to the gate
+- **Fixed** with TDD (each changed test ran red first):
+  - 1. `GuestOnly` waits for a sign up in progress as for a login. `useLoginInProgress` became `useSessionStartInProgress` (`frontend/src/api/session.ts`): it matches the login and sign up mutation keys exactly, pending or succeeded. `GuestOnly.tsx` uses it, and its comment names both. The unit test "stays busy after the 201 until Overview opens" now goes through `GuestOnly` with a slow, lazy Overview. Before the fix it failed (the form was gone after the 201); now Sign up stays busy until Overview opens.
+  - 2. After a 409 focus moves to Email. `SignUpPage` calls `setError` with `shouldFocus` for the first server field error of a 409, so a screen reader reads the message through `aria-describedby`. No live region; `FieldError` is unchanged. A 400's field errors still leave focus on Sign up (AC7, T7); making the focus move apply to every status fails that test.
+  - Tests:
+    - T5 asserts focus on Email and the message as Email's accessible description.
+    - T6 (focus kept after a failed request, AC7) now holds a 500 instead of a 409, since a 409 moves focus. Its assertions are unchanged.
+    - E2E T16 asserts focus on Email, the description, and the red border with focus. T18's last assertion follows the 409: focus on Email.
+- **Records**: Scope (the 409 bullet, the server field errors bullet, Routes), AC6, T5, T6 and T16 in this file, and one line in the Human checkpoint.
+- **Accepted by Marko** at the gate: the 32px heading line height and the Forgot Password line pitch.
+- **Validation** (all steps, in order):
+  1. `npm run lint` exit 0; `npm run typecheck` exit 0.
+  2. `npm test`: shared 503/503, backend 331/331, frontend 655/655.
+  3. `npm run e2e`: 79/79. Ports 3000 and 5173 were free before it.
+  4. Visual: `102-sign-up-2x-rerun.png` and `103-forgot-password-2x-rerun.png` have 0 differing pixels from the earlier renders, so the listed differences stand (`visual-differences.txt`).
+  5. Manual, Playwright MCP on `npm run dev`, all passed (`manual-checks.txt`, rerun section):
+     - after the 201 the busy form stays until Overview replaces it (a MutationObserver saw no empty page);
+     - the 409 focuses Email, which reads the message, with the red border;
+     - a 400 leaves focus on Sign up;
+     - the other checks as before; the `state-*.png` screenshots are from this run;
+     - the leftover dev-server processes were stopped afterwards.
+- **Reviews**: `security-review` and the code review were not run again; the feedback asked for two changes. My own check is in `security-review.md` (gate rework section): a signed-in visitor is still redirected, and the focus change adds no markup.
+- No Figma calls. Gate: human, status `awaiting-human`.
+
+### 2026-10-25, gate: approved (`/approve-task 010`)
+- Approved by human. Status `done` at 19:32.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-25 17:48
+- Finished: 2026-10-25 19:32
+- Human interventions: 2
+- Rework loops: 3
+- Notes on prompts that failed: none. Rework: 2 lint loops (oxlint function scoping on a test helper, Prettier). The `security-review` skill's diff against `origin/main` was empty for uncommitted changes; the sub-task was pointed at `git diff HEAD` and the untracked files. The `security-review` skill again asks for a reply with only its report; the report went into the evidence file and the task continued to the gate. Gate rework 1: GuestOnly waits for a sign up in progress, and a 409 moves focus to Email (both from the code review findings left for Marko).

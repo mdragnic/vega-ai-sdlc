@@ -4,7 +4,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { ApiError, apiRequest, formErrorMessage } from '../../src/api/client';
+import { ApiError, apiRequest, formErrorFor, formErrorMessage, serverFieldErrors } from '../../src/api/client';
 
 const echo = {
   method: 'PUT',
@@ -106,5 +106,55 @@ describe('formErrorMessage', () => {
     ['a response that fails its schema', new Error('Invalid input'), 'Something went wrong.'],
   ])('gives %s', (_name, error, text) => {
     expect(formErrorMessage(error)).toBe(text);
+  });
+});
+
+const withFields = (status: number, fieldErrors: Record<string, string>) =>
+  new ApiError(status, { message: 'Validation failed', fieldErrors }, true);
+
+// Task 010 T13: the field errors of a failed request for the fields on a screen (#15, #74), moved from Login.
+describe('serverFieldErrors', () => {
+  const fields = ['fullName', 'email', 'password'] as const;
+
+  it.each([
+    ['a 400', withFields(400, { fullName: 'Name is required', password: 'Password is required' })],
+    ['a 409', withFields(409, { fullName: 'Name is required', password: 'Password is required' })],
+  ])('gives the field errors of %s for the fields on the screen, in field order', (_name, error) => {
+    expect(serverFieldErrors(error, fields)).toEqual([
+      ['fullName', 'Name is required'],
+      ['password', 'Password is required'],
+    ]);
+  });
+
+  it('gives the email taken message of a 409 for Email', () => {
+    const taken = withFields(409, { email: 'An account with this email already exists' });
+
+    expect(serverFieldErrors(taken, fields)).toEqual([['email', 'An account with this email already exists']]);
+  });
+
+  it.each([
+    ['a 409 with a field not on the screen', withFields(409, { keepSignedIn: 'Invalid input' })],
+    ['a 401 without field errors', shared(401, 'Email or password is incorrect')],
+    ['a 500 with field errors', withFields(500, { email: 'Enter a valid email address' })],
+    ['a made-up error body', madeUp(400)],
+    ['a network failure', new TypeError('Failed to fetch')],
+  ])('gives none for %s', (_name, error) => {
+    expect(serverFieldErrors(error, fields)).toEqual([]);
+  });
+});
+
+// Task 010 T13: the text above the submit button only when no field error shows under a field (#97 a).
+describe('formErrorFor', () => {
+  const fields = ['email', 'password'] as const;
+
+  it.each([
+    ['a 400 with field errors for the screen', withFields(400, { email: 'Enter a valid email address' }), undefined],
+    ['a 409 with field errors for the screen', withFields(409, { email: 'Taken' }), undefined],
+    ['a 409 with a field not on the screen', withFields(409, { fullName: 'Name is required' }), 'Validation failed'],
+    ['a 401', shared(401, 'Email or password is incorrect'), 'Email or password is incorrect'],
+    ['a 500', shared(500, 'Internal server error'), 'Something went wrong.'],
+    ['a network failure', new TypeError('Failed to fetch'), 'Something went wrong.'],
+  ])('gives %s', (_name, error, text) => {
+    expect(formErrorFor(error, fields)).toBe(text);
   });
 });

@@ -31,6 +31,25 @@ export function formErrorMessage(error: unknown): string {
   return genericErrorMessage;
 }
 
+/**
+ * A failed request's field errors for the fields on a screen, in the screen's order: the `fieldErrors` of a
+ * 4xx in the shared shape, such as a 400 (#74) or the 409 of an email already registered (#15). Empty when
+ * none of them is for one of these fields.
+ */
+export function serverFieldErrors<Name extends string>(error: unknown, fieldNames: readonly Name[]): [Name, string][] {
+  if (!(error instanceof ApiError) || !error.fromServer || error.status < 400 || error.status >= 500) return [];
+  const fieldErrors = error.body.fieldErrors ?? {};
+  return fieldNames.flatMap((name) => (fieldErrors[name] ? [[name, fieldErrors[name]] as [Name, string]] : []));
+}
+
+/**
+ * The text above a form's submit button for a failed request (#97 a), or none when the failure has field
+ * errors for the screen's fields, which show under them instead.
+ */
+export function formErrorFor(error: unknown, fieldNames: readonly string[]): string | undefined {
+  return serverFieldErrors(error, fieldNames).length === 0 ? formErrorMessage(error) : undefined;
+}
+
 /** The browser's IANA time zone, sent with every request (#54). */
 export function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;

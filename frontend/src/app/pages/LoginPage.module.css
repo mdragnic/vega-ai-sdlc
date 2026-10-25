@@ -42,9 +42,3 @@
   line-height: var(--line-height-24);
   text-decoration: none;
 }
-
-/* Keyboard focus (#87). A mouse click shows no ring. */
-.createAccount:focus-visible {
-  outline: var(--border-width-focus-ring) solid var(--color-primary);
-  outline-offset: var(--space-focus-ring-offset);
-}

@@ -1,0 +1,46 @@
+Task 010 manual checks, 2026-10-25, Playwright MCP on `npm run dev` (Chromium, 1440x1024, fresh signed-out
+browser contexts; the MCP's own profile was still signed in and went to Overview, as GuestOnly should).
+No Figma calls.
+
+Sign up
+- Login > "Create an account": /sign-up, same document.
+- Sign up "  Manual Tester ", "manual-1792948618772@Example.com", "abcdef12": one POST /api/auth/signup, then
+  /overview. GET /api/auth/me: 200 {"fullName":"Manual Tester","email":"manual-1792948618772@example.com",
+  "username":"manual1792948618772"} (name trimmed, email lowercased).
+- finebank_session: expires in 30.00 days, httpOnly, SameSite Lax.
+- Back: /login, which sends the signed-in user to /overview; the Sign up form never shows. Reload: /overview.
+- Signed in, /sign-up and /forgot-password: /overview, no input rendered.
+- Empty submit: focus on Name; "Name is required | Email is required | Password is required" (state-field-errors.png).
+- 101-character Name, "a@b", "abcdefgh": "Name must be at most 100 characters | Enter a valid email address |
+  Password must contain at least one letter and one number".
+- The registered email in upper case: stays on /sign-up; "An account with this email already exists" under Email
+  with the red border; no alert above Sign up; focus on "Sign up" (state-email-taken.png).
+- Held request, Enter on the focused button: aria-busy true, focus on "Sign up" (state-loading.png).
+- The held request answered 500 { message: "Internal server error" }: "Something went wrong." above Sign up,
+  focus on "Sign up" (state-server-error.png).
+- Connection refused: "Something went wrong.".
+- Tab order: Name > Email > Password > Show password > Sign up > Continue with Google > Sign in here; never
+  "terms of service.". Rings: solid 2px teal on the eye, the buttons and "Sign in here" (state-ring-sign-in-here.png).
+- Click "terms of service." and "Continue with Google": URL unchanged, no /api request.
+
+Forgot Password
+- Tab order: Email > Password Reset > Back to login, ring on "Back to login" (state-ring-back-to-login.png).
+- "Password Reset" empty (click), "abc" (Enter, click), valid email (click, Enter): no /api request, URL unchanged,
+  value kept, no alert, no aria-invalid (state-forgot-after-reset.png).
+- With novalidate removed from the form on the live page, submitting "abc" fires 2 `invalid` events (the browser
+  bubble); as built, 0. The E2E test uses this check.
+- "Back to login": /login.
+
+The leftover dev-server node processes on ports 3000 and 5173 were stopped (taskkill) before each E2E run.
+
+Rerun after the gate rejection, 2026-10-25, same setup
+- Sign up from Login: one POST /api/auth/signup, then /overview. A MutationObserver recorded every DOM state in
+  between: "/sign-up form busy", "/overview form busy", "/overview page"; never an empty page. Cookie 30.00 days.
+  Back and reload: /overview. Signed in, /sign-up and /forgot-password: /overview.
+- The registered email again, Enter on the focused Sign up: focus on "Email Address", its aria-describedby text
+  "An account with this email already exists", border rgb(231, 61, 28) (--color-special-red) with focus, no alert
+  (state-email-taken.png, Email focused). Changing Email removes the message.
+- A 400 with fieldErrors { fullName }: the message under Name, focus stays on "Sign up".
+- Field errors, the held request (focus on Sign up), the 500 and the refused connection, the tab orders and rings,
+  "terms of service." and Google, and Forgot Password (no /api request in five tries): as above. Screenshots
+  state-*.png are from this run.

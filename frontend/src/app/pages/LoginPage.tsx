@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
-import { ApiError, formErrorMessage } from '../../api/client';
+import { formErrorFor, serverFieldErrors } from '../../api/client';
 import { useLogin } from '../../api/session';
 import { googleUrl } from '../../assets/brand';
 import { AuthLayout, ButtonPrimary, ButtonSecondary, FormError, Input, RemindMe, TextDivider } from '../../components';
@@ -11,15 +11,8 @@ import { paths } from '../../routes/paths';
 import { RETURN_TO_PARAM, returnTarget } from '../../routes/return-to';
 import styles from './LoginPage.module.css';
 
-/** The fields a 400's `fieldErrors` can point to on this screen (#74). */
+/** The fields a failed request's `fieldErrors` can point to on this screen (#74). */
 const fieldNames = ['email', 'password'] as const;
-
-/** A 400's field errors for the fields on this screen; empty when none of them is one. */
-function serverFieldErrors(error: unknown): [(typeof fieldNames)[number], string][] {
-  if (!(error instanceof ApiError) || !error.fromServer || error.status !== 400) return [];
-  const fieldErrors = error.body.fieldErrors ?? {};
-  return fieldNames.flatMap((name) => (fieldErrors[name] ? [[name, fieldErrors[name]] as const] : []));
-}
 
 /**
  * 101. Login (US-01): email and password against the task 007 API. The shared schema checks the fields and
@@ -47,13 +40,12 @@ export function LoginPage() {
         void navigate(returnTarget(searchParams.get(RETURN_TO_PARAM)), { replace: true });
       },
       onError: (error) => {
-        for (const [name, message] of serverFieldErrors(error)) setError(name, { type: 'server', message });
+        for (const [name, message] of serverFieldErrors(error, fieldNames)) setError(name, { type: 'server', message });
       },
     });
   });
 
-  const formError =
-    login.isError && serverFieldErrors(login.error).length === 0 ? formErrorMessage(login.error) : undefined;
+  const formError = login.isError ? formErrorFor(login.error, fieldNames) : undefined;
 
   return (
     <AuthLayout className={styles.column}>
