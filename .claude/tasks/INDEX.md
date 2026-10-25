@@ -3,7 +3,7 @@
 Status values: todo | in-progress | awaiting-human | done | blocked
 `/next-task` picks the first task that is `todo` and whose dependencies are all `done`.
 
-Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 009; the rest are outline rows, detailed by `/next-task` when picked.
+Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 010; the rest are outline rows, detailed by `/next-task` when picked.
 
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
@@ -17,7 +17,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #3 #14 #15 #39 #46 #62 #63 #67 #74 #75 #78 #79 #80 #95 | human | 000 | done |
 | 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #11 #24 #25 #39 #53 #54 #56 #57 #77 #78 #80 #85 #96, `demo-data.md`; `VisibleTransactions` (added at the start) | human | 007 | done |
 | 009 | Login screen and route protection | US-01 (1 to 12, 14, 15), US-04 (12), #3 #14 #39 #74 #87 #95 #97 #98; return target a relative in-app path only; links get the #87 teal :focus-visible ring; ButtonPrimary loading keeps keyboard focus on the button (task 005 review: focus moved to the page body while saving) | human | 002, 007 | done |
-| 010 | Sign up and Forgot Password screens | US-02 (1 to 8, 10 to 14), US-03, #15 #16 | human | 008, 009 | todo |
+| 010 | Sign up and Forgot Password screens | US-02 (1 to 8, 10 to 14), US-03, #1 #3 #15 #16 #37 #39 #51 #63 #65 #74 #78 #87 #95 #97 #99; reuse tasks 002, 007, 008 and 009, nothing redeclared; Google visual only until task 012 | human | 008, 009 | todo |
 | 011 | App shell slice: signed-in user, date, greeting, navigation, logout, unknown URLs | US-04, #3 #9 #10 #38 #39 #47 #54 #94; scrollbar-gutter: stable on the scroll container, so classic (Windows) scrollbars do not shift the header by 15px | human | 003, 009 | todo |
 | 012 | Google sign-in (needs the Google OAuth client, #75) | US-01 (13, 16), US-02 (9, 15), #2 #63 #75 #81 | human | 010, 011 | todo |
 | 013 | Overview: page grid and Total Balance | US-05, #17 #25 #57 | human | 004, 008, 011 | todo |
