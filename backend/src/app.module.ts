@@ -3,6 +3,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from './auth/auth.module.js';
+import { BankDataModule } from './bank-data/bank-data.module.js';
 import { ClockModule } from './common/clock/clock.module.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import { validationException } from './common/errors/validation-exception.js';
@@ -18,6 +19,7 @@ export class AppModule {
         TypeOrmModule.forRoot(databaseOptions(config)),
         ClockModule.forRoot(config),
         AuthModule.forRoot(config),
+        BankDataModule,
       ],
       providers: [
         { provide: APP_FILTER, useClass: ApiExceptionFilter },

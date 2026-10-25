@@ -44,12 +44,21 @@ describe('migrations', () => {
     );
   }
 
-  it('creates the users and sessions tables', async () => {
+  it('creates the users and sessions tables, and the finance tables of task 008', async () => {
     const tables = await query<{ name: string }>(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
     );
 
-    expect(tables.map((table) => table.name)).toEqual(['migrations', 'sessions', 'users']);
+    expect(tables.map((table) => table.name)).toEqual([
+      'accounts',
+      'bills',
+      'category_limits',
+      'migrations',
+      'savings_goals',
+      'sessions',
+      'transactions',
+      'users',
+    ]);
   });
 
   it('gives users a unique email and username and a nullable password hash', async () => {

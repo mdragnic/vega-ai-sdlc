@@ -1,0 +1,13 @@
+Read-only connection to backend/data/finebank.sqlite
+User manual-check-008-1792931396919@example.com id 2
+┌─────────────────┬────────┐
+│ (index)         │ Values │
+├─────────────────┼────────┤
+│ accounts        │ 5      │
+│ transactions    │ 3411   │
+│ bills           │ 14     │
+│ savings_goals   │ 84     │
+│ category_limits │ 6      │
+│ sessions        │ 1      │
+└─────────────────┴────────┘
+Accounts (id, type), oldest first: 1 credit-card, 2 checking, 3 savings, 4 investment, 5 loan

@@ -1,6 +1,6 @@
 # Task 008: Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 007
 - Size: L
@@ -54,7 +54,10 @@ The backend has the tables for accounts, transactions, bills, savings goals and 
     - `getAccount(userId, accountId)`: the account, or `null` when it does not exist or belongs to another user (#39).
     - `updateAccountDetails(userId, accountId, { bankName, branchName, accountType })`: stores the three fields (#26) and returns the updated account, or `null` (nothing changed) when it does not exist or belongs to another user. Validation of the fields is task 022's request schema.
     - `listTransactions(userId, filter)`: filters `accountId`, `direction`, `occurredFrom` (inclusive) and `occurredBefore` (exclusive) instants, `cursor`, `limit` (#77); newest first (`occurred_at` descending, then `id` descending). Returns `{ transactions, nextCursor }`; without `limit` it returns every match and `nextCursor` is `null`. The cursor is an opaque string made by the provider from the last row's timestamp and ID; a malformed one throws `InvalidCursorError` (task 020 maps it to 400). A `limit` that is not a positive integer throws a `RangeError`.
-  - Hiding entries dated after today, Complete-only sums, balances, totals and masking are app-service calculations of later tasks over this raw data (#57, #77).
+  - Complete-only sums, balances, totals and masking are app-service calculations of later tasks over this raw data (#57, #77). Hiding entries dated after today is the `VisibleTransactions` service below (added at the start, see Log).
+- **Visible transactions** (added by Marko at the start of the build, #53, #54, #77, #80), `backend/src/bank-data/visible-transactions.ts`, `VisibleTransactions` in `BankDataModule`:
+  - One app service that wraps `BankDataProvider.listTransactions` and always applies `occurredBefore` = the start of tomorrow in the user's time zone (the `X-Time-Zone` value, #54), from the injected Clock (#80), so entries dated after today are never shown or counted (#53). A caller's own `occurredBefore` is kept when it is earlier.
+  - Later tasks read transactions through it, never through the provider directly. A source test fails if code outside `src/bank-data/` and `src/demo/` calls `listTransactions` on the provider.
 - **E2E** (`e2e/tests/demo-seeding.spec.ts`): sign ups through the Vite proxy with the seeding in place.
 
 ## Out of scope
@@ -97,6 +100,7 @@ The backend has the tables for accounts, transactions, bills, savings goals and 
 13. Given the shared contract, then the five enums exist once in `shared/src/contract/`, and the entities' enum columns, the dataset schema and the provider types use them (#74).
 14. Given a user with seeded data, when the user row is deleted, then all their accounts, transactions, bills, goals and limits are deleted with it (foreign keys enforced).
 15. Given the real stack through the Vite proxy, when 3 users sign up at the same time, then all get 201 and each `me` returns its own user; each sign up's time is printed (#73, #78).
+16. Given `VisibleTransactions` with the Clock and a time zone, then it returns the provider's transactions dated up to today in that zone and none after: a transaction late in the evening today in Europe/Belgrade is listed and one just after midnight (tomorrow) is not, around midnight in two zones; a caller's earlier `occurredBefore` is kept; outside `src/bank-data/` and `src/demo/`, no backend source calls `listTransactions` (#53, #54, #77, #80).
 
 ## Test scenarios
 | ID | Type | Scenario | Expected | Covers AC |
@@ -119,6 +123,8 @@ The backend has the tables for accounts, transactions, bills, savings goals and 
 | T16 | unit | Account numbers: the bodies of sign up, login and `me` for a seeded user; the log of T8; a source guard over `backend/src` | None contains a full account number; the guard finds `accountNumber` only in `bank-data/` and `demo/` | 12 |
 | T17 | unit | Delete a seeded user's row | Their accounts, transactions, bills, goals and limits are gone; another user's rows stay | 14 |
 | T18 | e2e | `request` fixture through the Vite proxy: 3 sign ups with `Promise.all`, then `me` with each cookie jar | 201 each, `me` returns each own user; the times printed | 15 |
+| T19 | unit | `VisibleTransactions` on a user with transactions just before and after midnight: Clock and zone Europe/Belgrade (late evening today, just after midnight tomorrow), the same rows in America/New_York, the Clock moved past midnight in one zone only, a caller's `occurredBefore` earlier and later than tomorrow; the start of the next day across DST changes (one with no midnight) | Today's late evening listed, tomorrow's not, in both zones; the earlier `occurredBefore` kept, the later one capped; DST days start at their first instant | 16 |
+| T20 | unit | Source guard over `backend/src`: `listTransactions` outside `bank-data/` and `demo/`; sample code | No offenders; the sample calls are flagged | 16 |
 
 ## Validation steps (in this order, stop on first failure)
 1. Lint + typecheck pass (`npm run lint`, `npm run typecheck`).
@@ -138,6 +144,7 @@ The backend has the tables for accounts, transactions, bills, savings goals and 
 - Seeding inside the sign-up transaction: the measured time (unit test and development, recorded in the Log), the 3,000 ms ceiling, and that every other request waits for it while the single connection is busy.
 - Package and config changes: Zod from backend `devDependencies` to `dependencies` (approved at detailing); `nest-cli.json` assets; `backend/tsconfig.json` includes `scripts/`; `.prettierignore`; the `demo:generate` script.
 - The two existing tests changed for the new tables (`database-schema.test.ts`, `reset-database.test.ts`).
+- `VisibleTransactions` (added at the start): the start of tomorrow in the user's zone from the Clock, the cap on a caller's later `occurredBefore`, and the source guard on `listTransactions`.
 - The security review findings and their fixes.
 
 ## Log
@@ -173,9 +180,54 @@ The backend has the tables for accounts, transactions, bills, savings goals and 
 - INDEX: open questions #94 only.
 - Not started, as Marko asked. No Figma calls.
 
+### 2026-10-25, build started (`/next-task 008`)
+- Every decision the task cites is closed (#94 is open but not cited). Status `in-progress`.
+- **Addition to Scope by Marko** at the start: one app service, `backend/src/bank-data/visible-transactions.ts`, that wraps `BankDataProvider.listTransactions` and always applies `occurredBefore` = the start of tomorrow in the user's time zone (the `X-Time-Zone` value, #54) using the injected Clock (#80), so entries dated after today are never shown or counted (#53). Later tasks read transactions through it, never through the provider directly; a source test fails if code outside `bank-data/` and `demo/` calls `listTransactions` on the provider. Unit tests: a transaction today (late evening in Europe/Belgrade) is visible, one tomorrow is not, around midnight in two zones.
+  - Added to Scope ("Visible transactions"), AC16, T19 and T20, and the human checkpoint. The Scope line that left hiding future entries to later tasks now points at this service.
+  - Choices: the service method is `list(userId, timeZone, filter)`, not `listTransactions`, so the guard can flag every `listTransactions` outside `bank-data/` and `demo/`; a caller's `occurredBefore` earlier than tomorrow is kept (later tasks need past ranges such as last week or last month), a later one is capped; the start of tomorrow is computed with `Intl` (no new backend dependency), DST changes included.
+
+### 2026-10-25, build, validation and reviews (`/next-task 008`)
+- **Built** with TDD (each test file written and run red before its code):
+  - Shared enums: `shared/src/contract/{account,transaction,bill}.ts` (`accountTypeSchema`, `cardNetworkSchema`, `transactionDirectionSchema`, `transactionStatusSchema`, `billLogoSchema`).
+  - Entities: `bank-data/account.entity.ts`, `bank-data/transaction.entity.ts`, `bills/bill.entity.ts`, `goals/savings-goal.entity.ts`, `goals/category-limit.entity.ts`; migration `1792930295195-CreateFinanceTables` (generated, listed in `migrations/index.ts`).
+  - Generator `backend/scripts/generate-demo-data.ts` (`npm run demo:generate -w backend`), dataset `backend/src/demo/demo-dataset.json` (742,150 bytes, one record per line), loader `demo/demo-dataset.ts`, `DemoSeeder` and `DemoModule`; `AuthService.signUp` calls `seed` between the user insert and the session.
+  - `BankDataProvider`, `TypeOrmBankDataProvider`, `VisibleTransactions`, `BankDataModule` (imported by `AppModule`), `common/time-zone/start-of-next-day.ts`.
+  - Config: Zod moved to backend `dependencies` (same 4.6.7); `nest-cli.json` copies the JSON to `dist/demo/`; `backend/tsconfig.json` includes `scripts/`; `.prettierignore` has the JSON.
+  - Tests changed: `database-schema.test.ts` and `reset-database.test.ts` list the 5 new tables (the planned new outcome); `CapturingLogger` moved from `auth-logging.test.ts` into `test/helpers/capturing-logger.ts` to share it (no assertion changed).
+- **Decisions while building:**
+  - The transaction category CHECK is `("direction" = 'income') = ("category" IS NULL)`. The first form, `(expense AND category IS NOT NULL) OR (income AND category IS NULL)`, gave schema drift: the migration formatter (`--pretty`) wraps any CHECK over 50 characters, and TypeORM 1.1.2 reads back only a CHECK written on one line, so it saw the check as missing. The same rule in one comparison stays on one line; the drift test is green.
+  - The receipt PRNG is mulberry32 with the fixed seed `20221017`; the Figma row draws nothing and its ID is reserved, so no other row gets it.
+  - Seeding inserts the 5 accounts one by one (to get IDs), then multi-row INSERTs of `INSERT_BATCH_SIZE` = 1,000 rows: 4 statements for the transactions, one each for bills, goals and limits, with `updateEntity(false)`.
+  - The generator takes an optional output path argument, so a test runs it under Node's type stripping into a temp folder and compares the bytes with the committed file.
+  - `listTransactions` also throws a `RangeError` for an invalid `occurredFrom` or `occurredBefore` date (code review, see below); `VisibleTransactions` passes an invalid `occurredBefore` on to fail instead of replacing it with tomorrow.
+  - Vitest 5 defaults to `clearMocks: true`, so the "dataset read once at start" test starts its own app inside the test; the seeding time is printed with `process.stdout.write`, because Vitest 5's default reporter hides console output of passing tests.
+- **Measured seeding time (AC7):** 42 to 94 ms in the unit test on a file database over 5 runs (58, 42, 94, 70 and, in the final run, 63 ms), under the 3,000 ms ceiling. Whole sign ups: 273 ms on the development stack (scrypt N 2^17 plus seeding, through the Vite proxy); 103, 228 and 165 ms for the 3 concurrent E2E sign ups (scrypt N 2^14, `NODE_ENV=test`). Every other request waits while a sign up's transaction holds the single connection.
+- **Acceptance criteria to tests:** AC1 `finance-schema.test.ts`, `database-schema.test.ts` (drift, registered migrations); AC2 `demo-generator.test.ts` and the manual rerun; AC3 `demo-dataset-content.test.ts`, `demo-dataset-schema.test.ts`; AC4 and AC14 `demo-seeding.test.ts`; AC5 `demo-seeding.test.ts` (triggers on the 14th bill and the first transaction batch); AC6 `demo-seeding-io.test.ts`, `demo-seeding.test.ts` (concurrency), `demo-dataset-schema.test.ts` (broken file stops the app); AC7 `demo-seeding-io.test.ts`; AC8 to AC10 `bank-data-provider.test.ts`; AC11 `first-login.test.ts` (every value of "What a first login shows"); AC12 `demo-seeding.test.ts` and `bank-data-source.test.ts`; AC13 `finance-enums.test.ts`, the entities, dataset schema and provider types import them (typecheck); AC15 `e2e/tests/demo-seeding.spec.ts`; AC16 `visible-transactions.test.ts`, `start-of-next-day.test.ts`, `bank-data-source.test.ts`.
+- **Validation** (final run after the review fixes; outputs in `.claude/tasks/evidence/008/`):
+  1. `npm run lint` exit 0; `npm run typecheck` exit 0. Rework loop 1: the first lint run had 16 oxlint findings in the new code (function scoping, `vi.fn` type parameters, error `cause`, two unsafe type assertions in `src/` replaced by type guards, sort compare, base-to-string, unnecessary assertions); fixed and re-run.
+  2. `npm test`: shared 503/503, backend 330/330, frontend 474/474.
+  3. `npm run e2e`: 51/51 (1 new). The "Money must be integer cents, got 12.5" console line comes from the component gallery's deliberate "Render a bad amount" button, also present in task 007's run.
+  4. Visual: none. This task has no UI, so nothing was compared with `docs/figma/`. No Figma calls.
+  5. Manual: `npm run demo:generate -w backend` left the staged JSON unchanged (same SHA-256, `git diff --exit-code` 0, `demo-generate.txt`); `npm run migrate` applied `CreateFinanceTables1792930295195` to the development database and a second run reported no pending migrations (`migrate.txt`); with `npm run dev` and Playwright MCP, a sign up by `fetch` from the page took 273 ms and the new user has 5 accounts, 3,411 transactions, 14 bills, 84 goals, 6 limits (read-only count, `dev-session-check.md`, `dev-row-counts.txt`). `npm run build` exit 0 (`build.txt`), `dist/demo/demo-dataset.json` present. The dev servers' leftover node processes on ports 3000 and 5173 were stopped before E2E.
+- **Security review** (`security-review.md`): no findings. Checked SQL parameterisation, scoping of every provider method, cursor crafting, logs and responses during a failed sign up, the loader and seeder, the generator, the time zone input, and the attack surface (no new routes).
+- **Code review** (`superpowers:requesting-code-review`): ready with fixes; 0 critical, 2 important, 4 minor.
+  - Important: (1) this Log entry with the measured times was missing; added. (2) No security-review record on disk; the review had run with no findings, its report is now `evidence/008/security-review.md`.
+  - Minor, all fixed: an invalid `occurredFrom` date silently returned no rows (now a `RangeError`, tests added, `VisibleTransactions` passes an invalid `occurredBefore` on); `TRANSACTION_BATCH_SIZE` renamed `INSERT_BATCH_SIZE`, its comment corrected (TypeORM writes numbers into the SQL, so a row binds at most 9 values); tests added for clocks going back at midnight (Santiago 5 Apr 2026, Cairo 29 Oct 2026; the code already handled them); the T10 check that could not fail now compares each concurrent user's rows with the whole dataset.
+  - The reviewer cross-checked `startOfNextDay` against a brute-force scan of 23,360 instants in 16 zones (0 mismatches) and the generator constants line by line against `demo-data.md`.
+  - Notes for later tasks: compare `bills.due_date` with a `YYYY-MM-DD` string of today in the user's zone, never a `Date` parameter (a `Date` binds as `YYYY-MM-DD HH:MM:SS.SSS`, which sorts after the plain date and would drop the bill due today), added to rows 015 and 023 in INDEX; a `Date` passed to raw `dataSource.query` throws in better-sqlite3, so keep date filters on the QueryBuilder.
+- No Figma calls. Gate: human, status `awaiting-human`.
+
+### 2026-10-25, approved (`/approve-task 008 approve`)
+- Approved by human (Marko), with one check before the commit: the password hash in `AuthService.signUp` (task 007 code) must be computed before `dataSource.transaction` opens, so no thread-pool await happens inside the transaction on the single shared SQLite connection; if it were inside, stop without committing.
+- **Checked:** it is outside. `backend/src/auth/auth.service.ts` awaits `this.passwords.hash(fields.password)` on the line before `this.dataSource.transaction(...)`; the transaction holds only the user insert, `DemoSeeder.seed` and the session, which are better-sqlite3 calls settling in microtasks.
+- **Test added** in `backend/test/auth-signup.test.ts`, "hashes the password before the transaction opens, and the transaction never yields to the event loop". On a real sign up it records better-sqlite3's `inTransaction` when `PasswordHasher.hash` starts and when it resolves (both must be `false`), and wraps `dataSource.transaction` to queue a `setImmediate` when the transaction opens, which must not have run when it ends (any thread-pool or timer await inside the transaction fails this, not only the hash).
+  - Red check: with the hash moved inside the transaction, the test failed with `expected [ true, true ] to deeply equal [ false, false ]`, and with that assertion skipped, the second one failed with `expected [ true ] to deeply equal [ false ]`. The code was restored (the diff of `auth.service.ts` against HEAD holds only the task 008 seeding lines) and the test passes.
+- Re-validated after the test: `npm run lint` exit 0, `npm run typecheck` exit 0, `npm test` shared 503/503, backend 331/331, frontend 474/474 (seeding 70 ms), `npm run e2e` 51/51.
+- Status `done`.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-25 13:02
+- Finished: 2026-10-25 14:34
+- Human interventions: 3
+- Rework loops: 1
+- Notes on prompts that failed: the `security-review` skill asks for a reply with "the markdown report and nothing else", which ended the turn mid-task; Marko had to ask to continue. Interventions: the scope addition at the start (`VisibleTransactions`), that resume, and the approval with the hash-before-transaction check (a test added). Rework: 1 lint loop (16 oxlint findings in new code).

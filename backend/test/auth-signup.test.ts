@@ -1,9 +1,10 @@
 import type { INestApplication } from '@nestjs/common';
 import { currentUserSchema, errorResponseSchema } from '@finebank/shared';
 import request from 'supertest';
-import { DataSource } from 'typeorm';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { DataSource, type EntityManager } from 'typeorm';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PasswordHasher } from '../src/auth/password.js';
 import { login, newUser, sessionCookie, setCookies, sha256Hex, signUp } from './helpers/auth.js';
 import { createTestApp } from './helpers/test-app.js';
 
@@ -184,5 +185,41 @@ describe('POST /api/auth/signup', () => {
     });
     expect(setCookies(response)).toEqual([]);
     expect(await sessionCount()).toBe(0);
+  });
+
+  // Task 008 gate: SQLite has one shared connection, so the sign-up transaction must never wait on the
+  // thread pool. scrypt runs there, so the hash is computed before the transaction opens (task 007 note).
+  it('hashes the password before the transaction opens, and the transaction never yields to the event loop', async () => {
+    const connection = (db.driver as unknown as { databaseConnection: { inTransaction: boolean } }).databaseConnection;
+    const hasher = app.get(PasswordHasher);
+    const hash = hasher.hash.bind(hasher);
+    const inTransactionWhileHashing: boolean[] = [];
+    vi.spyOn(hasher, 'hash').mockImplementation(async (password) => {
+      inTransactionWhileHashing.push(connection.inTransaction);
+      const result = await hash(password);
+      inTransactionWhileHashing.push(connection.inTransaction);
+      return result;
+    });
+    const transaction = db.transaction.bind(db) as (
+      run: (manager: EntityManager) => Promise<unknown>,
+    ) => Promise<unknown>;
+    const yielded: boolean[] = [];
+    vi.spyOn(db, 'transaction').mockImplementation(((run: (manager: EntityManager) => Promise<unknown>) =>
+      transaction(async (manager) => {
+        let immediateRan = false;
+        setImmediate(() => {
+          immediateRan = true;
+        });
+        const result = await run(manager);
+        yielded.push(immediateRan);
+        return result;
+      })) as never);
+
+    const response = await post(newUser());
+
+    expect(response.status).toBe(201);
+    expect(inTransactionWhileHashing).toEqual([false, false]);
+    // One transaction ran (the user, the demo data and the session), and nothing outside it ran meanwhile.
+    expect(yielded).toEqual([false]);
   });
 });

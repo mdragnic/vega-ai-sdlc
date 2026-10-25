@@ -15,14 +15,14 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 005 | Shared components: Popup, amount input, Dropdown | #31 #35 #60 #64 #69 #71 #84 #87 #90 (104.1, 110.1, 110.2; 106, 110, 111) | human | 001, 002, 003, 004 | done |
 | 006 | Shared components: comparison bar chart and target vs achievement gauge | #6 #11 #18 #20 #29 #31 #55 #82 #86 #87 #89 #91 #92 #93 (104, 109, 110) | human | 001, 004 | done |
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #3 #14 #15 #39 #46 #62 #63 #67 #74 #75 #78 #79 #80 #95 | human | 000 | done |
-| 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #11 #24 #25 #39 #53 #56 #57 #77 #78 #85 #96, `demo-data.md` | human | 007 | todo |
+| 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #11 #24 #25 #39 #53 #54 #56 #57 #77 #78 #80 #85 #96, `demo-data.md`; `VisibleTransactions` (added at the start) | human | 007 | done |
 | 009 | Login screen and route protection | US-01 (1 to 12, 14, 15), US-04 (12), #3 #14 #39; links get the #87 teal :focus-visible ring; ButtonPrimary loading keeps keyboard focus on the button (task 005 review: focus moved to the page body while saving) | human | 002, 007 | todo |
 | 010 | Sign up and Forgot Password screens | US-02 (1 to 8, 10 to 14), US-03, #15 #16 | human | 008, 009 | todo |
 | 011 | App shell slice: signed-in user, date, greeting, navigation, logout, unknown URLs | US-04, #3 #9 #10 #38 #39 #47 #54 #94; scrollbar-gutter: stable on the scroll container, so classic (Windows) scrollbars do not shift the header by 15px | human | 003, 009 | todo |
 | 012 | Google sign-in (needs the Google OAuth client, #75) | US-01 (13, 16), US-02 (9, 15), #2 #63 #75 #81 | human | 010, 011 | todo |
 | 013 | Overview: page grid and Total Balance | US-05, #17 #25 #57 | human | 004, 008, 011 | todo |
 | 014 | Overview: Goals card and edit goal popup | US-06, #18 #31 #58 #64 #69 #71 #85; goal request schemas must reject negative amounts (moneySchema allows negatives) | human | 005, 006, 013 | todo |
-| 015 | Overview: Upcoming Bill | US-07, #28 #48 | human | 004, 013 | todo |
+| 015 | Overview: Upcoming Bill | US-07, #28 #48; compare `bills.due_date` with today as a `YYYY-MM-DD` string in the user's zone, never a `Date` parameter (it binds as `YYYY-MM-DD HH:MM:SS.SSS` and would drop the bill due today; task 008 review) | human | 004, 013 | todo |
 | 016 | Overview: Recent Transaction | US-08, #19 #40 #49 #56 | human | 004, 013 | todo |
 | 017 | Overview: Statistics (y-axis ticks in the backend) | US-09, #20 #55 #91 (empty message) #93 (header row) | human | 006, 013 | todo |
 | 018 | Overview: Expenses Breakdown | US-10, #21 #61 | human | 004, 013 | todo |
@@ -30,7 +30,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 020 | Transactions: list, tabs and Load More | US-13, #19 #27 #57 | human | 016 | todo |
 | 021 | Account Details: details and transaction history | US-12 (1 to 3, 10 to 17), #27 #39 #47 | human | 019, 020 | todo |
 | 022 | Account Details: edit details | US-12 (4 to 9, 18), #26 #60; Dropdown id prop for a visible label (task 005 review) | human | 005, 021 | todo |
-| 023 | Bills: upcoming bills table | US-14, #28 #41 | human | 015 | todo |
+| 023 | Bills: upcoming bills table | US-14, #28 #41; `due_date` compared as a `YYYY-MM-DD` string, as in row 015 (task 008 review) | human | 015 | todo |
 | 024 | Expenses: monthly comparison chart and category cards | US-15, #29 #55 #61 #91 (empty message) #93 (header row) | human | 017, 018 | todo |
 | 025 | Goals: Savings Goal card, month selector and Adjust Goal popup | US-16 (1, 2, 4 to 6, 9, 11), US-17 (110.1), #30 #58 #60 | human | 014 | todo |
 | 026 | Goals: Saving Summary chart | US-16 (3, 6, 12, 13), #42 #59 #68 #72 #93 (header row) | human | 017, 025 | todo |

@@ -36,7 +36,16 @@ describe('resetDatabase', () => {
 
     await resetDatabase(config);
 
-    expect(tableNames(config.databaseFile)).toEqual(['migrations', 'sessions', 'users']);
+    expect(tableNames(config.databaseFile)).toEqual([
+      'accounts',
+      'bills',
+      'category_limits',
+      'migrations',
+      'savings_goals',
+      'sessions',
+      'transactions',
+      'users',
+    ]);
   });
 
   it('refuses to run outside NODE_ENV=test', async () => {

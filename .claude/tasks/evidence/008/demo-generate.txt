@@ -1,0 +1,13 @@
+$ git add backend/src/demo/demo-dataset.json  (staged, so git diff compares the rerun with it)
+$ sha256sum (before)
+d5e2efdd98327275db06dbdb24f2b92fc0c0e92fb32711b725028c5c2c7d0ec3 *backend/src/demo/demo-dataset.json
+$ npm run demo:generate -w backend
+
+> @finebank/backend@0.0.0 demo:generate
+> node scripts/generate-demo-data.ts
+
+Wrote D:\Projects\VegaAI\finebank-v1\backend\src\demo\demo-dataset.json
+$ sha256sum (after)
+d5e2efdd98327275db06dbdb24f2b92fc0c0e92fb32711b725028c5c2c7d0ec3 *backend/src/demo/demo-dataset.json
+$ git diff --exit-code backend/src/demo/demo-dataset.json
+exit 0

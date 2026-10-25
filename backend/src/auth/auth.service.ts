@@ -2,6 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { authMessages, type CurrentUser, type LoginRequest, type SignUpRequest } from '@finebank/shared';
 import { DataSource, type EntityManager } from 'typeorm';
 
+import { DemoSeeder } from '../demo/demo-seeder.js';
 import type { User } from '../users/user.entity.js';
 import { EmailTakenError, toCurrentUser, UsersService } from '../users/users.service.js';
 import { PasswordHasher } from './password.js';
@@ -25,14 +26,19 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly sessions: SessionsService,
     private readonly passwords: PasswordHasher,
+    private readonly demo: DemoSeeder,
   ) {}
 
-  /** Creates the user and a session in one transaction, which task 008 extends with the demo data (#78). */
+  /**
+   * Creates the user, their copy of the demo dataset and a session in one transaction (#78): if any
+   * insert fails, nothing is kept.
+   */
   async signUp(fields: SignUpRequest, presentedToken: string | undefined): Promise<SignedIn> {
     const passwordHash = await this.passwords.hash(fields.password);
     try {
       return await this.dataSource.transaction(async (manager) => {
         const user = await this.users.create(manager, { fullName: fields.fullName, email: fields.email, passwordHash });
+        await this.demo.seed(manager, user.id);
         return this.startSession(manager, user, presentedToken);
       });
     } catch (error) {

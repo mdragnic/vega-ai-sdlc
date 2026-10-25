@@ -1,26 +1,11 @@
-import { inspect } from 'node:util';
-
-import type { INestApplication, LoggerService } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { cookieFor, login, me, sessionCookie } from './helpers/auth.js';
+import { CapturingLogger } from './helpers/capturing-logger.js';
 import { createTestApp } from './helpers/test-app.js';
-
-/** Collects everything the app logs, objects included, as a logger would print them. */
-class CapturingLogger implements LoggerService {
-  readonly lines: string[] = [];
-  private capture = (...args: unknown[]) => {
-    this.lines.push(args.map((arg) => (typeof arg === 'string' ? arg : inspect(arg, { depth: 10 }))).join(' '));
-  };
-  log = this.capture;
-  error = this.capture;
-  warn = this.capture;
-  debug = this.capture;
-  verbose = this.capture;
-  fatal = this.capture;
-}
 
 const fields = { fullName: 'Secret Person Name', email: 'secret.person@example.com', password: 'Plaintext-Secret-42' };
 

@@ -1,0 +1,49 @@
+$ npm run migrate  (first run)
+                CONSTRAINT "CHK_savings_goals_target" CHECK ("target_cents" > 0),
+                CONSTRAINT "FK_acf18d62676b7b640f44cc6eba5" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            )
+query: 
+            INSERT INTO "temporary_savings_goals"(
+                    "id",
+                    "user_id",
+                    "month",
+                    "target_cents",
+                    "present_cents"
+                )
+            SELECT "id",
+                "user_id",
+                "month",
+                "target_cents",
+                "present_cents"
+            FROM "savings_goals"
+query: 
+            DROP TABLE "savings_goals"
+query: 
+            ALTER TABLE "temporary_savings_goals"
+                RENAME TO "savings_goals"
+query: INSERT INTO "migrations"("timestamp", "name") VALUES (1792930295195, ?) -- PARAMETERS: ["CreateFinanceTables1792930295195"]
+Migration CreateFinanceTables1792930295195 has been executed successfully.
+query: COMMIT
+
+$ npm run migrate  (second run)
+> tsc -p tsconfig.build.json
+> @finebank/backend@0.0.0 migrate
+> nest build && typeorm migration:run -d dist/database/data-source.js
+query: SELECT * FROM "sqlite_master" WHERE "type" = 'table' AND "name" = ? -- PARAMETERS: ["migrations"]
+query: SELECT * FROM "migrations" "migrations" ORDER BY "id" DESC
+No migrations are pending
+
+$ migrations table (read-only)
+[
+  {
+    id: 1,
+    timestamp: 1792921656294,
+    name: 'CreateUsersAndSessions1792921656294'
+  },
+  {
+    id: 2,
+    timestamp: 1792930295195,
+    name: 'CreateFinanceTables1792930295195'
+  }
+]
+accounts, bills, category_limits, migrations, savings_goals, sessions, transactions, users
