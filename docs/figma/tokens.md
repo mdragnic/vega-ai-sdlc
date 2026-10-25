@@ -88,6 +88,9 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-form-small-gap` | `16px` | measured: PNG 101, "Keep me signed in" row bottom (y 992) to the Login button top (y 1024), 32 px, halved |
 | `--space-input-padding-x` | `16px` | measured: PNG 101, input left edge (x 1040) to the masked dots and typed text (x 1072), and the eye icon box right edge (x 1808) to the input right edge (x 1840), 32 px, halved. Added in task 002 |
 | `--space-auth-divider-inset` | `28px` | measured: PNG 101 and 102, column left edge (x 1040) to the "or sign in with" left line (x 1098), and the right line end (x 1782) to the column right edge (x 1840), 58 px, halved 29, rounded. Added in task 002 |
+| `--space-login-top` | `160px` | measured: PNG 101, page top to the logo glyph top (y 320; the logo SVG has no space above its glyphs), 320 px, halved. Added in task 009 |
+| `--space-login-logo-gap` | `64px` | measured: PNG 101, logo glyph bottom (y 381) to the "Email Address" line box top (y 512: the input top at y 576 less the 8px label gap and the 24px line, at 2x), 131 px, halved 65.5, rounded. Added in task 009 |
+| `--space-login-link-gap` | `40px` | measured: PNG 101, "Continue with Google" bottom (y 1384) to the "Create an account" line box top (y 1464: its glyph top at y 1476 less the 6px cap offset of Inter 16/24, at 2x), 80 px, halved. Added in task 009 |
 | `--space-focus-ring-offset` | `2px` | decision #87: not measured, keyboard focus is not designed. Gap between a focused control and its focus ring. Added in task 002 |
 | `--space-sidebar-x` | `28px` | measured: PNG 104, sidebar left edge (x 0) to the nav item (x 56), 56 px, halved |
 | `--space-nav-item-gap` | `16px` | measured: PNG 104 and 105, Overview item bottom (y 336) to the Balances item top (y 368 in 105), 32 px, halved |

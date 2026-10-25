@@ -23,8 +23,9 @@
   outline-offset: var(--space-focus-ring-offset);
 }
 
-/* Active=No from the component export: the disabled look, also while loading (#6). */
-.button:disabled {
+/* Active=No from the component export: the disabled look, also while loading (#6), which uses aria-disabled. */
+.button:disabled,
+.button[aria-disabled='true'] {
   background-color: var(--color-button-secondary);
   color: var(--color-input-active);
   cursor: default;

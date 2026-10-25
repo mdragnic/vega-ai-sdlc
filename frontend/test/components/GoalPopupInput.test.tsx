@@ -25,6 +25,15 @@ function renderPopup({ saving = false, formError }: { saving?: boolean; formErro
   return { user: userEvent.setup(), onSubmit };
 }
 
+/** A one-field popup, for re-rendering with another `saving`. */
+function onePopup(saving: boolean, onSubmit: (event: FormEvent<HTMLFormElement>) => void) {
+  return (
+    <GoalPopupInput open onOpenChange={() => undefined} title="Adjust the goal" onSubmit={onSubmit} saving={saving}>
+      <PopupInputSmall label="Target Amounts" defaultValue="500000" />
+    </GoalPopupInput>
+  );
+}
+
 describe('GoalPopupInput', () => {
   it('is a popup with the fields, then Save, then the X', async () => {
     const { user } = renderPopup();
@@ -63,15 +72,40 @@ describe('GoalPopupInput', () => {
   });
 
   // T12: while saving, Save is disabled with the spinner, and Enter does not submit again (AC11, #6).
-  it('disables Save with the spinner while saving', async () => {
+  // Task 009 T9: disabled through aria-disabled, so Save stays focusable and keeps focus (task 005 review finding 7).
+  it('disables Save with the spinner while saving, keeping its focus', async () => {
     const { user, onSubmit } = renderPopup({ saving: true });
     const save = screen.getByRole('button', { name: 'Save' });
 
-    expect(save).toBeDisabled();
+    expect(save).not.toBeDisabled();
+    expect(save).toHaveAttribute('aria-disabled', 'true');
     expect(save).toHaveAttribute('aria-busy', 'true');
     expect(within(save).getByTestId('spinner')).toBeInTheDocument();
 
+    await user.click(save);
+    expect(save).toHaveFocus();
+    expect(onSubmit).not.toHaveBeenCalled();
+
     await user.type(screen.getByRole('textbox', { name: 'Target Amounts' }), '{Enter}');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  // Task 009 T9: Save keeps keyboard focus when saving starts and ends (AC10; task 005 review finding 7).
+  it('keeps focus on Save while saving turns on and off', () => {
+    const onSubmit = vi.fn<(event: FormEvent<HTMLFormElement>) => void>();
+    const { rerender } = render(onePopup(false, onSubmit));
+    const save = screen.getByRole('button', { name: 'Save' });
+    save.focus();
+
+    rerender(onePopup(true, onSubmit));
+    expect(save).toHaveFocus();
+    // A natively disabled button loses focus in the browser (jsdom keeps it), so it must not be one.
+    expect(save).not.toBeDisabled();
+    expect(save).toHaveAttribute('aria-disabled', 'true');
+
+    rerender(onePopup(false, onSubmit));
+    expect(save).toHaveFocus();
+    expect(save).not.toHaveAttribute('aria-disabled');
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

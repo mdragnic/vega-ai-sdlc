@@ -1,0 +1,52 @@
+Task 009 manual checks, Playwright MCP on `npm run dev` at 1440x1024, 2026-10-25 (no Figma calls).
+
+Note: the MCP browser still had a session cookie from an earlier task, so the first open of /login went straight
+to /overview (AC12). Cookies were cleared before the checks below.
+
+1. Sign up with fetch, log out, open /goals, log in, land on /goals
+   - POST /api/auth/signup 201, POST /api/auth/logout 204
+   - /goals -> /login?returnTo=%2Fgoals
+   - logged in with the email in capitals -> /goals
+   - Back -> / (Login is not in the history)
+2. /login signed in -> /overview; /login?returnTo=%2Fbills signed in -> /overview
+3. Undesigned states
+   - empty submit: "Email is required" and "Password is required" under the fields, red borders, focus on Email
+     (state-field-errors-empty.png); "a@b": "Enter a valid email address" (state-field-error-email-format.png)
+   - wrong password: alert "Email or password is incorrect" above Login, focus stays on Login
+     (state-wrong-credentials.png)
+   - loading (login request held with page.route, Enter on the focused Login button): aria-busy="true",
+     aria-disabled="true", not natively disabled, :focus-visible, focus on Login, the previous alert is gone
+     (state-loading-keyboard-focus.png); after the response focus is still on Login
+   - 500 {"message":"Internal server error"} -> "Something went wrong." (state-server-error.png);
+     connection refused -> "Something went wrong."
+4. Keyboard: Tab from Email -> "Forgot Password?" with the teal ring (focus-forgot-password.png); six more Tabs ->
+   "Create an account" with the teal ring (focus-create-account.png)
+5. /login?returnTo=//evil.example, log in -> http://localhost:5173/overview
+6. Console: the only error is Chrome's network line for the expected 401 of GET /api/auth/me while signed out.
+
+Re-run after the gate rejection (#98), 2026-10-25: Playwright MCP on `npm run dev` at 1440x1024, fresh browser
+context, no Figma calls.
+
+1. Sign up with fetch (201), log out (204), /goals -> /login?returnTo=%2Fgoals, log in with the email in capitals
+   -> /goals; Back -> / (Login is not in the history)
+2. /login and /login?returnTo=%2Fbills signed in -> /overview, the form never visible
+3. #98 (new): signed in on /goals, window focus (visibilitychange)
+   - GET /api/auth/me answered 500 -> still /goals, no Login form
+   - GET /api/auth/me network failure (net::ERR_FAILED) -> still /goals, no Login form
+   - logout with fetch (204), focus -> 401 -> /login?returnTo=%2Fgoals with the form
+4. #97 b, the first check (fresh context, no cookie): a 500 and a network failure on /goals ->
+   /login?returnTo=%2Fgoals with the form
+5. Undesigned states
+   - empty submit: "Email is required" and "Password is required", focus on Email (state-field-errors-empty.png is
+     pixel-identical to the earlier one); "a@b": "Enter a valid email address"
+   - wrong password: alert "Email or password is incorrect", focus on Login
+   - loading (login held with page.route, Enter on the focused Login): aria-busy="true", aria-disabled="true", not
+     natively disabled, :focus-visible, no alert; after the response focus is still on Login
+   - 500 -> "Something went wrong." ("Internal server error" never shown); connection refused -> "Something went
+     wrong."
+   - The state-*.png files are this run's. They differ from the earlier ones only inside the form, where the typed
+     values and field states differ (the earlier "a@b" shot had one password character typed).
+6. Tab from Email -> "Forgot Password?" with the ring (solid 2px rgb(41, 157, 145), offset 2px); six more Tabs ->
+   "Create an account" with the same ring (focus-*.png are this run's)
+7. /login?returnTo=//evil.example, log in -> http://localhost:5173/overview
+8. Console: only Chrome's network lines for the expected 401, 500 and failed requests.

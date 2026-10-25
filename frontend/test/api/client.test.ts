@@ -4,7 +4,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { ApiError, apiRequest } from '../../src/api/client';
+import { ApiError, apiRequest, formErrorMessage } from '../../src/api/client';
 
 const echo = {
   method: 'PUT',
@@ -70,5 +70,41 @@ describe('apiRequest', () => {
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).status).toBe(502);
     expect((error as ApiError).body).toEqual({ message: 'Request failed with status 502' });
+  });
+
+  // Task 009: whether the message was written by the server or made up here (#97 a).
+  it('marks an error body in the shared shape as from the server', async () => {
+    const error: unknown = await apiRequest(missing).catch((caught: unknown) => caught);
+
+    expect((error as ApiError).fromServer).toBe(true);
+  });
+
+  it('marks a made-up error body as not from the server', async () => {
+    server.use(http.get('*/api/probe/missing', () => new HttpResponse('Bad Gateway', { status: 502 })));
+
+    const error: unknown = await apiRequest(missing).catch((caught: unknown) => caught);
+
+    expect((error as ApiError).fromServer).toBe(false);
+  });
+});
+
+const shared = (status: number, message: string) => new ApiError(status, { message }, true);
+const madeUp = (status: number) => new ApiError(status, { message: `Request failed with status ${status}` }, false);
+
+// Task 009 T8: the text above a form's submit button (#6, #74, #97 a).
+describe('formErrorMessage', () => {
+  it.each([
+    ['a 400 in the shared shape', shared(400, 'Validation failed'), 'Validation failed'],
+    ['a 403 in the shared shape', shared(403, 'Invalid CSRF request'), 'Invalid CSRF request'],
+    ['a 404 in the shared shape', shared(404, 'Not found'), 'Not found'],
+    ['a 499 in the shared shape', shared(499, 'Client closed'), 'Client closed'],
+    ['a 500 in the shared shape', shared(500, 'Internal server error'), 'Something went wrong.'],
+    ['a 503 in the shared shape', shared(503, 'Service unavailable'), 'Something went wrong.'],
+    ['a 404 without the shared shape', madeUp(404), 'Something went wrong.'],
+    ['a 502 without the shared shape', madeUp(502), 'Something went wrong.'],
+    ['a network failure', new TypeError('Failed to fetch'), 'Something went wrong.'],
+    ['a response that fails its schema', new Error('Invalid input'), 'Something went wrong.'],
+  ])('gives %s', (_name, error, text) => {
+    expect(formErrorMessage(error)).toBe(text);
   });
 });

@@ -1,0 +1,50 @@
+/* The offsets and gaps measured on 101. Without a server error the form matches it; the error, not designed
+   (#6), sits above Login with the 16 gap of the row before it, left-aligned like the field errors. */
+.column {
+  padding-top: var(--space-login-top);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-login-logo-gap);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-field-gap);
+}
+
+.keepSignedIn {
+  margin-top: var(--space-form-section-gap);
+}
+
+.submit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-small-gap);
+  margin-top: var(--space-form-small-gap);
+}
+
+.divider,
+.google {
+  margin-top: var(--space-form-section-gap);
+}
+
+/* "Create an account" as drawn on 101: teal, centered under the column. */
+.createAccount {
+  align-self: center;
+  margin-top: var(--space-login-link-gap);
+  color: var(--color-primary);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  text-decoration: none;
+}
+
+/* Keyboard focus (#87). A mouse click shows no ring. */
+.createAccount:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

@@ -1,0 +1,36 @@
+Task 009 visual check: /login at 1440x1024 (render-101-login.png, 2x: render-101-login-2x.png) against
+docs/figma/101. Login.png, Email "johndoe@email.com" focused, Password 14 masked characters. Both 2x images measured
+with the same Node script (built-ins only, session scratchpad). CSS px. compare-101-*.png: 101 above the red bar,
+the render below, the render shifted down 2px (4 rows) below the logo so the elements line up.
+
+| Element                    | 101                        | Render                     | Difference |
+|----------------------------|----------------------------|----------------------------|------------|
+| Logo glyphs                | x 584.5-856.5, y 160-190.5 | x 584-856, y 160-190       | none |
+| "Email Address" glyphs     | y 261.5-274.5              | y 259.5-272.5              | 2px higher |
+| Email input (Active)       | x 520-920, y 288-336       | x 520-920, y 286-334       | 2px higher |
+| Password row glyphs        | y 366-379                  | y 364-377                  | 2px higher |
+| "Forgot Password?" glyphs  | x 818-919                  | x 816.5-919.5              | 1.5px wider (text rendering) |
+| Password input             | y 392-440                  | y 390-438                  | 2px higher |
+| Checkbox row               | y 474-494, x 520-692       | y 472-492, x 520-694.5     | 2px higher; label 2.5px wider |
+| Login button               | y 512-560                  | y 510-558                  | 2px higher |
+| Divider lines              | x 549-891, y 601.5         | x 548-892, y 600-601       | 2px higher, 1px longer each side, 1px thick |
+| Google button              | y 644-692                  | y 642-690                  | 2px higher |
+| "Create an account" glyphs | x 649.5-790.5, y 738-750.5 | x 649.5-790.5, y 736-748.5 | 2px higher; same width (Semi Bold 16) |
+
+Colors sampled at matching points, all equal: Login and checkbox fill #299D91, Google fill #E4E7EB, Email border
+(Active) #4B5768, Password border #D0D5DD, divider line #CACED3, "Create an account", "Forgot Password?" and logo
+#299D91, typed email #4B5768, labels #191D23.
+
+Differences:
+1. Everything below the logo is 2px higher. The logo-to-form gap measures 65.5px; tokens are rounded to the 4px grid
+   (#65, enforced by test/styles/tokens.test.ts), so --space-login-logo-gap is 64px.
+2. Page background #F3F3F3 (--color-gray-06) against #F4F5F7 in the PNG: the token review of 2026-10-23.
+3. Divider lines 1px thick (0.5px in the PNG) and 1px longer at each end: the task 002 rounding and review.
+4. Masked password dots are larger and wider apart than in 101 (the browser's bullet glyph; task 002 chose 14px).
+5. The Google G is the official multi-color G (task 000, #70), slightly different from the flat G in 101.
+6. Text is drawn by Chrome on Windows, a little heavier than Figma's rendering ("Keep me signed in" 2.5px wider,
+   "Forgot Password?" 1.5px wider).
+
+Re-run after the gate rejection (#98), 2026-10-25: render-101-login-rerun.png and render-101-login-2x-rerun.png,
+made the same way, have 0 differing pixels from render-101-login.png and render-101-login-2x.png. The differences
+above stand; #98 changed no visual code.

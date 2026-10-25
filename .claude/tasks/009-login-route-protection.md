@@ -1,6 +1,6 @@
 # Task 009: Login screen and route protection
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 002, 007
 - Size: L
@@ -13,7 +13,7 @@ The Login screen of 101 works end to end against the task 007 API: the shared sc
 - Spec: `docs/spec/stories.md` US-01 criteria 1 to 12, 14 and 15; US-04 criterion 12; `docs/spec/brief.md` Navigation (Auth, signed out), Layout (auth screens), Not designed (Auth, Session)
 - Figma: Login `137:7477`, PNG `docs/figma/101. Login.png`. Form `137:8302`, Email input `402:5484`, Password input `402:5488`, Keep me signed in `402:5493`, Login button `402:5499`, Google button `402:5501`, "Create an account" `137:8301` (`docs/figma/inventory.md`). Budget 0, no MCP calls.
 - Components (task 002, `docs/figma/components.md`): `AuthLayout`, `Input`, `RemindMe`, `ButtonPrimary`, `ButtonSecondary`, `TextDivider`, `FormError`, `FieldError`, `Spinner`; `Google` brand image (task 000). Routes: `frontend/src/routes/paths.ts` (task 003). Contract: `authContract`, `loginRequestSchema`, `authMessages` in `shared/src/contract/auth.ts` (task 007).
-- Decisions: `docs/decisions.md` #3 (sign-in required, return to the requested page, signed-in users on Login go to Overview), #6 (form states), #14 (login rules, generic message, session length), #39 (never another user's data), #51 (eye toggle), #63 (focus-only active border, no placeholders), #66 and #70 (teal logo, Google icon), #74 (shared schemas, error shape), #75 (session cookie, 401 from the guard), #87 (teal `:focus-visible` ring, red error border), #88 ("Something went wrong."), #95 (field texts, password maximum), #97 (the error text above the Login button by status, a failing session check counts as signed out, only the page background while the check runs)
+- Decisions: `docs/decisions.md` #3 (sign-in required, return to the requested page, signed-in users on Login go to Overview), #6 (form states), #14 (login rules, generic message, session length), #39 (never another user's data), #51 (eye toggle), #63 (focus-only active border, no placeholders), #66 and #70 (teal logo, Google icon), #74 (shared schemas, error shape), #75 (session cookie, 401 from the guard), #87 (teal `:focus-visible` ring, red error border), #88 ("Something went wrong."), #95 (field texts, password maximum), #97 (the error text above the Login button by status, a failing session check counts as signed out, only the page background while the check runs), #98 (only the first check counts that failure as signed out; after that only a 401 ends the session)
 
 ## Scope
 - **Login screen** at `paths.login` (`/login`), `frontend/src/app/pages/LoginPage.tsx` with `LoginPage.module.css`, tokens only:
@@ -41,7 +41,7 @@ The Login screen of 101 works end to end against the task 007 API: the shared sc
   - `GoalPopupInput` Save (task 005) gets the same behavior with no change of its own.
   - `frontend/test/components/buttons.test.tsx` changes its loading assertion from `toBeDisabled()` to `aria-disabled="true"`, focusable, focus kept and no submit. That is the new correct outcome this task asks for, not a weaker test.
 - **Session state** (`frontend/src/api/session.ts`):
-  - One TanStack query for the signed-in user (`authContract.me`): the user, or `null` on 401. A failing check (network, 500) also counts as signed out, with no retry (#97 b).
+  - One TanStack query for the signed-in user (`authContract.me`): the user, or `null` on 401. A failing check (network, 500) is not retried. On the first check, when the app opens, it counts as signed out (#97 b); after that the known state stays, so a failed re-check keeps a signed-in user on their page and only a 401 ends the session (#98).
   - The default `refetchOnWindowFocus` stays on, so a session that ended while the tab was in the background is found when it comes back.
   - A login mutation on `authContract.login`.
   - `apiRequest` stays the only way to call the API (`client.ts`). `ApiError` records whether its body came from the server in the shared shape or was made up by the client, so a 4xx without a server message falls back to "Something went wrong." (#97 a). The existing client tests keep passing unchanged.
@@ -89,7 +89,7 @@ The Login screen of 101 works end to end against the task 007 API: the shared sc
 13. Given I am signed out, when I open any app path (Overview, Balances, an Account Details path, Transactions, Bills, Expenses, Goals, both Settings tabs), then Login opens with that page as the return target. After I log in, that page opens, with its query and hash. Signed in, the page renders (US-04 criterion 12; #3).
 14. Given a `returnTo` that is not a path inside the app, then after login Overview opens and the browser never leaves `http://localhost:5173`. That covers an absolute URL, `//evil.example`, `/\evil.example`, `/%09/evil.example`, `javascript:alert(1)`, `balances` without the slash, an empty value, and `/login`, `/sign-up` or `/forgot-password` (row 009 note: no open redirect).
 15. Given I am on an app page and my session ends (expired or deleted), when an API request gets 401 (a query, a mutation, or the session check on window focus), then Login opens with that page as the return target, and the queries cached for me are removed, so the next user who signs in in this tab never sees my data. The 401 of a failed login does not do this (#3, #39, #75).
-16. Given the session check fails with something other than 401, then the app treats me as signed out, with no retry: an app path opens Login with its return target, and Login shows the form, with no error page (#97 b). While the check runs, only the page background shows, with no spinner or skeleton (#97 c).
+16. Given the first session check, when the app opens, fails with something other than 401, then the app treats me as signed out, with no retry: an app path opens Login with its return target, and Login shows the form, with no error page (#97 b). Given I am signed in (by the first check or by a login), when a later check (on window focus) fails with something other than 401, then I stay signed in on my page with its data, with no message and no retry, and the next window focus checks again; only a 401 ends the session (AC15, #98). While the first check runs, only the page background shows, with no spinner or skeleton (#97 c).
 17. Given I click "Continue with Google", then nothing happens: no navigation, no request (visual only until task 012).
 18. Given development mode and no session, then `/dev/components` and `/dev/popup` still open, and `/` still renders the empty page.
 19. Given the frontend source, then the Login form takes its rules and messages from `loginRequestSchema` and `authMessages` in `@finebank/shared`. No validation rule or server text is redeclared in `frontend/src` (#74).
@@ -109,7 +109,7 @@ The Login screen of 101 works end to end against the task 007 API: the shared sc
 | T10 | unit | `return-to.ts` on the AC14 values plus `/balances`, `/balances/12?x=1#y`, `/settings/security` | The safe paths as given; Overview for every AC14 value | 14 |
 | T11 | unit | Memory router, `me` 401: each app path. `me` 200: `/login`, `/login?returnTo=%2Fbills`, each app path. `me` pending: `/login`, `/overview` | `/login?returnTo=<path>` for each path; Overview twice; the page frame renders; no form and no page content while pending | 12, 13, 16 |
 | T12 | unit | Signed in on `/bills`; a test query gets 401; then a test mutation gets 401; then a login 401 on `/login` | `/login?returnTo=%2Fbills`; the query cache holds no user data; the login 401 leaves the URL and the session alone | 15 |
-| T13 | unit | `me` fails with 500 and with a network error, on `/overview` and on `/login` | `/login?returnTo=%2Foverview`; the form shows; one `me` request (no retry) | 16 |
+| T13 | unit | `me` fails with 500 and with a network error: on the first check, on `/overview` and on `/login`; on window focus, signed in on `/bills` by the first check, then a 401 on the next focus; on window focus after a login that followed a failed first check | First check: `/login?returnTo=%2Foverview`, the form shows, one `me` request (no retry). Re-check: still `/bills` with its data shown and cached, no Login form, one `me` request; the next focus with a 401 gives `/login?returnTo=%2Fbills` and an empty cache. After the login: still `/bills` | 16 |
 | T14 | unit | Click "Continue with Google" with a request spy | URL unchanged; no request | 17 |
 | T15 | unit | Signed out (`me` 401) in dev: `/dev/components`, `/dev/popup`, `/` | Each renders; no redirect | 18 |
 | T16 | unit | Source guard over `frontend/src`: the texts of `authMessages` and the schema messages appear only through `@finebank/shared` | No literal match | 19 |
@@ -149,8 +149,9 @@ The Login screen of 101 works end to end against the task 007 API: the shared sc
 - Undesigned states: the field errors with the red border, wrong credentials and the server error above the Login button, the loading button, the teal ring on both links.
 - #97 as applied:
   - a 4xx shows the server's message, while a 5xx and a network failure show "Something went wrong.";
-  - a failing session check counts as signed out;
+  - a failing first session check, when the app opens, counts as signed out;
   - only the page background shows while the check runs.
+- #98 as applied: after the first check only a 401 ends the session; a failed re-check (a 500, a network failure) keeps the user signed in on their page, with no message.
 - `ButtonPrimary` loading now uses `aria-disabled` and stays focusable (also Save in `GoalPopupInput`). The loading assertion in `buttons.test.tsx` changed for it.
 - The return target as built:
   - a `returnTo` query parameter, the same name task 012 sends to Google (#75);
@@ -213,9 +214,112 @@ The Login screen of 101 works end to end against the task 007 API: the shared sc
 - INDEX: open questions list #94 only.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-10-25, build, validation and reviews (`/next-task 009`)
+- Every decision the task cites is closed (#3 #6 #14 #39 #51 #63 #66 #70 #74 #75 #87 #88 #95 #97). Status `in-progress` at 15:09.
+- **Built** with TDD (each test file written and run red before its code; the 401 wiring was written one step early, so each of its tests was proven by mutating `session.ts` and watching it fail):
+  - `ButtonPrimary`: `loading` sets `aria-disabled` and `aria-busy` and cancels the click (`preventDefault`, no `onClick`), not the native `disabled`; `.button[aria-disabled='true']` gets the disabled look. `disabled` stays native. In Chromium the old native `disabled` dropped focus (the e2e focus test fails with it).
+  - `frontend/src/routes/return-to.ts`: `returnTarget` and `loginPathFor`; `RequireAuth.tsx` and `GuestOnly.tsx` (layout routes, `null` while the check runs); `app/routes.tsx` wraps Login in `GuestOnly` and the nine app paths in `RequireAuth` (each renders `RootPage`).
+  - `frontend/src/api/session.ts`: `useSession`, `useLogin`, `useLoginInProgress`, `createQueryClient` (used by `AppProviders`). `client.ts`: `ApiError.fromServer` and `formErrorMessage` (#97 a).
+  - `frontend/src/app/pages/LoginPage.tsx` and `.module.css`; `Input.module.css`: the #87 ring on `.labelAction a:focus-visible`.
+  - Tokens, measured on 101 and added to `tokens.md` and `tokens.css`: `--space-login-top` 160, `--space-login-logo-gap` 64 (65.5 measured, 4px grid #65, which `tokens.test.ts` enforces), `--space-login-link-gap` 40.
+  - Tests changed: `buttons.test.tsx` (the loading assertion, as Scope says) and `GoalPopupInput.test.tsx`. Its "disables Save while saving" asserted `toBeDisabled()`. It now asserts `aria-disabled`, not natively disabled, a click that submits nothing and focus kept, plus a new test where saving turns on and off with Save focused. The same new outcome as `buttons.test.tsx`; not named in Scope, so listed for the gate. `client.test.ts` only gained tests.
+- **Decisions while building** (inside Scope; for review at the gate):
+  - The session query has `retry`, `retryOnMount` and `refetchOnMount` off. The check runs once when the app opens and again on window focus (the default stays on), not on every navigation, so a failed check is not repeated when Login mounts (T13 counts one request).
+  - The app client's default query retry skips a 401, so a session end is acted on at once (other errors keep TanStack's 3 retries).
+  - `GuestOnly` does not send to Overview while a login on the screen is pending or has succeeded (`useLoginInProgress`); Login opens the return target itself. Without it, a return target that loads lazily lost the race to Overview (unit test with a lazy route; it fails without the exception).
+  - The login mutation has `gcTime: 0`, so its variables (the password) go when Login unmounts. The Login button keeps its spinner after success until the page changes.
+  - A 400 whose `fieldErrors` name no field on the screen (e.g. `keepSignedIn`) shows its `message` above Login, so the failure is never silent. Server field errors do not move focus, so Login keeps it (AC9).
+  - `returnTarget` also rejects any control character, checks the percent-decoded path again (`/%2F%2Fhost`, `/%5Chost`, `/%09/host` as a literal value) and matches auth screens ignoring case and a trailing slash (React Router matches them so). A plain space is allowed: the parser encodes it.
+  - The server error sits in `FormError` above Login, 16px apart like the row above it, left-aligned like the field errors (not designed, #6; tokens only).
+  - The T16 source guard skips `src/app/dev/`: the task 002 gallery shows "Email is required" and "Email or password is incorrect" as sample texts. It checks nothing and is dropped from the production build.
+- **Acceptance criteria to tests:**
+  - AC1: `login.test.tsx` (order, no placeholders); e2e "matches the positions measured on 101".
+  - AC2: `login.test.tsx` "password eye".
+  - AC3: `login.test.tsx` "Keep me signed in".
+  - AC4: e2e "gives only the focused field the Active border".
+  - AC5: `login.test.tsx` links; e2e tab order, rings, mouse no ring, no page load.
+  - AC6: `login.test.tsx` (body, return target); e2e T17.
+  - AC7: `login.test.tsx` "field errors".
+  - AC8: `login.test.tsx` "wrong credentials"; e2e T19.
+  - AC9: `login.test.tsx` "while the login request runs", "failed requests"; e2e "keeps keyboard focus on Login".
+  - AC10: `buttons.test.tsx`, `GoalPopupInput.test.tsx`.
+  - AC11: e2e T18.
+  - AC12: `route-protection.test.tsx`; e2e T20.
+  - AC13: `route-protection.test.tsx`, `login.test.tsx`; e2e T17.
+  - AC14: `return-to.test.ts`; e2e T21.
+  - AC15: `session-end.test.tsx`; e2e T22.
+  - AC16: `route-protection.test.tsx`.
+  - AC17: `login.test.tsx`; e2e.
+  - AC18: `route-protection.test.tsx`.
+  - AC19: `login-source.test.ts`.
+- **Validation** (final run after the review fixes):
+  1. `npm run lint` exit 0; `npm run typecheck` exit 0.
+     - Rework loop 1: 10 oxlint findings in the new tests (`consistent-function-scoping` on test helpers and on the `() => undefined` placeholders of deferred promises, now `Promise.withResolvers`; `react/globals` on a test probe that set a module variable during render, now in an effect).
+     - Rework loop 2: one type error (a `let` inferred as a sync response, given an async one).
+     - Rework loop 3, in the re-validation after the review fixes: the same two oxlint rules in the new `GoalPopupInput` test.
+  2. `npm test`: shared 503/503, backend 331/331, frontend 590/590.
+  3. `npm run e2e`: 64/64 (13 new in `login.spec.ts`). Expected console lines: the gallery's "Money must be integer cents" demo, and React Router's 404 for `/sign-up` and `/forgot-password` (no screens until task 010).
+  - Also `npm run build` exit 0.
+  4. Visual: `/login` at 1440x1024, Email focused and filled, Password 14 masked characters. Files: `render-101-login.png`, `render-101-login-2x.png`, eight `compare-101-*.png` crops, the table in `visual-differences.txt`. Colors equal at every sampled point. Differences:
+     - (1) Everything below the logo is 2px higher (the 64px grid gap).
+     - (2) The page background is `--color-gray-06` (`#F3F3F3`, 101 has `#F4F5F7`; token review).
+     - (3) The divider lines are 1px thick and 1px longer at each end (task 002).
+     - (4) The masked dots are larger and wider apart (browser bullet at 14px, task 002).
+     - (5) The official multi-color Google G (#70).
+     - (6) Chrome on Windows draws text slightly heavier ("Keep me signed in" 2.5px wider).
+  5. Manual, Playwright MCP on `npm run dev` (`manual-checks.txt`):
+     - Sign up by `fetch`, log out, `/goals`, log in, land on `/goals`; Back skips Login.
+     - `/login` signed in (also with `returnTo`) gives Overview.
+     - Field errors, wrong credentials, loading with a held request (focus stays on Login), a 500 and a refused connection ("Something went wrong."), the teal rings on both links, and `returnTo=//evil.example` (Overview).
+     - Screenshots `state-*.png` and `focus-*.png`.
+     - The leftover dev-server node processes on ports 3000 and 5173 were stopped before E2E.
+- **Security review** (`evidence/009/security-review.md`): no findings.
+  - It fuzzed `returnTarget` with about 2.45 million inputs through React Router's own resolution: none left the origin, none reached an auth screen. It also checked the cache clearing and the credential retention.
+  - Two hardening notes below the bar, raised for later tasks:
+    - a user switch made in another tab with no 401 in this tab keeps the earlier cached queries until they refetch;
+    - the mutation cache is not cleared on a session end.
+- **Code review** (`superpowers:requesting-code-review`): ready with fixes; 0 critical, 1 important, 5 minor.
+  - Important 1, a question about the plan, not a code defect, raised as **#98 (open)**: a re-check on window focus that fails with a 500 or a network error signs out a user whose session is still valid (the literal #97 b). Proposed: only the first check counts a failure as signed out; after that only a 401 ends the session. Not changed; for Marko at the gate.
+  - Minor 2, fixed: a session check sent before the login, whose 401 arrived after it, ended the new session. `useLogin` now cancels a running session check in `onMutate`. The test failed first.
+  - Minor 5 and 6, fixed:
+    - a `GoalPopupInput` test where saving turns on and off with Save focused (it fails with the native `disabled`);
+    - `server.events.removeAllListeners()` in the route tests' `afterEach`;
+    - the window-focus reset moved to `afterEach`.
+  - Not changed:
+    - Minor 3 (the mutation cache on a session end): Scope asks for queries, and the only mutation today is login. Follow-up for the first task with a data mutation (014).
+    - Minor 4 ("Something went wrong." in both `client.ts` and `DataState.tsx`): one shared constant would make a component import from the API layer, and tests pin both texts.
+- INDEX: row 009 cites #98; open questions list #94 and #98.
+- No Figma calls. Gate: human, status `awaiting-human`.
+
+### 2026-10-25, gate: rejected (`/approve-task 009`)
+- Feedback, verbatim: "reject #98: as you proposed. Only the first session check (on app start) treats a non-401 failure as signed out; after that, only a 401 ends the session, and a failed re-check (500, network) keeps the user signed in on their page. Record #98 as closed (Marko, 2026-10-25), update AC16, the task file and the tests. Also add to the Covers column of row 014 in INDEX.md: "clear the mutation cache when a session ends; clear cached data when the signed-in user changes in another tab (task 009 review)". Everything else at the gate is approved, including the GoalPopupInput.test.tsx change. Re-run all validation, then stop at the gate again."
+- Status back to `in-progress`; Human interventions 1, Rework loops 4.
+
+### 2026-10-25, #98 applied, validation and back to the gate
+- **Fixed** with TDD (the new tests ran red first: the failed re-check sent the user to Login):
+  - `useSession` (`frontend/src/api/session.ts`) now decides by the cached data first. `null` is signed out, a user is signed in, and only with no data yet (the first check) does an error count as signed out. A failed re-check keeps the data of the last check that succeeded, or of the login, so the user stays on the page; a 401 still sets `null` through the `QueryCache`.
+  - `session-end.test.tsx`, new block for T13: a re-check failing with a 500 and with a network error keeps `/bills`, its data on screen and in the cache, no Login form, one `me` request; the next focus with a 401 opens `/login?returnTo=%2Fbills` with an empty cache. Also a user who logged in after a failed first check stays on `/bills` when a later check fails.
+  - `session-end.test.tsx`, "shows a new user none of the earlier data after they log in": its setup used a 500 re-check to sign out with data still cached, which #98 now rules out. It now starts signed out on Login with an earlier balance put in the cache, then logs in a second user; the assertions are unchanged. Breaking the login's cache clearing still fails it.
+  - `route-protection.test.tsx`: the T13 block is named for the first check; its assertions are unchanged.
+  - Each test was proven by breaking `session.ts`: the old any-failure sign-out fails the 3 new tests; a first check that never signs out fails the 4 T13 first-check tests and the login test; a login that does not clear the cache fails the new-user test.
+- **Records**: #98 closed in `docs/decisions.md` (answer as Marko gave it, Marko, closed; the header line says it was answered at the gate). INDEX: row 009 cites #98 without "open"; row 014 Covers adds the two follow-ups as worded in the feedback; the open questions line keeps only #94. Task file: References, Scope (session state), AC16, T13 and the Human checkpoint.
+- AC16 maps to `route-protection.test.tsx` (the first check) and `session-end.test.tsx` (the re-check).
+- **Validation** (all steps, in order):
+  1. `npm run lint` exit 0; `npm run typecheck` exit 0.
+  2. `npm test`: shared 503/503, backend 331/331, frontend 593/593 (3 new).
+  3. `npm run e2e`: 64/64. Ports 3000 and 5173 were free before it.
+  - Also `npm run build` exit 0.
+  4. Visual: `render-101-login-rerun.png` and `render-101-login-2x-rerun.png` have 0 differing pixels from the earlier renders, so the six differences listed above stand (`visual-differences.txt`).
+  5. Manual, Playwright MCP on `npm run dev`, all passed (`manual-checks.txt`), plus the #98 case in the browser. On `/goals`, a re-check answered 500, and then one that failed on the network, both kept `/goals`; after a logout the next re-check got a 401 and opened `/login?returnTo=%2Fgoals`. A failed first check still opens Login. The `state-*.png` and `focus-*.png` screenshots are from this run.
+- **Reviews**: `security-review` and the code review were not run again; the feedback asked for #98 only. My own check, added to `security-review.md`: the server's `SessionGuard` still decides every request; a 401 still ends the session and removes the cached queries; a failed re-check keeps only what was already on screen; the first check still fails closed.
+- No Figma calls. Gate: human, status `awaiting-human`.
+
+### 2026-10-25, gate: approved (`/approve-task 009`)
+- Approved by human. Status `done` at 17:31.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-25 15:09
+- Finished: 2026-10-25 17:31
+- Human interventions: 2
+- Rework loops: 4
+- Notes on prompts that failed: none so far. The `security-review` skill again asks for a reply with only its report; this time the report went into the evidence file and the task continued to the gate. Rework: 2 lint loops (oxlint function scoping and `react/globals` in new tests), 1 type error. Gate rework 1: #98 answered at the gate (a failed re-check keeps the session).

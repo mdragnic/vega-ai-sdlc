@@ -69,6 +69,9 @@
   --space-form-small-gap: 16px;
   --space-input-padding-x: 16px;
   --space-auth-divider-inset: 28px;
+  --space-login-top: 160px;
+  --space-login-logo-gap: 64px;
+  --space-login-link-gap: 40px;
   --space-focus-ring-offset: 2px;
   --space-sidebar-x: 28px;
   --space-nav-item-gap: 16px;

@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { FormEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { googleUrl } from '../../src/assets/brand';
@@ -46,7 +47,9 @@ describe('ButtonPrimary', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('while loading is busy and disabled, shows a spinner, keeps its name and ignores clicks', async () => {
+  // Task 009 T9: loading uses aria-disabled, not the native attribute, so the button stays focusable and
+  // keyboard focus is not dropped to the page body while saving (AC10; task 005 review finding 7).
+  it('while loading is busy and aria-disabled, stays focusable, shows a spinner, keeps its name and ignores clicks', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn<() => void>();
     const onSubmit = vi.fn<() => void>();
@@ -61,12 +64,67 @@ describe('ButtonPrimary', () => {
 
     await user.click(button);
 
-    expect(button).toBeDisabled();
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveFocus();
     expect(within(button).getByTestId('spinner')).toBeInTheDocument();
     expect(button).toHaveAccessibleName('Login');
     expect(onClick).not.toHaveBeenCalled();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('while loading, Enter in a field of its form submits nothing', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<(event: FormEvent<HTMLFormElement>) => void>((event) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <input aria-label="Email" />
+        <ButtonPrimary type="submit" loading>
+          Login
+        </ButtonPrimary>
+      </form>,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'Email' }), 'a{Enter}');
+
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('keeps keyboard focus while loading turns on and off, and works again after', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<(event: FormEvent<HTMLFormElement>) => void>((event) => event.preventDefault());
+    const form = (loading: boolean) => (
+      <form onSubmit={onSubmit}>
+        <ButtonPrimary type="submit" loading={loading}>
+          Login
+        </ButtonPrimary>
+      </form>
+    );
+    const { rerender } = render(form(false));
+    const button = screen.getByRole('button', { name: 'Login' });
+    button.focus();
+
+    rerender(form(true));
+    expect(button).toHaveFocus();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+
+    rerender(form(false));
+    expect(button).toHaveFocus();
+    expect(button).not.toHaveAttribute('aria-disabled');
+    expect(button).not.toHaveAttribute('aria-busy');
+    await user.keyboard('{Enter}');
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('is natively disabled with disabled, also while loading', () => {
+    render(
+      <ButtonPrimary disabled loading>
+        Login
+      </ButtonPrimary>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Login' })).toBeDisabled();
   });
 });
 

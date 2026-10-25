@@ -30,6 +30,12 @@
   text-decoration: none;
 }
 
+/* Keyboard focus on the action link (#87). A mouse click shows no ring. */
+.labelAction a:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
 /* The border is on the box around the input and the eye, so the eye sits inside it (Active=No).
    The 16px inset of 101 is measured from the outer edge, so the padding leaves room for the border. */
 .control {
