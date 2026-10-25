@@ -30,6 +30,10 @@ const sections = [
   'ButtonSmall',
   'Skeleton',
   'DataState',
+  'ChartLegend',
+  'ComparisonBarChart',
+  'ComparisonBarChartSkeleton',
+  'TargetVsAchievementMeter',
 ];
 
 async function openGallery(page: Page) {

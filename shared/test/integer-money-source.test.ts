@@ -3,10 +3,10 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-// T13: formatting and amount input never turn cents into a float (#11, AC12).
+// T13: formatting, amount input and chart rules never turn cents into a float (#11, AC12; task 006 T5).
 
 const srcDir = join(import.meta.dirname, '..', 'src');
-const checkedDirs = ['format', 'amount-input'];
+const checkedDirs = ['format', 'amount-input', 'chart'];
 
 const floatMoney = [
   /\bparseFloat\b/, // parseFloat(...), Number.parseFloat(...)

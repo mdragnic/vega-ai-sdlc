@@ -21,6 +21,9 @@ import {
   ButtonSmall,
   Card,
   CategoryIcon,
+  ChartLegend,
+  ComparisonBarChart,
+  ComparisonBarChartSkeleton,
   DataState,
   DateBox,
   Dropdown,
@@ -40,6 +43,7 @@ import {
   Section,
   Skeleton,
   Spinner,
+  TargetVsAchievementMeter,
   TextDivider,
 } from '../../components';
 import { menuTabId } from '../../components/MenuTab/MenuTab';
@@ -187,8 +191,8 @@ const listSkeleton = (
   </div>
 );
 
-const waitThenFail = () =>
-  new Promise<number[]>((_, reject) => {
+const waitThenFail = <TData,>() =>
+  new Promise<TData>((_, reject) => {
     setTimeout(() => reject(new Error('The demo query always fails')), 800);
   });
 
@@ -231,7 +235,7 @@ function DataStateEmpty() {
 
 /** Fails on load and on every Retry, after a short wait, so the skeleton shows between. */
 function DataStateError() {
-  const query = useQuery({ ...demoQuery, queryKey: ['gallery', 'error'], queryFn: waitThenFail });
+  const query = useQuery({ ...demoQuery, queryKey: ['gallery', 'error'], queryFn: () => waitThenFail<number[]>() });
   return (
     <Card className={styles.stateCard}>
       <DataState query={query} skeleton={listSkeleton}>
@@ -392,6 +396,191 @@ function DropdownExample({
 }) {
   const [value, setValue] = useState(initial);
   return <Dropdown variant={variant} options={options} value={value} onValueChange={setValue} aria-label={label} />;
+}
+
+// Task 006: chart samples as the backend will send them, ticks included (axisTicks of the highest value), so
+// the gallery computes nothing (#11). `null` marks a period still to come (#55).
+type ChartSample = Parameters<typeof ComparisonBarChart>[0];
+
+const amounts = (values: (number | null)[]) => values.map((cents) => (cents === null ? null : usd(cents)));
+
+// A week like the demo first login: last week's highest $322.00 on Thursday, no teal bar from Friday (#91).
+const statisticsSample: ChartSample = {
+  title: 'Expenses per day, this week and last week',
+  labels: ['19 Mon', '20 Tue', '21 Wed', '22 Thu', '23 Fri', '24 Sat', '25 Sun'],
+  previous: { name: 'Last week', values: amounts([18000, 9550, 24000, 32200, 15000, 21025, 6000]) },
+  current: { name: 'This week', values: amounts([12000, 26600, 7536, 28992, null, null, null]) },
+  ticks: [0, 10000, 20000, 30000, 40000].map(usd),
+};
+
+// A year up to October: last year's highest $3,412.50 in July gives $0 to $4k.
+const expensesSample: ChartSample = {
+  title: 'Expenses per month, this year and last year',
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  previous: {
+    name: 'Last year',
+    values: amounts([214030, 187500, 251045, 199010, 276000, 230575, 341250, 298820, 220100, 265435, 312080, 338000]),
+  },
+  current: {
+    name: 'This year',
+    values: amounts([230015, 205000, 247560, 281025, 239040, 301500, 289075, 320510, 269030, 214055, null, null]),
+  },
+  ticks: [0, 100000, 200000, 300000, 400000].map(usd),
+};
+
+const allZeroSample: ChartSample = {
+  ...statisticsSample,
+  previous: { name: 'Last week', values: amounts([0, 0, 0, 0, 0, 0, 0]) },
+  current: { name: 'This week', values: amounts([0, 0, 0, 0, null, null, null]) },
+};
+
+// The screens get the all-zero check from the backend (tasks 017, 024); the gallery reads its own sample.
+const noExpenses = {
+  isEmpty: ({ previous, current }: ChartSample) =>
+    [...previous.values, ...current.values].every((value) => value === null || value.cents === 0),
+  message: 'No expenses this week or last week',
+};
+
+/**
+ * A chart card as in 104 and 109: the header row (a text stand-in for the screen's comparison control, then the
+ * legend), and the chart's box, which every DataState state fills, so the card keeps its height.
+ */
+function ChartCard({
+  control,
+  current,
+  previous,
+  children,
+}: {
+  control: string;
+  current: string;
+  previous: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card>
+      <div className={styles.chartHeader}>
+        <span className={styles.chartControl}>{control}</span>
+        <ChartLegend current={current} previous={previous} />
+      </div>
+      <div className={styles.chartBox}>{children}</div>
+    </Card>
+  );
+}
+
+function StatisticsCard({ children }: { children: ReactNode }) {
+  return (
+    <ChartCard control="Weekly Comparison" current="This week" previous="Last week">
+      {children}
+    </ChartCard>
+  );
+}
+
+const statisticsSkeleton = <ComparisonBarChartSkeleton groups={7} />;
+const drawChart = (sample: ChartSample) => <ComparisonBarChart {...sample} />;
+
+function ChartLoading() {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'chart', 'loading'],
+    queryFn: () => new Promise<ChartSample>(() => undefined),
+  });
+  return (
+    <StatisticsCard>
+      <DataState query={query} skeleton={statisticsSkeleton}>
+        {drawChart}
+      </DataState>
+    </StatisticsCard>
+  );
+}
+
+function ChartAllZero() {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'chart', 'all-zero'],
+    queryFn: () => Promise.resolve(allZeroSample),
+  });
+  return (
+    <StatisticsCard>
+      <DataState query={query} skeleton={statisticsSkeleton} empty={noExpenses}>
+        {drawChart}
+      </DataState>
+    </StatisticsCard>
+  );
+}
+
+/** Fails on load and on every Retry, after a short wait, so the skeleton shows between. */
+function ChartError() {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'chart', 'error'],
+    queryFn: () => waitThenFail<ChartSample>(),
+  });
+  return (
+    <StatisticsCard>
+      <DataState query={query} skeleton={statisticsSkeleton} empty={noExpenses}>
+        {drawChart}
+      </DataState>
+    </StatisticsCard>
+  );
+}
+
+function ChartReady() {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'chart', 'ready'],
+    queryFn: () => Promise.resolve(statisticsSample),
+  });
+  return (
+    <StatisticsCard>
+      <DataState query={query} skeleton={statisticsSkeleton} empty={noExpenses}>
+        {drawChart}
+      </DataState>
+    </StatisticsCard>
+  );
+}
+
+/** "Refetch and fail" makes the next fetch fail: the chart stays, with no error state and no indicator (#89). */
+function ChartRefetchFails() {
+  const failNext = useRef(false);
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'chart', 'refetch-fails'],
+    queryFn: () => {
+      if (!failNext.current) return Promise.resolve(statisticsSample);
+      failNext.current = false;
+      return Promise.reject(new Error('The demo refetch fails'));
+    },
+  });
+
+  return (
+    <div className={styles.demoStack}>
+      <ButtonSmall
+        onClick={() => {
+          failNext.current = true;
+          void query.refetch();
+        }}
+      >
+        Refetch and fail
+      </ButtonSmall>
+      <div className={styles.chartStack}>
+        <StatisticsCard>
+          <DataState query={query} skeleton={statisticsSkeleton} empty={noExpenses}>
+            {drawChart}
+          </DataState>
+        </StatisticsCard>
+      </div>
+      <p className={styles.panelText}>Query status: {query.status}</p>
+    </div>
+  );
+}
+
+/** A gauge sample: Present of Target with the progress the backend's goalProgress gives. */
+function GaugeExample({ present, target, progress }: { present: number; target: number; progress: number }) {
+  return (
+    <Card className={styles.gaugeCard}>
+      <TargetVsAchievementMeter present={usd(present)} target={usd(target)} progress={progress} />
+    </Card>
+  );
 }
 
 /**
@@ -884,6 +1073,98 @@ export function ComponentGallery() {
           <Card>
             <DropdownExample variant="box" options={monthOptions(60)} initial="2026-10" label="Month" />
           </Card>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ChartLegend">
+        <Example name="This week / Last week (104)">
+          <Card>
+            <ChartLegend current="This week" previous="Last week" />
+          </Card>
+        </Example>
+        <Example name="This year / Last year (109)">
+          <Card>
+            <ChartLegend current="This year" previous="Last year" />
+          </Card>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ComparisonBarChart" wide>
+        <Example name="Statistics sample, like 104">
+          <div className={styles.chartTwoCards}>
+            <StatisticsCard>{drawChart(statisticsSample)}</StatisticsCard>
+          </div>
+        </Example>
+        <Example name="Expenses sample, like 109">
+          <div className={styles.chartThreeCards}>
+            <ChartCard control="Monthly Comparison" current="This year" previous="Last year">
+              {drawChart(expensesSample)}
+            </ChartCard>
+          </div>
+        </Example>
+        <Example name="Loading">
+          <div className={styles.chartTwoCards}>
+            <ChartLoading />
+          </div>
+        </Example>
+        <Example name="All zero">
+          <div className={styles.chartTwoCards}>
+            <ChartAllZero />
+          </div>
+        </Example>
+        <Example name="Error">
+          <div className={styles.chartTwoCards}>
+            <ChartError />
+          </div>
+        </Example>
+        <Example name="Ready">
+          <div className={styles.chartTwoCards}>
+            <ChartReady />
+          </div>
+        </Example>
+        <Example name="Background refetch fails: the chart stays">
+          <div className={styles.chartTwoCards}>
+            <ChartRefetchFails />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ComparisonBarChartSkeleton" wide>
+        <Example name="7 groups (104)">
+          <div className={styles.chartTwoCards}>
+            <Card>
+              <div className={styles.chartBox}>
+                <ComparisonBarChartSkeleton groups={7} />
+              </div>
+            </Card>
+          </div>
+        </Example>
+        <Example name="12 groups (109)">
+          <div className={styles.chartThreeCards}>
+            <Card>
+              <div className={styles.chartBox}>
+                <ComparisonBarChartSkeleton groups={12} />
+              </div>
+            </Card>
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TargetVsAchievementMeter">
+        <Example name="$12,500 of $20,000 (104)">
+          <GaugeExample present={1250000} target={2000000} progress={0.625} />
+        </Example>
+        <Example name="$16,250 of $20,000 (demo)">
+          <GaugeExample present={1625000} target={2000000} progress={0.8125} />
+        </Example>
+        <Example name="$0 of $20,000">
+          <GaugeExample present={0} target={2000000} progress={0} />
+        </Example>
+        <Example name="$25,000 of $20,000, over-achieved">
+          <GaugeExample present={2500000} target={2000000} progress={1} />
+        </Example>
+        <Example name="$1,000,000,000 of $1,000,000,000">
+          <GaugeExample present={100000000000} target={100000000000} progress={1} />
         </Example>
       </GallerySection>
     </div>

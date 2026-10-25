@@ -1,0 +1,45 @@
+// Task 006 visual comparison: design crop | render crop | |difference| x4 (white = equal), at 2x.
+import { decode } from './png.mjs';
+import { writePng } from './crop.mjs';
+const fig = 'D:/Projects/VegaAI/finebank-v1/docs/figma/';
+const ev = 'D:/Projects/VegaAI/finebank-v1/.claude/tasks/evidence/006/';
+function compare(name, a, b, w, h) {
+  const gap = 8, W = w * 3 + gap * 2, out = Buffer.alloc(W * h * 3, 255);
+  let sum = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const p = a.img.px(a.x + x, a.y + y), q = b.img.px(b.x + x, b.y + y);
+    for (let c = 0; c < 3; c++) {
+      const d = Math.abs(p[c] - q[c]); sum += d;
+      out[(y * W + x) * 3 + c] = p[c];
+      out[(y * W + x + w + gap) * 3 + c] = q[c];
+      out[(y * W + x + 2 * (w + gap)) * 3 + c] = 255 - Math.min(255, d * 4);
+    }
+  }
+  writePng(ev + 'compare-' + name + '.png', W, h, out);
+  return { name, mean: +(sum / (w * h * 3)).toFixed(2) };
+}
+const d104 = decode(fig + '104. Overview.png'), d109 = decode(fig + '109. Expenses.png'), d110 = decode(fig + '110. Goals.png');
+const stat = decode(ev + 'render-statistics-card.png'), exp = decode(ev + 'render-expenses-card.png');
+const gauge = decode(ev + 'render-gauge-12500.png');
+const r = [];
+// The element screenshots start at the whole pixel before the half-pixel card edge: render x + 2.
+// Whole cards, aligned at the card's top-left (render 260 high, design 258: compare 516 rows).
+r.push(compare('104-statistics-card', { img: d104, x: 1360, y: 896 }, { img: stat, x: 2, y: 0 }, 1456, 516));
+r.push(compare('109-expenses-card', { img: d109, x: 608, y: 304 }, { img: exp, x: 2, y: 0 }, 2208, 516));
+// Parts of the Statistics card (offsets from the card's top-left at 2x).
+const part = (name, dx, dy, w, h, ddy = 0) => r.push(compare(name, { img: d104, x: 1360 + dx, y: 896 + dy }, { img: stat, x: dx + 2, y: dy + ddy }, w, h));
+part('104-y-axis', 0, 100, 240, 260);
+part('104-grid-and-bars', 200, 100, 1256, 240);
+part('104-x-labels', 150, 430, 1306, 60);
+part('104-first-group', 200, 100, 200, 240);
+// The header row: the render's sits 16 px (2x) lower; shown at the same offset and shifted.
+part('104-legend', 1000, 30, 456, 60);
+part('104-legend-shifted', 1000, 30, 456, 60, 16);
+// Gauges: the SVG box's top-left in the design (104: 1744, 456; 110: 1024, 472) and in the render (274, 48).
+const g = (name, img, gx, gy, dx, dy, w, h) => r.push(compare(name, { img, x: gx + dx, y: gy + dy }, { img: gauge, x: 274 + dx, y: 48 + dy }, w, h));
+g('104-gauge', d104, 1744, 456, -40, -16, 336, 280);
+g('104-gauge-arc', d104, 1744, 456, -8, -8, 272, 160);
+g('104-gauge-labels', d104, 1744, 456, -40, 140, 336, 52);
+g('104-gauge-caption', d104, 1744, 456, -40, 200, 336, 60);
+g('110-gauge', d110, 1024, 472, -40, -16, 336, 280);
+console.log(JSON.stringify(r, null, 1));

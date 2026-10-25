@@ -1,0 +1,29 @@
+/* The colors, the typography and the height are tokens; the drawing inside is numeric, from geometry.ts (#92). */
+.chart {
+  position: relative;
+}
+
+.plot {
+  display: block;
+  width: 100%;
+  height: var(--size-chart-height);
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--color-gray-06);
+}
+
+.yLabel,
+.xLabel {
+  fill: var(--color-gray-03);
+  font: var(--font-regular-14-20);
+}
+
+.previous {
+  fill: var(--color-gray-05);
+}
+
+.current {
+  fill: var(--color-primary);
+}

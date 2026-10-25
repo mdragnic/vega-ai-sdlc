@@ -1,0 +1,69 @@
+/* Not designed (#6): existing tokens only, in the chart's box (--size-chart-height). The five 16px label lines are
+   centered 36 apart from 16 down, on the chart's grid rows, above the x label row. */
+.skeleton {
+  display: flex;
+  gap: var(--space-form-small-gap);
+  height: var(--size-chart-height);
+}
+
+.axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: var(--space-section-title-gap) 0 var(--line-height-20);
+}
+
+.axisLabel {
+  width: var(--size-avatar);
+  height: var(--line-height-16);
+}
+
+.plot {
+  display: flex;
+  flex-grow: 1;
+  justify-content: space-between;
+  padding: 0 var(--space-card-padding);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-section-title-gap);
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-section-title-gap);
+}
+
+.bar {
+  width: var(--size-icon-sm);
+}
+
+/* Three bar pairs of different heights, repeated, so the placeholder reads as a bar chart. */
+.group:nth-child(3n + 1) .bar:first-child,
+.group:nth-child(3n + 2) .bar:last-child {
+  height: var(--size-date-box-height-lg);
+}
+
+.group:nth-child(3n + 1) .bar:last-child,
+.group:nth-child(3n) .bar:first-child {
+  height: var(--size-profile-height);
+}
+
+.group:nth-child(3n + 2) .bar:first-child {
+  height: var(--size-category-tile-tall);
+}
+
+.group:nth-child(3n) .bar:last-child {
+  height: var(--size-date-box-height);
+}
+
+.groupLabel {
+  width: var(--size-category-tile);
+  height: var(--line-height-16);
+}

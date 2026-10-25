@@ -1,0 +1,32 @@
+/* 104 and 109: a 16x8 swatch 8 before each label, items 24 apart, Regular 12/16 in Secondary. */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-chart-legend-item-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-chart-legend-swatch-gap);
+  color: var(--color-secondary);
+  font: var(--font-regular-12-16);
+  white-space: nowrap;
+}
+
+.swatch {
+  width: var(--size-chart-legend-swatch-width);
+  height: var(--size-chart-legend-swatch-height);
+  border-radius: var(--radius-chart-legend-swatch);
+}
+
+.current {
+  background-color: var(--color-primary);
+}
+
+.previous {
+  background-color: var(--color-gray-05);
+}

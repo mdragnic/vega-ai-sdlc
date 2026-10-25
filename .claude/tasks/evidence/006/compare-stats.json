@@ -1,0 +1,54 @@
+[
+ {
+  "name": "104-statistics-card",
+  "mean": 9.75
+ },
+ {
+  "name": "109-expenses-card",
+  "mean": 5.68
+ },
+ {
+  "name": "104-y-axis",
+  "mean": 4.81
+ },
+ {
+  "name": "104-grid-and-bars",
+  "mean": 12.14
+ },
+ {
+  "name": "104-x-labels",
+  "mean": 6.42
+ },
+ {
+  "name": "104-first-group",
+  "mean": 19.32
+ },
+ {
+  "name": "104-legend",
+  "mean": 20.88
+ },
+ {
+  "name": "104-legend-shifted",
+  "mean": 9.31
+ },
+ {
+  "name": "104-gauge",
+  "mean": 6.74
+ },
+ {
+  "name": "104-gauge-arc",
+  "mean": 7.27
+ },
+ {
+  "name": "104-gauge-labels",
+  "mean": 12.42
+ },
+ {
+  "name": "104-gauge-caption",
+  "mean": 5.06
+ },
+ {
+  "name": "110-gauge",
+  "mean": 6.74
+ }
+]

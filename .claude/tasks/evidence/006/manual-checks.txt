@@ -1,0 +1,14 @@
+Task 006 manual browser checks (Playwright MCP, /dev/components, 1440x1024), 2026-10-24
+- Hovered all 11 bars of the Statistics sample and clicked one: chart SVG outerHTML unchanged (true).
+- Hovered and clicked the gauge (arc top, center, track end): meter outerHTML unchanged (true).
+- Tooltips on the page: 0. <title> elements in chart and gauge SVGs: 0.
+- Tab from the last Dropdown: Retry (Error sample) -> "Refetch and fail" -> body. No chart or gauge element takes focus.
+- Error sample: Retry shows the skeleton (aria-busy count 1), then "Something went wrong." again.
+- All zero sample shows "No expenses this week or last week"; Loading sample is aria-busy.
+- Accessibility tree: table "Expenses per day, this week and last week" with rowheaders 19 Mon to 25 Sun,
+  columnheaders Last week / This week, cells in formatMoney, empty for Fri to Sun; meter "Target vs Achievement".
+- Console errors or warnings during the checks: none.
+- dataviz palette validator (light, surface #FFFFFF) on #299D91,#E8E8E8:
+  Lightness band FAIL (#E8E8E8 0.931), Chroma floor FAIL (#E8E8E8 0, reads gray), CVD separation PASS (dE 26.5 protan,
+  tritan 31.3), Normal-vision floor PASS (dE 31.7), Contrast vs surface WARN (#E8E8E8 1.23:1, relief: legend + table view).
+  Colors are the design's (Gray/05 is the de-emphasis series); not changed.

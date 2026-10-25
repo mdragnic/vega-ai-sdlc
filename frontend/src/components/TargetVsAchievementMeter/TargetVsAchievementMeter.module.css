@@ -1,0 +1,58 @@
+/* The colors, the typography and the SVG's size are tokens; the drawing inside is numeric, from geometry.ts (#92).
+   The caption is centered under the gauge; long labels may reach past the SVG's sides. */
+.meter {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gauge {
+  display: block;
+  width: var(--size-gauge-width);
+  height: var(--size-gauge-height);
+  overflow: visible;
+}
+
+.track,
+.progress {
+  fill: none;
+}
+
+.track {
+  stroke: var(--color-gray-05);
+}
+
+.progress {
+  stroke: var(--color-primary);
+}
+
+.needle,
+.dot {
+  fill: var(--color-primary);
+}
+
+/* 104 and 110: #D1D1D1, Special/BG within 1. */
+.limitMin,
+.limitMax {
+  fill: var(--color-special-bg);
+  font: var(--font-regular-12-16);
+}
+
+/* Semibold 16 (measured: the ink of "12K" in 104 matches 600, not 500 or 700). */
+.value {
+  fill: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+}
+
+/* Medium 12 (measured: 131 wide like 12px Inter; its ink matches 500, not 400). */
+.caption {
+  margin: var(--space-gauge-caption-gap) 0 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-16);
+  white-space: nowrap;
+}

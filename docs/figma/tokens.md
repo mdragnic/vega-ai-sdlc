@@ -5,7 +5,7 @@ Written in task 000, steps 7 to 9 (decision #65). `frontend/src/styles/tokens.cs
 Sources:
 - Colors and typography: one `get_variable_defs` call on the Typography & Color frame `418:6459` on 2026-10-23 (`docs/figma/inventory.md`, call 5). It returned 12 color variables and 10 text styles, and no effects.
 - Components page labels (`docs/figma/components.md`, last section) for values the call lacks.
-- Everything else is measured from the 2x PNGs in `docs/figma/`: pixel positions are PNG pixels (2880x2048), halved, then rounded to the nearest 4px. Border widths are halved but not rounded. Measured with a Node script using only built-ins (PNG decode, color runs, corner-curve fit, Gaussian shadow fit), kept outside the repo.
+- Everything else is measured from the 2x PNGs in `docs/figma/`: pixel positions are PNG pixels (2880x2048), halved, then rounded to the nearest 4px. Border widths, and radii under 4px, are halved but not rounded (decisions #86, #92). Inside an SVG, only the colors, the typography and the outer size are tokens; the drawing inside is numeric, from named constants in the component (decision #92). Measured with a Node script using only built-ins (PNG decode, color runs, corner-curve fit, Gaussian shadow fit), kept outside the repo.
 
 Names follow the Figma variable or style name in kebab-case. Measured tokens are named by role.
 
@@ -117,6 +117,9 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-popup-input-padding-x` | `24px` | measured: PNG 104.1, field left edge (x 1336) to the `$500000` glyphs (x 1386) and the placeholder glyphs (x 1385), 49 to 50 px including the side bearing of the first glyph, halved, rounded. Added in task 005 |
 | `--space-dropdown-padding-x` | `16px` | measured: PNG 110, Savings Goal period box left edge (x 984) to its text glyphs (x 1018, 1 to 2 px of side bearing), 33 px, and the 16px chevron box (glyph x 1238 to 1257) to the box right edge (x 1296), 32 px, halved, rounded. Added in task 005 |
 | `--space-dropdown-chevron-gap` | `8px` | measured: PNG 110, end of the period text (glyphs to x 1213) to the 16px chevron box (its 9 px glyph at x 1238 to 1257 sits 3.3 px inside the box), 17 px, halved 8.5, rounded; Saving Summary the same (text to x 1877, glyph from x 1902). Added in task 005 |
+| `--space-chart-legend-swatch-gap` | `8px` | measured: PNG 104, legend swatch right edge (x 2420) to the "This week" glyphs (x 2437), 17 px including the side bearing of the "T", halved 8.5, rounded; PNG 109 the same (x 2408 to 2425). Added in task 006 |
+| `--space-chart-legend-item-gap` | `24px` | measured: PNG 104, end of the "This week" text (glyphs to x 2551) to the "Last week" swatch (x 2602), 50 px including the side bearing of the "k", halved 25, rounded. Added in task 006 |
+| `--space-gauge-caption-gap` | `16px` | measured: PNG 104, bottom of the gauge drawing (y 640, see --size-gauge-height) to the "Target vs Achievement" line box (y 671: glyphs from y 678 in a 12/16 line), 31 px, halved 15.5, rounded. PNG 110 the same. Added in task 006 |
 
 ## Size
 
@@ -162,6 +165,11 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-button-small-height` | `32px` | Figma Button small 84x32 (components.md). Checked: export docs/figma/components/418-6433.png, y 724 to 787, 64 px, halved. Added in task 004 |
 | `--size-popup-button-width` | `192px` | measured: PNG 104.1, Save x 1504 to 1887, 384 px, halved; centered in the panel (x 1208 to 2183). PNG 110.1 and 110.2 the same. Added in task 005 |
 | `--size-dropdown-box-height` | `32px` | measured: PNG 110, Savings Goal period box y 344 to 407, 64 px, halved. Added in task 005 |
+| `--size-chart-height` | `188px` | measured: PNG 104 Statistics and PNG 109 Monthly Comparison, the plot from the top grid line (y 1022) down to the descent of the x-axis labels (y 1369: baseline y 1362, glyphs from y 1342), placed under the card padding and a 24 px header row. That header row is assumed, not measured: 104 and 109 center the header at y 952, 16 px higher, partly inside the card padding (decision #93: kept, the header row 8 lower than in Figma). From the assumed row's end (y 992: card top 896 plus 48 and 48) to the descent, 377 px, halved 188.5, rounded; the top grid line falls 15 below its top. One height for the chart, its skeleton and its DataState box; the chart draws inside it from named constants (#92). Added in task 006 |
+| `--size-chart-legend-swatch-width` | `16px` | measured: PNG 104, legend swatches x 2388 to 2419 and 2602 to 2633, 32 px, halved. PNG 109 the same (x 2376 to 2407). Added in task 006 |
+| `--size-chart-legend-swatch-height` | `8px` | measured: PNG 104 and 109, legend swatches y 944 to 959 (352 to 367 in 109), 16 px, halved. Added in task 006 |
+| `--size-gauge-width` | `128px` | measured: PNG 104 and 110, the gauge arc's outer edge fitted as a circle of radius 128.1 px (ink x 1744 to 1999), diameter 256.2 px, halved 128.1, rounded. The SVG's viewBox width; the arc is drawn inside it from named constants (#92). Added in task 006 |
+| `--size-gauge-height` | `92px` | measured: PNG 104 and 110, the gauge arc top (y 456) to the center value's baseline (y 632) plus the descent of its 16 px text (8 px at 2x), 184 px, halved. The SVG's viewBox height, holding the arc, the needle and the three labels (#92). Added in task 006 |
 
 ## Radius
 
@@ -182,6 +190,7 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-avatar` | `50%` | measured: PNG 104 and 105, the sidebar profile photo is a circle. Added in task 003 |
 | `--radius-category-tile` | `8px` | measured: PNG 104, Recent Transaction and Expenses Breakdown tiles, corner radius 16 px; PNG 109 and 110 tiles fit about 18 px; halved and rounded. The date and amount boxes in 108 have the same radii as in 104 (--radius-date-box, --radius-amount-box). Added in task 004 |
 | `--radius-dropdown` | `4px` | measured: PNG 110, Savings Goal period box corners: the straight border starts 7 px from the corner on both sides, radius about 7 to 8 px, halved and rounded. Added in task 005 |
+| `--radius-chart-legend-swatch` | `2px` | measured: PNG 104 and 109, legend swatch corners: the straight top edge starts 4 px in (x 2392 in 2388 to 2419), radius 4 px, halved. Kept under 4px, off the grid (#92 b). Added in task 006 |
 
 ## Border
 

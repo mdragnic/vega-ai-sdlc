@@ -98,6 +98,9 @@
   --space-popup-input-padding-x: 24px;
   --space-dropdown-padding-x: 16px;
   --space-dropdown-chevron-gap: 8px;
+  --space-chart-legend-swatch-gap: 8px;
+  --space-chart-legend-item-gap: 24px;
+  --space-gauge-caption-gap: 16px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -140,6 +143,11 @@
   --size-button-small-height: 32px;
   --size-popup-button-width: 192px;
   --size-dropdown-box-height: 32px;
+  --size-chart-height: 188px;
+  --size-chart-legend-swatch-width: 16px;
+  --size-chart-legend-swatch-height: 8px;
+  --size-gauge-width: 128px;
+  --size-gauge-height: 92px;
 
   /* Radius */
   --radius-input: 8px;
@@ -155,6 +163,7 @@
   --radius-avatar: 50%;
   --radius-category-tile: 8px;
   --radius-dropdown: 4px;
+  --radius-chart-legend-swatch: 2px;
 
   /* Border */
   --border-width-input: 1px;

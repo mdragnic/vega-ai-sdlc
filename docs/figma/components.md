@@ -148,7 +148,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`.
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`.
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -172,6 +172,10 @@ Code components with no Figma component. They are built from tokens, and their n
 | `DataState` | The shared states of one widget, list, table or chart: skeleton while loading, empty message, error state ("Something went wrong." above Retry) when there is no data to show, with a per-widget error boundary around the content. A failed background refetch keeps the data on screen | #6, #88, #89 |
 | `Popup` | The modal shell of every popup, on Radix Dialog: the white 488px panel with its top edge at y 276, centered on the content area, and the X. The overlay dims the content area only (right of the sidebar, below the header), but the whole page is blocked: focus stays inside, the page does not scroll and the rest is hidden from assistive technology. Closes with the X, Esc or a click on the dimmed area; focus returns to the opener. Rendered inside `AppLayout`, which gives it the content area to dim. `GoalPopupInput` is built on it | #35, #87, #90 |
 | `Dropdown` | The one shared select, on Radix Select. Closed looks: `box` (110 Savings Goal period), `plain` (110 Saving Summary period), `inline` (111 country code, the label only) and `input` (Account Type in 106 edit mode, styled like `Input`). One open list for all: Popup radius, card shadow, 1px Gray/05 border | #26, #30, #33, #43, #60, #87, #90 |
+| `ComparisonBarChart` | The bar chart of 104 Statistics and 109 Monthly Comparison (Figma bars `Graph bar 01` / `Bar`, no component): per label a Gray/05 bar for the earlier period and a Primary bar for the current one, 16 wide and 8 apart with rounded tops, on 5 Gray/06 grid lines with compact y labels. It draws the values and ticks it is given (ticks from the backend's `axisTicks`); `null` draws no bar. No interaction. The SVG is hidden; a visually hidden table carries the data. Its colors, typography and height are tokens, its drawing named constants | #11, #20, #29, #55, #82, #91, #92 |
+| `ComparisonBarChartSkeleton` | The loading skeleton of `ComparisonBarChart` for `DataState`, in the chart's box: y label lines and per group two bar blocks over a label line, no text. Not designed | #6 |
+| `ChartLegend` | The legend at the right of a chart card's header row (104, 109, later 110 Saving Summary): the current period first with a Primary swatch, then the earlier one with a Gray/05 swatch, labels in Secondary | #29, #92 |
+| `TargetVsAchievementMeter` | The gauge of 104 Goals and 110 Savings Goal (Figma frame `Target vs Achievement Meter` `407:5628`, no component): a Gray/05 half circle with a Primary arc and needle at the progress it is given (from the backend's `goalProgress`), `$0` and the Target under the ends and the Present between them in the compact format, the caption under them. A `meter` named by the caption | #11, #18, #31, #92 |
 
 ## Totals
 

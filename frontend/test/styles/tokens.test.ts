@@ -54,8 +54,9 @@ const radixRuntime = ['--radix-select-trigger-width', '--radix-select-content-av
 
 const crlf = (text: string) => text.replaceAll('\r\n', '\n').replaceAll('\n', '\r\n');
 
-/** Measured tokens kept off the 4px grid: border widths, and the checkbox radius (decision #86). */
-const offGridAllowed = (name: string) => name.startsWith('--border-width') || name === '--radius-checkbox';
+/** Measured sizes kept off the 4px grid: border widths, and radii under 4px (decisions #86, #92). */
+const offGridAllowed = (name: string, px: number) =>
+  name.startsWith('--border-width') || (name.startsWith('--radius') && px < 4);
 
 // T3: tokens.css holds exactly the tokens in docs/figma/tokens.md (AC7).
 describe('design tokens', () => {
@@ -68,13 +69,26 @@ describe('design tokens', () => {
     expect(rows).toHaveLength(fromMarkdown.length);
 
     const offGrid = rows
-      .filter(([, name, , source]) => source!.startsWith('measured') && !offGridAllowed(name!))
+      .filter(([, , , source]) => source!.startsWith('measured'))
       .flatMap(([, name, value]) =>
-        [...value!.matchAll(/(\d+(?:\.\d+)?)px/g)].filter((m) => Number(m[1]) % 4 !== 0).map(() => `${name}: ${value}`),
+        [...value!.matchAll(/(\d+(?:\.\d+)?)px/g)]
+          .map((m) => Number(m[1]))
+          .filter((px) => px % 4 !== 0 && !offGridAllowed(name!, px))
+          .map(() => `${name}: ${value}`),
       );
 
     expect(rows.filter(([, , , source]) => !source?.trim())).toEqual([]);
     expect(offGrid).toEqual([]);
+  });
+
+  it.each([
+    ['--border-width-divider', 1, true],
+    ['--radius-checkbox', 2, true],
+    ['--radius-chart-legend-swatch', 2, true],
+    ['--radius-card', 6, false],
+    ['--space-card-gap', 2, false],
+  ])('allows %s at %ipx off the grid: %s', (name, px, allowed) => {
+    expect(offGridAllowed(name, px)).toBe(allowed);
   });
 
   it('lists every token once in tokens.md', () => {

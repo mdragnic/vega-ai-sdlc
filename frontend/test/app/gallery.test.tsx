@@ -1,3 +1,4 @@
+import { axisTicks, formatCompactMoney } from '@finebank/shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
@@ -21,6 +22,7 @@ const figure = (region: string, name: string) =>
   within(screen.getByRole('region', { name: region })).getByRole('figure', { name });
 
 const amountField = (name: string) => within(figure('PopupInputSmall', name)).getByRole('textbox');
+const chartState = (name: string) => figure('ComparisonBarChart', name);
 const dropdownTrigger = (name: string) => within(figure('Dropdown', name)).getByRole('combobox');
 
 // The dev gallery (AC12): one section per shared component. Vitest runs in development mode.
@@ -226,6 +228,89 @@ describe('component gallery', () => {
     const long = screen.getAllByRole('option').map((option) => option.textContent);
     expect(long).toHaveLength(60);
     expect([long[0], long[59]]).toEqual(['Oct, 2026', 'Nov, 2021']);
+  });
+
+  // Task 006 Scope: the legend, the chart samples and the gauge samples (AC17).
+  it('shows the chart and gauge samples', async () => {
+    await renderGallery();
+
+    for (const [name, labels] of [
+      ['This week / Last week (104)', ['This week', 'Last week']],
+      ['This year / Last year (109)', ['This year', 'Last year']],
+    ] as const) {
+      expect(
+        within(figure('ChartLegend', name))
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(labels);
+    }
+
+    const statistics = figure('ComparisonBarChart', 'Statistics sample, like 104');
+    expect(within(statistics).getByText('Weekly Comparison')).toBeInTheDocument();
+    expect(
+      within(statistics)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['This week', 'Last week']);
+    const weekTable = within(statistics).getByRole('table', { name: 'Expenses per day, this week and last week' });
+    expect(
+      within(weekTable)
+        .getAllByRole('rowheader')
+        .map((cell) => cell.textContent),
+    ).toEqual(['19 Mon', '20 Tue', '21 Wed', '22 Thu', '23 Fri', '24 Sat', '25 Sun']);
+    expect(within(weekTable).getByRole('cell', { name: '$322.00' })).toBeInTheDocument();
+    // The ticks are written in the gallery: the backend's axisTicks gives $0 to $400 for $322.00 (#91).
+    for (const tick of axisTicks({ cents: 32_200, currency: 'USD' })) {
+      expect(within(statistics).getByText(formatCompactMoney(tick))).toBeInTheDocument();
+    }
+
+    const expenses = figure('ComparisonBarChart', 'Expenses sample, like 109');
+    const yearTable = within(expenses).getByRole('table', { name: 'Expenses per month, this year and last year' });
+    expect(within(yearTable).getAllByRole('rowheader')).toHaveLength(12);
+    expect(within(yearTable).getAllByRole('row').at(-1)).toHaveTextContent(/^Dec\$3,380\.00$/);
+    for (const tick of axisTicks({ cents: 341_250, currency: 'USD' })) {
+      expect(within(expenses).getByText(formatCompactMoney(tick))).toBeInTheDocument();
+    }
+
+    for (const groups of ['7 groups (104)', '12 groups (109)']) {
+      // No text but the caption.
+      expect(figure('ComparisonBarChartSkeleton', groups).textContent).toBe(groups);
+    }
+
+    for (const [name, valueText] of [
+      ['$12,500 of $20,000 (104)', '$12.5k'],
+      ['$16,250 of $20,000 (demo)', '$16.2k'],
+      ['$0 of $20,000', '$0'],
+      ['$25,000 of $20,000, over-achieved', '$25k'],
+      ['$1,000,000,000 of $1,000,000,000', '$1,000M'],
+    ] as const) {
+      expect(
+        within(figure('TargetVsAchievementMeter', name)).getByRole('meter', { name: 'Target vs Achievement' }),
+      ).toHaveAttribute('aria-valuetext', valueText);
+    }
+  });
+
+  // T13 (unit): the chart's states inside DataState, with the header row kept in each (AC12, #6, #89).
+  it('shows the chart in every DataState state', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    for (const name of ['Loading', 'All zero', 'Error', 'Ready', 'Background refetch fails: the chart stays']) {
+      expect(within(chartState(name)).getByText('Weekly Comparison')).toBeInTheDocument();
+      expect(within(chartState(name)).getAllByRole('listitem')).toHaveLength(2);
+    }
+    expect(chartState('Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(chartState('All zero')).findByText('No expenses this week or last week')).toBeInTheDocument();
+    expect(await within(chartState('Error')).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(within(chartState('Error')).getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(await within(chartState('Ready')).findByRole('table')).toBeInTheDocument();
+
+    const refetch = chartState('Background refetch fails: the chart stays');
+    expect(await within(refetch).findByRole('table')).toBeInTheDocument();
+    await user.click(within(refetch).getByRole('button', { name: 'Refetch and fail' }));
+    expect(await within(refetch).findByText('Query status: error')).toBeInTheDocument();
+    expect(within(refetch).getByRole('table')).toBeInTheDocument();
+    expect(within(refetch).queryByRole('alert')).toBeNull();
   });
 
   it('links the popup sections to /dev/popup', async () => {

@@ -228,3 +228,49 @@
 .devLink {
   color: var(--color-primary);
 }
+
+/* Task 006: chart cards as wide as two cards and a gap (104 Statistics) or three cards and two gaps (109). */
+.chartTwoCards {
+  width: calc(var(--size-card-width) + var(--size-card-width) + var(--space-card-gap));
+  margin: 0 auto;
+}
+
+.chartThreeCards {
+  width: calc(
+    var(--size-card-width) + var(--size-card-width) + var(--size-card-width) + var(--space-card-gap) +
+      var(--space-card-gap)
+  );
+  margin: 0 auto;
+}
+
+/* The header row of a chart card: the comparison control on the left, the legend on the right. */
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* A plain text stand-in for the "Weekly Comparison" control (tasks 017, 024), Semibold 16 as in 104. */
+.chartControl {
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+/* The chart's box: the chart, its skeleton, the empty message and the error state all fill it. */
+.chartBox {
+  display: flex;
+  flex-direction: column;
+  height: var(--size-chart-height);
+}
+
+.chartStack {
+  align-self: stretch;
+}
+
+.gaugeCard {
+  display: flex;
+  justify-content: center;
+}

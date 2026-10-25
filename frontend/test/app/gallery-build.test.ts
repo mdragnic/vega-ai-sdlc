@@ -7,8 +7,14 @@ import { build } from 'vite';
 import { afterAll, describe, expect, it } from 'vitest';
 
 const frontendDir = resolve(import.meta.dirname, '../..');
-// The gallery heading, the popup page's open button and both route paths: all are in the dev pages only.
-const markers = ['Component gallery', '/dev/components', 'Open two-field popup', '/dev/popup'];
+// The gallery heading, the popup page's open button, both route paths and a chart sample: all are in the dev pages only.
+const markers = [
+  'Component gallery',
+  '/dev/components',
+  'Open two-field popup',
+  '/dev/popup',
+  'Expenses sample, like 109',
+];
 const outDirs: string[] = [];
 
 /** Builds the app like `vite build` with the given NODE_ENV, and returns the markers found in the output. */
@@ -36,7 +42,7 @@ afterAll(() => {
   for (const dir of outDirs) rmSync(dir, { recursive: true, force: true });
 });
 
-// T14 (task 002), T20 (task 005): the production build contains no dev page code.
+// T14 (task 002), T20 (task 005), T19 (task 006): the production build contains no dev page code.
 describe('production build', () => {
   it('contains no gallery code', async () => {
     expect(await markersInBuild('production')).toEqual([]);
