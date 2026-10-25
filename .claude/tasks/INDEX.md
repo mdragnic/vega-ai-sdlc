@@ -3,7 +3,7 @@
 Status values: todo | in-progress | awaiting-human | done | blocked
 `/next-task` picks the first task that is `todo` and whose dependencies are all `done`.
 
-Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 007; the rest are outline rows, detailed by `/next-task` when picked.
+Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 008; the rest are outline rows, detailed by `/next-task` when picked.
 
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
@@ -15,7 +15,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 005 | Shared components: Popup, amount input, Dropdown | #31 #35 #60 #64 #69 #71 #84 #87 #90 (104.1, 110.1, 110.2; 106, 110, 111) | human | 001, 002, 003, 004 | done |
 | 006 | Shared components: comparison bar chart and target vs achievement gauge | #6 #11 #18 #20 #29 #31 #55 #82 #86 #87 #89 #91 #92 #93 (104, 109, 110) | human | 001, 004 | done |
 | 007 | Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF) | US-01, US-02 (API), #3 #14 #15 #39 #46 #62 #63 #67 #74 #75 #78 #79 #80 #95 | human | 000 | done |
-| 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #24 #53 #56 #57 #77 #78, `demo-data.md` | human | 007 | todo |
+| 008 | Backend: data model, BankDataProvider, demo dataset generator and sign-up seeding | #1 #11 #24 #25 #39 #53 #56 #57 #77 #78 #85 #96, `demo-data.md` | human | 007 | todo |
 | 009 | Login screen and route protection | US-01 (1 to 12, 14, 15), US-04 (12), #3 #14 #39; links get the #87 teal :focus-visible ring; ButtonPrimary loading keeps keyboard focus on the button (task 005 review: focus moved to the page body while saving) | human | 002, 007 | todo |
 | 010 | Sign up and Forgot Password screens | US-02 (1 to 8, 10 to 14), US-03, #15 #16 | human | 008, 009 | todo |
 | 011 | App shell slice: signed-in user, date, greeting, navigation, logout, unknown URLs | US-04, #3 #9 #10 #38 #39 #47 #54 #94; scrollbar-gutter: stable on the scroll container, so classic (Windows) scrollbars do not shift the header by 15px | human | 003, 009 | todo |
