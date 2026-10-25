@@ -1,0 +1,51 @@
+
+> finebank@0.0.0 test
+> npm run build -w shared && npm run test --workspaces --if-present
+
+
+> @finebank/shared@0.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @finebank/shared@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 D:/Projects/VegaAI/finebank-v1/shared
+
+
+ Test Files  15 passed (15)
+      Tests  469 passed (469)
+   Start at  11:38:01
+   Duration  1.46s (import 96%, transform 3%, tests 1%)
+
+
+> @finebank/backend@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 D:/Projects/VegaAI/finebank-v1/backend
+
+
+ Test Files  16 passed (16)
+      Tests  162 passed (162)
+   Start at  11:38:02
+   Duration  3.89s (import 68%, tests 30%, transform 2%)
+
+
+> @finebank/frontend@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 D:/Projects/VegaAI/finebank-v1/frontend
+
+
+ Test Files  33 passed (33)
+      Tests  474 passed (474)
+   Start at  11:38:07
+   Duration  9.95s (import 40%, environment 27%, tests 25%, setup 5%, transform 2%)
+
+Environment  jsdom was created 33 times · 31.99s total, 27% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+

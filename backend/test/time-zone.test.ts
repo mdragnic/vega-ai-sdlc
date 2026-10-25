@@ -3,9 +3,12 @@ import { errorResponseSchema } from '@finebank/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { Public } from '../src/auth/public.decorator.js';
 import { TimeZone } from '../src/common/time-zone/time-zone.decorator.js';
 import { createTestApp } from './helpers/test-app.js';
 
+// Public, so these tests reach the decorator behind the session guard.
+@Public()
 @Controller('probe')
 class ZoneController {
   @Get('zone')

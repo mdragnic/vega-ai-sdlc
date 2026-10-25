@@ -12,6 +12,8 @@ export interface AppConfig {
   uploadsDir: string;
   /** Where the clock starts with NODE_ENV=test. */
   testNow: string;
+  /** scrypt cost N for new password hashes: the OWASP minimum, lower only with NODE_ENV=test (#95). */
+  scryptCost: number;
 }
 
 const nodeEnvs: readonly NodeEnv[] = ['development', 'test', 'production'];
@@ -51,6 +53,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     databaseFile: join(dataDir, nodeEnv === 'test' ? 'finebank.test.sqlite' : 'finebank.sqlite'),
     uploadsDir: join(dataDir, 'uploads'),
     testNow,
+    scryptCost: nodeEnv === 'test' ? 2 ** 14 : 2 ** 17,
   };
 }
 

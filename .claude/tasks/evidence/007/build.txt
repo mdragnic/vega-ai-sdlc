@@ -1,0 +1,33 @@
+
+> finebank@0.0.0 build
+> npm run build -w shared && npm run build -w backend && npm run build -w frontend
+
+
+> @finebank/shared@0.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @finebank/backend@0.0.0 build
+> nest build
+
+
+> @finebank/frontend@0.0.0 build
+> tsc -p tsconfig.json --noEmit && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 148 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                              0.52 kB │ gzip:   0.33 kB
+dist/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2     10.25 kB
+dist/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2      11.23 kB
+dist/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2       18.74 kB
+dist/assets/inter-greek-wght-normal-CkhJZR-_.woff2          18.99 kB
+dist/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2   25.96 kB
+dist/assets/inter-latin-wght-normal-Dx4kXJAl.woff2          48.25 kB
+dist/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2      85.06 kB
+dist/assets/index-KnR951-x.css                               7.37 kB │ gzip:   2.05 kB
+dist/assets/index-SMo1xxqJ.js                              338.14 kB │ gzip: 105.66 kB
+
+✓ built in 167ms

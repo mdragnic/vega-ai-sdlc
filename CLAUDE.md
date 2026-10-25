@@ -20,6 +20,7 @@ Personal finance dashboard, desktop only (1440x1024). React SPA, NestJS API, SQL
 - No new dependency without asking.
 - TypeORM entity relations use `Relation<T>` (ESM circular imports).
 - Migrations run from the compiled data source in `backend/dist` (`npm run migrate`, `npm run migration:generate -- <Name>`), never through ts-node.
+- Every new migration must be added to backend/src/database/migrations/index.ts (listed by class, not glob); a test fails if one is missing.
 - The backend reads "now" only from `Clock` (`@Inject(CLOCK)`). The test-only clock route `/api/test/clock` exists only with `NODE_ENV=test`.
 
 ## Commands

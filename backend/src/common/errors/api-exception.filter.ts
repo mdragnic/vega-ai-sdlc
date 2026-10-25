@@ -20,7 +20,13 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    this.logger.error(exception);
+    // Only the message and stack: an error's other fields can hold data, such as the values of a
+    // failed query (TypeORM's QueryFailedError keeps them in `parameters`).
+    if (exception instanceof Error) {
+      this.logger.error(exception.message, exception.stack);
+    } else {
+      this.logger.error('A value that is not an Error was thrown');
+    }
     const body: ErrorResponse = { message: 'Internal server error' };
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(body);
   }

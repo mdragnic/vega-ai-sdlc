@@ -1,0 +1,24 @@
+
+> finebank@0.0.0 typecheck
+> npm run build -w shared && npm run typecheck --workspaces --if-present
+
+
+> @finebank/shared@0.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @finebank/shared@0.0.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+
+> @finebank/backend@0.0.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+
+> @finebank/frontend@0.0.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+
+> @finebank/e2e@0.0.0 typecheck
+> tsc -p tsconfig.json --noEmit
+

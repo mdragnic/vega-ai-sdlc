@@ -2,6 +2,7 @@ import { type DynamicModule, Module, StandardSchemaValidationPipe } from '@nestj
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from './auth/auth.module.js';
 import { ClockModule } from './common/clock/clock.module.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import { validationException } from './common/errors/validation-exception.js';
@@ -13,7 +14,11 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [TypeOrmModule.forRoot(databaseOptions(config)), ClockModule.forRoot(config)],
+      imports: [
+        TypeOrmModule.forRoot(databaseOptions(config)),
+        ClockModule.forRoot(config),
+        AuthModule.forRoot(config),
+      ],
       providers: [
         { provide: APP_FILTER, useClass: ApiExceptionFilter },
         {

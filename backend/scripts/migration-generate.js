@@ -20,4 +20,8 @@ const result = spawnSync(
   ],
   { stdio: 'inherit', shell: process.platform === 'win32' },
 );
+if (result.status === 0) {
+  // Migrations are listed as classes (database-options.ts), so a new file runs only once listed.
+  console.log(`Next: add the new ${name} class to src/database/migrations/index.ts, then run npm run format.`);
+}
 process.exit(result.status ?? 1);

@@ -1,9 +1,11 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
 import { testClockContract, type TestClockState } from '@finebank/shared';
 
+import { Public } from '../../auth/public.decorator.js';
 import { FixedClock } from './fixed-clock.js';
 
-/** Reads and moves the test clock. Registered only with NODE_ENV=test (ClockModule). */
+/** Reads and moves the test clock. Registered only with NODE_ENV=test (ClockModule), public. */
+@Public()
 @Controller()
 export class TestClockController {
   constructor(private readonly clock: FixedClock) {}

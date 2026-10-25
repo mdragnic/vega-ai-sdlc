@@ -1,6 +1,6 @@
 # Task 007: Backend: users, sessions and auth API (sign up, login, logout, me, guard, CSRF)
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 000
 - Size: L
@@ -176,9 +176,105 @@ The backend has users and sessions: sign up, login, logout and "me" endpoints un
 - INDEX: open questions #94 only.
 - Not started, as Marko asked. No Figma calls.
 
+### 2026-10-25, build (`/next-task 007`)
+- All cited decisions closed (#94 is open but not cited). Status in-progress at 10:35. Built test first: each test file was run red (missing modules, 404s, the unfiltered log) before the code it covers.
+- **Shared** (`shared/src/contract/`):
+  - `user.ts`: `usernameSchema`, `currentUserSchema`, type `CurrentUser`.
+  - `auth.ts`: the field schemas, `signUpRequestSchema`, `loginRequestSchema`, `authMessages`, `authContract`.
+  - One message per field: every check but the last uses Zod's `abort`.
+  - A missing field counts as empty and gives the field's "required" text. A non-string value keeps Zod's default text.
+  - The login password schema is module-local, tested through `loginRequestSchema`.
+- **Database**:
+  - Entities `users/user.entity.ts` and `auth/session.entity.ts`.
+  - Migration `1792921656294-CreateUsersAndSessions.ts`, generated with `npm run migration:generate -- CreateUsersAndSessions` against the empty development database and kept as TypeORM wrote it (it creates `sessions`, then rebuilds it with the foreign key), formatted with Prettier.
+  - Deviation, needed for the unit tests: `databaseOptions` now lists entities and migrations as classes (`[User, Session]`, `migrations/index.ts`) instead of `dist/` globs. Vitest runs the TS sources, where a `*.js` glob finds nothing, and TypeORM's own `import()` of a `.ts` file would skip SWC's decorators.
+  - Cost of that deviation: every new migration must be added to `migrations/index.ts`. `database-schema.test.ts` fails when a file is not listed, and `scripts/migration-generate.js` now prints that reminder. CLAUDE.md does not say it yet (left for Marko).
+  - `migrations/.gitkeep` removed.
+  - `test/helpers/test-app.ts` runs the real migrations on the in-memory database and accepts an optional logger.
+- **Backend**:
+  - `auth/password.ts` (`PasswordHasher`):
+    - Async scrypt, stored as `scrypt$N$r$p$salt$key` (base64url).
+    - Verification reads N, r and p from the stored string, rejects malformed values without throwing, caps memory at 1 GiB, and compares with `timingSafeEqual`.
+    - `create(cost)` makes the dummy hash at startup, at the configured cost.
+    - `verify(password, null)` runs against the dummy and is always false, so unknown emails and users without a password take the same scrypt work.
+  - `readConfig` sets `scryptCost`: 2^17, or 2^14 with `NODE_ENV=test`.
+  - `users/username.ts` with `usernameBase` and `usernameCandidate`.
+    - Edge, so the result always passes the rule (#67): a uniqueness number of 10,000 or more shortens the base to stay within 30 characters (unreachable in practice, tested).
+  - `users/users.service.ts`:
+    - Inserts with a username loop.
+    - A unique-constraint race on email gives `EmailTakenError`, so 409. One on username takes the next number. Tested with SQLite triggers that insert the clashing row.
+  - `auth/sessions.service.ts`:
+    - `randomBytes(32)` base64url tokens, SHA-256 hex stored.
+    - The expiry is the Clock's now plus 30 days. The session is valid while now is before the expiry; at the expiry or later it gets 401 and its row is deleted.
+  - `auth/session-cookie.ts`: the name, attributes and the 30-day Max-Age.
+    - The guard reads the Cookie header with a small parser that matches `@Cookies()` for our base64url tokens (first pair wins). Nest exports no public parser.
+    - Handlers read the cookie with `@Cookies()`.
+    - Cookies are set and cleared through `HttpAdapterHost.httpAdapter.setCookie/clearCookie`.
+  - `auth/session.guard.ts` (`APP_GUARD`), `auth/public.decorator.ts`, `auth/current-user.decorator.ts` (a WeakMap filled by the guard), `auth/auth.service.ts`, `auth/auth.controller.ts`, `auth/auth.module.ts`, `users/users.module.ts`.
+  - `configureApp` calls `app.enableCsrfProtection()`. `TestClockController` is `@Public()`.
+  - Password hashing runs before `dataSource.transaction`. TypeORM's better-sqlite3 driver shares one query runner, so a transaction must never await real I/O (thread pool, files, timers), or other requests' queries run inside it. **Task 008 must keep the demo seeding inside the sign up transaction free of such awaits.**
+  - `ApiExceptionFilter` (task 000 code) now logs only an error's message and stack. A non-Error throw logs a fixed sentence.
+    - Why: TypeORM's `QueryFailedError` carries the failed row in `parameters`, which reached the log (the logging test failed on it first).
+    - This applies to every 500, not only auth.
+- **Existing tests changed** (assertions unchanged):
+  - `app.test.ts`: probe controller `@Public()`.
+  - `reset-database.test.ts`: tables `migrations`, `sessions`, `users`.
+  - Also `time-zone.test.ts`: its probe controller `@Public()`. Not listed in Scope; without it the guard answers 401 before the decorator runs.
+- **Tests**:
+  - Shared: `auth-contract.test.ts`, `user-contract.test.ts`.
+  - Backend: `password.test.ts` (T6), `username.test.ts` (T5), `database-schema.test.ts` (T16), `auth-signup.test.ts` (T2 to T4, AC4 through the API, the two races), `auth-login.test.ts` (T7 to T9, one verification per failed case), `auth-session.test.ts` (T10 to T14), `csrf.test.ts` (T15), `auth-source.test.ts` (T17), `auth-logging.test.ts` (AC5, database error without the row).
+  - E2E: `auth-api.spec.ts` (T18, T19). The `document.cookie` check runs on a document under `/api`, next to a visible probe cookie, so only `HttpOnly` can hide the session.
+- **AC to tests**:
+  - AC1: T2, T18. AC2: T1, T3. AC3: T4. AC4: T5 and the API username test.
+  - AC5: T6 and `auth-logging`. AC6: T7, T18. AC7: T8. AC8: T1, T9.
+  - AC9: T10, T18. AC10: T11. AC11: T12. AC12: T13, T18. AC13: T14.
+  - AC14: T15, T19. AC15: T1 and every response parsed with `currentUserSchema`. AC16: T16 and `reset-database`. AC17: T19. T17 covers AC5 and AC11.
+- **Validation** (outputs in `.claude/tasks/evidence/007/`):
+  1. Lint and typecheck: exit 0 (`lint.txt`, `typecheck.txt`).
+     - Two failed runs first: oxlint flagged test helpers in the wrong scope, helpers asserting outside the test and needless casts; tsc flagged two E2E typings. Fixed, rework loops 1 and 2.
+     - `npm run build`: exit 0 (`build.txt`).
+  2. Unit tests: exit 0. Shared 469, backend 157, frontend 474 (`unit-tests.txt`).
+  3. E2E: exit 0, 50 passed, including the 3 auth specs (`e2e.txt`).
+     - One failed run before that: ports 3000 and 5173 were still held by the dev servers of the manual check, whose child processes outlived the stopped `npm run dev` on Windows. Stopped them (PIDs 12412 and 36808), re-ran. Rework loop 3.
+  4. Visual: none. No UI in this task, nothing to compare with `docs/figma/`.
+  5. Manual checks:
+     - `npm run migrate` applied `CreateUsersAndSessions1792921656294`, and the second run said "No migrations are pending" (`migrate.txt`).
+     - With `npm run dev` and Playwright MCP at 1440x1024 on `http://localhost:5173`: sign up 201, cookie `HttpOnly`, `SameSite=Lax`, `Path=/api`, host-only `localhost`, not `Secure`, 30 days. `document.cookie` under `/api` was empty. `me` 200, logout 204 with the cookie gone, then `me` 401 (`dev-session-check.md`).
+- **Security review** (`security-review`): no findings at High or Medium with confidence 0.8 or more. Nothing to fix.
+  - Noted, not a vulnerability: the guard's cookie reader does not unquote or percent-decode like `@Cookies()`, so it fails closed for values that cannot be our tokens.
+- **Code review** (`superpowers:requesting-code-review`): ready for the gate. No Critical or Important issues. Minor:
+  1. Vite's proxy shorthand sets `changeOrigin: true`, so the backend sees `Host: 127.0.0.1:3000`.
+     - Browser POSTs pass on `Sec-Fetch-Site: same-origin` (every current browser sends it to localhost; proven in Chromium by T19). The Origin/Host fallback could not pass behind the proxy.
+     - The unit test for that branch sets `Host: localhost:5173` itself.
+     - Not changed: `frontend/vite.config.ts` is outside Scope. Raised at the checkpoint.
+  2. The undisclosed `time-zone.test.ts` change: now listed above and at the checkpoint.
+  3. The class lists for entities and migrations: kept. Added the reminder to `migration-generate.js`.
+  4. The filter change affects every 500: disclosed above.
+  5. The shared type `CurrentUser` and the `@CurrentUser()` decorator share a name; the controller imports the type as `CurrentUserResponse`. Kept: the Scope names the decorator.
+  6. `common/clock` imports `@Public()` from `auth/`. Kept: the decorator belongs with the guard.
+- No Figma calls. No new dependencies.
+- Status awaiting-human.
+
+### 2026-10-25, gate (`/approve-task 007 approve`)
+- Approved by human (Marko), with three requests before the commit:
+  1. **Check that N is 2^17 whenever `NODE_ENV` is not `test`, including unset. Holds.**
+     - `readConfig` turns an unset `NODE_ENV` into `development`, which gives 2^17, as does `production`. Only the exact value `test` gives 2^14.
+     - Any other value (`TEST`, ` test`, `staging`, an empty string) makes `readConfig` throw at startup (task 000), so the app never hashes at another cost.
+     - `readConfig` is the only reader of `NODE_ENV`, and `PasswordHasher.create(config.scryptCost)` is the only use of the cost.
+     - Added to `backend/test/password.test.ts`: "gives N 2^17 when NODE_ENV is not set", and "refuses NODE_ENV=…" for those four values.
+     - The unset test failed when the default was changed to `test` on purpose. The default is restored.
+  2. **CLAUDE.md**, "Rules you would otherwise get wrong": added "Every new migration must be added to backend/src/database/migrations/index.ts (listed by class, not glob); a test fails if one is missing."
+  3. **Accepted**: the `time-zone.test.ts` change (probe controller `@Public()`) and the error filter logging fix (message and stack only).
+     - The Vite proxy stays as it is: the string shorthand sets `changeOrigin: true`, so browser POSTs pass CSRF on `Sec-Fetch-Site: same-origin`, not on the Origin/Host fallback.
+- **Re-validated after these changes** (outputs in `.claude/tasks/evidence/007/`):
+  - `npm run lint` and `npm run typecheck`: exit 0.
+  - `npm test`: exit 0. Shared 469, backend 162 (5 new), frontend 474.
+  - `npm run e2e`: exit 0, 50 passed.
+- Status done.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-25 10:35
+- Finished: 2026-10-25 11:39
+- Human interventions: 1
+- Rework loops: 3
+- Notes on prompts that failed: the auto mode classifier denied a PowerShell process listing and one compound E2E command; `tasklist`, `taskkill` and a plain `npm run e2e` were allowed.

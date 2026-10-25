@@ -4,10 +4,13 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { Public } from '../src/auth/public.decorator.js';
 import { createTestApp } from './helpers/test-app.js';
 
 const greetingSchema = z.object({ name: z.string().min(1) });
 
+// Public, so these tests reach the pipe and the error filter behind the session guard.
+@Public()
 @Controller('probe')
 class ProbeController {
   @Post('greeting')
