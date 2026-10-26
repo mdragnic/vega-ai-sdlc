@@ -132,14 +132,14 @@ describe('when the first session check fails', () => {
   );
 });
 
-// T15: the development pages and / stay outside the guards (AC18).
+// T15: the development pages stay outside the guards (AC18). `/` is no page: it opens Overview (task 011, #39).
 describe('outside the guards', () => {
-  it('renders / signed out', async () => {
+  it('sends / signed out to Login for Overview', async () => {
     server.use(me.signedOut());
     const { url } = renderApp('/');
 
-    expect(await screen.findByRole('main')).toBeInTheDocument();
-    expect(url()).toBe('/');
+    await waitFor(() => expect(url()).toBe('/login?returnTo=%2Foverview'));
+    expect(await loginForm()).toBeInTheDocument();
   });
 
   it('renders /dev/components signed out', async () => {

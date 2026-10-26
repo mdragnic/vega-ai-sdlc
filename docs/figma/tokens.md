@@ -183,6 +183,8 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-chart-legend-swatch-height` | `8px` | measured: PNG 104 and 109, legend swatches y 944 to 959 (352 to 367 in 109), 16 px, halved. Added in task 006 |
 | `--size-gauge-width` | `128px` | measured: PNG 104 and 110, the gauge arc's outer edge fitted as a circle of radius 128.1 px (ink x 1744 to 1999), diameter 256.2 px, halved 128.1, rounded. The SVG's viewBox width; the arc is drawn inside it from named constants (#92). Added in task 006 |
 | `--size-gauge-height` | `92px` | measured: PNG 104 and 110, the gauge arc top (y 456) to the center value's baseline (y 632) plus the descent of its 16 px text (8 px at 2x), 184 px, halved. The SVG's viewBox height, holding the arc, the needle and the three labels (#92). Added in task 006 |
+| `--size-page-min-width` | `1280px` | decision #94: the narrowest page, app or auth; below it the page scrolls horizontally. `min-width` on `body`. Added in task 011 |
+| `--size-scrollbar-gutter` | `15px` | decision #101: the width of a classic scrollbar, which `scrollbar-gutter: stable` keeps free on every app page (#100). Measured in task 011 in Chromium on Windows, headed and headless: the page is 1425 wide in a 1440 window. A constant, since no CSS length gives the window width with its scrollbar (headed Chromium leaves the gutter out of `100vw`). Subtracted from `--size-page-min-width` on `body`, so a window 1280 wide never scrolls sideways. Added in task 011 |
 
 ## Radius
 

@@ -28,6 +28,14 @@ export const me = {
     }),
 };
 
+/** The backend's today in the test, as `GET /api/calendar/today` returns it. */
+export const TODAY = '2026-10-22';
+
+/** `GET /api/calendar/today` answers. */
+export const today = {
+  answers: (value: string = TODAY) => http.get('*/api/calendar/today', () => HttpResponse.json({ today: value })),
+};
+
 /** Every app path in `paths`, with an Account Details path for `/balances/:accountId`. */
 export const appPaths = [
   '/overview',

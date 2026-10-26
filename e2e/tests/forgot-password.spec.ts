@@ -70,7 +70,10 @@ test('sends a signed-in user from Forgot Password to Overview without showing th
   await signUp(page.request);
   await page.addInitScript(() => {
     new MutationObserver(() => {
-      if (document.querySelector('input')) (window as unknown as { formSeen: boolean }).formSeen = true;
+      // Any field but the header search of the app page it opens (task 011).
+      if (document.querySelector('input:not([type="search"])')) {
+        (window as unknown as { formSeen: boolean }).formSeen = true;
+      }
     }).observe(document, { childList: true, subtree: true });
   });
 

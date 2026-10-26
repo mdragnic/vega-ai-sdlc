@@ -1,0 +1,44 @@
+Task 011 visual check, 2026-10-26. Playwright MCP (headed Chromium on Windows, classic scrollbars), dev server,
+1440x1024 at device scale 2, signed in as "Tanzir Rahman" on the demo data (demo account 36 for Account Details).
+Compared with the 2x PNGs in docs/figma/ by a Node script (built-ins only, outside the repo): mean absolute
+difference per channel (0 to 255) and ink boxes, in 2x px. Content area ignored. No Figma calls.
+
+Renders: 104-overview-2x.png, 105-balances-2x.png, 106-account-details-2x.png, 107-transactions-2x.png,
+108-bills-2x.png, 109-expenses-2x.png, 110-goals-2x.png, 111-settings-account-2x.png, 112-settings-security-2x.png.
+Side by side (design | render | difference x4): compare-1xx-sidebar.png, compare-1xx-header.png.
+
+Per screen                 sidebar (no avatar)  header right, 15px shifted / unshifted   active item ink (2x)
+104 Overview               0.60                 2.11 / 5.33                               x 56-503, as the PNG
+105 Balances               0.60                 2.11 / 5.33                               x 56-503, as the PNG
+106 Account Details        0.60                 2.19 / 5.39                               Balances (#47), as the PNG
+107 Transactions           0.60                 2.19 / 5.39                               as the PNG
+108 Bills                  0.60                 2.19 / 5.39                               as the PNG
+109 Expenses               0.59                 2.19 / 5.39                               as the PNG
+110 Goals                  0.60                 2.19 / 5.39                               as the PNG
+111 Settings (Account)     0.60                 2.19 / 5.39                               Settings, as the PNG
+112 Settings (Security)    0.60                 2.19 / 5.39                               Settings, as the PNG
+
+Differences (every one seen):
+1. Header right side 15px (30 at 2x) left of the PNGs on every app page: the classic scrollbar's gutter that
+   scrollbar-gutter keeps free (#100, #101 b, expected). Bell ink x 1958-2000 vs 1988-2030, search x 1958-2732 vs
+   1988-2763 (2x). Shifted back by 15px the right side matches (2.1 against 5.3 unshifted). The header's bottom line
+   and the page end at x 1425; the 15px gutter shows the page background (#F3F3F3).
+2. Date: "26 Oct, 2026" (the dev clock; the e2e shows "22 Oct, 2026" on the fixed clock) in the #11 format, against
+   "May 19, 2023" (expected, #11, #54).
+3. Avatar: initials "TR" on Gray/01 instead of the photo (expected, #38). Mean difference in the avatar box 61.
+4. Page tone: #F3F3F3 (--color-gray-06) against #F4F5F7 in the PNG header (known since task 003).
+5. 104 only: the "»" icon 1 CSS px left (ink x 944-971 vs 946-973 at 2x), since the greeting is about 1px narrower in
+   Inter Variable than in Figma's Inter; the greeting 1 CSS px higher (y 67-104 vs 69-106). Both known from task 003.
+   On 105 to 112 the "»" ink is equal (x 618-645).
+6. Text anti-aliasing in the sidebar labels (the residual 0.6), as in task 003.
+7. Content area empty on every screen (task 013 onward).
+
+Evidence only (no PNG at these sizes), headed Chromium with a 15px classic scrollbar gutter:
+- overview-1920x1080.png: page 1905 wide (window minus the gutter), header to x 1905, search ends at 1873.
+- overview-1280x1024.png: page 1265, no horizontal scroll (#101 a).
+- overview-1100x800.png: page 1265 plus the gutter, scrolls horizontally; sidebar 280.
+- login-1920x1080.png: column x 760 to 1160, no gutter on auth pages.
+- login-1100x800.png: page 1265, column from x 432.5 (#101 a).
+- state-logout-failed-1440.png, state-logout-failed-sidebar.png: "Couldn't log out. Please try again." in white,
+  regular 14/20, two balanced lines, box x 28 y 724 224x40, 16px above Logout (x 28 y 780, unchanged).
+- state-header-no-date.png, state-header-no-date-header.png: greeting, "»", bell and search in place, no date.

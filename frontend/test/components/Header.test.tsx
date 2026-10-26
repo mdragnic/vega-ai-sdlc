@@ -52,6 +52,17 @@ describe('Header', () => {
     expect(bell!.querySelector('[style*="--color-primary"]')).not.toBeNull();
   });
 
+  // T6, #100 (a): before the date arrives, and after a failed request, everything else is in place.
+  it('leaves out only the date without today', () => {
+    const { container } = render(<Header greetingName="Tanzir" />);
+    const chevron = container.querySelector('svg')!;
+
+    expect(container.querySelector('time')).toBeNull();
+    expect(screen.getByText('Hello Tanzir').nextElementSibling).toBe(chevron);
+    expect(chevron.nextElementSibling).toBe(container.querySelectorAll('svg')[1]);
+    expect(screen.getByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
+  });
+
   it('includes the search field', () => {
     render(<Header today="2023-05-19" />);
 

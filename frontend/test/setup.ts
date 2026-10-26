@@ -15,6 +15,11 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
+// jsdom has no window scrolling. React Router's ScrollRestoration in the app shell scrolls the window.
+if (typeof window !== 'undefined') {
+  window.scrollTo = () => undefined;
+}
+
 // jsdom has no pointer capture and no scrolling. Radix Select uses both: it checks pointer capture when its
 // trigger is pressed and scrolls the selected option into view. Node-environment tests have no Element.
 const radixStubs = {

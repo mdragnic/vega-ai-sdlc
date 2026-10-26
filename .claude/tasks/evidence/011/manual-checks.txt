@@ -1,0 +1,34 @@
+Task 011 manual checks, 2026-10-26. Playwright MCP, headed Chromium on Windows with classic scrollbars, on
+`npm run dev` (system clock, date 26 Oct, 2026). Fresh browser contexts unless noted.
+
+1. Sign up through the UI ("Tanzir Rahman") -> /overview, Overview active, "Hello Tanzir", "26 Oct, 2026".
+   Sidebar: Balances, Transactions, Bills, Expenses, Goals, Settings (-> /settings/account), Overview: each URL as
+   paths.ts, the clicked item active, the greeting only on Overview. "View profile" -> /settings/account, Settings
+   active. /settings -> /settings/account; Back -> /settings/account (the earlier page), Forward -> /settings/account:
+   /settings never stays in the history.
+2. Tab from the sidebar's corner on /balances: Overview > Balances > Transactions > Bills > Expenses > Goals >
+   Settings > Logout > View profile > Search, each solid 2px rgb(41, 157, 145) offset 2px (the search ring on its
+   box). Enter on "Bills" -> /bills, focus stays on "Bills" with its ring. Screenshots focus-*.png.
+3. A 3000px block in /transactions' content: the search ends at x 1393 on the empty page and on the tall one (the
+   15px gutter on both, #100). Scrolled to 800, "Bills" opened at y 0; scrolled to 300; Back -> /transactions at
+   800; Forward -> /bills at 300. Screenshots manual-tall-page-*.png.
+4. Resized (overview-*.png, login-*.png): 1920 -> page 1905, search ends 1873; 1280 -> page 1265, no horizontal
+   scroll; 1279 and 1100 -> page 1265 plus the gutter, horizontal scroll; Login 1920 column x 760, 1100 x 432.5.
+   First run of this check, before the gutter token was made a constant: 1280 -> page 1280 in a 1265 viewport,
+   horizontal scroll. Headed Chromium leaves the gutter out of 100vw, so calc(100vw - 100%) was 0 (see the Log).
+5. Overview > Goals > Logout: no dialog, -> /login?returnTo=%2Fgoals in the FIRST run, a bug (AC8 wants exactly
+   /login). Root cause in the Log; fixed in RequireAuth with a failing unit test first. After the fix, 5 of 5 runs
+   -> exactly /login. Then Back -> /login?returnTo=%2Foverview (Login, no sidebar); /bills -> /login?returnTo=%2Fbills;
+   the session cookie gone; login from /login -> /overview.
+6. Signed in: / -> /overview, /nope -> /overview, /settings/foo -> /overview. Signed out: / and /nope ->
+   /login?returnTo=%2Foverview, /settings -> /login?returnTo=%2Fsettings%2Faccount.
+7. Backend stopped (its node process killed; Vite answered 502) with /bills open, signed in:
+   - "Goals" opened; the date request and its 3 retries failed (4 x 502 in the console): the date shown before stays,
+     no message (#100 a, as #89).
+   - Logout: "Couldn't log out. Please try again." above Logout, focus on Logout, still on /goals
+     (manual-backend-down-logout-failed*.png).
+   - Backend started again: GET /api/auth/me 200 (the session lived on), Logout -> /login, me 401 after.
+   - The header without its date: the date request answered 500 by page.route (with the backend stopped the first
+     session check fails as well and Login opens, #97 b): greeting, "»", bell and search in place, no date and no
+     message after the retries (state-header-no-date*.png).
+   Console: only the failed requests above (502 and 500), no app errors.

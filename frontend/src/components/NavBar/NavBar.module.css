@@ -43,3 +43,21 @@
   gap: var(--space-sidebar-logout-gap);
   margin-top: auto;
 }
+
+/* Logout with a failed logout's message above it. The block is anchored at the bottom, so the message grows
+   upwards and Logout stays where 104 draws it. */
+.logout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-nav-item-gap);
+}
+
+/* Not designed (#100 c): FormError's text style, in white, since the error red is below 4.5:1 on Default Black.
+   Aligned with the item icons, balanced over two lines. */
+.logoutError {
+  margin: 0;
+  padding: 0 var(--space-nav-padding-x);
+  color: var(--color-white);
+  font: var(--font-regular-14-20);
+  text-wrap: balance;
+}

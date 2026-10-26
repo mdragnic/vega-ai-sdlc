@@ -18,6 +18,7 @@ describe('route paths', () => {
         'goals',
         'login',
         'overview',
+        'settings',
         'settingsAccount',
         'settingsSecurity',
         'signUp',

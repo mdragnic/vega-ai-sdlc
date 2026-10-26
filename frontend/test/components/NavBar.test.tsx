@@ -131,4 +131,64 @@ describe('Logout', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  // T9, #100 (c): while the request runs, clicks and Enter do nothing; focus stays, the look stays.
+  it('cancels clicks and Enter while pending, keeping focus and its look', async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn<() => void>();
+    const { rerender } = render(<Logout onLogout={onLogout} />);
+    const button = screen.getByRole('button', { name: 'Logout' });
+    const idleClass = button.className;
+
+    rerender(<Logout onLogout={onLogout} pending />);
+    await user.click(button);
+    await user.keyboard('{Enter}');
+
+    expect(onLogout).not.toHaveBeenCalled();
+    expect(button).toHaveFocus();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toBeDisabled();
+    expect(button.className).toBe(idleClass);
+
+    rerender(<Logout onLogout={onLogout} />);
+    await user.keyboard('{Enter}');
+    expect(onLogout).toHaveBeenCalledTimes(1);
+    expect(button).not.toHaveAttribute('aria-disabled');
+  });
+});
+
+// T10, #100 (c): a failed logout says so next to Logout.
+describe('NavBar logout state', () => {
+  it('shows the failure as an alert right before Logout, in the sidebar', () => {
+    renderInRouter(
+      <NavBar
+        activeSection="overview"
+        fullName="Tanzir Rahman"
+        onLogout={vi.fn<() => void>()}
+        logoutError="Couldn't log out. Please try again."
+      />,
+    );
+    const alert = screen.getByRole('alert');
+
+    expect(alert).toHaveTextContent("Couldn't log out. Please try again.");
+    expect(alert.nextElementSibling).toBe(screen.getByRole('button', { name: 'Logout' }));
+    expect(screen.getByRole('navigation', { name: 'Main' }).parentElement).toContainElement(alert);
+  });
+
+  it('shows no alert without a failure', () => {
+    renderNavBar();
+
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('passes pending to Logout', async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn<() => void>();
+    renderInRouter(<NavBar activeSection="overview" fullName="Tanzir Rahman" onLogout={onLogout} logoutPending />);
+
+    await user.click(screen.getByRole('button', { name: 'Logout' }));
+
+    expect(onLogout).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Logout' })).toHaveAttribute('aria-disabled', 'true');
+  });
 });

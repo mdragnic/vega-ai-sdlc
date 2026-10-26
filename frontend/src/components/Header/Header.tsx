@@ -7,8 +7,11 @@ import styles from './Header.module.css';
 type HeaderProps = {
   /** The signed-in user's first name, given on Overview only (#10). */
   greetingName?: string;
-  /** Today as a plain date `YYYY-MM-DD`: the backend's today in the browser's time zone (#54). */
-  today: string;
+  /**
+   * Today as a plain date `YYYY-MM-DD`: the backend's today in the browser's time zone (#54). Without it (still
+   * loading, or failed) the date is left out and nothing else moves (#100 a). An empty date is never formatted.
+   */
+  today?: string;
 };
 
 /**
@@ -20,9 +23,11 @@ export function Header({ greetingName, today }: HeaderProps) {
     <header className={styles.header}>
       {greetingName && <p className={styles.greeting}>Hello {greetingName}</p>}
       <ChevronsRight className={styles.chevron} aria-hidden="true" />
-      <time className={styles.date} dateTime={today}>
-        {formatDate(today)}
-      </time>
+      {today && (
+        <time className={styles.date} dateTime={today}>
+          {formatDate(today)}
+        </time>
+      )}
       <NotificationIcon className={styles.bell} aria-hidden="true" />
       <HeaderSearch />
     </header>

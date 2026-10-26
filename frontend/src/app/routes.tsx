@@ -1,12 +1,12 @@
-import type { RouteObject } from 'react-router';
+import { Navigate, type RouteObject } from 'react-router';
 
 import { GuestOnly } from '../routes/GuestOnly';
 import { paths } from '../routes/paths';
 import { RequireAuth } from '../routes/RequireAuth';
+import { AppShell, type ShellHandle } from './AppShell';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
-import { RootPage } from './RootPage';
 
 // The component gallery and the popup page exist in development only. Vite replaces import.meta.env.DEV with
 // false in a production build, so these routes and their lazy chunks are dropped from the bundle
@@ -27,22 +27,24 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
     ]
   : [];
 
-/** Every app page needs a session (#3). Until the shell and the screens exist, each renders the empty page frame. */
-const appPaths = [
-  paths.overview,
-  paths.balances,
-  paths.accountDetails,
-  paths.transactions,
-  paths.bills,
-  paths.expenses,
-  paths.goals,
-  paths.settingsAccount,
-  paths.settingsSecurity,
+/**
+ * Every app page needs a session (#3) and opens in the shell, with its sidebar section (Account Details is
+ * Balances, #47) and the greeting on Overview only (#10). The screens fill their content from task 013 on.
+ */
+const appPages: { path: string; handle: ShellHandle }[] = [
+  { path: paths.overview, handle: { section: 'overview', greeting: true } },
+  { path: paths.balances, handle: { section: 'balances' } },
+  { path: paths.accountDetails, handle: { section: 'balances' } },
+  { path: paths.transactions, handle: { section: 'transactions' } },
+  { path: paths.bills, handle: { section: 'bills' } },
+  { path: paths.expenses, handle: { section: 'expenses' } },
+  { path: paths.goals, handle: { section: 'goals' } },
+  { path: paths.settingsAccount, handle: { section: 'settings' } },
+  { path: paths.settingsSecurity, handle: { section: 'settings' } },
 ];
 
 /** Route table for React Router data mode. Screens are added by later tasks. */
 export const routes: RouteObject[] = [
-  { path: '/', element: <RootPage /> },
   {
     element: <GuestOnly />,
     children: [
@@ -51,6 +53,15 @@ export const routes: RouteObject[] = [
       { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
     ],
   },
-  { element: <RequireAuth />, children: appPaths.map((path) => ({ path, element: <RootPage /> })) },
+  {
+    element: <RequireAuth />,
+    // `element: null` until the screen exists: an empty content area, without React Router's empty-route warning.
+    children: [{ element: <AppShell />, children: appPages.map((page) => ({ ...page, element: null })) }],
+  },
+  // Settings opens on its Account tab, whose guard handles a signed-out visitor (#100).
+  { path: paths.settings, element: <Navigate replace to={paths.settingsAccount} /> },
   ...devRoutes,
+  // No not-found page: `/` and unknown URLs open Overview, or Login through its guard when signed out (#39).
+  { path: '/', element: <Navigate replace to={paths.overview} /> },
+  { path: '*', element: <Navigate replace to={paths.overview} /> },
 ];

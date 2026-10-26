@@ -14,6 +14,8 @@ export const paths = {
   bills: '/bills',
   expenses: '/expenses',
   goals: '/goals',
+  // Settings without a tab: only redirects to the Account tab (#100).
+  settings: '/settings',
   settingsAccount: '/settings/account',
   settingsSecurity: '/settings/security',
 } as const;

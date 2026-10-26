@@ -31,7 +31,8 @@ test('returns to the page asked for after login, and Back does not show Login', 
   await expect(page).toHaveURL(`${FRONTEND_URL}/balances/12?view=1#top`);
   await expect(page.getByRole('main')).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/`);
+  // The page before: `/`, which opens Overview for a signed-in user (task 011, #39).
+  await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);
   await expect(loginButton(page)).toHaveCount(0);
 });
 

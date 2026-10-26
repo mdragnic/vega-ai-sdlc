@@ -1,6 +1,7 @@
 export * from './account.js';
 export * from './auth.js';
 export * from './bill.js';
+export * from './calendar.js';
 export * from './category.js';
 export * from './entry.js';
 export * from './error.js';

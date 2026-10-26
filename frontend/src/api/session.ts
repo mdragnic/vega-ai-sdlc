@@ -16,6 +16,7 @@ import { ApiError, apiRequest } from './client';
 const sessionQueryKey = ['session'] as const;
 const loginMutationKey = ['session', 'login'] as const;
 const signUpMutationKey = ['session', 'signUp'] as const;
+const logoutMutationKey = ['session', 'logout'] as const;
 
 /** Who is signed in, from `GET /api/auth/me` (#3). */
 export type Session = { status: 'checking' } | { status: 'signedIn'; user: CurrentUser } | { status: 'signedOut' };
@@ -79,6 +80,49 @@ export function useLogin() {
 /** `POST /api/auth/signup`: the new account is signed in for 30 days, with the demo dataset (#15, #63, #78). */
 export function useSignUp() {
   return useSessionStart(signUpMutationKey, (request: SignUpRequest) => apiRequest(authContract.signUp, request));
+}
+
+/** The logout of the shell: its state, and `logOut`, which sends nothing while a request runs. */
+export type LogoutState = { logOut: () => void; pending: boolean; failed: boolean };
+
+/**
+ * `POST /api/auth/logout` (#3, #100 c). One request at a time. On the 204 the session is signed out and every
+ * other cached query is removed (#39); the app page's guard then opens Login, without a return target
+ * (`useLogoutInProgress`). On a failure the session and the cached data stay: only the backend can end the
+ * session (the cookie is httpOnly), so the user is still signed in, and `failed` says so until the next try.
+ */
+export function useLogout(): LogoutState {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationKey: logoutMutationKey,
+    mutationFn: () => apiRequest(authContract.logout),
+    // Sent also while the browser counts as offline, so it fails and says so instead of waiting silently.
+    networkMode: 'always',
+    // Gone once the shell is: a later session's guard must not take it for this logout.
+    gcTime: 0,
+    onSuccess: async () => {
+      // A session check sent before the logout could answer with the user after it.
+      await queryClient.cancelQueries({ queryKey: sessionQueryKey });
+      setSessionUser(queryClient, null);
+    },
+  });
+  return {
+    // The cache knows at once that a request runs; the component only after its next render.
+    logOut: () => {
+      if (queryClient.isMutating({ mutationKey: logoutMutationKey, exact: true }) === 0) mutation.mutate();
+    },
+    pending: mutation.isPending,
+    failed: mutation.isError,
+  };
+}
+
+/** True while a logout runs or once it succeeded: the session then ends without a return target (#3). */
+export function useLogoutInProgress(): boolean {
+  const statuses = useMutationState({
+    filters: { mutationKey: logoutMutationKey, exact: true },
+    select: (mutation) => mutation.state.status,
+  });
+  return statuses.some((status) => status === 'pending' || status === 'success');
 }
 
 const sessionStartMutationKeys = [loginMutationKey, signUpMutationKey];

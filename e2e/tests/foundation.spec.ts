@@ -1,13 +1,17 @@
 import { FIXED_NOW, FRONTEND_URL, TIME_ZONE, VIEWPORT } from '../constants';
 import { expect, test } from '../fixtures';
-import { collectErrors, tokenColor } from '../helpers';
+import { collectErrors, signUp, tokenColor } from '../helpers';
 
 // T13: the root page loads at 1440x1024, without console errors, on the page background token (AC2, AC5).
+// `/` opens Overview since task 011 (#39). Signed in, so no session check answers 401, which the browser logs.
 test('root page loads at 1440x1024 on the page background without console errors', async ({ page }) => {
+  // page.request shares the browser's cookies: this signs the page in.
+  await signUp(page.request);
   const errors = collectErrors(page);
 
   await page.goto('/');
 
+  await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);
   await expect(page.getByRole('main')).toBeVisible();
   expect(page.viewportSize()).toEqual(VIEWPORT);
   const body = await page.evaluate(() => {

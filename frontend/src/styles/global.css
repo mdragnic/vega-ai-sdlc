@@ -4,7 +4,10 @@
   box-sizing: border-box;
 }
 
+/* Every page is at least 1280px wide, a classic scrollbar's gutter included, so a window 1280 wide never scrolls
+   sideways; below that it does (#94, #101). Where scrollbars take no space, the minimum is 15px less. */
 body {
+  min-width: calc(var(--size-page-min-width) - var(--size-scrollbar-gutter));
   margin: 0;
   background-color: var(--color-gray-06);
   color: var(--color-default-black);

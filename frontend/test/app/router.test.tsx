@@ -1,23 +1,42 @@
-import { render, screen } from '@testing-library/react';
-import { createMemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { AppProviders } from '../../src/app/AppProviders';
-import { routes } from '../../src/app/routes';
+import { me, renderApp, today } from '../support/app';
 
+const server = setupServer();
+
+beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {
+  server.resetHandlers();
   vi.restoreAllMocks();
 });
+afterAll(() => server.close());
 
-// T12: the router renders the root page (AC2).
+// T13: no not-found page. `/` and unknown URLs open Overview, or Login with Overview as the return target when
+// signed out (AC15; #3, #39).
 describe('router', () => {
-  it('renders the root page at / without errors', async () => {
+  it.each(['/', '/foo', '/overview/extra', '/settings/foo'])(
+    'opens Overview at %s when signed in, replacing that URL, without errors',
+    async (path) => {
+      const consoleError = vi.spyOn(console, 'error');
+      server.use(me.signedIn(), today.answers());
+      const { router, url } = renderApp(path);
+
+      await waitFor(() => expect(url()).toBe('/overview'));
+      expect(router.state.historyAction).toBe('REPLACE');
+      expect(await screen.findByText('Hello Tanzir')).toBeInTheDocument();
+      expect(consoleError).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['/', '/foo'])('opens Login with Overview as the return target at %s when signed out', async (path) => {
     const consoleError = vi.spyOn(console, 'error');
-    const router = createMemoryRouter(routes, { initialEntries: ['/'] });
+    server.use(me.signedOut());
+    const { url } = renderApp(path);
 
-    render(<AppProviders router={router} />);
-
-    expect(await screen.findByRole('main')).toBeInTheDocument();
+    await waitFor(() => expect(url()).toBe('/login?returnTo=%2Foverview'));
+    expect(await screen.findByRole('button', { name: 'Login' })).toBeInTheDocument();
     expect(consoleError).not.toHaveBeenCalled();
   });
 });

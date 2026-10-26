@@ -13,7 +13,7 @@ import { SignUpPage } from '../../src/app/pages/SignUpPage';
 import { routes } from '../../src/app/routes';
 import { googleUrl } from '../../src/assets/brand';
 import { GuestOnly } from '../../src/routes/GuestOnly';
-import { me, renderApp } from '../support/app';
+import { me, renderApp, today } from '../support/app';
 
 const server = setupServer();
 
@@ -202,8 +202,9 @@ describe('password eye', () => {
 describe('successful sign up', () => {
   it('sends the parsed values, opens Overview in place of Sign up, and keeps only the new session', async () => {
     const bodies = signUpAnswers(created);
-    server.use(me.signedOut());
-    const router = createMemoryRouter(probedRoutes, { initialEntries: ['/', '/sign-up'], initialIndex: 1 });
+    server.use(me.signedOut(), today.answers());
+    // The page before Sign up. Not `/`, which redirects to Overview (task 011, #39).
+    const router = createMemoryRouter(probedRoutes, { initialEntries: ['/goals', '/sign-up'], initialIndex: 1 });
     const user = userEvent.setup();
     render(<AppProviders router={router} />);
     await screen.findByRole('button', { name: 'Sign up' });
@@ -215,7 +216,8 @@ describe('successful sign up', () => {
     await user.click(signUpButton());
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/overview'));
-    expect(await screen.findByRole('main')).toBeInTheDocument();
+    // The shell's sidebar, since Sign up has a `main` too until it unmounts.
+    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(bodies).toEqual([{ fullName: 'Tanzir Rahman', email: 'marko@x.com', password: ' abcdef12 ' }]);
     expect(signUpRequests()).toHaveLength(1);
     expect(appClient!.getQueryData(['session'])).toEqual(newUser);
@@ -224,12 +226,12 @@ describe('successful sign up', () => {
         .getQueryCache()
         .getAll()
         .map((query) => query.queryKey),
-    ).toEqual([['session']]);
+    ).toEqual([['session'], ['calendar', 'today']]);
     // The mutation holds the password: it is gone once Sign up is.
     await waitFor(() => expect(appClient!.getMutationCache().getAll()).toEqual([]));
 
     await act(() => router.navigate(-1));
-    expect(router.state.location.pathname).toBe('/');
+    expect(router.state.location.pathname).toBe('/goals');
   });
 
   it('sends the request on Enter in a field', async () => {

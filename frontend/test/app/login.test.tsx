@@ -12,7 +12,7 @@ import { routes } from '../../src/app/routes';
 import { googleUrl } from '../../src/assets/brand';
 import { GuestOnly } from '../../src/routes/GuestOnly';
 import { RequireAuth } from '../../src/routes/RequireAuth';
-import { me, renderApp, signedInUser } from '../support/app';
+import { me, renderApp, signedInUser, today } from '../support/app';
 
 const server = setupServer();
 
@@ -264,9 +264,10 @@ describe('field errors', () => {
 describe('successful login', () => {
   it('opens the return target with its query and hash, and Back does not reopen Login', async () => {
     loginAnswers(() => HttpResponse.json(signedInUser));
-    server.use(me.signedOut());
+    server.use(me.signedOut(), today.answers());
+    // The page before Login. Not `/`, which redirects to Overview (task 011, #39).
     const router = createMemoryRouter(routes, {
-      initialEntries: ['/', '/login?returnTo=%2Fbills%3Ftab%3D1%23x'],
+      initialEntries: ['/goals', '/login?returnTo=%2Fbills%3Ftab%3D1%23x'],
       initialIndex: 1,
     });
     const user = userEvent.setup();
@@ -278,13 +279,14 @@ describe('successful login', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/bills'));
     expect(`${router.state.location.search}${router.state.location.hash}`).toBe('?tab=1#x');
-    // The page renders: the session holds the user, though `me` still answers 401.
-    expect(await screen.findByRole('main')).toBeInTheDocument();
+    // The page renders in the shell: the session holds the user, though `me` still answers 401. The shell's
+    // sidebar, since Login has a `main` too until it unmounts.
+    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Login' })).toBeNull();
     expect(loginRequests()).toHaveLength(1);
 
     await router.navigate(-1);
-    expect(router.state.location.pathname).toBe('/');
+    expect(router.state.location.pathname).toBe('/goals');
   });
 
   // While the return target still loads (a lazy route), the signed-in session must not send Login to Overview.

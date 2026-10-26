@@ -62,7 +62,8 @@ test('signs up a new user, opens Overview, and Back does not show Sign up', asyn
   expect(Math.abs(cookie!.expires - (Date.now() / 1000 + THIRTY_DAYS_SECONDS))).toBeLessThan(120);
 
   await page.goBack();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/`);
+  // The page before: `/`, which opens Overview for a signed-in user (task 011, #39).
+  await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);
   await expect(signUpButton(page)).toHaveCount(0);
 });
 
@@ -93,7 +94,10 @@ test('sends a signed-in user from Sign up to Overview without showing the form',
   await signUp(page.request);
   await page.addInitScript(() => {
     new MutationObserver(() => {
-      if (document.querySelector('input')) (window as unknown as { formSeen: boolean }).formSeen = true;
+      // Any field but the header search of the app page it opens (task 011).
+      if (document.querySelector('input:not([type="search"])')) {
+        (window as unknown as { formSeen: boolean }).formSeen = true;
+      }
     }).observe(document, { childList: true, subtree: true });
   });
 

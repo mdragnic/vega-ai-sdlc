@@ -1,0 +1,11 @@
+/* A marker for the rule below; it draws no box of its own. */
+.shell {
+  display: contents;
+}
+
+/* The document is the scroll container (#5, #83). A classic scrollbar then takes the same width on every app
+   page, scrolling or not, so the header does not move between them (#100). App pages only: not the auth pages,
+   whose column stays centered in the window, nor the development pages. */
+:global(html):has(.shell) {
+  scrollbar-gutter: stable;
+}

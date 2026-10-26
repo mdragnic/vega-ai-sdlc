@@ -161,6 +161,8 @@
   --size-chart-legend-swatch-height: 8px;
   --size-gauge-width: 128px;
   --size-gauge-height: 92px;
+  --size-page-min-width: 1280px;
+  --size-scrollbar-gutter: 15px;
 
   /* Radius */
   --radius-input: 8px;
