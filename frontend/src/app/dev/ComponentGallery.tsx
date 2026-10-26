@@ -6,6 +6,7 @@ import {
   parseAmountInput,
   type ExpenseCategory,
   type Money,
+  type SavingsGoalResponse,
 } from '@finebank/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -32,6 +33,8 @@ import {
   type DropdownOption,
   FieldError,
   FormError,
+  Goals,
+  GoalsSkeleton,
   Header,
   HeaderSearch,
   Input,
@@ -606,11 +609,17 @@ const sampleAccounts: AccountsResponse = {
   ],
 };
 
-/** The Total Balance card as Overview draws it: 352 wide, inset 20 and 24, at least 232 high. */
-function TotalBalanceCard({ children }: { children: ReactNode }) {
+/** The goal of a month, as `GET /api/savings-goals/current` sends it; the progress as the backend calculates it. */
+const sampleGoal = (target: number, present: number, progress: number): SavingsGoalResponse => ({
+  month: '2026-10',
+  goal: { target: usd(target), present: usd(present), progress },
+});
+
+/** A top row card as Overview draws it (Total Balance, Goals): 352 wide, inset 20 and 24, at least 232 high. */
+function TopRowCard({ children }: { children: ReactNode }) {
   return (
     <div className={styles.sampleCard}>
-      <Card padding="none" className={styles.totalBalanceCard}>
+      <Card padding="none" className={styles.topRowCard}>
         {children}
       </Card>
     </div>
@@ -1217,14 +1226,14 @@ export function ComponentGallery() {
 
       <GallerySection name="TotalBalance" wide>
         <Example name="The demo accounts (104), from the first">
-          <TotalBalanceCard>
+          <TopRowCard>
             <TotalBalance data={sampleAccounts} />
-          </TotalBalanceCard>
+          </TopRowCard>
         </Example>
         <Example name="One account: both buttons disabled">
-          <TotalBalanceCard>
+          <TopRowCard>
             <TotalBalance data={{ totalBalance: usd(2101918), accounts: sampleAccounts.accounts.slice(0, 1) }} />
-          </TotalBalanceCard>
+          </TopRowCard>
         </Example>
       </GallerySection>
 
@@ -1266,9 +1275,49 @@ export function ComponentGallery() {
 
       <GallerySection name="TotalBalanceSkeleton" wide>
         <Example name="Loading">
-          <TotalBalanceCard>
+          <TopRowCard>
             <TotalBalanceSkeleton />
-          </TotalBalanceCard>
+          </TopRowCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="Goals" wide>
+        <Example name="The demo goal (104): $16,250 of $20,000">
+          <TopRowCard>
+            <Goals data={sampleGoal(2000000, 1625000, 0.8125)} />
+          </TopRowCard>
+        </Example>
+        <Example name="Over-achieved: the whole arc">
+          <TopRowCard>
+            <Goals data={sampleGoal(2000000, 2500000, 1)} />
+          </TopRowCard>
+        </Example>
+        <Example name="No goal for this month (#108 c)">
+          <TopRowCard>
+            <Goals data={{ month: '2026-10', goal: null }} />
+          </TopRowCard>
+        </Example>
+        <Example name="Long amounts: the month and the gauge move under (#108 b)">
+          <TopRowCard>
+            <Goals data={sampleGoal(100000000000, 100000000000, 1)} />
+          </TopRowCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="GoalsSkeleton" wide>
+        <Example name="Loading">
+          <TopRowCard>
+            <GoalsSkeleton />
+          </TopRowCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingsGoalPopup">
+        <Example name="104.1 from the Goals card">
+          <p className={styles.panelText}>
+            The pencil of a Goals card above opens it. It saves through the API, so Save works when signed in; on
+            Overview it dims the content area of the app shell.
+          </p>
         </Example>
       </GallerySection>
     </div>

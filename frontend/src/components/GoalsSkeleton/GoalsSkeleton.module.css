@@ -1,0 +1,118 @@
+/* Not designed (#6): existing tokens only, on the Goals card's grid. It fills the content box of the top row card at
+   its 232 minimum (the card inset 20 at the top and the bottom). */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  height: calc(
+    var(--size-overview-card-height) - var(--space-overview-card-padding-y) - var(--space-overview-card-padding-y)
+  );
+}
+
+/* The 32px row of the Target, the pencil and the month, and the divider under it. */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: calc(var(--line-height-32) + var(--space-goals-divider-gap) + var(--border-width-divider));
+  padding-bottom: var(--space-goals-divider-gap);
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.targetRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-goals-edit-gap);
+}
+
+/* As the Total Balance skeleton's total: about as wide as the amount in Exbold 22, as high as its digits. */
+.target {
+  width: var(--size-amount-box-width-lg);
+  height: var(--line-height-20);
+}
+
+.edit {
+  width: var(--size-goals-edit-button);
+  height: var(--size-goals-edit-button);
+}
+
+.month {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-14);
+}
+
+/* The amounts on the left and the gauge on the right, 20 under the divider, as the card draws them. */
+.body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-goals-body-gap);
+}
+
+.amounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goals-group-gap);
+}
+
+.amount {
+  display: flex;
+  gap: var(--space-goals-icon-gap);
+}
+
+.icon {
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+/* The label line (12px text) over the amount line (16px text). */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goals-amount-gap);
+}
+
+.label {
+  width: var(--size-amount-box-width-lg);
+  height: var(--font-size-12);
+}
+
+.value {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-16);
+}
+
+/* The gauge's 128px box at the card's right, its half circle and the $0, Present and Target label lines below. */
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-label-gap);
+  width: var(--size-gauge-width);
+  margin-right: var(--space-goals-gauge-inset);
+}
+
+.arc {
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 2;
+}
+
+.circle {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.gaugeLabels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.limit {
+  width: var(--size-icon);
+  height: var(--font-size-12);
+}
+
+.gaugeValue {
+  width: var(--size-category-tile);
+  height: var(--font-size-16);
+}

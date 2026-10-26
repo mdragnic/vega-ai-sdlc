@@ -1,4 +1,11 @@
-import type { AccountsResponse, CurrentUser, ErrorResponse } from '@finebank/shared';
+import {
+  type AccountsResponse,
+  type CurrentUser,
+  type ErrorResponse,
+  goalProgress,
+  type SavingsGoalRequest,
+  type SavingsGoalResponse,
+} from '@finebank/shared';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
@@ -80,11 +87,58 @@ export const accounts = {
     http.get('*/api/accounts', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
 };
 
+/** The demo goal of Oct 2026 as `GET /api/savings-goals/current` returns it (demo-data.md; task 014 AC1, AC2). */
+export const demoGoal: SavingsGoalResponse = {
+  month: '2026-10',
+  goal: { target: usd(2_000_000), present: usd(1_625_000), progress: 0.8125 },
+};
+
+/** The current month with no goal (#58, #85). */
+export const noGoal: SavingsGoalResponse = { month: '2026-10', goal: null };
+
+const currentGoalPath = '*/api/savings-goals/current';
+const saveGoalPath = '*/api/savings-goals';
+
+/** `GET /api/savings-goals/current` answers. */
+export const savingsGoal = {
+  answers: (body: SavingsGoalResponse = demoGoal) => http.get(currentGoalPath, () => HttpResponse.json(body)),
+  pending: () =>
+    http.get(currentGoalPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoGoal);
+    }),
+  fails: () =>
+    http.get(currentGoalPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+};
+
+/**
+ * A backend's goal for one test: `GET /api/savings-goals/current` answers it; `PUT /api/savings-goals` records the
+ * body, saves it with the progress from `goalProgress`, as the backend does, and answers it.
+ */
+export function goalBackend(initial: SavingsGoalResponse = demoGoal) {
+  let current = initial;
+  const saved: SavingsGoalRequest[] = [];
+  const handlers = [
+    http.get(currentGoalPath, () => HttpResponse.json(current)),
+    http.put(saveGoalPath, async ({ request }) => {
+      const body = (await request.json()) as SavingsGoalRequest;
+      saved.push(body);
+      current = {
+        month: body.month,
+        goal: { target: body.target, present: body.present, progress: goalProgress(body.present, body.target) },
+      };
+      return HttpResponse.json(current);
+    }),
+  ];
+  return { handlers, saved };
+}
+
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
- * its accounts without asking: the demo accounts. A test's own `server.use` comes first.
+ * its accounts and its goal without asking: the demo accounts and the demo goal. A test's own `server.use` comes
+ * first.
  */
-export const signedInDefaults = () => [accounts.answers()];
+export const signedInDefaults = () => [accounts.answers(), savingsGoal.answers()];
 
 /** Every app path in `paths`, with an Account Details path for `/balances/:accountId`. */
 export const appPaths = [

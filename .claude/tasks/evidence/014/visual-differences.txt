@@ -1,0 +1,59 @@
+Task 014 visual check, 2026-10-26. Playwright MCP (headed Chromium on Windows), backend on the fixed test clock
+(NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite dev server, fresh contexts at
+1440x1024, device scale 2, Europe/Belgrade, new users signed up through the API (the demo data). Scrollbars hidden for
+the 1440 renders (`html { scrollbar-width: none }`, so the page is 1440 wide like the PNG); the 1920 and 1280 renders
+keep the classic scrollbar. Compared with docs/figma/104. Overview.png and 104.1. Overview.png (2x) by a Node script
+(built-ins only, in the session scratchpad): ink boxes and mean absolute difference per channel (0 to 255), in 2x px.
+No Figma calls.
+
+Renders:
+- 104-overview-2x.png: /overview at 1440x1024. compare-104-goals.png: the Goals card, design | render | difference x4.
+- 104.1-overview-2x.png: the popup open. compare-104.1-popup.png: the panel, design | render shifted 24 (2x) | diff x4.
+- overview-1920x1080.png, goals-1920x1080.png (#94); overview-1280x1024.png, goals-1280x1024.png (#108 b).
+- overview-1440-long-amounts.png: a Target and a Present of $1,000,000,000.00 at 1440 (#108 b; see #109).
+- state-skeleton.png, state-error.png (page.route on the goal GET), state-no-goal.png and popup-no-goal-2x.png
+  (backend clock 2029-01-15, after the demo goals end), popup-field-errors.png, popup-saving.png,
+  popup-server-error.png (page.route on the PUT), focus-pencil.png (Tab from Total Balance's Next).
+
+Goals card, ink boxes, design vs render (2x px):
+  card edges           x 1360-2063 y 288-751  |  the same (x 680-1032, y 144-376 in CSS px)
+  target text          x 1409-1598 y 340-383  |  x 1409-... y 339-384   ("$20,000.00" is longer than "$20,000", #11)
+  pencil box           x 1620-1683 y 328-391  |  32x32 at y 164; x follows the longer Target (12 after it)
+  month                x 1877-2014 y 349-375  |  x 1885-2014 y 349-375   (right edge equal; "Oct, 2026" is narrower)
+  divider              y 414-415              |  y 416-417               (1 CSS px lower, the 12 px token as Total Balance)
+  Award icon           x 1416-1447 y 476-509  |  x 1416-1447 y 478-511
+  "Target Achieved"    x 1465-1646 y 474-497  |  x 1464-1647 y 476-499
+  present amount       x 1465-1593 y 517-549  |  x 1465-1641 y 519-552   ("$16,250.00" against "$12,500", #11, #12)
+  goal icon            x 1414-1449 y 610-645  |  x 1414-1449 y 612-647
+  "This month Target"  x 1465-1669 y 610-633  |  x 1464-1669 y 612-635
+  target amount        x 1465-1599 y 653-685  |  x 1465-1651 y 655-688
+  gauge arc            x 1744-1998 y 456-591  |  x 1744-1998 y 457-595   (arc at 81.25%, Figma about 75% for 62.5%)
+  $0                   x 1740-1767 y 608-629  |  x 1743-1771 y 610-632
+  center value         x 1839-1893 y 608-631  |  "$16.2k" against "12K" (#11, #18)
+  $20k                 x 1958-2015 y 608-629  |  x 1959-2015 y 610-632
+  caption              x 1741-2002 y 677-701  |  x 1741-2003 y 679-703
+  "Goals" title        x 1362-1474 y 223-256  |  x 1362-1476 y 223-256
+  mean difference over the card (x 1340-2080, y 270-770): 7.37
+
+Popup 104.1 (render shifted 24 at 2x: the panel 12 px right of the PNG, #90 c):
+  panel x 1208-2183 y 552-1335, X, both labels, both field boxes, Save and its label: equal within 1 px (2x).
+  Measured in CSS px: panel x 616-1104, y 276-668, 488x392; the dim from x 280 and y 88.
+
+Differences:
+1. Amounts and month: "$20,000.00", "$16,250.00", "Oct, 2026" against "$20,000", "$12,500", "May, 2023" (#11, #12).
+   The pencil box moves with the longer Target: 12 after it, as at the detailing.
+2. Gauge: center "$16.2k" against "12K" (#11, #18); the arc at 81.25% (Figma draws about 75% for 62.5%, task 006).
+3. The divider, the amounts and the gauge 1 CSS px lower than 104: the 12 px header gap of Total Balance (104: 11).
+4. Popup: the fields prefilled "$20000" and "$16250" against "$500000" and the placeholder (#31, #64: a goal exists;
+   the placeholder alone shows in popup-no-goal-2x.png, "Write present amount here" without Figma's typo, #18).
+   The Target field shows task 005's darker focus border, since focus starts there (#35); 104.1 draws no focus.
+   The panel 12 px right of the PNG (#90 c).
+5. The rest of the page as listed in task 013 (the four empty cards, #105 a; the header date and avatar; the page tone).
+6. Long amounts (evidence, overview-1440-long-amounts.png): the month and the gauge move under, as #108 b; the top row
+   grows to 393. Inside the gauge (task 006's component) the center "$1,000M" and the Target label "$1,000M" nearly
+   touch (text boxes overlap 1.4 px), and the Target label ends 9.5 px past the content's right edge, in the padding.
+   Raised as #109, closed by Marko: accepted as drawn (only at the maximum; inside the card, nothing cut).
+
+Evidence only, as intended: 1920 (the gauge at the right edge, heights 232), 1280 (month and gauge under, row 393, both
+cards in the row stretched), the skeleton and the error state at 232, the no-goal card with the pencil and the month
+(#108 c), the field errors with red borders, Save busy, "Something went wrong." above Save, the pencil's teal ring.

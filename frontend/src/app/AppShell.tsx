@@ -19,7 +19,8 @@ const logoutFailedMessage = "Couldn't log out. Please try again.";
 /**
  * Layout route around every app page (104 to 112), inside `RequireAuth`: the sidebar and the header for the
  * signed-in user, with the page below. It stays mounted while the user moves between pages. Another page
- * opens at the top; Back and Forward restore the position (#100 d).
+ * opens at the top; Back and Forward restore the position (#100 d). The page remounts when the signed-in user
+ * changes.
  */
 export function AppShell() {
   const session = useSession();
@@ -47,7 +48,9 @@ export function AppShell() {
         }
         header={<Header greetingName={handle.greeting ? firstName(fullName) : undefined} today={today} />}
       >
-        <Outlet />
+        {/* Keyed on the user: when another tab signs in someone else, the page remounts, so an open popup closes
+            and nothing typed for the earlier user stays (#39). */}
+        <Outlet key={session.user.email} />
       </AppLayout>
       <ScrollRestoration />
     </div>

@@ -150,6 +150,9 @@ test('tabs through the card with the teal ring, keeps focus on a disabled Next, 
     await expect(target).toBeFocused();
     await expectRing(page, target);
   }
+  // Then the next card: the Goals pencil (task 014), then Upcoming Bill's "View All".
+  await page.keyboard.press('Tab');
+  await expect(region(page, 'Goals').getByRole('button', { name: 'Edit savings goal' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(region(page, 'Upcoming Bill').getByRole('link', { name: 'View All' })).toBeFocused();
 

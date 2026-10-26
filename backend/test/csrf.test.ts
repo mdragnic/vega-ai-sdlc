@@ -1,9 +1,10 @@
 import type { INestApplication } from '@nestjs/common';
-import { errorResponseSchema } from '@finebank/shared';
+import { errorResponseSchema, savingsGoalsContract } from '@finebank/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { FixedClock } from '../src/common/clock/fixed-clock.js';
 import { cookieFor, me, newUser, setCookies, signUp } from './helpers/auth.js';
 import { createTestApp } from './helpers/test-app.js';
 
@@ -44,6 +45,9 @@ describe('CSRF protection', () => {
 
   const post = (path: string, headers: Record<string, string>) => request(app.getHttpServer()).post(path).set(headers);
 
+  const goalRows = async () =>
+    db.query<Record<string, unknown>[]>("SELECT * FROM savings_goals WHERE month = '2026-10' ORDER BY id");
+
   it.each(crossSite)('rejects a sign up with %s and stores nothing', async (_case, headers) => {
     const response = await post('/api/auth/signup', headers).send(newUser());
 
@@ -69,6 +73,43 @@ describe('CSRF protection', () => {
 
     expectForbidden(response);
     expect((await me(app, token)).status).toBe(200);
+  });
+
+  // Task 014 T8: the savings goal PUT, the first data write (AC12).
+  describe('the savings goal PUT', () => {
+    const goalBody = {
+      month: '2026-10',
+      target: { cents: 100, currency: 'USD' },
+      present: { cents: 0, currency: 'USD' },
+    };
+    const putGoal = (token: string, headers: Record<string, string>) =>
+      request(app.getHttpServer())
+        .put(`/api${savingsGoalsContract.save.path}`)
+        .set({ ...headers, Cookie: cookieFor(token), 'X-Time-Zone': 'Europe/Belgrade' })
+        .send(goalBody);
+
+    beforeEach(() => {
+      app.get(FixedClock).set(new Date('2026-10-22T10:00:00Z'));
+    });
+
+    it.each(crossSite)('rejects it with %s and keeps the goal', async (_case, headers) => {
+      const { token } = await signUp(app);
+      const before = await goalRows();
+
+      const response = await putGoal(token, headers);
+
+      expectForbidden(response);
+      expect(await goalRows()).toEqual(before);
+    });
+
+    it('lets a same-origin one through', async () => {
+      const { token } = await signUp(app);
+
+      const response = await putGoal(token, { 'Sec-Fetch-Site': 'same-origin' });
+
+      expect(response.status).toBe(200);
+      expect((await goalRows())[0]).toMatchObject({ target_cents: 100, present_cents: 0 });
+    });
   });
 
   it('lets a same-origin request through', async () => {

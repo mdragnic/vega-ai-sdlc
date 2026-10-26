@@ -276,7 +276,7 @@
 }
 
 /* The Total Balance card of Overview: inset 20 and 24, at least 232 high (task 013). */
-.totalBalanceCard {
+.topRowCard {
   display: flex;
   flex-direction: column;
   min-height: var(--size-overview-card-height);

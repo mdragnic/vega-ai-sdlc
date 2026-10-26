@@ -60,7 +60,7 @@
   min-height: var(--size-expenses-breakdown-card-height);
 }
 
-/* 104: the Total Balance content is inset 20 at the top and the bottom and 24 at the sides. */
+/* 104: the Total Balance and Goals content is inset 20 at the top and the bottom and 24 at the sides. */
 .topCardBody {
   display: flex;
   flex-grow: 1;

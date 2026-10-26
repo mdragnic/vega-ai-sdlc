@@ -1,6 +1,7 @@
 import { authContract, type CurrentUser, type LoginRequest, type SignUpRequest } from '@finebank/shared';
 import {
   matchMutation,
+  type Mutation,
   MutationCache,
   type Query,
   QueryCache,
@@ -25,22 +26,55 @@ const isUnauthorized = (error: unknown) => error instanceof ApiError && error.st
 
 const isSessionQuery = (query: Query) => query.queryKey[0] === sessionQueryKey[0];
 
-/** Sets who is signed in (`null`: nobody) and removes every other cached query, so no data of an earlier user stays (#39). */
+/** Login, sign up and logout: the guards read them while a session starts or ends. */
+const isSessionMutation = (mutation: Mutation) => mutation.options.mutationKey?.[0] === sessionQueryKey[0];
+
+/** How many times each query client's user data was cleared: a session start, a session end or a user switch. */
+const sessionEpochs = new WeakMap<QueryClient, number>();
+
+/**
+ * The query client's session count. A request started in one session and answered in a later one is dropped: it
+ * compares the count from its start with the count at its answer (#39).
+ */
+export const sessionEpoch = (queryClient: QueryClient): number => sessionEpochs.get(queryClient) ?? 0;
+
+/**
+ * Removes every cached query but the session, and every mutation but the session's own, so no data or pending write
+ * of an earlier user stays in this tab (#39). A request still running is not cancelled; its answer is dropped
+ * (`sessionEpoch`).
+ */
+function clearUserData(queryClient: QueryClient): void {
+  sessionEpochs.set(queryClient, sessionEpoch(queryClient) + 1);
+  queryClient.removeQueries({ predicate: (query) => !isSessionQuery(query) });
+  const mutationCache = queryClient.getMutationCache();
+  for (const mutation of mutationCache.getAll()) {
+    if (!isSessionMutation(mutation)) mutationCache.remove(mutation);
+  }
+}
+
+/** Sets who is signed in (`null`: nobody) and clears every other cached query and mutation (#39). */
 function setSessionUser(queryClient: QueryClient, user: CurrentUser | null): void {
   queryClient.setQueryData<CurrentUser | null>(sessionQueryKey, user);
-  queryClient.removeQueries({ predicate: (query) => !isSessionQuery(query) });
+  clearUserData(queryClient);
 }
 
 /**
  * The signed-in user. The check runs once when the app opens and again when the window gets focus back, so a
  * session that ended in the background is found (#3). A 401 means signed out. Any other failure, with no retry,
  * counts as signed out only on the first check (#97 b); after that the known state stays, so only a 401 ends
- * a session (#98).
+ * a session (#98). A check that finds another user than the one known here (another tab logged out and signed
+ * in someone else) clears the cached data as a session start does (#39).
  */
 export function useSession(): Session {
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: sessionQueryKey,
-    queryFn: () => apiRequest(authContract.me),
+    queryFn: async () => {
+      const user = await apiRequest(authContract.me);
+      const known = queryClient.getQueryData<CurrentUser | null>(sessionQueryKey);
+      if (known && known.email !== user.email) clearUserData(queryClient);
+      return user;
+    },
     retry: false,
     retryOnMount: false,
     // Each guard mounts its own observer; the check is not repeated on every navigation.

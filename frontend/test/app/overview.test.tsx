@@ -351,7 +351,8 @@ describe('the Total Balance card states', () => {
 
 // T13: the page grid of 104 with its six sections (AC13; #48, #49, #94, #105 a).
 describe('the Overview page', () => {
-  it('shows the six sections in 104’s order, the links and the note, and the five other cards empty', async () => {
+  // The Goals card has its content from task 014 (overview-goals.test.tsx); the other four stay empty until theirs.
+  it('shows the six sections in 104’s order, the links and the note, and the four unbuilt cards empty', async () => {
     await openOverview();
     await within(totalBalance()).findByText('$130,254.67');
     const main = screen.getByRole('main');
@@ -372,7 +373,7 @@ describe('the Overview page', () => {
     );
     expect(within(region('Expenses Breakdown')).getByText('*Compare to last month')).toBeInTheDocument();
     expect(within(main).getAllByRole('link', { name: 'View All' })).toHaveLength(2);
-    for (const name of ['Goals', 'Upcoming Bill', 'Recent Transaction', 'Statistics', 'Expenses Breakdown']) {
+    for (const name of ['Upcoming Bill', 'Recent Transaction', 'Statistics', 'Expenses Breakdown']) {
       expect(region(name).lastElementChild).toBeEmptyDOMElement();
     }
   });

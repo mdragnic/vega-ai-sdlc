@@ -141,6 +141,14 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-account-slide-line-gap` | `4px` | decision #106: not measured, 104 leaves 43 px between the number and "$25000". The least space between the masked number and the balance before the balance and the round arrow wrap to their own line; on the 4px grid and small enough that the demo balances stay on one line at 1440 with a classic scrollbar (Checking needs 263 of 267 px). Added in task 013 |
 | `--space-slider-dot-gap` | `8px` | measured: PNG 104, Previous / Next dots x 920 to 935, 952 to 967, 984 to 999: 16 px between them, halved. Added in task 013 |
 | `--space-slider-chevron-gap` | `4px` | measured: PNG 104, the left chevron's 16 px box (x 656 to 687, glyph x 667 to 676) to "Previous" (glyphs from x 698), 10 px including the side bearing of the "P", and "Next" (glyphs to x 1221) to the right chevron's box (x 1232, glyph x 1243 to 1252), 10 px including the "t", halved 5, rounded. Added in task 013 |
+| `--space-goals-edit-gap` | `12px` | measured: PNG 104 Goals, the end of the Target "$20,000" (Exbold 22, its Chromium text box to x 1600; ink to x 1599) to the pencil box (x 1620), 20 px, halved 10, a tie on the 4px grid: 12, as measured at the detailing of task 014. Added in task 014 |
+| `--space-goals-divider-gap` | `12px` | measured: PNG 104 Goals, the Target row bottom (y 392) to the divider (y 414), 22 px, halved 11, rounded 12, as the Total Balance row (`--space-total-balance-gap`). Added in task 014 |
+| `--space-goals-body-gap` | `20px` | measured: PNG 104 Goals, the divider bottom (y 416) to the gauge arc top (y 456), 40 px, halved. The amounts are centered on the gauge (both centered at y 580). Added in task 014 |
+| `--space-goals-icon-gap` | `4px` | measured: PNG 104 Goals, the Award and goal icons' 24 px boxes (x 1408 to 1455: Award ink x 1416 to 1447) to "Target Achieved" and "This month Target" (glyphs from x 1465, 1 px side bearing), 8 px, halved. Added in task 014 |
+| `--space-goals-amount-gap` | `4px` | measured: PNG 104 Goals, the "Target Achieved" 12/16 line box (glyphs y 474 to 497: in the 2x render they start 6 px below the line top, so the line is y 468 to 500) to the "$12,500" 16/24 line box (the "$" from y 517, 9 px below its line top in the render: from y 508), 8 px, halved. Added in task 014 |
+| `--space-goals-group-gap` | `24px` | measured: PNG 104 Goals, the "$12,500" 16/24 line box bottom (y 556, see --space-goals-amount-gap) to the "This month Target" 12/16 line box (glyphs from y 610, line from y 604), 48 px, halved; the goal icon's box from y 604 too (ink y 610 to 645). Added in task 014 |
+| `--space-goals-gauge-inset` | `8px` | measured: PNG 104 Goals, the gauge arc's right edge (x 1999, see `--size-gauge-width`) to the card content's right edge (x 2016), 17 px, halved 8.5, rounded: the room the `$20k` label takes past the arc (its ink to x 2015). Added in task 014 |
+| `--space-goals-wrap-gap` | `16px` | decision #108 b: not measured, 104 leaves 35 px or more. The least space between the Target with the pencil and the month, and between the amounts and the gauge; where a line does not fit with it, the right part moves under the left, this far below. Added in task 014 |
 
 ## Size
 
@@ -201,6 +209,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-card-network-logo-height` | `32px` | Figma `Mastercard` 408:5979 and `Visacard` 410:5467, both exported 48x32. Added in task 013 |
 | `--size-round-arrow` | `24px` | Figma `Frame 40276` 24x24 (`components.md`, possible detached components). Checked: PNG 104, the white disc x 1184 to 1231 and y 552 to 599, 48 px, halved. Added in task 013 |
 | `--size-slider-dot` | `8px` | measured: PNG 104, Previous / Next dots x 920 to 935 and y 684 to 699, 16 px, halved. Added in task 013 |
+| `--size-goals-edit-button` | `32px` | measured: PNG 104 Goals, the pencil box (Figma `Frame 40640`) x 1620 to 1683, y 328 to 391, 64 px, halved; Gray/06 with a 4 px radius (`--radius-button`) around the 16 px `edit` icon. Added in task 014 |
 
 ## Radius
 

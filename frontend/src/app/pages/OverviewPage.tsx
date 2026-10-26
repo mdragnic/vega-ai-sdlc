@@ -1,14 +1,16 @@
 import { useAccounts } from '../../api/accounts';
-import { Card, DataState, Section, TotalBalance, TotalBalanceSkeleton } from '../../components';
+import { useCurrentSavingsGoal } from '../../api/savings-goals';
+import { Card, DataState, Goals, GoalsSkeleton, Section, TotalBalance, TotalBalanceSkeleton } from '../../components';
 import { paths } from '../../routes/paths';
 import styles from './OverviewPage.module.css';
 
 /**
- * Overview (104): the six sections on a grid that fills the content area (#94). Only Total Balance has content;
+ * Overview (104): the six sections on a grid that fills the content area (#94). Total Balance and Goals have content;
  * the other cards stay empty, at their 104 heights, until their tasks fill them (#105 a).
  */
 export function OverviewPage() {
   const accounts = useAccounts();
+  const savingsGoal = useCurrentSavingsGoal();
 
   return (
     <div className={styles.grid}>
@@ -26,7 +28,14 @@ export function OverviewPage() {
         </Card>
       </Section>
       <Section title="Goals" gap="sm" className={`${styles.section} ${styles.goals}`}>
-        <Card className={`${styles.card} ${styles.topCard}`}>{null}</Card>
+        <Card padding="none" className={`${styles.card} ${styles.topCard}`}>
+          <div className={styles.topCardBody}>
+            {/* No goal is drawn by `Goals`, which keeps the pencil (#58, #108 c), not by an empty message here. */}
+            <DataState query={savingsGoal} skeleton={<GoalsSkeleton />}>
+              {(data) => <Goals data={data} />}
+            </DataState>
+          </div>
+        </Card>
       </Section>
       <Section title="Upcoming Bill" gap="sm" viewAllTo={paths.bills} className={`${styles.section} ${styles.bills}`}>
         <Card className={`${styles.card} ${styles.topCard}`}>{null}</Card>

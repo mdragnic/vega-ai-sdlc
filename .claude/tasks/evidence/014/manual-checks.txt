@@ -1,0 +1,43 @@
+Task 014 manual checks, 2026-10-26 (after #109 closed). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page is 1425 wide in a 1440 window, #101), fresh contexts in Europe/Belgrade. Backend on the fixed test
+clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend`
+to keep the database across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. The Goals card reads
+   "$20,000.00 | Oct, 2026 | Target Achieved | $16,250.00 | This month Target | $20,000.00 | $0 | $16.2k | $20k |
+   Target vs Achievement"; the meter aria-valuenow 0.8125, aria-valuetext "$16.2k".
+   Mouse: the pencil opens the popup with Target 20000 and Present 16250, focus on Target. Typed 99, then closed with
+   X, with Esc and with a click on the dimmed area: each time closed, focus back on the pencil, nothing sent, and the
+   next opening showed 20000 again.
+   Keyboard: Tab from Total Balance's Next reaches the pencil with :focus-visible and a solid 2px rgb(41, 157, 145)
+   outline; Enter opens the popup; Tab goes Target Amounts, Present Amounts, Save, Close; Esc closes it and focus is
+   back on the pencil. 0 PUT requests so far.
+   Saved Target 25000.5, Present 18000: PUT {"month":"2026-10","target":{"cents":2500050,"currency":"USD"},
+   "present":{"cents":1800000,"currency":"USD"}}; the card shows $25,000.50, $18,000.00, the gauge $18k of $25k.
+   Reopened: 25000.50 and 18000. Cleared Present and saved: present 0 cents; the card shows $0.00, no arc, "$0".
+   Each broken rule (Target "", ".", "0", "1000000000.01"; Present "1000000000.01"): its message under its field,
+   aria-invalid on that field only, 0 PUT requests (manual-broken-rule.png).
+2. Resize: 1920x1080 page 1905, no sideways scroll, the Goals card 507 wide and 232 high, the gauge's arc 32 from the
+   card's right edge (24 + 8), month and gauge on their rows, the top row 232/232/232 (manual-1920.png).
+   1280x1024 page 1265, no sideways scroll, card 293.7 wide: the month under the Target and the pencil, the gauge under
+   the amounts, the top row 393/393/393 (manual-1280.png). Back to 1440x1024: page 1425, card 347 x 232, both on one
+   row again.
+   Saved a Target and a Present of 1000000000 at 1440: "$1,000,000,000.00" three times, the month and the gauge under,
+   the top row 393/393/393, no sideways scroll; the gauge's "$1,000M" center and Target labels as accepted in #109
+   (manual-1440-long-amounts.png).
+3. Two tabs in one browser: tab 1 on that user's Overview with the popup open and 45000 typed. Tab 2: Logout, then
+   Sign up "Ada Lovelace" through the form, Overview. Tab 1 brought to front: Playwright's bringToFront did not fire a
+   visibility change within 1.5 s in this headed window, so the window-focus event was dispatched (as the e2e tests
+   do). Tab 1 then: popup closed, "Hello Ada", Ada Lovelace in the sidebar profile, the Goals card $20,000.00 /
+   $16,250.00 (Ada's demo goal), no "$1,000,000,000.00" anywhere; the pencil reopens with 20000, not the earlier typing
+   (manual-user-switch-tab1.png).
+4. Backend stopped (taskkill on the node process on port 3000):
+   - In tab 1, the popup with Target 30000, Save: the PUT answered 502 by the Vite proxy; "Something went wrong."
+     above Save, the popup open with 30000 (manual-backend-down-save.png).
+   - A second tab parked on /balances (Overview's goal never fetched there), Overview from the sidebar: the Goals
+     skeleton at once, the card 232 high (manual-backend-down-skeleton.png); "Something went wrong." with Retry after
+     the request and its 3 retries (7.6 s), still signed in, the other sections in place
+     (manual-backend-down-error.png).
+   - Backend started again (database kept), Retry: the goal shows, $20,000.00 / $16,250.00 (the failed save stored
+     nothing), no message (manual-backend-back-retry.png).
+5. Servers stopped afterwards; ports 3000 and 5173 free.

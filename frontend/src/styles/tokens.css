@@ -122,6 +122,14 @@
   --space-account-slide-line-gap: 4px;
   --space-slider-dot-gap: 8px;
   --space-slider-chevron-gap: 4px;
+  --space-goals-edit-gap: 12px;
+  --space-goals-divider-gap: 12px;
+  --space-goals-body-gap: 20px;
+  --space-goals-icon-gap: 4px;
+  --space-goals-amount-gap: 4px;
+  --space-goals-group-gap: 24px;
+  --space-goals-gauge-inset: 8px;
+  --space-goals-wrap-gap: 16px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -179,6 +187,7 @@
   --size-card-network-logo-height: 32px;
   --size-round-arrow: 24px;
   --size-slider-dot: 8px;
+  --size-goals-edit-button: 32px;
 
   /* Radius */
   --radius-input: 8px;

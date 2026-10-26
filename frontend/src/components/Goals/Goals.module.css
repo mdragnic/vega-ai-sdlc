@@ -1,0 +1,146 @@
+/* Fills the content box of the top row card (inset 20 and 24, see OverviewPage), so "No goal for this month" can
+   take the rest of it. */
+.goals {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+/* 104: the Target with the pencil on the left and the month on the right of one 32px row, then the Gray/06 divider
+   12 below it, as in Total Balance. Where the row does not fit, the month moves under it, right-aligned (#108 b). */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-goals-wrap-gap);
+  padding-bottom: var(--space-goals-divider-gap);
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.targetRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-goals-edit-gap);
+}
+
+/* 104 "$20,000": Default Black, Exbold 22/32, as the Total Balance total. */
+.target {
+  margin: 0;
+  color: var(--color-default-black);
+  font: var(--font-exbold-22-32);
+  white-space: nowrap;
+}
+
+/* 104 Figma `Frame 40640`: the 16px `edit` icon in Secondary, centered in a 32px Gray/06 box. No hover style (not
+   designed). */
+.edit {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: var(--size-goals-edit-button);
+  height: var(--size-goals-edit-button);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-button);
+  background-color: var(--color-gray-06);
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.edit svg {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+/* Keyboard focus (#87); a mouse click shows none. */
+.edit:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* 104 "May, 2023": Secondary, Regular 14/20, on the right also when it wraps. */
+.month {
+  margin: 0 0 0 auto;
+  color: var(--color-secondary);
+  font: var(--font-regular-14-20);
+  white-space: nowrap;
+}
+
+/* 104: the amounts on the left, centered on the gauge on the right, 20 under the divider. Where they do not fit side
+   by side, the gauge moves under the amounts, right-aligned (#108 b). Wider columns widen the space between (#94). */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-goals-wrap-gap);
+  margin-top: var(--space-goals-body-gap);
+}
+
+.amounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goals-group-gap);
+  margin: 0;
+}
+
+/* The 24px icon at the left of its label and amount, the text 4 after it. */
+.amount {
+  position: relative;
+  padding-left: calc(var(--size-icon) + var(--space-goals-icon-gap));
+}
+
+.icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  color: var(--color-secondary);
+}
+
+/* 104 "Target Achieved": Gray/02, Regular 12/16. */
+.label {
+  color: var(--color-gray-02);
+  font: var(--font-regular-12-16);
+  white-space: nowrap;
+}
+
+/* 104 "$12,500": Default Black, Bold 16/24. */
+.value {
+  margin: var(--space-goals-amount-gap) 0 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* The gauge's drawing box, as wide as its arc: the caption reaches a little past it on both sides, and the `$20k`
+   label to the content's right edge, 8 past the arc (104). */
+.gauge {
+  display: flex;
+  justify-content: center;
+  width: var(--size-gauge-width);
+  margin-right: var(--space-goals-gauge-inset);
+  margin-left: auto;
+}
+
+/* Not designed (#108 c): the message centered in the rest of the card, in DataState's empty-message style. */
+.empty {
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Gray/01, so 14px text keeps a 4.5:1 contrast on white (as DataState's empty message). */
+.emptyText {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+}
