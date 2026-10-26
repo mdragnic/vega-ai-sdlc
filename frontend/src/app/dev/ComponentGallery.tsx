@@ -1,4 +1,5 @@
 import {
+  type AccountsResponse,
   expenseCategorySchema,
   formatAmountInput,
   formatMonthLabel,
@@ -12,6 +13,7 @@ import { Link } from 'react-router';
 
 import { googleUrl } from '../../assets/brand';
 import {
+  AccountTypeSlide,
   AmountBox,
   AppLayout,
   AuthLayout,
@@ -42,9 +44,12 @@ import {
   RemindMe,
   Section,
   Skeleton,
+  SliderOption,
   Spinner,
   TargetVsAchievementMeter,
   TextDivider,
+  TotalBalance,
+  TotalBalanceSkeleton,
 } from '../../components';
 import { menuTabId } from '../../components/MenuTab/MenuTab';
 import { navSections } from '../../components/NavMenu/NavMenu';
@@ -580,6 +585,48 @@ function GaugeExample({ present, target, progress }: { present: number; target: 
     <Card className={styles.gaugeCard}>
       <TargetVsAchievementMeter present={usd(present)} target={usd(target)} progress={progress} />
     </Card>
+  );
+}
+
+/** The demo accounts on 22 Oct 2026 (demo-data.md), as `GET /api/accounts` sends them (task 013). */
+const sampleAccounts: AccountsResponse = {
+  totalBalance: usd(13025467),
+  accounts: [
+    {
+      id: 1,
+      accountType: 'credit-card',
+      cardNetwork: 'mastercard',
+      maskedNumber: '**** **** **** 2598',
+      balance: usd(2101918),
+    },
+    { id: 2, accountType: 'checking', cardNetwork: 'visa', maskedNumber: '**** **** **** 7310', balance: usd(3336248) },
+    { id: 3, accountType: 'savings', cardNetwork: null, maskedNumber: '**** **** **** 4421', balance: usd(2735680) },
+    { id: 4, accountType: 'investment', cardNetwork: null, maskedNumber: '**** **** **** 6652', balance: usd(2950300) },
+    { id: 5, accountType: 'loan', cardNetwork: null, maskedNumber: '**** **** **** 9083', balance: usd(1901321) },
+  ],
+};
+
+/** The Total Balance card as Overview draws it: 352 wide, inset 20 and 24, at least 232 high. */
+function TotalBalanceCard({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.sampleCard}>
+      <Card padding="none" className={styles.totalBalanceCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+/** The carousel control with its own position, so Previous and Next can be tried. */
+function SliderOptionExample({ count, start = 0 }: { count: number; start?: number }) {
+  const [position, setPosition] = useState(start);
+  return (
+    <SliderOption
+      count={count}
+      position={position}
+      onPrevious={() => setPosition(position - 1)}
+      onNext={() => setPosition(position + 1)}
+    />
   );
 }
 
@@ -1165,6 +1212,63 @@ export function ComponentGallery() {
         </Example>
         <Example name="$1,000,000,000 of $1,000,000,000">
           <GaugeExample present={100000000000} target={100000000000} progress={1} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TotalBalance" wide>
+        <Example name="The demo accounts (104), from the first">
+          <TotalBalanceCard>
+            <TotalBalance data={sampleAccounts} />
+          </TotalBalanceCard>
+        </Example>
+        <Example name="One account: both buttons disabled">
+          <TotalBalanceCard>
+            <TotalBalance data={{ totalBalance: usd(2101918), accounts: sampleAccounts.accounts.slice(0, 1) }} />
+          </TotalBalanceCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AccountTypeSlide" wide>
+        {sampleAccounts.accounts.slice(0, 3).map((account, index) => (
+          <Example
+            key={account.id}
+            name={`${account.maskedNumber.slice(-4)}: ${account.cardNetwork ?? 'no card network'}`}
+          >
+            <div className={styles.slideSample}>
+              <AccountTypeSlide account={account} label={`Account ${index + 1} of 5`} />
+            </div>
+          </Example>
+        ))}
+        <Example name="A narrow column: the balance wraps under the number (#106)">
+          <div className={styles.slideSampleNarrow}>
+            <AccountTypeSlide account={sampleAccounts.accounts[1]!} label="Account 2 of 5" />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SliderOption" wide>
+        <Example name="First of 5: Previous disabled">
+          <div className={styles.slideSample}>
+            <SliderOptionExample count={5} />
+          </div>
+        </Example>
+        <Example name="Last of 5: Next disabled">
+          <div className={styles.slideSample}>
+            <SliderOptionExample count={5} start={4} />
+          </div>
+        </Example>
+        <Example name="One account: both disabled">
+          <div className={styles.slideSample}>
+            <SliderOptionExample count={1} />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TotalBalanceSkeleton" wide>
+        <Example name="Loading">
+          <TotalBalanceCard>
+            <TotalBalanceSkeleton />
+          </TotalBalanceCard>
         </Example>
       </GallerySection>
     </div>

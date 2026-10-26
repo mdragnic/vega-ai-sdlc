@@ -1,0 +1,55 @@
+/* Not designed (#6): existing tokens only, on TotalBalance's grid. It fills the content box of the top row card at
+   its 232 minimum (the card inset 20 at the top and the bottom), with the control lines at the bottom. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  height: calc(
+    var(--size-overview-card-height) - var(--space-overview-card-padding-y) - var(--space-overview-card-padding-y)
+  );
+}
+
+/* The 32px row of the total and "All Accounts", and the divider under it. */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: calc(var(--line-height-32) + var(--space-total-balance-gap) + var(--border-width-divider));
+  padding-bottom: var(--space-total-balance-gap);
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* About as wide as a six-digit total in Exbold 22, as high as its digits. */
+.total {
+  width: var(--size-amount-box-width-lg);
+  height: var(--line-height-20);
+}
+
+.link {
+  width: var(--size-amount-box-width);
+  height: var(--line-height-16);
+}
+
+/* The account card's box (the block's radius is the card's, 4). */
+.slide {
+  height: var(--size-account-slide-height);
+  margin-top: var(--space-total-balance-gap);
+}
+
+/* Previous at the left, Next at the right, on the control's 20px row. */
+.control {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: var(--line-height-20);
+  margin-top: auto;
+}
+
+.previous {
+  width: var(--size-category-tile-tall);
+  height: var(--line-height-16);
+}
+
+.next {
+  width: var(--size-category-tile);
+  height: var(--line-height-16);
+}

@@ -2,9 +2,9 @@ import { screen, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { me, renderApp, today } from '../support/app';
+import { me, renderApp, signedInDefaults, today } from '../support/app';
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {

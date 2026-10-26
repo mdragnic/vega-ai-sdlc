@@ -133,6 +133,14 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-chart-legend-swatch-gap` | `8px` | measured: PNG 104, legend swatch right edge (x 2420) to the "This week" glyphs (x 2437), 17 px including the side bearing of the "T", halved 8.5, rounded; PNG 109 the same (x 2408 to 2425). Added in task 006 |
 | `--space-chart-legend-item-gap` | `24px` | measured: PNG 104, end of the "This week" text (glyphs to x 2551) to the "Last week" swatch (x 2602), 50 px including the side bearing of the "k", halved 25, rounded. Added in task 006 |
 | `--space-gauge-caption-gap` | `16px` | measured: PNG 104, bottom of the gauge drawing (y 640, see --size-gauge-height) to the "Target vs Achievement" line box (y 671: glyphs from y 678 in a 12/16 line), 31 px, halved 15.5, rounded. PNG 110 the same. Added in task 006 |
+| `--space-overview-card-padding-y` | `20px` | measured: PNG 104, top row card top (y 288) to the Goals edit button and the Total Balance total row (y 328), 40 px, and the Previous / Next row bottom (y 712: its 14/20 line box, glyph top y 681 less 8, plus 40) to the card bottom (y 752), 40 px, halved. The top row cards are inset 20 vertically and 24 (`--space-card-padding`) horizontally. Added in task 013 |
+| `--space-total-balance-gap` | `12px` | measured: PNG 104, Total Balance total row bottom (y 392) to the divider (y 414), 22 px, and the divider bottom (y 416) to the teal card (y 440), 24 px, halved 11 and 12, rounded. Added in task 013 |
+| `--space-total-balance-control-gap` | `16px` | measured: PNG 104, teal card bottom (y 632) to the Previous / Next row (y 672), 40 px, halved 20: at the 232 card minimum the row sits at the card bottom as drawn (y 336, 19 below the teal card, since the divider rounds 1 px down). This is the least space kept above the row when a taller teal card (decision #106) pushes it down. Added in task 013 |
+| `--space-account-slide-padding` | `16px` | measured: PNG 104, teal card left edge (x 656) to "Account Type" (glyphs from x 689, 1 px side bearing), 33 px; its right edge (x 1263) to the round arrow (x 1231) and its bottom (y 631) to the arrow (y 599), 32 px; its top (y 440) to the "Account Type" 14/20 line box (y 472: glyph top y 481 less 8), 32 px; halved, rounded. The logo box sits 4 px higher in 104 (its ink from y 476). Added in task 013 |
+| `--space-account-slide-amount-gap` | `12px` | measured: PNG 104, end of "$25000" (glyphs to x 1158) to the round arrow (x 1184), 26 px including the side bearing of the "0", halved 13, rounded. Added in task 013 |
+| `--space-account-slide-line-gap` | `4px` | decision #106: not measured, 104 leaves 43 px between the number and "$25000". The least space between the masked number and the balance before the balance and the round arrow wrap to their own line; on the 4px grid and small enough that the demo balances stay on one line at 1440 with a classic scrollbar (Checking needs 263 of 267 px). Added in task 013 |
+| `--space-slider-dot-gap` | `8px` | measured: PNG 104, Previous / Next dots x 920 to 935, 952 to 967, 984 to 999: 16 px between them, halved. Added in task 013 |
+| `--space-slider-chevron-gap` | `4px` | measured: PNG 104, the left chevron's 16 px box (x 656 to 687, glyph x 667 to 676) to "Previous" (glyphs from x 698), 10 px including the side bearing of the "P", and "Next" (glyphs to x 1221) to the right chevron's box (x 1232, glyph x 1243 to 1252), 10 px including the "t", halved 5, rounded. Added in task 013 |
 
 ## Size
 
@@ -185,6 +193,14 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-gauge-height` | `92px` | measured: PNG 104 and 110, the gauge arc top (y 456) to the center value's baseline (y 632) plus the descent of its 16 px text (8 px at 2x), 184 px, halved. The SVG's viewBox height, holding the arc, the needle and the three labels (#92). Added in task 006 |
 | `--size-page-min-width` | `1280px` | decision #94: the narrowest page, app or auth; below it the page scrolls horizontally. `min-width` on `body`. Added in task 011 |
 | `--size-scrollbar-gutter` | `15px` | decision #101: the width of a classic scrollbar, which `scrollbar-gutter: stable` keeps free on every app page (#100). Measured in task 011 in Chromium on Windows, headed and headless: the page is 1425 wide in a 1440 window. A constant, since no CSS length gives the window width with its scrollbar (headed Chromium leaves the gutter out of `100vw`). Subtracted from `--size-page-min-width` on `body`, so a window 1280 wide never scrolls sideways. Added in task 011 |
+| `--size-overview-card-height` | `232px` | measured: PNG 104, Total Balance, Goals and Upcoming Bill cards y 288 to 751, 464 px, halved. The least height of the top row cards in every state (decision #105 a); the row grows with its tallest card (#106). Added in task 013 |
+| `--size-statistics-card-height` | `260px` | decision #93: PNG 104 Statistics card y 896 to 1411, 516 px, halved 258, built 260 (the 188 px chart under a 24 px header row inside the 24 px card padding). The least height in every state (#105 a). Added in task 013 |
+| `--size-expenses-breakdown-card-height` | `212px` | measured: PNG 104, Expenses Breakdown card y 1556 to 1979, 424 px, halved. The least height in every state (decision #105 a). Added in task 013 |
+| `--size-account-slide-height` | `96px` | measured: PNG 104, teal account card in Total Balance y 440 to 631, 192 px, halved. Its height wherever its bottom line fits on one line (decision #106). Added in task 013 |
+| `--size-card-network-logo-width` | `48px` | Figma `Mastercard` 408:5979 and `Visacard` 410:5467, both exported 48x32 (`frontend/src/assets/brand/`). Checked: PNG 104 Mastercard ink x 1146 to 1223 and y 476 to 523, the 43x24 image area of the 48x32 box at 2x. Added in task 013 |
+| `--size-card-network-logo-height` | `32px` | Figma `Mastercard` 408:5979 and `Visacard` 410:5467, both exported 48x32. Added in task 013 |
+| `--size-round-arrow` | `24px` | Figma `Frame 40276` 24x24 (`components.md`, possible detached components). Checked: PNG 104, the white disc x 1184 to 1231 and y 552 to 599, 48 px, halved. Added in task 013 |
+| `--size-slider-dot` | `8px` | measured: PNG 104, Previous / Next dots x 920 to 935 and y 684 to 699, 16 px, halved. Added in task 013 |
 
 ## Radius
 
@@ -206,6 +222,7 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-category-tile` | `8px` | measured: PNG 104, Recent Transaction and Expenses Breakdown tiles, corner radius 16 px; PNG 109 and 110 tiles fit about 18 px; halved and rounded. The date and amount boxes in 108 have the same radii as in 104 (--radius-date-box, --radius-amount-box). Added in task 004 |
 | `--radius-dropdown` | `4px` | measured: PNG 110, Savings Goal period box corners: the straight border starts 7 px from the corner on both sides, radius about 7 to 8 px, halved and rounded. Added in task 005 |
 | `--radius-chart-legend-swatch` | `2px` | measured: PNG 104 and 109, legend swatch corners: the straight top edge starts 4 px in (x 2392 in 2388 to 2419), radius 4 px, halved. Kept under 4px, off the grid (#92 b). Added in task 006 |
+| `--radius-circle` | `50%` | measured: PNG 104, the round arrow's white disc (x 1184 to 1231, y 552 to 599) and the Previous / Next dots are circles. Added in task 013 |
 
 ## Border
 

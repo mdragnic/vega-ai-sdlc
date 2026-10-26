@@ -274,3 +274,23 @@
   display: flex;
   justify-content: center;
 }
+
+/* The Total Balance card of Overview: inset 20 and 24, at least 232 high (task 013). */
+.totalBalanceCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-overview-card-height);
+  padding: var(--space-overview-card-padding-y) var(--space-card-padding);
+}
+
+/* The content width of a 352px card at 1440. */
+.slideSample {
+  width: calc(var(--size-card-width) - var(--space-card-padding) - var(--space-card-padding));
+  margin: 0 auto;
+}
+
+/* Narrower than any Overview column, so the balance line wraps (#106). */
+.slideSampleNarrow {
+  width: var(--size-popup-button-width);
+  margin: 0 auto;
+}

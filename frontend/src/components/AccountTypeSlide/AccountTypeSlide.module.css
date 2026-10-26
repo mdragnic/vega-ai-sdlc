@@ -1,0 +1,100 @@
+/* 104: the teal card, inset 16, 96 high where its bottom line fits (#106). It stretches with its column (#94), and
+   in a taller cell (#107) its bottom line stays at the bottom. */
+.slide {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-account-slide-height);
+  padding: var(--space-account-slide-padding);
+  border-radius: var(--radius-account-card);
+  background-color: var(--color-primary);
+}
+
+/* The two top lines keep clear of the logo at the top right. */
+.caption,
+.type {
+  margin: 0 var(--size-card-network-logo-width) 0 0;
+}
+
+/* 104 "Account Type": White 70% (measured #BEE1DE over Primary), Regular 14/20. */
+.caption {
+  color: var(--color-white-70);
+  font: var(--font-regular-14-20);
+}
+
+/* 104 "Credit Card": White, Bold 16/24. */
+.type {
+  color: var(--color-white);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+}
+
+/* The exported 48x32 asset at the top right, for both networks (104 draws the Mastercard 2px higher). */
+.logo {
+  position: absolute;
+  top: var(--space-account-slide-padding);
+  right: var(--space-account-slide-padding);
+  width: var(--size-card-network-logo-width);
+  height: var(--size-card-network-logo-height);
+}
+
+/* The number on the left, the balance and the round arrow on the right, both ending on the card's last line.
+   Where they do not fit side by side, the balance and the arrow wrap to the next line, right-aligned (#106). */
+.bottomLine {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+  column-gap: var(--space-account-slide-line-gap);
+  /* The wrapped balance row starts where the number's line ends: the row reaches up by this much (below). */
+  row-gap: calc(var(--line-height-24) - var(--line-height-20));
+}
+
+/* 104 "**** **** **** 2598": White 70%, Regular 14/20; never broken. */
+.number {
+  margin: 0;
+  color: var(--color-white-70);
+  font: var(--font-regular-14-20);
+  white-space: nowrap;
+}
+
+/* 104: the 24px balance row ends on the number's 20px line and reaches 4px above it, so the card stays 96 high. */
+.amount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-account-slide-amount-gap);
+  margin-top: calc(var(--line-height-20) - var(--line-height-24));
+  margin-left: auto;
+}
+
+/* 104 "$25000": White, Bold 16/24. */
+.balance {
+  margin: 0;
+  color: var(--color-white);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* Figma `Frame 40276`: the 16px arrow-up-right in Primary on a 24px white disc. Visual only (#17). */
+.roundArrow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-round-arrow);
+  height: var(--size-round-arrow);
+  border-radius: var(--radius-circle);
+  background-color: var(--color-white);
+  color: var(--color-primary);
+}
+
+.arrow {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}

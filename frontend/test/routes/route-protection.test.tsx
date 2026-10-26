@@ -3,9 +3,9 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { appPaths, me, renderApp } from '../support/app';
+import { appPaths, me, renderApp, signedInDefaults } from '../support/app';
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {

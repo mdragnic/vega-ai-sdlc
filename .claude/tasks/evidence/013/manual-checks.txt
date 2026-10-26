@@ -1,0 +1,36 @@
+Task 013 manual checks, 2026-10-26. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is
+1425 wide in a 1440 window, #101), fresh contexts in Europe/Belgrade. Backend on the fixed test clock
+(NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep
+the database across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form: lands on /overview, total $130,254.67.
+   Mouse, Next from the first account to the last:
+     Account 1 of 5: Account Type | Credit Card | **** **** **** 2598 | $21,019.18 | logo Mastercard
+     Account 2 of 5: Account Type | Checking | **** **** **** 7310 | $33,362.48 | logo VISA
+     Account 3 of 5: Account Type | Savings | **** **** **** 4421 | $27,356.80 | no logo
+     Account 4 of 5: Account Type | Investment | **** **** **** 6652 | $29,503.00 | no logo
+     Account 5 of 5: Account Type | Loan | **** **** **** 9083 | $19,013.21 | no logo
+   Next aria-disabled="true" on the last; a click on it keeps Account 5 of 5. Previous four times back to Account 1 of 5,
+   Previous aria-disabled="true".
+   Keyboard, from the header search: Tab to "All Accounts", Previous (disabled, still a tab stop), Next, each with
+   :focus-visible and a solid 2px rgb(41, 157, 145) outline (focus-all-accounts.png, focus-next.png). Enter, Space,
+   Enter, Space on Next: Accounts 2, 3, 4, 5; focus stays on the now disabled Next with its ring
+   (focus-next-disabled.png). Shift+Tab to Previous, Enter: Account 4 of 5. Shift+Tab to "All Accounts".
+2. The round arrow: a click leaves /overview and Account 4 of 5 as they were.
+   "All Accounts" opens /balances with Balances Active; back on Overview the carousel starts at Account 1 of 5.
+   Upcoming Bill "View All" opens /bills (Bills Active), Recent Transaction "View All" /transactions (Transactions
+   Active). No full page load during these clicks (0 load events).
+3. Resize: 1920x1080 page 1905, scrollWidth 1905, teal card 96, Total Balance card 232. 1280x1024 page 1265,
+   scrollWidth 1265 (no sideways scroll), teal card 120 (the balance wrapped under the number, #106), Total Balance card
+   253. Back to 1440x1024: page 1425, teal card 96, card 232 (manual-1440-after-resize.png).
+4. Backend stopped (taskkill on the node process on port 3000):
+   - On a signed-in page parked on /balances (Overview's accounts never fetched), Overview from the sidebar: the
+     skeleton at once (manual-backend-down-skeleton.png), "Something went wrong." with Retry after the request and its
+     3 retries (7.6 s, manual-backend-down-error.png); the six sections in place, the header date kept, still signed in.
+   - A reload with the backend down opens /login?returnTo=%2Foverview: the first session check of a page load fails,
+     which counts as signed out (#97 b), so a reload cannot show the Total Balance states; they were checked by moving
+     to Overview inside the app instead (above), and by page.route in the visual step and the e2e (T19).
+   - Backend started again (database kept), Retry: $130,254.67 and Account 1 of 5 (manual-backend-back-retry.png).
+   - Backend stopped again with the data shown; the window gets focus back: 4 failed /api/accounts requests (the
+     refetch and its 3 retries), the data stays with no message (manual-backend-down-refocus-data-kept.png).
+5. Servers stopped afterwards; ports 3000 and 5173 free.

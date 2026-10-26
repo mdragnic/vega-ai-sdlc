@@ -3,8 +3,8 @@ import { join, relative, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-// T16, T20: full account numbers and the unfiltered transaction list stay inside bank-data/ and demo/
-// (#25, #53, #77). Task 013 adds its masking function as the one other reader of accountNumber.
+// T16, T20 (task 008), T7 (task 013): full account numbers and the unfiltered transaction list stay inside
+// bank-data/ and demo/ (#25, #53, #77). The masking function is the one other reader of accountNumber.
 const srcDir = resolve(import.meta.dirname, '../src');
 const allowedFolders = ['bank-data/', 'demo/'];
 
@@ -13,6 +13,12 @@ const guards = {
   accountNumber: /\baccountNumber\b/,
   // Later tasks read transactions through VisibleTransactions.list, never the provider (#53).
   listTransactions: /\blistTransactions\b/,
+};
+
+/** The single files outside those folders that may use a name. */
+const allowedFiles: Record<keyof typeof guards, string[]> = {
+  accountNumber: ['accounts/mask-account-number.ts'],
+  listTransactions: [],
 };
 
 function sourceFiles(dir: string): string[] {
@@ -33,15 +39,28 @@ describe('bank data in backend/src', () => {
         'bank-data/typeorm-bank-data-provider.ts',
         'demo/demo-seeder.ts',
         'auth/auth.service.ts',
+        'accounts/accounts.service.ts',
+        'accounts/mask-account-number.ts',
       ]),
     );
     expect(outside.length).toBeGreaterThan(10);
   });
 
-  it.each(Object.entries(guards))('uses %s only in bank-data/ and demo/', (_name, pattern) => {
-    const offenders = outside.filter((file) => pattern.test(readFileSync(join(srcDir, file), 'utf8')));
+  it.each(Object.entries(guards))('uses %s only in bank-data/, demo/ and its allowed files', (name, pattern) => {
+    const offenders = outside.filter(
+      (file) =>
+        !allowedFiles[name as keyof typeof guards].includes(file) &&
+        pattern.test(readFileSync(join(srcDir, file), 'utf8')),
+    );
 
     expect(offenders).toEqual([]);
+  });
+
+  // The exception is the one that is needed: the masking function reads the number, nothing else outside does.
+  it('allows accountNumber in the masking function, which reads it', () => {
+    const masking = readFileSync(join(srcDir, allowedFiles.accountNumber[0]!), 'utf8');
+
+    expect(guards.accountNumber.test(masking)).toBe(true);
   });
 
   it.each([

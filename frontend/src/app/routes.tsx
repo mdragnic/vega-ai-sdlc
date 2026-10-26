@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Navigate, type RouteObject } from 'react-router';
 
 import { GuestOnly } from '../routes/GuestOnly';
@@ -6,6 +7,7 @@ import { RequireAuth } from '../routes/RequireAuth';
 import { AppShell, type ShellHandle } from './AppShell';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
+import { OverviewPage } from './pages/OverviewPage';
 import { SignUpPage } from './pages/SignUpPage';
 
 // The component gallery and the popup page exist in development only. Vite replaces import.meta.env.DEV with
@@ -31,8 +33,8 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
  * Every app page needs a session (#3) and opens in the shell, with its sidebar section (Account Details is
  * Balances, #47) and the greeting on Overview only (#10). The screens fill their content from task 013 on.
  */
-const appPages: { path: string; handle: ShellHandle }[] = [
-  { path: paths.overview, handle: { section: 'overview', greeting: true } },
+const appPages: { path: string; handle: ShellHandle; element?: ReactNode }[] = [
+  { path: paths.overview, handle: { section: 'overview', greeting: true }, element: <OverviewPage /> },
   { path: paths.balances, handle: { section: 'balances' } },
   { path: paths.accountDetails, handle: { section: 'balances' } },
   { path: paths.transactions, handle: { section: 'transactions' } },
@@ -56,7 +58,9 @@ export const routes: RouteObject[] = [
   {
     element: <RequireAuth />,
     // `element: null` until the screen exists: an empty content area, without React Router's empty-route warning.
-    children: [{ element: <AppShell />, children: appPages.map((page) => ({ ...page, element: null })) }],
+    children: [
+      { element: <AppShell />, children: appPages.map(({ element = null, ...page }) => ({ ...page, element })) },
+    ],
   },
   // Settings opens on its Account tab, whose guard handles a signed-out visitor (#100).
   { path: paths.settings, element: <Navigate replace to={paths.settingsAccount} /> },

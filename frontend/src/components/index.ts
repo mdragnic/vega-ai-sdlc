@@ -1,5 +1,6 @@
 // Shared components, exported by their code name from docs/figma/components.md: the Code name column,
 // or the Code-only table for components with no Figma component (#36). test/components/names.test.ts checks it.
+export { AccountTypeSlide } from './AccountTypeSlide/AccountTypeSlide';
 export { AmountBox } from './AmountBox/AmountBox';
 export { AppLayout } from './AppLayout/AppLayout';
 export { AuthLayout } from './AuthLayout/AuthLayout';
@@ -31,6 +32,9 @@ export { Profile } from './Profile/Profile';
 export { RemindMe } from './RemindMe/RemindMe';
 export { Section } from './Section/Section';
 export { Skeleton } from './Skeleton/Skeleton';
+export { SliderOption } from './SliderOption/SliderOption';
 export { Spinner } from './Spinner/Spinner';
 export { TargetVsAchievementMeter } from './TargetVsAchievementMeter/TargetVsAchievementMeter';
 export { TextDivider } from './TextDivider/TextDivider';
+export { TotalBalance } from './TotalBalance/TotalBalance';
+export { TotalBalanceSkeleton } from './TotalBalanceSkeleton/TotalBalanceSkeleton';

@@ -1,0 +1,64 @@
+/* 104: Previous at the left, the dots centered, Next at the right edge, on one 20px row. The outer columns share
+   what the dots leave, so the dots stay centered whatever the two labels' widths (#94). */
+.control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
+/* 104 "Next": Default Black, Regular 14/20, 4 from its 16px chevron. */
+.button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-slider-chevron-gap);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-default-black);
+  font: var(--font-regular-14-20);
+  cursor: pointer;
+}
+
+.next {
+  justify-self: end;
+}
+
+/* 104 "Previous" on the first account: Special/BG, measured #D1D1D1. Next takes it on the last (#17). */
+.disabled {
+  color: var(--color-special-bg);
+  cursor: default;
+}
+
+/* Keyboard focus (#87); a mouse click shows none. No hover style: none is designed. */
+.button:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+/* The left chevron is chevron-right mirrored. */
+.previous {
+  transform: scaleX(-1);
+}
+
+.dots {
+  display: flex;
+  gap: var(--space-slider-dot-gap);
+}
+
+/* 104: Special/BG dots (#D1D1D1), the shown account's in Primary. */
+.dot {
+  width: var(--size-slider-dot);
+  height: var(--size-slider-dot);
+  border-radius: var(--radius-circle);
+  background-color: var(--color-special-bg);
+}
+
+.active {
+  background-color: var(--color-primary);
+}

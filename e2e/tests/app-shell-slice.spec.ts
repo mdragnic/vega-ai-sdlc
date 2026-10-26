@@ -6,6 +6,15 @@ import { box, computed, expectRing, sessionCookie, signUp, tokenColor, type User
 
 const sections = ['Overview', 'Balances', 'Transactions', 'Bills', 'Expenses', 'Goals', 'Settings'] as const;
 const logoutFailedMessage = "Couldn't log out. Please try again.";
+/** The sections of Overview in 104's order (task 013). */
+const overviewSections = [
+  'Total Balance',
+  'Goals',
+  'Upcoming Bill',
+  'Recent Transaction',
+  'Statistics',
+  'Expenses Breakdown',
+];
 
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' });
 const navBar = (page: Page) => sidebar(page).locator('..');
@@ -63,12 +72,17 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     await expect(page).toHaveURL(`${FRONTEND_URL}${path}`);
     await expect(navBar(page).getByText('Tanzir Rahman', { exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Tanzir Rahman' })).toHaveText('TR');
-    await expect(page.locator('img')).toHaveCount(0);
+    // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013).
+    await expect((path === '/overview' ? navBar(page) : page).locator('img')).toHaveCount(0);
     await expect(activeItem(page)).toHaveCount(1);
     await expect(activeItem(page)).toHaveText(item);
     await expect(header(page).getByText(/^Hello /)).toHaveCount(path === '/overview' ? 1 : 0);
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
-    await expect(page.getByRole('main')).toBeEmpty();
+    // Overview holds its six sections (task 013); the other screens are empty until their tasks.
+    await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(
+      path === '/overview' ? overviewSections : [],
+    );
+    if (path !== '/overview') await expect(page.getByRole('main')).toBeEmpty();
   }
 });
 

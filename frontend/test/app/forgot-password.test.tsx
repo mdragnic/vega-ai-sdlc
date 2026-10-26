@@ -3,9 +3,9 @@ import type { UserEvent } from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { me, renderApp } from '../support/app';
+import { me, renderApp, signedInDefaults } from '../support/app';
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 /** Every request the app sends, as `METHOD /path`. */
 let requests: string[] = [];

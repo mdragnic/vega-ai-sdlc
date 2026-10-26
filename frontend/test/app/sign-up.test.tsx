@@ -14,7 +14,7 @@ import { SignUpPage } from '../../src/app/pages/SignUpPage';
 import { routes } from '../../src/app/routes';
 import { googleUrl } from '../../src/assets/brand';
 import { GuestOnly } from '../../src/routes/GuestOnly';
-import { me, renderApp, today } from '../support/app';
+import { me, renderApp, signedInDefaults, today } from '../support/app';
 
 // The page load of Google sign-in, which jsdom cannot do; the e2e tests follow it (task 012).
 vi.mock('../../src/api/google', async (importOriginal) => ({
@@ -22,7 +22,7 @@ vi.mock('../../src/api/google', async (importOriginal) => ({
   startGoogleSignIn: vi.fn<(returnTo?: string) => void>(),
 }));
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 /** Every request the app sends, as `METHOD /path`. */
 let requests: string[] = [];
@@ -233,7 +233,8 @@ describe('successful sign up', () => {
         .getQueryCache()
         .getAll()
         .map((query) => query.queryKey),
-    ).toEqual([['session'], ['calendar', 'today']]);
+      // The new session's own: the header date and Overview's accounts (task 013); the earlier balance is gone.
+    ).toEqual([['session'], ['calendar', 'today'], ['accounts']]);
     // The mutation holds the password: it is gone once Sign up is.
     await waitFor(() => expect(appClient!.getMutationCache().getAll()).toEqual([]));
 

@@ -1,0 +1,60 @@
+/* Fills the card's content box (the top row card is inset 20 and 24, see OverviewPage), so the control sits at its
+   bottom: y 336 to 356 at the 232 minimum, as in 104. */
+.totalBalance {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+/* 104: the total and "All Accounts" on one 32px row, then the Gray/06 divider 12 below it. */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-total-balance-gap);
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* 104 "$240,399": Default Black, Exbold 22/32. */
+.total {
+  margin: 0;
+  color: var(--color-default-black);
+  font: var(--font-exbold-22-32);
+  white-space: nowrap;
+}
+
+/* 104 "All Accounts": Secondary, Regular 14/20. */
+.allAccounts {
+  color: var(--color-secondary);
+  font: var(--font-regular-14-20);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Keyboard focus (#87); a mouse click shows none. */
+.allAccounts:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* Every account's card in one cell: the cell is as tall as the tallest, so paging never moves the page (#107). */
+.slides {
+  display: grid;
+  margin-top: var(--space-total-balance-gap);
+}
+
+/* Each fills the cell, so the shown card takes the cell's height. */
+.slide {
+  display: grid;
+  grid-area: 1 / 1;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+/* At the card bottom, at least 16 under a taller teal card (#106). */
+.control {
+  margin-top: auto;
+  padding-top: var(--space-total-balance-control-gap);
+}

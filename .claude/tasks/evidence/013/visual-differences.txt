@@ -1,0 +1,69 @@
+Task 013 visual check, 2026-10-26. Playwright MCP (headed Chromium on Windows), backend on the fixed test clock
+(NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite dev server, a fresh context at
+1440x1024, device scale 2, Europe/Belgrade, a new user signed up through the API (the demo data). Scrollbars hidden
+for the 1440 render (`html { scrollbar-width: none }`, so the page is 1440 wide like the PNG); the 1920 and 1280
+renders keep the classic scrollbar. Compared with docs/figma/104. Overview.png (2x) by a Node script (built-ins
+only, in the session scratchpad): ink boxes and mean absolute difference per channel (0 to 255), in 2x px.
+No Figma calls.
+
+Renders:
+- 104-overview-2x.png: /overview at 1440x1024, first slide.
+- compare-104-total-balance.png: the Total Balance card, design | render | difference x4.
+- slide-2-visa-2x.png, slide-5-last-2x.png: Checking with the VISA logo (not drawn in 104), Loan with Next disabled.
+- overview-1920x1080.png, overview-1280x1024.png (#94), overview-1280-total-balance-wrapped.png (#106).
+- state-skeleton.png, state-error.png, state-empty.png (page.route on /api/accounts): the undesigned states.
+
+Ink boxes, design vs render (2x px, x and y ranges):
+  total text          x 657-871   y 340-383   |  x 657-930   y 339-384   (longer amount)
+  All Accounts        x 1097-1262 y 349-370   |  x 1099-1262 y 349-370
+  divider             x 656-1263  y 414-415   |  x 656-1263  y 416-417
+  teal card           x 656-1263  y 440-631   |  x 656-1263  y 442-633
+  "Account Type"      x 689-871   y 481-507   |  x 688-870   y 483-509
+  "Credit Card"       x 689-865   y 523-548   |  x 689-863   y 525-550
+  number              x 690-953   y 569-590   |  x 689-...   y 569-592   (the longer balance starts at x 1000)
+  Mastercard logo     x 1146-1223 y 476-523   |  x 1146-1223 y 482-529
+  balance             x 1033-1158 y 561-590   |  x 1000-1158 y 563-596   (right-aligned, longer amount)
+  round arrow disc    x 1184-1231 y 552-599   |  x 1184-1231 y 554-601
+  Previous + chevron  x 667-810   y 681-702   |  x 667-809   y 681-702
+  dots                x 920-999   y 684-699   |  x 888-1031  y 684-699   (5 dots, same center x 959.5)
+  Next + chevron      x 1162-1252 y 681-702   |  x 1164-1252 y 681-702
+  "Total Balance"     x 610-884   y 224-256   |  x 609-885   y 224-256
+  Upcoming Bill View All x 2652-2781 y 229-249 | x 2678-2804 y 230-248
+  Recent Transaction View All x 1172-1301 y 837-857 | x 1174-1300 y 838-856
+  "*Compare to last month" x 2543-2814 y 1514-1536 | x 2545-2814 y 1518-1540
+Mean difference: Total Balance card 7.57 (x 600-1320, y 280-760), the teal card 9.10, the control row 5.91; most of it
+is the different amounts and the two extra dots.
+
+Differences (every one seen):
+1. Amounts: `$130,254.67` and `$21,019.18` against `$240,399` and `$25000` (expected: demo numbers #12, format #11).
+   The balance is right-aligned, so its left edge sits further left.
+2. 5 dots against 3, centered on the same x (expected, #17).
+3. The divider, the teal card and everything in it 1 CSS px lower (2x: divider y 416 vs 414, teal card 442 vs 440):
+   104's 11 px gap under the total row is the 12 px token (`--space-total-balance-gap`, 4px grid).
+4. The card network logo 3 CSS px lower (2x ink y 482 vs 476): 1 px from (3), and 2 px because its 48x32 box sits at
+   the card's 16 px inset, where 104 draws it 14 from the top (noted in tokens.md, `--space-account-slide-padding`).
+5. Upcoming Bill "View All" 12 to 13 CSS px right of 104 (2x ink x 2678-2804 vs 2652-2781). 104 insets this one 12 px
+   from the card's right edge, while Recent Transaction's "View All" is flush with its card (render within 1 px of
+   104). `Section` (task 004) puts every "View All" flush with the card edge; not changed in this task.
+6. The five other cards are empty, at their 104 heights (expected, #105 a).
+7. The Statistics card 2 px taller and the Expenses Breakdown section 2 px lower (expected, #93): the note at 2x y 1518
+   vs 1514.
+8. Header: the date `22 Oct, 2026` (fixed clock), the initials avatar, the page tone #F3F3F3 against #F4F5F7 (known
+   since tasks 003 and 011).
+9. Text anti-aliasing: "All Accounts", "Next" and "Account Type" within 1 CSS px of 104.
+10. With a classic scrollbar (the 1920 and 1280 renders) the page is 15 px narrower than the window and every right
+    edge moves in by 15 px (expected, #101).
+
+Evidence-only states (not designed):
+- 1920x1080: page 1905 wide (classic gutter); columns 507 wide at x 304, 835, 1366; Statistics and Expenses
+  Breakdown 1038 wide from x 835; the top row cards 232 high, the teal card 96 high and 459 wide.
+- 1280x1024: page 1265 wide, scrollWidth 1265 (no sideways scroll); columns 293.7 wide; the teal card 120 high with the
+  balance and the round arrow on their own line under the number, right-aligned (#106); the top row cards all 253
+  high; Statistics from y 469, Expenses Breakdown from y 801, Recent Transaction to its bottom (y 1013).
+- Skeleton, error state ("Something went wrong." above Retry) and "No accounts yet": the card 232 high in each.
+
+After the code review (#107, all account cards in one cell), re-rendered 2026-10-26:
+- 104-overview-2x.png re-taken at 1440: the ink boxes and mean differences above are unchanged (same numbers).
+- band-1405-slide-1.png, band-1405-slide-2.png: a 1405 window (a 1390 page with the classic scrollbar), inside the band
+  where some demo balances fit and others wrap (pages 1380 to 1410). The teal card is 120 high and Next at y 357 on all
+  5 slides; Credit Card's line fits and sits at the card's bottom, Checking's wraps.

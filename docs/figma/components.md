@@ -148,7 +148,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`.
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`; task 013 added `TotalBalance`, `AccountTypeSlide`, `SliderOption` and `TotalBalanceSkeleton`.
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -176,6 +176,10 @@ Code components with no Figma component. They are built from tokens, and their n
 | `ComparisonBarChartSkeleton` | The loading skeleton of `ComparisonBarChart` for `DataState`, in the chart's box: y label lines and per group two bar blocks over a label line, no text. Not designed | #6 |
 | `ChartLegend` | The legend at the right of a chart card's header row (104, 109, later 110 Saving Summary): the current period first with a Primary swatch, then the earlier one with a Gray/05 swatch, labels in Secondary | #29, #92 |
 | `TargetVsAchievementMeter` | The gauge of 104 Goals and 110 Savings Goal (Figma frame `Target vs Achievement Meter` `407:5628`, no component): a Gray/05 half circle with a Primary arc and needle at the progress it is given (from the backend's `goalProgress`), `$0` and the Target under the ends and the Present between them in the compact format, the caption under them. A `meter` named by the caption | #11, #18, #31, #92 |
+| `TotalBalance` | The content of the Overview Total Balance card (Figma `405:5461`, no component): the total with "All Accounts" to Balances over the Gray/06 divider, then one account at a time in `AccountTypeSlide`, inside a polite live region, with `SliderOption` at the bottom. Every account's card is laid out in one grid cell (the others hidden and `aria-hidden`), so the tallest sets the height and paging never moves the page. Starts at the first account on every visit; with fewer accounts in new data, at the last one. Shows the amounts it is given | #11, #17, #87, #107 |
+| `AccountTypeSlide` | The teal account card in Total Balance (Figma frame `Account type` `405:5469`; not the Balances card `AccountType`): "Account Type", the type, the masked number, the card network logo when set (Mastercard as drawn, VISA in the same 48x32 box), the balance and the round arrow (Figma `Frame 40276`, visual only). A group named by its position ("Account 1 of 5"). 96 high where the number and the balance fit on one line; otherwise the balance and the arrow wrap under the number and the card grows. The bottom line stays at the card's bottom in a taller cell | #17, #24, #25, #106, #107 |
+| `SliderOption` | Previous, one dot per account and Next under the Total Balance account card (Figma frame `Slider option` `405:5480`): buttons that are `aria-disabled` (focus kept) and muted at the ends, the dots visual only | #17, #87 |
+| `TotalBalanceSkeleton` | The loading skeleton of the Total Balance card for `DataState`: lines for the total and "All Accounts" over the divider, a block in the account card's box and lines for Previous and Next, at the card's 232 minimum. Not designed | #6, #105 |
 
 ## Totals
 

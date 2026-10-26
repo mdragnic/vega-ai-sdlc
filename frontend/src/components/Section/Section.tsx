@@ -8,6 +8,8 @@ type SectionProps = {
   title: string;
   /** The title-to-content gap the screen's PNG shows: `sm` 8 (Overview), `lg` 16 (the other screens). */
   gap: 'sm' | 'lg';
+  /** Layout from the screen: grid placement and stretching. */
+  className?: string;
   children: ReactNode;
 } & (
   | {
@@ -26,11 +28,12 @@ type SectionProps = {
  * A titled block of an app screen: an `<h2>` in the section title style (104 "Total Balance") and the
  * content below it. Two "View All" links share Overview, so each is described by its section title.
  */
-export function Section({ title, gap, viewAllTo, note, children }: SectionProps) {
+export function Section({ title, gap, viewAllTo, note, className, children }: SectionProps) {
   const titleId = useId();
+  const classes = [gap === 'sm' ? styles.sectionSm : styles.sectionLg, className].filter(Boolean).join(' ');
 
   return (
-    <section className={gap === 'sm' ? styles.sectionSm : styles.sectionLg} aria-labelledby={titleId}>
+    <section className={classes} aria-labelledby={titleId}>
       <div className={styles.titleRow}>
         <h2 id={titleId} className={styles.title}>
           {title}

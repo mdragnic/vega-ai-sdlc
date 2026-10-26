@@ -7,9 +7,9 @@ import type { RouteObject } from 'react-router';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { routes } from '../../src/app/routes';
-import { appPaths, me, renderApp, signedInUser, today, TODAY } from '../support/app';
+import { appPaths, me, renderApp, signedInDefaults, signedInUser, today, TODAY } from '../support/app';
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {
@@ -99,6 +99,16 @@ const activeItem: Record<(typeof appPaths)[number], string> = {
   '/settings/security': 'Settings',
 };
 
+/** The sections of Overview in 104's order (task 013). */
+const overviewSections = [
+  'Total Balance',
+  'Goals',
+  'Upcoming Bill',
+  'Recent Transaction',
+  'Statistics',
+  'Expenses Breakdown',
+];
+
 // T4: every app path opens in the shell with the signed-in user and today's date (AC1, AC2, AC4).
 describe('the shell on each app path', () => {
   it.each(appPaths)('shows the user, the date and the section of %s', async (path) => {
@@ -109,11 +119,19 @@ describe('the shell on each app path', () => {
     expect(within(sidebar().parentElement!).getByText('Tanzir Rahman')).toBeInTheDocument();
     const avatar = screen.getByRole('img', { name: 'Tanzir Rahman' });
     expect(avatar).toHaveTextContent('TR');
-    expect(container.querySelector('img')).toBeNull();
+    // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013).
+    expect((path === '/overview' ? sidebar().parentElement! : container).querySelector('img')).toBeNull();
     expect(currentLinks()).toEqual([activeItem[path]]);
     // The greeting on Overview only.
     expect(screen.queryByText(/Hello/)?.textContent ?? null).toBe(path === '/overview' ? 'Hello Tanzir' : null);
-    expect(screen.getByRole('main')).toBeEmptyDOMElement();
+    // Overview holds its six sections (task 013); the other screens are empty until their tasks.
+    const main = screen.getByRole('main');
+    expect(
+      within(main)
+        .queryAllByRole('region')
+        .map((region) => within(region).getByRole('heading', { level: 2 }).textContent),
+    ).toEqual(path === '/overview' ? overviewSections : []);
+    expect(main.childNodes.length === 0).toBe(path !== '/overview');
     expect(url()).toBe(path);
   });
 

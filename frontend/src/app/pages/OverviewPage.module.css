@@ -1,0 +1,69 @@
+/* 104: three equal columns that fill the content area at any width (#94). Row 1: Total Balance, Goals, Upcoming
+   Bill; Recent Transaction on the left over rows 2 and 3; Statistics and Expenses Breakdown over columns 2 and 3. */
+.grid {
+  display: grid;
+  grid-template-areas:
+    'total-balance goals bills'
+    'recent-transaction statistics statistics'
+    'recent-transaction expenses-breakdown expenses-breakdown';
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-card-row-gap) var(--space-card-gap);
+}
+
+/* Each section stretches to its grid area, and its card to the rest of the section: the top row's cards share
+   the row's height, and Recent Transaction ends with Expenses Breakdown. */
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+.totalBalance {
+  grid-area: total-balance;
+}
+
+.goals {
+  grid-area: goals;
+}
+
+.bills {
+  grid-area: bills;
+}
+
+.recentTransaction {
+  grid-area: recent-transaction;
+}
+
+.statistics {
+  grid-area: statistics;
+}
+
+.expensesBreakdown {
+  grid-area: expenses-breakdown;
+}
+
+/* The 104 heights are minimums in every state (#105 a); the row grows with its tallest card (#106). */
+.topCard {
+  min-height: var(--size-overview-card-height);
+}
+
+.statisticsCard {
+  min-height: var(--size-statistics-card-height);
+}
+
+.expensesBreakdownCard {
+  min-height: var(--size-expenses-breakdown-card-height);
+}
+
+/* 104: the Total Balance content is inset 20 at the top and the bottom and 24 at the sides. */
+.topCardBody {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  padding: var(--space-overview-card-padding-y) var(--space-card-padding);
+}

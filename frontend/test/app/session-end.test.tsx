@@ -12,9 +12,9 @@ import { apiRequest } from '../../src/api/client';
 import { LoginPage } from '../../src/app/pages/LoginPage';
 import { GuestOnly } from '../../src/routes/GuestOnly';
 import { RequireAuth } from '../../src/routes/RequireAuth';
-import { authenticationRequired, me, renderApp, signedInUser } from '../support/app';
+import { authenticationRequired, me, renderApp, signedInDefaults, signedInUser } from '../support/app';
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {

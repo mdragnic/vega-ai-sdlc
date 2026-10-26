@@ -2,6 +2,7 @@ import { type DynamicModule, Module, StandardSchemaValidationPipe } from '@nestj
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AccountsModule } from './accounts/accounts.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BankDataModule } from './bank-data/bank-data.module.js';
 import { CalendarModule } from './calendar/calendar.module.js';
@@ -21,6 +22,7 @@ export class AppModule {
         ClockModule.forRoot(config),
         AuthModule.forRoot(config),
         BankDataModule,
+        AccountsModule,
         CalendarModule,
       ],
       providers: [

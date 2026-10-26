@@ -13,7 +13,7 @@ import { routes } from '../../src/app/routes';
 import { googleUrl } from '../../src/assets/brand';
 import { GuestOnly } from '../../src/routes/GuestOnly';
 import { RequireAuth } from '../../src/routes/RequireAuth';
-import { me, renderApp, signedInUser, today } from '../support/app';
+import { me, renderApp, signedInDefaults, signedInUser, today } from '../support/app';
 
 // The page load of Google sign-in, which jsdom cannot do; the e2e tests follow it (task 012).
 vi.mock('../../src/api/google', async (importOriginal) => ({
@@ -21,7 +21,7 @@ vi.mock('../../src/api/google', async (importOriginal) => ({
   startGoogleSignIn: vi.fn<(returnTo?: string) => void>(),
 }));
 
-const server = setupServer();
+const server = setupServer(...signedInDefaults());
 
 /** Every request the app sends, as `METHOD /path`. */
 let requests: string[] = [];
@@ -336,7 +336,9 @@ describe('successful login', () => {
     await user.click(loginButton());
 
     await waitFor(() => expect(url()).toBe('/overview'));
-    expect(await screen.findByRole('main')).toBeInTheDocument();
+    // Login has a main of its own: wait for the shell and Overview's content, not any main.
+    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).getByRole('region', { name: 'Total Balance' })).toBeInTheDocument();
   });
 
   it('opens Overview for a return target outside the app', async () => {

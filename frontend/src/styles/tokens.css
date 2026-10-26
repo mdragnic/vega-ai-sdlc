@@ -114,6 +114,14 @@
   --space-chart-legend-swatch-gap: 8px;
   --space-chart-legend-item-gap: 24px;
   --space-gauge-caption-gap: 16px;
+  --space-overview-card-padding-y: 20px;
+  --space-total-balance-gap: 12px;
+  --space-total-balance-control-gap: 16px;
+  --space-account-slide-padding: 16px;
+  --space-account-slide-amount-gap: 12px;
+  --space-account-slide-line-gap: 4px;
+  --space-slider-dot-gap: 8px;
+  --space-slider-chevron-gap: 4px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -163,6 +171,14 @@
   --size-gauge-height: 92px;
   --size-page-min-width: 1280px;
   --size-scrollbar-gutter: 15px;
+  --size-overview-card-height: 232px;
+  --size-statistics-card-height: 260px;
+  --size-expenses-breakdown-card-height: 212px;
+  --size-account-slide-height: 96px;
+  --size-card-network-logo-width: 48px;
+  --size-card-network-logo-height: 32px;
+  --size-round-arrow: 24px;
+  --size-slider-dot: 8px;
 
   /* Radius */
   --radius-input: 8px;
@@ -179,6 +195,7 @@
   --radius-category-tile: 8px;
   --radius-dropdown: 4px;
   --radius-chart-legend-swatch: 2px;
+  --radius-circle: 50%;
 
   /* Border */
   --border-width-input: 1px;
