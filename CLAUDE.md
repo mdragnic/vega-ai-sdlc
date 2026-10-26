@@ -24,13 +24,10 @@ Personal finance dashboard, desktop only (1440x1024). React SPA, NestJS API, SQL
 - The backend reads "now" only from `Clock` (`@Inject(CLOCK)`). The test-only clock route `/api/test/clock` exists only with `NODE_ENV=test`.
 
 ## Commands
-- Install: `npm install`, then once `npx playwright install chromium` (Node 24 from 24.20.0, npm 11.19.0).
-- Dev: `npm run dev` (shared in watch mode, backend on :3000, frontend on :5173). Open http://localhost:5173; `/api` is proxied to the backend.
-- Test: `npm test` (Vitest in shared, backend and frontend).
-- E2E: `npm run e2e` (Playwright, Chromium at 1440x1024, `NODE_ENV=test`, fresh test database, fixed clock and zone from `e2e/constants.ts`).
-- Lint: `npm run lint` (oxlint type-aware, Stylelint, Prettier check). `npm run format` applies Prettier.
-- Typecheck: `npm run typecheck`. Build: `npm run build`.
-- Migrate: `npm run migrate`. New migration: `npm run migration:generate -- <Name>`.
+Scripts are in the root `package.json`. Not obvious from it:
+- Stop `npm run dev` before `npm run e2e`: both use ports 3000 and 5173.
+- `npm run migrate` runs the TypeORM CLI against the compiled backend (`backend/dist`), not through ts-node.
+- `npx playwright install chromium` once after install, for the e2e tests.
 
 ## Structure
 - `shared/` (`@finebank/shared`): `src/contract/` holds the API contract (Zod schemas, `ContractEntry`, the error shape). Built to `dist/` with tsc.
