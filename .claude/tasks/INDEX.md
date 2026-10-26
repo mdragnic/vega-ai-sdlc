@@ -3,7 +3,7 @@
 Status values: todo | in-progress | awaiting-human | done | blocked
 `/next-task` picks the first task that is `todo` and whose dependencies are all `done`.
 
-Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 013; the rest are outline rows, detailed by `/next-task` when picked. Every page is full width (#94): the screen tasks from 013 apply it to their card grids.
+Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 014; the rest are outline rows, detailed by `/next-task` when picked. Every page is full width (#94): the screen tasks from 013 apply it to their card grids.
 
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
@@ -21,7 +21,7 @@ Order: foundation, shared display rules, shared components (used on 2+ screens),
 | 011 | App shell slice: signed-in user, date, greeting, navigation, logout, unknown URLs | US-04, #3 #5 #9 #10 #38 #39 #47 #54 #62 #74 #80 #83 #87 #94 #97 #98 #100 #101; scrollbar-gutter: stable on the scroll container, so classic (Windows) scrollbars do not shift the header by 15px | human | 003, 009 | done |
 | 012 | Google sign-in (against the fake Google client until a real one exists, #102) | US-01 (13, 16), US-02 (9, 15), #2 #3 #15 #39 #62 #63 #67 #74 #75 #78 #80 #81 #97 #102 #103 #104; returnTo a relative in-app path only, with the task 009 rule moved to shared for the backend | human | 010, 011 | done |
 | 013 | Overview: page grid and Total Balance | US-05, #6 #11 #17 #24 #25 #39 #53 #54 #57 #74 #77 #87 #89 #93 #94 #96 #101 #105 #106 #107; all six Overview sections in the grid, only Total Balance filled; balances only through `VisibleTransactions`; numbers masked in the backend | human | 004, 008, 011 | done |
-| 014 | Overview: Goals card and edit goal popup | US-06, #18 #31 #58 #64 #69 #71 #85; goal request schemas must reject negative amounts (moneySchema allows negatives); clear the mutation cache when a session ends; clear cached data when the signed-in user changes in another tab (task 009 review) | human | 005, 006, 013 | todo |
+| 014 | Overview: Goals card and edit goal popup | US-06, #6 #11 #18 #31 #35 #39 #54 #58 #64 #69 #71 #74 #75 #80 #84 #85 #87 #88 #89 #90 #92 #94 #96 #97 #105 #106 #108; goal request schemas must reject negative amounts (moneySchema allows negatives); clear the mutation cache when a session ends; clear cached data when the signed-in user changes in another tab (task 009 review); the first write: user-scoped, session guard and Nest CSRF, integer cents with USD; only the goal queries invalidated after a save | human | 005, 006, 013 | todo |
 | 015 | Overview: Upcoming Bill | US-07, #28 #48; compare `bills.due_date` with today as a `YYYY-MM-DD` string in the user's zone, never a `Date` parameter (it binds as `YYYY-MM-DD HH:MM:SS.SSS` and would drop the bill due today; task 008 review) | human | 004, 013 | todo |
 | 016 | Overview: Recent Transaction | US-08, #19 #40 #49 #56 | human | 004, 013 | todo |
 | 017 | Overview: Statistics (y-axis ticks in the backend) | US-09, #20 #55 #91 (empty message) #93 (header row) | human | 006, 013 | todo |
