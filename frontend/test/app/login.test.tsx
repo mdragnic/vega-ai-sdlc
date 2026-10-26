@@ -6,6 +6,7 @@ import { setupServer } from 'msw/node';
 import { createMemoryRouter, type RouteObject } from 'react-router';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { startGoogleSignIn } from '../../src/api/google';
 import { AppProviders } from '../../src/app/AppProviders';
 import { LoginPage } from '../../src/app/pages/LoginPage';
 import { routes } from '../../src/app/routes';
@@ -13,6 +14,12 @@ import { googleUrl } from '../../src/assets/brand';
 import { GuestOnly } from '../../src/routes/GuestOnly';
 import { RequireAuth } from '../../src/routes/RequireAuth';
 import { me, renderApp, signedInUser, today } from '../support/app';
+
+// The page load of Google sign-in, which jsdom cannot do; the e2e tests follow it (task 012).
+vi.mock('../../src/api/google', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/api/google')>()),
+  startGoogleSignIn: vi.fn<(returnTo?: string) => void>(),
+}));
 
 const server = setupServer();
 
@@ -52,6 +59,7 @@ const emailField = () => screen.getByRole('textbox', { name: 'Email Address' });
 const passwordField = () => screen.getByLabelText('Password');
 const loginButton = () => screen.getByRole('button', { name: 'Login' });
 const keepSignedIn = () => screen.getByRole('checkbox', { name: 'Keep me signed in' });
+const googleButton = () => screen.getByRole('button', { name: 'Continue with Google' });
 const loginRequests = () => requests.filter((request) => request === 'POST /api/auth/login');
 
 /** Login, signed out, with the form on screen. */
@@ -498,16 +506,94 @@ describe('failed requests', () => {
   });
 });
 
-// T14: "Continue with Google" is visual only until task 012 (AC17).
+// Task 012 T19: "Continue with Google" starts the sign-in with the page's return target; it replaces task 009's T14,
+// written for "visual only until task 012" (AC1, AC15; #3, #75).
 describe('Continue with Google', () => {
-  it('does nothing', async () => {
-    const { user, url } = await openLogin();
+  beforeEach(() => {
+    vi.mocked(startGoogleSignIn).mockClear();
+  });
+
+  it.each([
+    ['/login?returnTo=%2Fbills', [['/bills']]],
+    ['/login?returnTo=%2Fbills%3Fx%3D1%23y', [['/bills?x=1#y']]],
+    ['/login', [[]]],
+    ['/login?returnTo=https://evil.example', [['/overview']]],
+  ])('on %s starts the sign-in with %j, with no request of its own', async (path, calls) => {
+    const { user, url } = await openLogin(path);
     const before = requests.length;
 
-    await user.click(screen.getByRole('button', { name: 'Continue with Google' }));
+    await user.click(googleButton());
 
-    expect(url()).toBe('/login');
+    expect(vi.mocked(startGoogleSignIn).mock.calls).toEqual(calls);
     expect(requests.length).toBe(before);
+    expect(url()).toBe(path);
     expect(screen.queryByText('Email is required')).toBeNull();
+  });
+
+  it('stays a button with the G, outside the form', async () => {
+    await openLogin();
+
+    expect(googleButton()).toHaveAttribute('type', 'button');
+    expect(googleButton().querySelector('img')).toHaveAttribute('src', googleUrl);
+    expect(googleButton().closest('form')).toBeNull();
+  });
+});
+
+// Task 012 T20: Login opened after a failed Google sign-in (AC7; #81, #97).
+describe('after a failed Google sign-in', () => {
+  it('shows the message above Login and removes the marker from the URL, keeping returnTo', async () => {
+    const { router, url } = await openLogin('/login?returnTo=%2Fbills&googleSignIn=failed');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/^Google sign-in failed\. Please try again\.$/);
+    expect(follows(keepSignedIn(), alert)).toBe(true);
+    expect(follows(alert, loginButton())).toBe(true);
+    await waitFor(() => expect(url()).toBe('/login?returnTo=%2Fbills'));
+    expect(router.state.historyAction).toBe('REPLACE');
+  });
+
+  it('keeps the message while typing and removes it when the next submit starts', async () => {
+    loginAnswers(async () => {
+      await delay('infinite');
+      return invalidCredentials();
+    });
+    const { user } = await openLogin('/login?googleSignIn=failed');
+
+    await fill(user, 'tanzir@example.com', 'wrong-password');
+    expect(screen.getByRole('alert')).toHaveTextContent('Google sign-in failed. Please try again.');
+
+    await user.click(loginButton());
+    await waitFor(() => expect(loginRequests()).toHaveLength(1));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows only the failed login’s message after the next submit', async () => {
+    loginAnswers(invalidCredentials);
+    const { user } = await openLogin('/login?googleSignIn=failed');
+
+    await fill(user, 'tanzir@example.com', 'wrong-password');
+    await user.click(loginButton());
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/^Email or password is incorrect$/));
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+  });
+
+  it('ignores any other marker value', async () => {
+    const { url } = await openLogin('/login?googleSignIn=other');
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(url()).toBe('/login?googleSignIn=other');
+  });
+});
+
+// Task 012 T21: a signed-in user who opens Login with the marker goes to Overview (AC14, #3).
+describe('signed in, with the failure marker', () => {
+  it('opens Overview and never renders the form', async () => {
+    server.use(me.signedIn(), today.answers());
+    const { url } = renderApp('/login?googleSignIn=failed');
+
+    await waitFor(() => expect(url()).toBe('/overview'));
+    expect(screen.queryByRole('button', { name: 'Login' })).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

@@ -1,0 +1,42 @@
+Task 012 visual check, 2026-10-26. Playwright MCP, Chromium, 1440x1024, fresh signed-out contexts, on the test
+stack (npm run start:e2e -w backend with NODE_ENV=test, npm run dev -w frontend). No Figma calls.
+Pixel diff: Node built-ins only (PNG decode with zlib), script in the session scratchpad, outside the repo.
+
+1. Login and Sign up unchanged (AC15). Same states as the task 009 and 010 renders:
+   Login: Password "password123456", then Email "johndoe@email.com" (focused).
+   Sign up: Password "password123456", then Name "Tanzir Rahman" (focused), Email empty.
+
+   render-101-login-2x.png    vs 009/render-101-login-2x.png      0 differing pixels (2880x2048)
+   render-102-sign-up-2x.png  vs 010/102-sign-up-2x.png           0 differing pixels (2880x2048)
+   render-101-login.png       vs 009/render-101-login.png         21 differing pixels, x 520-527, y 286-432
+   render-102-sign-up.png     vs 010/102-sign-up-1440x1024.png    32 differing pixels, x 520-527, y 274-524
+
+   The 1x differences: anti-aliased pixels on the left corners of the input boxes, at most 1 unit in one color
+   channel (e.g. 122,130,143 against 122,131,143). Not visible, and no element moved: two 1x renders of this
+   build match each other exactly (0 pixels), and the 2x renders match tasks 009 and 010 exactly. Rasterization
+   rounding at 1x, not a change of this task (it changed no style).
+   The comparison of these renders with docs/figma/101. Login.png and 102. Signup.png is therefore the one recorded
+   in 009/visual-differences.txt and 010/visual-differences.txt; no new difference.
+
+2. Login after a failed Google sign-in (state-google-failed.png), undesigned (#81, #97): the FormError of task 009,
+   unchanged, with "Google sign-in failed. Please try again." Measured against the wrong-credentials message in the
+   same page (state-google-failed-then-wrong-credentials.png):
+   - Google message:      x 520, y 510, 400x20, 14px/20px Inter Variable 400, rgb(231, 61, 28)
+   - Wrong credentials:   x 520, y 510, 400x20, 14px/20px Inter Variable 400, rgb(231, 61, 28)
+   - Login button with either message: y 546 (512 without one); Google button y 678. The same 34px move as every
+     server error on Login since task 009; no new token, color, font or spacing.
+   - After the failed login only one alert shows, the login's own.
+
+3. The fake Google page (fake-google-page.png): test infrastructure, not a product screen. Plain HTML form titled
+   "Fake Google", prefilled with "Google Tester", google.tester@example.com, "Email verified" checked; Continue,
+   Cancel, Fail. Evidence only.
+
+Differences listed: the 1x anti-aliasing rounding in item 1. Nothing else.
+
+Re-run after the gate rejection (#104), 2026-10-26: *-rerun.png. render-101-login-2x-rerun.png and
+render-102-sign-up-2x-rerun.png have 0 differing pixels from 009/render-101-login-2x.png and 010/102-sign-up-2x.png;
+the 1x re-renders and state-google-failed-rerun.png have 0 differing pixels from the first renders of this task.
+#104 changed no screen.
+
+Second re-run (login race fix), 2026-10-26: *-rerun2.png. 2x renders 0 differing pixels from tasks 009 and 010;
+1x renders 0 differing pixels from the first renders of this task. No screen changed.

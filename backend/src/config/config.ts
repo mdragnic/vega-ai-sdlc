@@ -2,9 +2,16 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { testClockStateSchema } from '@finebank/shared';
+import { googleSignIn, testClockStateSchema } from '@finebank/shared';
 
 export type NodeEnv = 'development' | 'test' | 'production';
+
+/** The Google OAuth client (#75): its credentials and the redirect URI registered with it. */
+export interface GoogleConfig {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+}
 
 export interface AppConfig {
   nodeEnv: NodeEnv;
@@ -14,12 +21,20 @@ export interface AppConfig {
   testNow: string;
   /** scrypt cost N for new password hashes: the OWASP minimum, lower only with NODE_ENV=test (#95). */
   scryptCost: number;
+  /** Null when GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is unset or empty: Google sign-in then fails safely (#102). */
+  google: GoogleConfig | null;
 }
 
 const nodeEnvs: readonly NodeEnv[] = ['development', 'test', 'production'];
 
 /** Same instant as FIXED_NOW in e2e/constants.ts (a test keeps them equal). */
 const defaultTestNow = '2026-10-22T10:00:00Z';
+
+/** The app's one origin in the browser: the Vite dev server, which proxies /api to the backend (#73). */
+const appOrigin = 'http://localhost:5173';
+
+/** The redirect URI of #75, registered with the Google OAuth client: a constant, not a variable. */
+export const GOOGLE_REDIRECT_URI = `${appOrigin}/api${googleSignIn.callback}`;
 
 const isNodeEnv = (value: string): value is NodeEnv => nodeEnvs.some((nodeEnv) => nodeEnv === value);
 
@@ -54,7 +69,15 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     uploadsDir: join(dataDir, 'uploads'),
     testNow,
     scryptCost: nodeEnv === 'test' ? 2 ** 14 : 2 ** 17,
+    google: readGoogleConfig(env),
   };
+}
+
+function readGoogleConfig(env: NodeJS.ProcessEnv): GoogleConfig | null {
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret, redirectUri: GOOGLE_REDIRECT_URI };
 }
 
 /** Creates the data and uploads folders if missing. */

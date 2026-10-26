@@ -7,6 +7,7 @@ import {
   currentUserSchema,
   emailSchema,
   fullNameSchema,
+  googleSignIn,
   loginRequestSchema,
   newPasswordSchema,
   signUpRequestSchema,
@@ -186,10 +187,25 @@ describe('authContract', () => {
     expect(authContract.logout.response.safeParse({}).success).toBe(false);
   });
 
-  it('exports the two server messages', () => {
+  it('exports the server messages, the Google failure one included (#81)', () => {
     expect(authMessages).toEqual({
       invalidCredentials: 'Email or password is incorrect',
       emailTaken: 'An account with this email already exists',
+      googleFailed: 'Google sign-in failed. Please try again.',
     });
+  });
+});
+
+// Task 012 T17: the Google browser routes and the Login marker of a failed sign-in exist once (#74, #75, #81).
+describe('googleSignIn', () => {
+  it('names the start and callback routes, relative to /api', () => {
+    expect(googleSignIn.start).toBe('/auth/google');
+    expect(googleSignIn.callback).toBe('/auth/google/callback');
+  });
+
+  it('marks a failed sign-in on Login with googleSignIn=failed', () => {
+    expect(new URLSearchParams({ [googleSignIn.failureParam]: googleSignIn.failureValue }).toString()).toBe(
+      'googleSignIn=failed',
+    );
   });
 });

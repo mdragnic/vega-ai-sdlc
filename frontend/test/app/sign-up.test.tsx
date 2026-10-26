@@ -8,12 +8,19 @@ import { useEffect } from 'react';
 import { createMemoryRouter, Outlet, type RouteObject } from 'react-router';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { startGoogleSignIn } from '../../src/api/google';
 import { AppProviders } from '../../src/app/AppProviders';
 import { SignUpPage } from '../../src/app/pages/SignUpPage';
 import { routes } from '../../src/app/routes';
 import { googleUrl } from '../../src/assets/brand';
 import { GuestOnly } from '../../src/routes/GuestOnly';
 import { me, renderApp, today } from '../support/app';
+
+// The page load of Google sign-in, which jsdom cannot do; the e2e tests follow it (task 012).
+vi.mock('../../src/api/google', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/api/google')>()),
+  startGoogleSignIn: vi.fn<(returnTo?: string) => void>(),
+}));
 
 const server = setupServer();
 
@@ -547,19 +554,36 @@ describe('failed requests', () => {
   });
 });
 
-// T8: "terms of service." and "Continue with Google" are visual only (AC8, AC11; #15).
+// T8: "terms of service." is visual only (AC8; #15).
 describe('visual-only items', () => {
-  it.each([
-    ['terms of service.', () => screen.getByText('terms of service.')],
-    ['Continue with Google', () => screen.getByRole('button', { name: 'Continue with Google' })],
-  ])('does nothing on "%s"', async (_name, target) => {
+  it('does nothing on "terms of service."', async () => {
     const { user, url } = await openSignUp();
     const before = requests.length;
 
-    await user.click(target());
+    await user.click(screen.getByText('terms of service.'));
 
     expect(url()).toBe('/sign-up');
     expect(requests.length).toBe(before);
+    expect(screen.queryByText('Name is required')).toBeNull();
+  });
+});
+
+// Task 012 T19: "Continue with Google" starts the sign-in with no return target, so Overview opens; it replaces the
+// Google half of task 010's T8, written for "visual only until task 012" (AC1, AC15; US-02 criterion 9).
+describe('Continue with Google', () => {
+  beforeEach(() => {
+    vi.mocked(startGoogleSignIn).mockClear();
+  });
+
+  it('starts the sign-in without returnTo and sends no request of its own', async () => {
+    const { user, url } = await openSignUp();
+    const before = requests.length;
+
+    await user.click(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    expect(vi.mocked(startGoogleSignIn).mock.calls).toEqual([[]]);
+    expect(requests.length).toBe(before);
+    expect(url()).toBe('/sign-up');
     expect(screen.queryByText('Name is required')).toBeNull();
   });
 });

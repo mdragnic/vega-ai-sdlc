@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 
 import { ApiError, formErrorFor, serverFieldErrors } from '../../api/client';
+import { startGoogleSignIn } from '../../api/google';
 import { useSignUp } from '../../api/session';
 import { googleUrl } from '../../assets/brand';
 import { AuthLayout, ButtonPrimary, ButtonSecondary, FormError, Input, TextDivider } from '../../components';
@@ -16,7 +17,8 @@ const fieldNames = ['fullName', 'email', 'password'] as const;
 /**
  * 102. Sign up (US-02): name, email and password against the task 007 API. The shared schema checks the fields
  * and gives their messages (#15, #74, #95). An email already registered shows its message under Email (#15);
- * other server errors show above the Sign up button (#97 a). The new account opens Overview (#3).
+ * other server errors show above the Sign up button (#97 a). The new account opens Overview (#3). "Continue with
+ * Google" starts Google sign-in with no return target, so Overview opens after it too (#75, US-02 criterion 9).
  */
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -95,9 +97,10 @@ export function SignUpPage() {
       <div className={styles.divider}>
         <TextDivider>or sign up with</TextDivider>
       </div>
-      {/* Visual only until Google sign-in (task 012). */}
       <div className={styles.google}>
-        <ButtonSecondary icon={<img src={googleUrl} alt="" />}>Continue with Google</ButtonSecondary>
+        <ButtonSecondary icon={<img src={googleUrl} alt="" />} onClick={() => startGoogleSignIn()}>
+          Continue with Google
+        </ButtonSecondary>
       </div>
       <p className={styles.signIn}>
         Already have an account?{' '}

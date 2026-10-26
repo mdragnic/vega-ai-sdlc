@@ -1,6 +1,6 @@
 # Task 012: Google sign-in
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 010, 011
 - Size: L
@@ -18,7 +18,7 @@
   - Frontend (tasks 009, 010): `LoginPage.tsx`, `SignUpPage.tsx`, `FormError`, `ButtonSecondary` with the `Google` image, `returnTarget`, `RETURN_TO_PARAM` and `loginPathFor` (`frontend/src/routes/return-to.ts`), `paths` (`frontend/src/routes/paths.ts`), `GuestOnly`.
   - E2E: `e2e/helpers.ts` (`newUser`, `signUp`, `sessionCookie`, `collectErrors`).
   - Dependency: `google-auth-library` 11.3.1, already in `backend/package.json`. No new dependency.
-- Decisions: `docs/decisions.md` #2 (Google in scope, matched by email, Google-only users have no password), #3 (return to the page asked for, else Overview; signed-in users on Login and Sign up go to Overview), #15 (email trimmed and lowercased), #39 (never another user's data), #62 and #67 (name from the Google profile, generated username), #63 (30-day session after Google sign-in), #74 (shared contract, nothing redeclared), #75 (code flow with PKCE, state and verifier in a 10-minute httpOnly cookie, scopes `openid email profile`, `email_verified` required, fake client with `NODE_ENV=test`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `backend/.env`), #78 (new users seeded in the sign-up transaction, no real I/O inside it), #80 (no `X-Time-Zone` on browser navigations; nothing here needs the zone), #81 (cancel and failure), #97 (the message above "Login" and its lifetime), #102 (built against the fake client; unset variables fail safely), #103 (the name of a new Google user: the part of the email before `@` when the profile has no name, cut to 100 characters when longer; Google never changes an existing user's name)
+- Decisions: `docs/decisions.md` #2 (Google in scope, matched by email, Google-only users have no password), #3 (return to the page asked for, else Overview; signed-in users on Login and Sign up go to Overview), #15 (email trimmed and lowercased), #39 (never another user's data), #62 and #67 (name from the Google profile, generated username), #63 (30-day session after Google sign-in), #74 (shared contract, nothing redeclared), #75 (code flow with PKCE, state and verifier in a 10-minute httpOnly cookie, scopes `openid email profile`, `email_verified` required, fake client with `NODE_ENV=test`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `backend/.env`), #78 (new users seeded in the sign-up transaction, no real I/O inside it), #80 (no `X-Time-Zone` on browser navigations; nothing here needs the zone), #81 (cancel and failure), #97 (the message above "Login" and its lifetime), #102 (built against the fake client; unset variables fail safely), #103 (the name of a new Google user: the part of the email before `@` when the profile has no name, cut to 100 characters when longer; Google never changes an existing user's name), #104 (an existing user with a password, matched by Google: their other sessions deleted and the password removed in the same transaction, no message)
 
 ## Scope
 - **Reuse first** (one rule, one place, #74):
@@ -62,7 +62,7 @@
       - no client (#102);
       - the transaction fails, seeding included (#78).
     - Success: the email from `emailSchema` (trimmed, lowercased, #15). The Google calls (code exchange, ID token verification and its key fetch) finish before the transaction opens, never inside it (#78; SQLite has one connection). Then one transaction:
-      - the user with that email (#2), a password user or a Google-only one, whose name, username and password stay as they are; or
+      - the user with that email (#2), a password user or a Google-only one, whose name and username stay as they are. Changed by #104: when that user has a password, the same transaction deletes all of their sessions and sets `password_hash` to NULL, so a password set by someone else stops working; they are Google-only from then on. No message (not designed). A Google-only user's other sessions stay. Login (task 007, `AuthService.login`) closes the race with a login already running: after the scrypt verification, its transaction re-reads `password_hash` and creates the session only if it is exactly the hash just verified, otherwise 401 "Email or password is incorrect" (#104); or
       - a new user from `UsersService.create`: the name below, the email, `passwordHash: null` (#2), the generated username (#62, #67); then `DemoSeeder.seed` (#78). A race that inserts the same email first (`EmailTakenError`) counts as a failure; the next try finds the user.
         - The name (#62, #103), from `newUserName(profile)` in `backend/src/auth/google/new-user-name.ts`, a pure function:
           - the profile's `name`, trimmed;
@@ -98,7 +98,7 @@
 - A real Google OAuth client and a check against it: a later manual test with no code change (#102).
 - The Settings Security tab, where Google-only users have no password section (#2, task 030). The `CurrentUser` response is unchanged.
 - Linking or unlinking Google accounts, storing Google's `sub`, tokens or refresh tokens; the Google profile photo (profile photos are task 029).
-- Changing anything of an existing user from Google (name, username, password).
+- Changing an existing user's name or username from Google. (Their password: removed, #104.)
 - Brute-force protection and rate limits (#14). One Tap, `prompt`, `login_hint`, `hd`.
 - Any visual change to Login or Sign up, and new components. Overview's content (task 013).
 - Logout, the app shell and route protection, used as built (tasks 009, 011).
@@ -112,7 +112,7 @@
    - a session cookie is set that expires 30 days later;
    - Overview opens through a full page load, so nothing cached before shows (#39), and the header shows the new user's name.
    (US-01 criterion 13, US-02 criteria 9 and 12; #2, #15, #39, #62, #63, #67, #75, #78, #103)
-3. Given a user already has the email of my verified Google account (in any case), when I finish the Google sign-in, then I am signed in as that user: no user is added, nothing is seeded again, and their name, username and password are unchanged (also when the Google name differs), so their password still logs in. The session lasts 30 days (#2, #63, #103).
+3. Given a user already has the email of my verified Google account (in any case), when I finish the Google sign-in, then I am signed in as that user: no user is added, nothing is seeded again, and their name and username are unchanged (also when the Google name differs). Changed by #104: when that user has a password, it is removed and all of their other sessions are deleted in the same transaction, with no message, so a password set by someone else (who signed up first with my email) no longer logs in and their session gets 401; a password login already running when this happens starts no session. The name chosen at that earlier sign up stays (accepted, editable in Settings, task 028). The session lasts 30 days (#2, #63, #103, #104).
 4. Given I started from Login with `returnTo=/bills?x=1#y`, when the Google sign-in succeeds, then `/bills?x=1#y` opens. Given `returnTo` is any of these, then Overview opens and no response ever names another host:
    - an absolute URL, or one on the app origin;
    - `//host`, `/\host`;
@@ -153,7 +153,8 @@
 | T1 | unit (backend) | `GET /api/auth/google?returnTo=/bills` with the fake, and with a `GoogleAuthLibraryClient` (fake credentials, nothing fetched) | `302`; `Location` has the AC1 parameters; `Cache-Control: no-store`; cookie attributes as AC1; the decoded cookie's verifier hashes (S256) to `code_challenge`; its `returnTo` is `/bills`; without `returnTo` the cookie has none | 1 |
 | T2 | unit (backend) | Fake round trip for a new verified email (`New.Person@Example.com `), then `me` with the cookie | `302` to `/overview`; session cookie `Max-Age` 30 days; `me` gives the lowercased email, the profile name, the generated username; `password_hash` NULL; `financeRows` for the user: 5 accounts, 3,411 transactions, 14 bills, 84 savings goals, 6 category limits | 2 |
 | T3 | unit (backend) | Username from the Google email: `marko-d@x.com` twice (second with another domain), `jo@x.com` | `markod`, `markod2`, `jo1` (#62, #67) | 2 |
-| T4 | unit (backend) | Sign up with a password, then Google with the same email in capitals and another name | Same user id; user count unchanged; table counts unchanged; name, username and hash unchanged; the password still logs in | 3 |
+| T4 | unit (backend) | Sign up with a password, then Google with the same email in capitals and another name | Same user id; user count unchanged; finance counts unchanged; name and username unchanged; `password_hash` NULL; the sign-up session deleted, only the Google one left (#104) | 3 |
+| T32 | unit (backend) | An attacker signs up with the victim's email and logs in on a second browser; the victim signs in with Google | The attacker's password login gets 401; both attacker sessions get 401 on `me`; the victim's session works; with a `sessions` insert that fails, nothing changes: hash and attacker sessions kept (one transaction); a Google-only user's other session stays on a second Google sign-in (#104) | 3 |
 | T5 | unit (backend) | Callback success for each `returnTo` in AC4, set at the start and, separately, written into a hand-made cookie | `/bills?x=1#y` kept; every unsafe value gives `Location: /overview`; no `Location` with a host | 4 |
 | T6 | unit (backend) | Callback `error=access_denied` with a valid cookie holding `returnTo`; and with no cookie | `302` to `/login?returnTo=…` and to `/login`; no `googleSignIn`; the sign-in cookie cleared; no session cookie; user count unchanged | 5 |
 | T7 | unit (backend) | Each AC6 failure: `error=server_error`; no cookie; garbage cookie; `state` missing and different; no `code`; unknown code; code used twice; wrong verifier in the cookie; `email_verified` false; email missing; a `users` trigger that aborts the insert; a `GoogleClient` stub whose `profile` throws | `302` to `/login?googleSignIn=failed` (with the cookie's `returnTo` when there is one); cookie cleared; no session cookie; users and table counts unchanged | 6 |
@@ -174,7 +175,9 @@
 | T22 | unit (frontend) | Source guard (`auth-source.test.ts`) extended to the #81 text, `googleSignIn`, `/auth/google` and the return-target helpers | No literal outside `@finebank/shared`; `frontend/src/routes/paths.ts` and `return-to.ts` only re-export (plus `loginPathFor`) | 16 |
 | T23 | e2e | Signed out, open `/bills`; Login with its `returnTo`; "Continue with Google"; the fake page with a new email; "Continue" | URL `/bills`; the header shows the profile name; `finebank_session` expires about 30 days later; `GET /api/auth/me` gives the lowercased email; a marker set on `window` before the click is gone (full page load) | 1, 2, 4 |
 | T24 | e2e | From Sign up, "Continue with Google" with a new email | `/overview`; the new user's name in the header | 2 |
-| T25 | e2e | Sign up a password user through `e2e/helpers.ts`, log out, then Google with that email in capitals | Signed in; the header shows the password user's name, not the Google one; logging out and logging in with the password still works | 3 |
+| T34 | unit (backend) | Log in while the password is removed, and separately replaced, between the scrypt verification and the session creation | 401 "Email or password is incorrect"; no Set-Cookie; no new session row (#104) | 3 |
+| T25 | e2e | Sign up a password user through `e2e/helpers.ts`, log out, then Google with that email in capitals | Signed in; the header shows the password user's name, not the Google one; after logging out, the password gets "Email or password is incorrect" (#104) | 3 |
+| T33 | e2e | An attacker signs up with the victim's email in one browser; the victim signs in with Google in another | The victim on Overview; the attacker's open page gets 401 on its next request and Login opens; the attacker's password login shows "Email or password is incorrect" (#104) | 3 |
 | T26 | e2e | "Cancel" on the fake page, from `/login?returnTo=%2Fbills` | `/login?returnTo=%2Fbills`; no alert; `me` 401 | 5 |
 | T27 | e2e | "Fail" on the fake page; "Email verified" unchecked; the callback opened directly in a fresh context | Login with the #81 alert, URL without the marker; reload: no alert; a sign up with the unverified email then succeeds (no user was made) | 6, 7 |
 | T28 | e2e | Signed in, open `/login?googleSignIn=failed` | `/overview`; the form never visible | 14 |
@@ -208,7 +211,7 @@
 - #103 as applied: a new Google user without a profile name (or with only spaces) is named after the part of the email before `@`; a name over 100 characters is cut to its first 100; an existing user's name never changes.
 - The flow in the browser through the fake Google page:
   - new user: Overview, the name, the 30-day session, the demo dataset (Overview content from task 013);
-  - existing user, matched by email, keeps their name and password;
+  - existing user, matched by email, keeps their name; their password is removed and their other sessions end (#104);
   - `returnTo` kept, unsafe values give Overview;
   - cancel: Login with no message;
   - failure: Login with "Google sign-in failed. Please try again."
@@ -263,9 +266,164 @@
 - INDEX: row 012 cites #103 as closed; the open questions line says none.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-10-26, build and gate (`/next-task 012`)
+- Every cited decision closed; status in-progress at 13:34. Built test first (each new test watched failing, then
+  passing), shared, then backend, frontend, e2e.
+- **Shared**: `paths` and `accountDetailsPath` moved to `shared/src/routes/paths.ts`; the return-target rule to
+  `shared/src/routes/return-to.ts`, parsed against a fixed origin (`http://finebank.invalid`). Added
+  `inAppReturnTarget(value)` (the target, or null when unsafe), with `returnTarget` = it or Overview: the backend
+  needs "keep none" at the start and on cancel or failure, not Overview. `authMessages.googleFailed` and
+  `googleSignIn` (`start`, `callback`, `failureParam`, `failureValue`). The frontend files only re-export (plus
+  `loginPathFor`); `frontend/test/routes/paths.test.ts` and `return-to.test.ts` pass unchanged.
+- **Backend** (`backend/src/auth/google/`): `GoogleClient` and `GOOGLE_CLIENT`; `GoogleAuthLibraryClient` (library
+  errors replaced by ours, without a cause); `FakeGoogleClient` and `FakeGoogleController` (registered only with
+  NODE_ENV=test; the page refuses an authorization request that is not this app's; POST answers to the fixed
+  redirect URI; codes once, S256 checked); `GoogleSignInService`, `GoogleAuthController` (302, `no-store`, no body);
+  the sign-in cookie (`sign-in-cookie.ts`, strict schema); `pkce.ts`; `newUserName`;
+  `google-client.providers.ts` (fake in test, real when both variables are set, otherwise null). `readConfig` reads
+  both variables, `GOOGLE_REDIRECT_URI` is built from the app origin and `googleSignIn.callback`; `.env.example`
+  lists both empty. `AuthService.startSession` made public (unchanged otherwise). `createTestApp` takes `overrides`.
+  No migration.
+- **Frontend**: `api/google.ts` (`googleSignInUrl`, `startGoogleSignIn` with `window.location.assign`); Login starts
+  Google with its return target and shows `authMessages.googleFailed` in `FormError` from the marker, which it
+  removes with `replace`, until the next submit starts; Sign up starts Google without returnTo. No visual change.
+- **Replaced tests** (changed requirement, as Scope directs): `login.test.tsx` T14, the Google half of
+  `sign-up.test.tsx` T8, `login.spec.ts` "does nothing on Continue with Google", the Google half of `sign-up.spec.ts`
+  T8/T11 (the "terms of service." half kept).
+- **Undesigned state** (`frontend-design`): the message reuses `FormError` as-is; same box, type and color as the
+  wrong-credentials message (measured), the same 34px move of Login as any server error. No new token.
+- **Validation** (final run after all fixes):
+  1. `npm run lint` exit 0, `npm run typecheck` exit 0. First run failed (rework loop 1): an unused import,
+     helpers in inner scopes, tests asserting only through a helper (`expect-expect`), untyped `vi.fn`, two needless
+     casts. Fixed at the cause: helpers moved out, `redirectOf()` returns the Location so tests use `expect(...)`.
+  2. `npm test`: shared 18 files 544 tests, backend 32 files 462, frontend 42 files 714, all passed.
+  3. `npm run e2e`: 113 passed (2.4m), new spec `google-sign-in.spec.ts` (T23 to T29, plus login CSRF with another
+     browser's unused code).
+  4. Visual (`evidence/012/visual-differences.txt`): 2x renders of Login and Sign up identical to tasks 009 and 010
+     (0 pixels); 1x renders differ by at most 1 color unit on 21 and 32 anti-aliased corner pixels of the input
+     boxes (two 1x renders of this build are identical; no element moved). The failure state and the fake page
+     saved.
+  5. Manual (`evidence/012/manual-checks.txt`): returnTo, sign up, existing email, cancel, fail, unverified, edited
+     state, both cookies' attributes, Back after a sign-in, and `npm run dev` without Google variables (#102: the
+     message, no request to Google, one warning line; test routes 404).
+- **Security review** (`evidence/012/security-review.md`): no finding at or above the bar. Noted below the bar, for
+  the gate: password sign-up never verifies the email (#15), so an account made first with someone's address is the
+  one their later Google sign-in opens (#2), "pre-account hijacking". Left as is: Marko decides it at the gate.
+- **Code review** (requesting-code-review): "With fixes"; no Critical.
+  - Important, fixed: the frontend source guard banned the literal `'failed'`, also a transaction status (#27), so
+    a later task would fail on correct code. Rule removed (the `googleSignIn` rules pin the marker), with a test that
+    `status === 'failed'` passes; the generic `controlCharacter` rule removed too.
+  - Minor, fixed: T7 checks each failure's log line for no email, name or long token; a failed save logs the error's
+    class (`QueryFailedError`), never its message (test red first); names: `started`, `StartedSignIn`,
+    `completeSignIn`, `startUserSession`, the controller's `signInService`.
+  - Minor, not changed: no timeout on the real client's Google calls. Only the real client is affected, which is
+    out of scope (#102); listed for the later manual test with a real client.
+  - Set aside by the reviewer, accepted as built: the 10 minutes rest on the cookie's Max-Age (#75); a returnTo over
+    about 3 KB would not fit the cookie (no app URL is that long); grapheme clusters may be cut (#103 names surrogate
+    pairs); the start is a cross-site GET (#75); a GOOGLE_CLIENT_ID of only spaces counts as set; wrong credentials
+    end on Google's error page (real client, #102); cancel whatever the state (accepted at detailing); the fake's
+    code map grows (tests only).
+- Status `awaiting-human`. No Figma calls.
+
+### 2026-10-26, gate: rejected (`/approve-task 012 reject`)
+Feedback, verbatim:
+
+> Pre-account hijacking: option B. Record #104 as closed (Marko, 2026-10-26): when a Google sign-in matches an
+> existing user who has a password, inside the same transaction delete all of that user's other sessions and set
+> password_hash to NULL, so a password set by someone else stops working; the user is Google-only from then on (#2:
+> the Settings password section is hidden). No message (not designed). Add tests: an attacker signs up with the
+> victim's email, the victim signs in with Google, then the attacker's password login gets 401 and the attacker's
+> session gets 401. Update the AC and the manual check "existing user keeps name and password" (name kept, password
+> removed). Also add to #102: a timeout on the real Google calls is part of the later real-client test. Re-run all
+> validation and the security review, then stop at the gate again.
+
+Status back to in-progress.
+
+### 2026-10-26, rework for #104, gate again
+- **Decisions**: #104 recorded closed in `docs/decisions.md` (Marko, 2026-10-26), the answer in Marko's words. #102
+  extended: "a timeout on the real Google calls (the code exchange and the ID token check) is part of that later
+  real-client test". Note for the gate: #102 still says "a manual test only, no code change", and a timeout needs code.
+- **Task file**: References (#104), Scope (the existing-user bullet, "Changed by #104"), Out of scope (password
+  removed, #104), AC3, T4 and T25 changed, T32 and T33 added, the Human checkpoint line for the existing user.
+  INDEX row 012 cites #104.
+- **Code**: `GoogleSignInService.startUserSession`: for an existing user with a password, in the sign-in
+  transaction, `SessionsService.deleteAllOf` (new) and `UsersService.removePassword` (new), then `startSession` as
+  before. A Google-only user is left as is. No message, no screen change, no migration.
+- **Tests, red first**: T4 rewritten (name and username kept, `password_hash` NULL, only the Google session left);
+  T32 (attacker's password login 401 and both attacker sessions 401; a failing `sessions` insert keeps hash and
+  sessions; a Google-only user's other session stays); e2e T25 (the old password gets "Email or password is
+  incorrect") and T33 (attacker in one browser, victim in another: the attacker's next request opens Login, their
+  password login fails). The e2e two were run against the code without #104 and failed, then passed. Mutation
+  checks: the removal moved before the transaction fails T32's transaction case; dropping the "has a password"
+  condition fails T32's Google-only case.
+- **Validation** (final run):
+  1. `npm run lint` exit 0 after one failure (rework loop 3: the T32 helper in an inner scope, moved out),
+     `npm run typecheck` exit 0.
+  2. `npm test`: shared 18 files 544 tests, backend 32 files 465, frontend 42 files 714, all passed.
+  3. `npm run e2e`: 114 passed (2.5m).
+  4. Visual: re-renders 0 differing pixels from the first renders and, at 2x, from tasks 009 and 010
+     (`visual-differences.txt`, re-run section). No screen changed.
+  5. Manual (`manual-checks.txt`, re-run section): all checks again; the existing password user keeps the name and
+     loses the password; attacker first, two browsers: the attacker's page goes to Login, their password fails, the
+     victim stays signed in. The account keeps the attacker's chosen name and generated username (#103, #104).
+- **Security review re-run** (`evidence/012/security-review.md`, re-run section): no finding at or above the bar.
+  Below the bar, kept by the filter at 7 of 10: a password login already running when the takeover commits still
+  creates a 30-day session (task 007's `login` checks the hash before scrypt and inserts after it, without a
+  re-check), so an attacker logging in back to back can keep access. Not changed (task 007 code, outside the
+  feedback); for Marko at the gate, with the suggested fix.
+- No second code review: the gate feedback limits this rework to #104; the security re-review covered the change.
+- Status `awaiting-human`. No Figma calls.
+
+### 2026-10-26, gate: rejected again (`/approve-task 012 reject`)
+Feedback, verbatim:
+
+> Fix the login race (changes task 007 login, approved): after the scrypt verification (outside the transaction, as
+> now), open the login transaction and re-read the user's password_hash; create the session only if it is exactly
+> the hash that was just verified, otherwise 401 "Email or password is incorrect". No hashing inside the transaction.
+> Add a test that removes the password between the verification and the session creation and expects 401 with no
+> session row. Note it under #104. Also correct #102: the real-client check needs a small code change (the timeout),
+> not "no code change". The attacker-chosen name staying after a takeover is accepted (editable in Settings, task
+> 028). Re-run all validation and the security review, then stop at the gate again.
+
+Status back to in-progress.
+
+### 2026-10-26, rework for the login race, gate again
+- **Code** (`AuthService.login`, task 007, approved by Marko): the scrypt verification stays outside the
+  transaction; the login transaction re-reads the user (`findOneBy`) and starts the session only if `passwordHash`
+  is exactly the hash just verified, otherwise the usual 401 "Email or password is incorrect". No hashing inside
+  the transaction. `User` is now a value import there.
+- **Test, red first**: T34 in `backend/test/auth-login.test.ts`: the password removed, and separately replaced,
+  after the real verification resolves and before the session is created: 401, the message, no Set-Cookie, no new
+  session row. Failed with 200 before the change, passes after.
+- **Decisions**: #104 notes the login re-check and Marko's acceptance of the name kept after a takeover (editable in
+  Settings, task 028). #102 corrected: the real-client check is a manual test plus a small code change, the timeout.
+- **Task file**: Scope (the #104 bullet names the login re-check), AC3 (a login already running starts no session;
+  the name kept), T34 added.
+- **Validation** (final run): 1. `npm run lint` exit 0, `npm run typecheck` exit 0. 2. `npm test`: shared 18 files
+  544, backend 32 files 467, frontend 42 files 714, all passed. 3. `npm run e2e`: 114 passed (2.4m). 4. Visual:
+  `*-rerun2.png`, 0 differing pixels (2x against tasks 009 and 010, 1x against this task's first renders). 5.
+  Manual (`manual-checks.txt`, second re-run): a plain password login still opens Overview; the Google flows, the
+  attacker case and `npm run dev` without Google variables as before; the race itself is covered by T34.
+- **Security review, second re-run** (`evidence/012/security-review.md`): no finding; nothing reached 7 of 10. The
+  re-check closes the race (better-sqlite3 runs the whole login transaction within one turn; no request or Google
+  transaction runs in between) and leaks nothing new. Below the bar, for the gate: another site can send a
+  signed-in victim through `GET /api/auth/google`; if Google completes without asking, #104 makes the victim's own
+  password account Google-only and ends their other sessions. No one else gains access.
+- Status `awaiting-human`. No Figma calls.
+
+### 2026-10-26, gate
+- Approved by human (`/approve-task 012 approve`). Marko's instruction before the commit, applied: #104 gets a
+  "Known limitation" note: another site can start "Continue with Google" for a user already signed in to Google;
+  #104 then makes their account Google-only and ends their other sessions; nobody gains access. Fix later by making
+  the start route a POST form (CSRF-protected).
+- Status `done`.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-26 13:34
+- Finished: 2026-10-26 15:41
+- Human interventions: 4 (the turn ended after the security review's report; Marko asked to continue to the gate;
+  gate rejected for #104; gate rejected for the login race; approval at the gate)
+- Rework loops: 4 (validation step 1: lint; gate rejection: #104; validation step 1 again: lint; gate rejection:
+  the login race)
+- Notes on prompts that failed: the `security-review` skill asks for a final reply of only its report, which ended the
+  turn in the middle of `/next-task`. Save the report to the evidence folder and continue in the same turn.

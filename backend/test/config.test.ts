@@ -35,6 +35,33 @@ describe('readConfig', () => {
   });
 });
 
+// Task 012 T9: the Google OAuth client from GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or none (#75, #102).
+describe('readConfig google', () => {
+  const both = { GOOGLE_CLIENT_ID: 'client-id.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'client-secret' };
+
+  it('reads both variables, with the #75 redirect URI', () => {
+    expect(readConfig({ NODE_ENV: 'development', ...both }).google).toEqual({
+      clientId: 'client-id.apps.googleusercontent.com',
+      clientSecret: 'client-secret',
+      redirectUri: 'http://localhost:5173/api/auth/google/callback',
+    });
+  });
+
+  it.each([
+    ['the ID empty', { ...both, GOOGLE_CLIENT_ID: '' }],
+    ['the secret empty', { ...both, GOOGLE_CLIENT_SECRET: '' }],
+    ['the ID unset', { GOOGLE_CLIENT_SECRET: both.GOOGLE_CLIENT_SECRET }],
+    ['the secret unset', { GOOGLE_CLIENT_ID: both.GOOGLE_CLIENT_ID }],
+    ['neither', {}],
+  ])('has no Google client with %s', (_case, env) => {
+    expect(readConfig({ NODE_ENV: 'development', ...env }).google).toBeNull();
+  });
+
+  it('reads them with NODE_ENV=test too; the app then uses the fake regardless (auth-google.test.ts)', () => {
+    expect(readConfig({ NODE_ENV: 'test', ...both }).google).not.toBeNull();
+  });
+});
+
 // AC13: the data folder is gitignored (base .gitignore kept) and .env.example lists every variable read.
 describe('repo files for the backend', () => {
   const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -58,7 +85,7 @@ describe('repo files for the backend', () => {
       ),
     );
 
-    expect([...read].toSorted()).toEqual(['NODE_ENV', 'TEST_NOW']);
+    expect([...read].toSorted()).toEqual(['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'NODE_ENV', 'TEST_NOW']);
     expect([...read].filter((name) => !listed.has(name))).toEqual([]);
   });
 });

@@ -55,6 +55,7 @@ describe('login texts', () => {
       'Password must be at most 128 characters',
       'Email or password is incorrect',
       'An account with this email already exists',
+      'Google sign-in failed. Please try again.',
     ]);
   });
 
@@ -93,5 +94,72 @@ describe('sign up texts', () => {
 
   it('never writes one of them in frontend/src', () => {
     expect(writtenInSource(texts)).toEqual([]);
+  });
+});
+
+/** The source of `file` without its comments, which may name the rules they point to. */
+function codeOf(file: string): string {
+  return readFileSync(file, 'utf8')
+    .replaceAll(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('//'))
+    .join('\n')
+    .trim();
+}
+
+/** The places in frontend/src whose code matches one of `patterns`, as `file: pattern`. */
+function matchedInCode(patterns: RegExp[]): string[] {
+  return sourceFiles(srcDir).flatMap((file) => {
+    const code = codeOf(file);
+    return patterns.filter((pattern) => pattern.test(code)).map((pattern) => `${relative(srcDir, file)}: ${pattern}`);
+  });
+}
+
+// Task 012 T22: the route paths, the return-target rule, the Google routes, the marker and the failure message exist
+// once, in @finebank/shared; the frontend imports them (AC16, #74).
+describe('Google sign-in and return target sources', () => {
+  const routesDir = join(srcDir, 'routes');
+
+  it('re-exports the route paths from @finebank/shared', () => {
+    expect(codeOf(join(routesDir, 'paths.ts'))).toBe("export { accountDetailsPath, paths } from '@finebank/shared';");
+  });
+
+  it('re-exports the return-target rule and declares only loginPathFor', () => {
+    const code = codeOf(join(routesDir, 'return-to.ts'));
+
+    expect(code).toContain("export { RETURN_TO_PARAM, returnTarget } from '@finebank/shared';");
+    expect([...code.matchAll(/\b(?:function|const|let|var)\s+(\w+)/g)].map((match) => match[1])).toEqual([
+      'loginPathFor',
+    ]);
+  });
+
+  // A route path, the returnTo or googleSignIn parameter, the marker, a Google route, a return-target helper. Not a
+  // bare 'failed': it is also a transaction status (#27).
+  const ownRules = [
+    /(['"`])\/(login|sign-up|forgot-password|overview|balances|transactions|bills|expenses|goals|settings)\b/,
+    /(['"`])returnTo\1/,
+    /(['"`])googleSignIn\1/,
+    /googleSignIn=/,
+    /\/auth\/google/,
+    /\b(isSafeRelativePath|decodeOrNull|isAuthPath)\b/,
+  ];
+
+  it('writes no path, marker, Google route or rule helper of its own', () => {
+    expect(matchedInCode(ownRules)).toEqual([]);
+  });
+
+  it.each([
+    "const login = '/login';",
+    'const marker = `googleSignIn=failed`;',
+    "params.get('googleSignIn') === 'failed'",
+    "fetch('/api/auth/google')",
+    "new URLSearchParams({ 'returnTo': target })",
+    'function isSafeRelativePath(value) {}',
+  ])('flags %s', (code) => {
+    expect(ownRules.some((pattern) => pattern.test(code))).toBe(true);
+  });
+
+  it("allows a transaction status 'failed'", () => {
+    expect(ownRules.some((pattern) => pattern.test("status === 'failed'"))).toBe(false);
   });
 });

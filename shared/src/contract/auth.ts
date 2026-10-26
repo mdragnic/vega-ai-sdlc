@@ -58,10 +58,24 @@ export const loginRequestSchema = z.object({
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
-/** The texts the server sends, which the Login and Sign up screens show (#14, #15). */
+/** The texts the server sends, which the Login and Sign up screens show (#14, #15, #81). */
 export const authMessages = {
   invalidCredentials: 'Email or password is incorrect',
   emailTaken: 'An account with this email already exists',
+  googleFailed: 'Google sign-in failed. Please try again.',
+} as const;
+
+/**
+ * Google sign-in (#75): the two browser routes, relative to `/api` like contract entries, and the Login marker of a
+ * failed sign-in (#81). The routes are page navigations that answer with redirects, not JSON endpoints, so they are
+ * not contract entries. `start` takes the `returnTo` query parameter (#3).
+ */
+export const googleSignIn = {
+  start: '/auth/google',
+  callback: '/auth/google/callback',
+  /** Login opened with `googleSignIn=failed` shows `authMessages.googleFailed` (#81). */
+  failureParam: 'googleSignIn',
+  failureValue: 'failed',
 } as const;
 
 /**

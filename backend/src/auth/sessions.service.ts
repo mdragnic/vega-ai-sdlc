@@ -39,6 +39,11 @@ export class SessionsService {
   async delete(manager: EntityManager, token: string): Promise<void> {
     await manager.delete(Session, { tokenHash: hashToken(token) });
   }
+
+  /** Ends every session of the user, through the caller's transaction. */
+  async deleteAllOf(manager: EntityManager, userId: number): Promise<void> {
+    await manager.delete(Session, { userId });
+  }
 }
 
 const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');

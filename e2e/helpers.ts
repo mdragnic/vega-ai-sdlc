@@ -100,3 +100,26 @@ export async function expectNoRingOnMouseFocus(page: Page, link: Locator) {
   await page.mouse.move(5, 5);
   await page.mouse.up();
 }
+
+/** The fields of the fake Google page (task 012); each one as entered there, the prefilled value when not given. */
+export interface GoogleProfile {
+  name?: string;
+  email?: string;
+  emailVerified?: boolean;
+}
+
+/**
+ * On the fake Google page, which "Continue with Google" opens with NODE_ENV=test (#75): changes its prefilled
+ * profile by `profile` and presses `button`.
+ */
+export async function googleSignIn(
+  page: Page,
+  profile: GoogleProfile = {},
+  button: 'Continue' | 'Cancel' | 'Fail' = 'Continue',
+): Promise<void> {
+  await expect(page).toHaveTitle('Fake Google');
+  if (profile.name !== undefined) await page.getByLabel('Name').fill(profile.name);
+  if (profile.email !== undefined) await page.getByLabel('Email', { exact: true }).fill(profile.email);
+  if (profile.emailVerified !== undefined) await page.getByLabel('Email verified').setChecked(profile.emailVerified);
+  await page.getByRole('button', { name: button }).click();
+}

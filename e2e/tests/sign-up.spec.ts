@@ -164,15 +164,15 @@ test('keeps keyboard focus on Sign up while the request runs', async ({ page, re
   expect(signUps).toBe(1);
 });
 
-// T8 and T11 in the browser: "terms of service." and "Continue with Google" are visual only (AC8, AC11).
-test('does nothing on "terms of service." and "Continue with Google"', async ({ page }) => {
+// T8 in the browser: "terms of service." is visual only (AC8). "Continue with Google" (T11 here until task 012):
+// e2e/tests/google-sign-in.spec.ts.
+test('does nothing on "terms of service."', async ({ page }) => {
   await page.goto('/sign-up');
   await expect(signUpButton(page)).toBeVisible();
   const requests: string[] = [];
   page.on('request', (sent) => requests.push(sent.url()));
 
   await page.getByText('terms of service.').click();
-  await page.getByRole('button', { name: 'Continue with Google' }).click();
 
   await expect(page).toHaveURL(`${FRONTEND_URL}/sign-up`);
   expect(requests).toEqual([]);

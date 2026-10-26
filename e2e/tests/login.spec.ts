@@ -330,16 +330,4 @@ test('follows "Forgot Password?" and "Create an account" without a page load', a
   await expect(page).toHaveURL(`${FRONTEND_URL}/sign-up`);
   expect(await sameDocument()).toBe(true);
 });
-
-// T14 in the browser: "Continue with Google" is visual only (AC17).
-test('does nothing on "Continue with Google"', async ({ page }) => {
-  await page.goto('/login');
-  await expect(loginButton(page)).toBeVisible();
-  const requests: string[] = [];
-  page.on('request', (sent) => requests.push(sent.url()));
-
-  await page.getByRole('button', { name: 'Continue with Google' }).click();
-
-  await expect(page).toHaveURL(`${FRONTEND_URL}/login`);
-  expect(requests).toEqual([]);
-});
+// "Continue with Google" (T14 here until task 012): e2e/tests/google-sign-in.spec.ts.

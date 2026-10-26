@@ -138,4 +138,28 @@ describe('POST /api/auth/login', () => {
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ message: 'Email or password is incorrect' });
   });
+
+  // Task 012 T34 (#104): a Google sign-in can remove the password while a login's verification runs. The login then
+  // starts no session, so a password set by someone else gives no way back in.
+  it.each([
+    ['removed', async () => null],
+    ['replaced', async () => app.get(PasswordHasher).hash('another-pass1')],
+  ])('gives 401 and starts no session when the password is %s during the verification', async (_case, nextHash) => {
+    const hasher = app.get(PasswordHasher);
+    const verify = hasher.verify.bind(hasher);
+    const replacement = await nextHash();
+    vi.spyOn(hasher, 'verify').mockImplementation(async (...args: Parameters<PasswordHasher['verify']>) => {
+      const valid = await verify(...args);
+      await db.query('UPDATE users SET password_hash = ? WHERE email = ?', [replacement, email]);
+      return valid;
+    });
+    const before = await sessions();
+
+    const response = await login(app, { email, password });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: 'Email or password is incorrect' });
+    expect(setCookies(response)).toEqual([]);
+    expect(await sessions()).toEqual(before);
+  });
 });

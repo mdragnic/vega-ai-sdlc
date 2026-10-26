@@ -52,6 +52,11 @@ export class UsersService {
     }
   }
 
+  /** Makes the user Google-only (#2, #104), through the caller's transaction. */
+  async removePassword(manager: EntityManager, id: number): Promise<void> {
+    await manager.update(User, { id }, { passwordHash: null });
+  }
+
   findByEmail(email: string): Promise<User | null> {
     return this.dataSource.getRepository(User).findOneBy({ email });
   }

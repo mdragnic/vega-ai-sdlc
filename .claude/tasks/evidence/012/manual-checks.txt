@@ -1,0 +1,63 @@
+Task 012 manual checks, 2026-10-26, Playwright MCP (Chromium, 1440x1024, a fresh browser context per check).
+No Figma calls.
+
+On the test stack (npm run start:e2e -w backend, NODE_ENV=test; npm run dev -w frontend), through the fake page:
+- Login /login?returnTo=%2Fbills > "Continue with Google": the fake page. During the flow finebank_google_signin
+  is set: Path /api/auth/google, HttpOnly, SameSite Lax, not Secure, expires in 10 minutes.
+  Name "Manual Google", email "Manual.<n>@Example.com" > Continue: /bills, the name in the sidebar
+  (manual-return-to-bills.png). finebank_session: Path /api, HttpOnly, SameSite Lax, expires in 43200 minutes
+  (30 days). finebank_google_signin gone. GET /api/auth/me: {"fullName":"Manual Google",
+  "email":"manual.<n>@example.com","username":"manual.<n>"} (email lowercased).
+- Back after the sign-in: the fake Google page again (its GET, no-store), as Back would show Google's page
+  (manual-back-after-sign-in.png). Pressing Continue there: the callback fails (its sign-in cookie was cleared),
+  the session stays the same user, and GuestOnly sends Login to /overview; the Login form never shows.
+- Sign up > "Continue with Google", "Sam Manual", a new email: /overview, "Hello Sam" in the header
+  (manual-sign-up-overview.png).
+- An existing email ("MANUAL.<n>@EXAMPLE.COM", name "Someone Else"): /overview, signed in as "Manual Google"
+  with the same email and username; the name did not change. (First run, before #104; see the re-run below.)
+- Cancel from /login?returnTo=%2Fbills: /login?returnTo=%2Fbills, no alert, me 401, no sign-in cookie
+  (manual-cancel.png).
+- Fail from /login?returnTo=%2Fbills: /login?returnTo=%2Fbills (marker removed), "Google sign-in failed. Please
+  try again.", me 401, no sign-in cookie.
+- "Email verified" unchecked: /login with the message, me 401; a sign up with that email afterwards: 201 (no user
+  had been made).
+- The state edited on the fake page before Continue: /login with the message, me 401, no sign-in cookie.
+
+On npm run dev without Google variables (no backend/.env; no GOOGLE_* in the environment), NODE_ENV development:
+- /login?returnTo=%2Fbills > "Continue with Google": one GET /api/auth/google?returnTo=%2Fbills, then
+  /login?returnTo=%2Fbills with "Google sign-in failed. Please try again." (manual-dev-no-google-client.png).
+  Every request went to localhost:5173; none to a Google host. No finebank_google_signin cookie.
+- Backend log: "WARN [GoogleSignInService] Google sign-in failed: no Google client is configured" (one line).
+- /api/test/google/authorize and /api/test/clock: 404.
+
+Re-run after the gate rejection (#104), 2026-10-26, same setup, a fresh context per check:
+- returnTo=/bills: /bills; finebank_google_signin Path /api/auth/google, HttpOnly, SameSite Lax, not Secure, 10
+  minutes; finebank_session Path /api, HttpOnly, SameSite Lax, 43200 minutes (30 days); sign-in cookie gone; me with
+  the lowercased email. Back, then Continue on the fake page again: /overview, still the same user.
+- Sign up > Google with a new email: /overview, "Hello Sam", me {"fullName":"Sam Manual",...}.
+- Existing password user (#104): signed up through the API as "Pat Password" with a password; Google with the email
+  in capitals and the name "Someone Else": /overview, me {"fullName":"Pat Password", same email and username} (name
+  kept). Logout, then Login with the email and the old password: "Email or password is incorrect" (password removed).
+- Attacker first (#104, manual-attacker-password-removed.png): browser A signs up through the Sign up screen with
+  victim.<n>@example.com and its own password, Overview "Hello Attacker". Browser B: Google with that email,
+  /overview. me in browser A: 401. Browser A clicks Bills: /login?returnTo=%2Fbills. Browser A logs in with the
+  email and its password: "Email or password is incorrect". Browser B still signed in. The account keeps the name
+  "Attacker Person" and username set at the attacker's sign up (#103, #104 keep name and username).
+- Cancel, Fail, unverified email, edited state: as in the first run (Login, message only for the failures, me 401,
+  no sign-in cookie).
+- npm run dev without Google variables: as in the first run (one GET /api/auth/google?returnTo=%2Fbills, Login with
+  the message, every request to localhost:5173, no sign-in cookie, the fake page 404, one warning line
+  "Google sign-in failed: no Google client is configured").
+
+Second re-run after the gate rejection (login race), 2026-10-26, same setup:
+- A password user signed up through the API, logged out, then logged in on the Login screen: /overview (the new
+  in-transaction re-check passes when the password did not change).
+- returnTo=/bills, both cookies, Back then Continue, Sign up through Google, cancel, fail, unverified email, edited
+  state: as in the first re-run.
+- Attacker first, two browsers: the account keeps "Attacker Person" (accepted by Marko, editable in Settings, task
+  028); browser A gets 401, its next page move opens /login?returnTo=%2Fbills, its password gives "Email or password
+  is incorrect".
+- The race itself (a login whose password is removed during the scrypt verification) is not reproducible by hand;
+  it is covered by the backend test T34 (auth-login.test.ts).
+- npm run dev without Google variables: as before (Login with the message, requests only to localhost:5173, no
+  sign-in cookie, the fake page 404, one warning line).

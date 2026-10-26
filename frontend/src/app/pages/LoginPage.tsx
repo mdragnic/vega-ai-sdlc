@@ -1,9 +1,11 @@
-import { loginRequestSchema, type LoginRequest } from '@finebank/shared';
+import { authMessages, googleSignIn, loginRequestSchema, type LoginRequest } from '@finebank/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { formErrorFor, serverFieldErrors } from '../../api/client';
+import { startGoogleSignIn } from '../../api/google';
 import { useLogin } from '../../api/session';
 import { googleUrl } from '../../assets/brand';
 import { AuthLayout, ButtonPrimary, ButtonSecondary, FormError, Input, RemindMe, TextDivider } from '../../components';
@@ -17,12 +19,31 @@ const fieldNames = ['email', 'password'] as const;
 /**
  * 101. Login (US-01): email and password against the task 007 API. The shared schema checks the fields and
  * gives their messages (#14, #74, #95). Wrong credentials and server errors show above the Login button (#97 a).
- * After login the return target opens, or Overview (#3).
+ * After login the return target opens, or Overview (#3). "Continue with Google" starts Google sign-in with the
+ * same return target (#75); a failed one comes back here with a marker, and its message shows above the Login
+ * button too (#81).
  */
 export function LoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const login = useLogin();
+  const [googleFailed, setGoogleFailed] = useState(
+    () => searchParams.get(googleSignIn.failureParam) === googleSignIn.failureValue,
+  );
+
+  // The marker goes from the URL at once, so a reload or Back does not show the message again; returnTo stays.
+  useEffect(() => {
+    if (!googleFailed) return;
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params);
+        next.delete(googleSignIn.failureParam);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [googleFailed, setSearchParams]);
+
   const {
     control,
     formState: { errors },
@@ -45,7 +66,15 @@ export function LoginPage() {
     });
   });
 
-  const formError = login.isError ? formErrorFor(login.error, fieldNames) : undefined;
+  // Above the Login button: the last attempt's message, or else a failed Google sign-in's (#81, #97 a).
+  const googleError = googleFailed ? authMessages.googleFailed : undefined;
+  const formError = login.isError ? formErrorFor(login.error, fieldNames) : googleError;
+
+  const continueWithGoogle = () => {
+    const returnTo = searchParams.get(RETURN_TO_PARAM);
+    if (returnTo === null) startGoogleSignIn();
+    else startGoogleSignIn(returnTarget(returnTo));
+  };
 
   return (
     <AuthLayout className={styles.column}>
@@ -55,8 +84,9 @@ export function LoginPage() {
         onSubmit={(event) => {
           event.preventDefault();
           if (login.isPending || login.isSuccess) return;
-          // The message of the last attempt stays until the next submit starts.
+          // The message of the last attempt, or of a failed Google sign-in, stays until the next submit starts.
           login.reset();
+          setGoogleFailed(false);
           void submit(event);
         }}
       >
@@ -96,9 +126,10 @@ export function LoginPage() {
       <div className={styles.divider}>
         <TextDivider>or sign in with</TextDivider>
       </div>
-      {/* Visual only until Google sign-in (task 012). */}
       <div className={styles.google}>
-        <ButtonSecondary icon={<img src={googleUrl} alt="" />}>Continue with Google</ButtonSecondary>
+        <ButtonSecondary icon={<img src={googleUrl} alt="" />} onClick={continueWithGoogle}>
+          Continue with Google
+        </ButtonSecondary>
       </div>
       <Link className={styles.createAccount} to={paths.signUp}>
         Create an account
