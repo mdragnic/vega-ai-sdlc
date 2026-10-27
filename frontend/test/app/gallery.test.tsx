@@ -332,6 +332,44 @@ describe('component gallery', () => {
     expect(figure('UpcomingBillSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(10);
   });
 
+  // Task 016: the Recent Transaction card, its row and its skeleton.
+  it('shows the Recent Transaction samples: the tabs, the states, a long row and the skeleton', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    const demo = figure('RecentTransaction', 'The demo transactions (104)');
+    const demoRows = () => within(within(demo).getByRole('tabpanel')).getAllByRole('listitem');
+    expect(await within(demo).findByRole('list')).toBeInTheDocument();
+    expect(demoRows().map((row) => row.textContent)).toEqual([
+      'JeansDenim House-$266.0022 Oct, 2026',
+      'Movie ticketInox-$17.6421 Oct, 2026',
+      'PizzaPizza Hit-$24.6420 Oct, 2026',
+      'Taxi fareUber-$10.6419 Oct, 2026',
+      'Restaurant billSpice Garden-$147.8418 Oct, 2026',
+    ]);
+    await user.click(within(demo).getByRole('tab', { name: 'Revenue' }));
+    expect(demoRows()[0]).toHaveTextContent('Freelance paymentBright Studio+$179.2017 Oct, 2026');
+
+    const fewer = figure('RecentTransaction', 'Fewer than 5: 3, 1 and none');
+    expect(await within(fewer).findAllByRole('listitem')).toHaveLength(3);
+    expect(
+      await within(figure('RecentTransaction', 'Every list empty')).findByText('No transactions yet'),
+    ).toBeVisible();
+    expect(figure('RecentTransaction', 'Loading').querySelector('[role="tabpanel"] [aria-busy="true"]')).not.toBeNull();
+    const error = figure('RecentTransaction', 'Error');
+    expect(await within(error).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(within(error).getByRole('tablist', { name: 'Recent Transaction' })).toBeInTheDocument();
+
+    const itemRow = (name: string) => within(figure('RecentTransactionItem', name)).getByRole('listitem');
+    expect(itemRow('Expense (104)')).toHaveTextContent('JeansDenim House-$266.0022 Oct, 2026');
+    expect(within(itemRow('Income: the wallet')).getByRole('img')).toHaveAccessibleName('Income');
+    expect(itemRow('A long item, shop and amount: the right column moves under (#111 a)')).toHaveTextContent(
+      '-$1,000,000,000.00',
+    );
+    // Five rows: a tile block, two lines on the left and two on the right.
+    expect(figure('RecentTransactionSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(25);
+  });
+
   it('links the popup sections to /dev/popup', async () => {
     await renderGallery();
 

@@ -33,6 +33,15 @@ describe('time in backend/src', () => {
     expect(files).toEqual(expect.arrayContaining(['bills/bills.service.ts', 'bills/bills.controller.ts']));
   });
 
+  // Task 016 T6: the recent transactions read today from the Clock only, through VisibleTransactions.
+  it('scans the transactions module', () => {
+    const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+
+    expect(files).toEqual(
+      expect.arrayContaining(['transactions/transactions.service.ts', 'transactions/transactions.controller.ts']),
+    );
+  });
+
   it('never reads the system time outside the clock files', () => {
     const offenders = sourceFiles(srcDir)
       .map((file) => relative(srcDir, file).replaceAll('\\', '/'))

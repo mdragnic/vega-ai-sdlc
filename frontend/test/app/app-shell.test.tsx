@@ -58,7 +58,7 @@ function withContent(table: RouteObject[], path: string, element: RouteObject['e
 /** The app with a probe of the query client inside the Bills page, and data of the session in the cache. */
 async function openBillsWithData() {
   const view = renderApp('/bills', withContent(routes, '/bills', <ClientProbe />));
-  expect(await screen.findByText('22 Oct, 2026')).toBeInTheDocument();
+  expect(await within(await screen.findByRole('banner')).findByText('22 Oct, 2026')).toBeInTheDocument();
   act(() => {
     appClient!.setQueryData(['balance'], { cents: 2505600 });
   });
@@ -115,7 +115,10 @@ describe('the shell on each app path', () => {
     server.use(me.signedIn(), today.answers());
     const { container, url } = renderApp(path);
 
-    expect(await screen.findByText('22 Oct, 2026')).toHaveAttribute('datetime', TODAY);
+    expect(await within(await screen.findByRole('banner')).findByText('22 Oct, 2026')).toHaveAttribute(
+      'datetime',
+      TODAY,
+    );
     expect(within(sidebar().parentElement!).getByText('Tanzir Rahman')).toBeInTheDocument();
     const avatar = screen.getByRole('img', { name: 'Tanzir Rahman' });
     expect(avatar).toHaveTextContent('TR');
@@ -152,7 +155,7 @@ describe('moving between pages', () => {
   it('opens each section from the sidebar, then the Account tab from "View profile", in one shell', async () => {
     server.use(me.signedIn(), today.answers());
     const { user, url } = renderApp('/overview');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
     const shell = sidebar();
 
     for (const [name, path] of [
@@ -201,7 +204,7 @@ describe('the header date while it loads or fails', () => {
     expect(chevron!.nextElementSibling).toBe(bell);
 
     answer();
-    const date = await screen.findByText('22 Oct, 2026');
+    const date = await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     expect(chevron!.nextElementSibling).toBe(date);
     expect(date.nextElementSibling).toBe(bell);
@@ -234,7 +237,7 @@ describe('the header date while it loads or fails', () => {
   it('keeps a date already shown when a later request fails', async () => {
     server.use(me.signedIn(), today.answers());
     renderApp('/overview');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     vi.useFakeTimers({ shouldAdvanceTime: true });
     server.use(
@@ -245,7 +248,7 @@ describe('the header date while it loads or fails', () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(todayRequests()).toBe(4);
-    expect(screen.getByText('22 Oct, 2026')).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText('22 Oct, 2026')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
@@ -255,38 +258,38 @@ describe('the header date after midnight', () => {
   it('shows the new date when the window gets focus back', async () => {
     server.use(me.signedIn(), today.answers('2026-10-22'));
     renderApp('/overview');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     server.use(today.answers('2026-10-23'));
     refocusWindow();
 
-    expect(await screen.findByText('23 Oct, 2026')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('banner')).findByText('23 Oct, 2026')).toBeInTheDocument();
   });
 
   it('shows the new date when another app page opens', async () => {
     server.use(me.signedIn(), today.answers('2026-10-22'));
     const { user } = renderApp('/overview');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     server.use(today.answers('2026-10-23'));
     const todayRequests = countRequests(todayPath);
     await user.click(sidebarLink('Balances'));
 
-    expect(await screen.findByText('23 Oct, 2026')).toBeInTheDocument();
+    expect(await within(await screen.findByRole('banner')).findByText('23 Oct, 2026')).toBeInTheDocument();
     expect(todayRequests()).toBe(1);
   });
 
   it('does not ask again while time passes with no focus or move', async () => {
     server.use(me.signedIn(), today.answers('2026-10-22'));
     renderApp('/overview');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
     const todayRequests = countRequests(todayPath);
 
     vi.useFakeTimers({ shouldAdvanceTime: true });
     await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000);
 
     expect(todayRequests()).toBe(0);
-    expect(screen.getByText('22 Oct, 2026')).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText('22 Oct, 2026')).toBeInTheDocument();
   });
 });
 
@@ -346,7 +349,7 @@ describe('Logout', () => {
         : route,
     ) as RouteObject[];
     const { user, url } = renderApp('/goals', slowLogin);
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     await user.click(logoutButton());
     // The shell is gone and the logout forgotten while Login still loads.
@@ -367,7 +370,7 @@ describe('Logout', () => {
       http.post('*/api/auth/logout', () => HttpResponse.error()),
     );
     const { user, url } = renderApp('/bills');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
     act(() => onlineManager.setOnline(false));
 
     await user.click(logoutButton());
@@ -397,7 +400,7 @@ describe('Logout', () => {
     );
     const logoutRequests = countRequests(logoutPath);
     const { user, url } = renderApp('/bills');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
     const button = logoutButton();
     const idleClass = button.className;
 
@@ -494,7 +497,7 @@ describe('/settings', () => {
 
     await waitFor(() => expect(url()).toBe('/settings/account'));
     expect(router.state.historyAction).toBe('REPLACE');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
     expect(currentLinks()).toEqual(['Settings']);
   });
 
@@ -525,10 +528,10 @@ describe('rendering', () => {
     const consoleError = vi.spyOn(console, 'error');
     server.use(me.signedIn(), today.answers());
     const { user } = renderApp('/overview');
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     await user.click(sidebarLink('Goals'));
-    await screen.findByText('22 Oct, 2026');
+    await within(await screen.findByRole('banner')).findByText('22 Oct, 2026');
 
     expect(consoleError).not.toHaveBeenCalled();
   });

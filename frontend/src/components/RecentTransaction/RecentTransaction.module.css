@@ -1,0 +1,62 @@
+/* The tabs at the top of the card's content, the panel filling the rest: the card's height comes from the grid
+   (#105 a) or from the tallest tab's rows. */
+.content {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+/* 104: the rows from 12 under the tabs. */
+.panel {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  margin-top: var(--space-recent-transaction-list-gap);
+}
+
+/* Keyboard focus (#87, #112): none after a click in the panel. */
+.panel:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* The three tabs' lists in one grid cell: the cell takes the tallest one's height (#107, #112 a). */
+.lists {
+  display: grid;
+  flex-grow: 1;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tabList {
+  display: flex;
+  flex-direction: column;
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+/* The rows at the top, also in a card the grid has made taller. */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Not designed (#6): a tab's own empty list, in DataState's empty-message style, centered in the panel. */
+.message {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Gray/01 rather than Gray/02, so 14px text keeps a 4.5:1 contrast on white (as DataState). */
+.emptyText {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+}

@@ -1,6 +1,6 @@
 # Task 016: Overview: Recent Transaction
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 004, 013
 - Size: M
@@ -153,9 +153,121 @@ Choices marked "(#112)" follow #112 (closed, Marko, 2026-10-27: (a) as proposed,
 - INDEX: open questions none; row 016 cites the one-cell tabs and the panel Tab stop.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-10-27, build (`/next-task 016`)
+- Decisions checked before the start: all 112 closed.
+- Built test first (TDD). Each unit and API test was watched failing for the right reason before the code: missing exports, 404s, a missing module, a missing component.
+  - **Shared** (`shared/src/contract/transaction.ts`):
+    - `recentTransactionSchema`: UTC `z.iso.datetime()`; `moneySchema` refined to 0 or more cents; a refinement that an expense has a category and income has none; unknown keys dropped.
+    - `recentTransactionsResponseSchema` (`all`, `revenue`, `expenses`, each `.max(5)`) and `transactionsContract.recent` (`GET /transactions/recent`).
+    - After the code review, `RECENT_TRANSACTIONS_PER_TAB` (5) and the row type `RecentTransactionRow` are exported and used by the service, the row component, the gallery and the test support.
+  - **Backend** (`backend/src/transactions/`, `TransactionsModule` in `AppModule`, importing `BankDataModule` only):
+    - `TransactionsService.recent` makes three `VisibleTransactions.list` reads (`{ limit }`, plus `direction` `income` and `expense`) in parallel. It maps each row to the six contract keys, with `occurredAt.toISOString()` and `{ cents, currency: 'USD' }`.
+    - `TransactionsController` reads its path from the contract, the user from `@CurrentUser()` and the zone from `@TimeZone()`.
+    - No table, column or migration.
+  - **Frontend**:
+    - `useRecentTransactions()` on `['transactions', 'recent']`. `OverviewPage` passes it to `RecentTransaction` inside the existing card.
+    - `RecentTransaction`: `MenuTab` in every state; a panel (`role="tabpanel"`, `tabIndex={0}`, labelled by the selected tab, the #87 ring on `:focus-visible`) holding `DataState` (`RecentTransactionSkeleton`; "No transactions yet" when every list is empty). The three lists share one grid cell (`grid-area: 1 / 1`), the hidden ones `visibility: hidden` and `aria-hidden`; a tab's own empty list shows "No transactions yet".
+    - `RecentTransactionItem`: the `recent` icon, the item over the shop, `formatSignedMoney` over a `time` with `formatDate(occurredAt, browserTimeZone())`; the #111 a wrap rule as task 015's bill rows. The divider is a bottom border on every row but the last, with the padding 24 less the border, so each row stays 88 and the divider is its last pixel row as in 104.
+    - `RecentTransactionSkeleton` (frontend-design, existing tokens): five rows on the rows' grid.
+    - Gallery sections for the three; Code-only rows for `RecentTransaction` and `RecentTransactionSkeleton` in `components.md` (`RecentTransactionItem` has its Figma row).
+  - **Tokens**, each in `tokens.md` with its source and in `tokens.css`:
+    - Measured on 104 at 2x, halved: `--space-recent-transaction-list-gap` 12, `-row-padding-y` 24, `-icon-gap` 16.
+    - From Marko's notes, as task 015: `-amount-gap` 16 and `-wrap-gap` 12. The amount-gap note first said 104 leaves "60 px or more"; measured again, it is 91.5. Corrected before the gate.
+- **Existing tests changed**, none weakened:
+  - Listed in Scope:
+    - `overview.test.tsx` T13 keeps Statistics and Expenses Breakdown empty.
+    - `sign-up.test.tsx` adds `['transactions', 'recent']`.
+    - `overview-total-balance.spec.ts` T20: 260 and 212 exact from 1440, at least that at 1280, Expenses Breakdown placed from Statistics' real height.
+    - Both specs' `openOverview` wait for the panel (`waitForRecentTransactions` in `e2e/helpers.ts`).
+  - Not listed, a follow-on of the same change: `app-shell.test.tsx` found the header date by bare text ("22 Oct, 2026"), which the Jeans row now also shows on Overview (5 tests failed with "multiple elements"). Its date queries are now scoped to the header (`banner`), which is what they assert.
+  - Extended: `bank-data-source.test.ts` and `no-direct-time.test.ts` expect `transactions/`; `gallery.test.tsx` checks the new samples.
+  - Changed at the gate (Marko's request, see the gate entries below): this task's T3 in `transactions-service.test.ts`. The `it.each` of the two midnight cases became two tests.
+    - 21:59:59Z now checks the exact top rows: All starting with Biriyani of 23 Oct, Revenue with the Freelance payment of 17 Oct, and no row from 00:00 on 24 Oct in Belgrade in any list. It was only "the 24 Oct rows are not at the top".
+    - 22:00:00Z keeps its assertions.
+    - Strengthened, not weakened.
+- **E2E proven able to fail**: with the hidden lists set to `display: none` instead of sharing the cell, the 1280 tab-switch test failed ("Revenue: the card, Statistics, Expenses Breakdown and the page end"). Restored, it passes.
+- **Validation** (final runs, after the review fixes):
+  1. `npm run lint` exit 0, `npm run typecheck` exit 0.
+  2. `npm test`: 2,163 passed (shared 720, backend 619, frontend 824).
+  3. `npm run e2e`: 169 passed (13 new), exit 0.
+  4. Visual (`evidence/016/visual-differences.txt`, `compare-104-recent-transaction.png`): against 104 at 2x, relative to the card's top, the tiles, the four dividers and the "All" underline are identical and the text starts at the same x.
+     - Differences: the demo content (#12), the signs (#19), the dates with the comma (#11), the demo icons (#56), the card 101 lower (the top row's growth, task 015) and 544 high (#93), the right column's ink 1.5 px further right (right-aligned at the content's edge), the inactive tab labels 1 px narrower (task 004), 36 under the last row against 34.
+     - Also rendered: Revenue and Expenses at 1440; 1920 (rows on one line, no scroll); 1280 (the card 740 on every tab, Revenue's; Statistics 358, Expenses Breakdown 310; no sideways scroll); the long item, shop and amount; the skeleton, the error state, the empty card, 3, 1 and 0 rows.
+  5. Manual (`evidence/016/manual-checks.txt`):
+     - Sign up through the form; the three tabs by mouse; Tab from "View All" to the tab, the arrows, Home and End, the panel with the ring, out of the content, Shift+Tab back; no ring after a click; "View All" to Transactions.
+     - The resizes: 1920, 1280 with the tab switches, 1440 with the classic scrollbar, every row on one line.
+     - The backend stopped (skeleton, then the error state after 7.6 s, the card 544, still signed in), started again, and Retry.
+- **Security review**: no findings (`evidence/016/security-review.md`). The new files were marked intent-to-add so the diff covered them.
+- **Code review**: 0 critical, 0 important, 4 minor.
+  1. The per-tab 5 was declared in the contract and the service. It is now exported once (`RECENT_TRANSACTIONS_PER_TAB`), with a test.
+  2. The row type was spelled `RecentTransactionsResponse['all'][number]` in three places. It is now `RecentTransactionRow` from the contract.
+  3. The per-tab empty message copies `DataState`'s empty-message CSS (the same tokens). Kept: `DataState` is out of scope. For the gate.
+  4. The demo lists are written in both backend test files. Kept, as task 015's bills tests do.
+  - Its "declined to judge" items, for the gate:
+    - After a keyboard Retry, focus falls to the body, because `DataState` replaces the button (existing behavior; `DataState` out of scope).
+    - An amount near the largest safe integer would overflow the right column at 1280 (AC14's bound is $1,000,000,000.00).
+    - At 1280 the page grows once when the rows arrive (the skeleton at the grid's height, then Revenue's height; #112 covers tab switches).
+    - No `Cache-Control: no-store` (no endpoint sets it).
+    - The Clock read once per list in the same tick.
+    - No zone in the query key, as every query.
+    - Below 1280 (#4).
+  - Its optional recommendation, a contract refinement that `revenue` holds only income and `expenses` only expenses, was not added: neither T1 nor the Scope asks for it, and the backend tests cover it.
+- Rework loops: 2.
+  1. Validation step 1: oxlint found 5 problems in the new tests: an unused helper, function scoping twice, and `expect` with a message argument twice.
+  2. The new e2e spec's first run: 12 of 13 passed. A visibility check also matched the icon SVGs' own `aria-hidden`; it now checks the three list cells.
+- Wrong tests caught before the code was trusted:
+  - The service test's status check counted every future row; it is now narrowed to 22 Oct.
+  - A gallery caption equal to the empty message; renamed "Every list empty".
+- No Figma calls.
+
+### 2026-10-27, at the gate: the midnight tests against a read that bypasses `VisibleTransactions` (Marko's request)
+- **Mutation**: `TransactionsService` read through `BANK_DATA_PROVIDER.listTransactions(userId, filter)` directly, with the same `{ limit }` and `{ direction, limit }` filters and no today cap. Nothing else changed. The file was backed up first, and the SHA-256 of `git diff HEAD` (`5c592e5d…10cdb8`) and of `git status --short` (`a0aff776…1eb6096`) were recorded.
+- **Result**: `npx vitest run test/transactions-service.test.ts test/transactions.test.ts` (backend) exited 1, with 11 failed and 13 passed of 24. The bypass answers the dataset's last rows (28 to 31 Dec 2028) instead of those up to today:
+  - `answers a first login’s three lists…` (service) and `answers 200 with the three lists…` (API): expected `occurredAt` `2026-10-22T12:00:00.000Z` to `2026-10-18…`, got `2028-12-31T12:00:00.000Z` to `2028-12-28…`.
+  - `at 2026-10-23T22:30:00Z in Belgrade (24 Oct)…` and `…in New York (23 Oct) lists up to 23 Oct` (AC4): the lists differ in the same way.
+  - `at 2026-10-23T22:00:00Z (00:00 on 24 Oct) lists the rows of 24 Oct: true` (T3): "expected false to be true".
+  - `lists a Failed and a Pending transaction like a Complete one`: expected `['Polo shirt 10-22', …]`, got `['Biriyani 12-31', …]`.
+  - `answers three empty lists before the dataset begins` (service and API): expected three empty lists, got rows.
+  - `answers only the user’s own transactions` and `answers each user from their own rows…`: the lists differ.
+  - `reads transactions only through VisibleTransactions, never the provider` (source check): the service matched `BANK_DATA_PROVIDER`.
+  - Also run on the mutation: `bank-data-source.test.ts` failed `uses listTransactions only in bank-data/, demo/ and its allowed files` (offender `transactions/transactions.service.ts`).
+- **Weak spot**: the other midnight case, `at 2026-10-23T21:59:59Z (23:59:59 on 23 Oct) lists the rows of 24 Oct: false`, still **passed** under the bypass. It checks only that the 24 Oct rows are not at the top, and under the bypass they are not there either, because the 2028 rows are. So that case alone does not catch the bypass; its partner (`…22:00:00Z… true`) and the AC4 lists do. A stronger form would assert the exact top rows at 21:59:59Z (All starting with Biriyani 23 Oct, Revenue with the Freelance payment of 17 Oct). It was not changed here; for Marko to decide. Marko asked for it: done in the next entry.
+- **Restored** from the backup: the file's SHA-256 is the original (`188a42a5…4072928`). Re-run: the two files passed 24 of 24 (exit 0), and `bank-data-source.test.ts` 13 of 13.
+- **Byte-identical**: after the restore, `git diff HEAD` and `git status --short` hashed to the same values as before. This Log entry is the only change made after them.
+
+### 2026-10-27, at the gate: the 21:59:59Z midnight test strengthened (Marko's request)
+- **Test change** (`backend/test/transactions-service.test.ts`, T3; the only file changed besides this Log):
+  - The `it.each` of the two midnight cases became two tests.
+  - `at 2026-10-23T21:59:59Z (23:59:59 on 23 Oct) lists up to 23 Oct: All from Biriyani, Revenue from 17 Oct` asserts:
+    - `all[0]` equals the whole Biriyani row of 23 Oct (`2026-10-23T12:00:00.000Z`, 1478 cents);
+    - `revenue[0]` equals the Freelance payment of 17 Oct;
+    - no row in any of the three lists is at or after `2026-10-23T22:00:00.000Z` (00:00 on 24 Oct in Belgrade).
+  - `at 2026-10-23T22:00:00Z (00:00 on 24 Oct) lists the rows of 24 Oct` keeps its two assertions: Gift in All's first two, Revenue starting with the Freelance payment of 24 Oct.
+- **On the real code**: both pass. The service's SHA-256 before the mutation was `188a42a5…4072928`.
+- **The same bypass mutation** as the entry above: `listTransactions` through `BANK_DATA_PROVIDER`, the same filters, no today cap. Mutated file `64930350…63c2d86`.
+- **The test alone** (`npx vitest run test/transactions-service.test.ts -t "21:59:59Z"`) exited 1, with 1 failed and 8 skipped. It fails at its first assertion (line 134), "expected { item: 'Biriyani', …(5) } to deeply equal { item: 'Biriyani', …(5) }":
+  - `occurredAt` expected `2026-10-23T12:00:00.000Z`, got `2028-12-31T12:00:00.000Z`;
+  - `cents` expected 1478, got 1800.
+  - The dataset's last row is also a Biriyani, so a check on the item name alone would have passed. The test compares the whole row.
+- **Restored** from the backup: SHA-256 `188a42a588c08052b0ad96b1029c4c49eea7639c25ac32921d7dc246a4072928`, matching `188a42a5…`.
+- **Re-run on the restored code**:
+  - `transactions-service.test.ts` and `transactions.test.ts`: 24 of 24 passed, exit 0, both midnight tests among them. The count is unchanged: one `it.each` of 2 became 2 tests.
+  - `bank-data-source.test.ts`: 13 of 13, exit 0.
+  - `npm run lint`: exit 0.
+
+### 2026-10-27, approved by human (`/approve-task`)
+- Approved by Marko. His notes: "Checked by Marko in the browser: Recent Transaction card at 1440 against 104, tab switching with nothing moving, keyboard (tabs, arrow keys, panel as a Tab stop with the ring on keyboard only), 1280 with the right column stretched to 358 and 310 (accepted), bottom inset at 1440 and 1280: all good. Gate checks logged: the bypass mutation, and the 21:59:59Z midnight test strengthened to fail on its own. Code review items: accepted as is: the page growing once when rows arrive at 1280; overflow only beyond the tested $1,000,000,000.00 bound; the query key without the time zone (like every other query). Two follow-ups, added to INDEX row 017 so its detailing includes them in Scope with tests: (1) Cache-Control: no-store on every /api response, set once globally (authenticated financial data must not stay in the browser cache), applied to all existing endpoints; (2) DataState Retry by keyboard: after Retry, focus moves to the widget's content or its region, not the page body, fixed once in the shared DataState for every widget."
+- INDEX row 017 cites both follow-ups.
+- Status done. Human interventions: 4:
+  - the #112 answer at detailing;
+  - the bypass mutation check Marko asked for at the gate;
+  - the 21:59:59Z test strengthening he asked for;
+  - this approval.
+- Before the commit, `npm test` passed 2,163 of 2,163 (shared 720, backend 619, frontend 824).
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-27 17:56
+- Finished: 2026-10-27 19:00
+- Human interventions: 4
+- Rework loops: 2
+- Notes on prompts that failed: none. The `security-review` skill's diff was empty for uncommitted work again; marking the new files intent-to-add (`git add -N`) and giving its sub-task `git diff HEAD` covered them.

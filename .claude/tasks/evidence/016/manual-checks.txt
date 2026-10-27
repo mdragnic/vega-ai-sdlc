@@ -1,0 +1,36 @@
+Task 016 manual checks, 2026-10-27. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), fresh contexts in Europe/Belgrade. Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep the database
+across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. The Recent Transaction card, All selected, reads:
+   "Jeans | Denim House | -$266.00 | 22 Oct, 2026", "Movie ticket | Inox | -$17.64 | 21 Oct, 2026",
+   "Pizza | Pizza Hit | -$24.64 | 20 Oct, 2026", "Taxi fare | Uber | -$10.64 | 19 Oct, 2026",
+   "Restaurant bill | Spice Garden | -$147.84 | 18 Oct, 2026".
+   Revenue: "Freelance payment | Bright Studio | +$179.20 | 17 Oct, 2026", "Dividend | AB Bank Ltd | +$84.00 | 15 Oct,
+   2026", Freelance payment 10 Oct and 3 Oct, "Design project | Acme Ltd. | +$784.00 | 1 Oct, 2026"; the panel labelled
+   by the Revenue tab. Expenses: the All rows. All again: the All rows.
+2. Keyboard (manual-panel-keyboard-ring.png): from Recent Transaction's "View All", Tab: the All tab with the teal ring
+   (2px, #299D91, :focus-visible). Right: Revenue selected and focused; Right: Expenses; Right wraps to All; Left wraps
+   to Expenses; Home: All; End: Expenses (5 rows). Tab: the tab panel with the teal ring. Tab: focus leaves the page's
+   content (the body; Statistics and Expenses Breakdown hold nothing focusable yet). From the panel, Shift+Tab: the
+   Expenses tab; Shift+Tab: "View All". No stop in the rows.
+   Mouse (manual-panel-click-no-ring.png): a click on All focuses it with no ring (:focus-visible false, outline none);
+   a click on row 3 focuses the panel with no ring and does nothing else (still /overview).
+   "View All" opens /transactions.
+3. Resize (each tab at each size; manual-1280-revenue.png):
+   - 1920x1080: page 1905, the card 507x544 at y 448, Statistics 260, Expenses Breakdown 212 ending at y 992 with the
+     card; every row on one line on every tab; the page 1080 high, no scroll.
+   - 1280x1024: page 1265, no sideways scroll (scrollWidth 1265). The card 293.7x740 at y 609 on All, Revenue and
+     Expenses alike; Statistics 358, Expenses Breakdown 310, both ending at y 1349 with the card; the page 1381 high
+     on every tab. All and Expenses: row 5 (Restaurant bill) wrapped, its amount and date under the text,
+     right-aligned; Revenue: rows 1, 3, 4 and 5 wrapped. Switching tabs moved nothing.
+   - Back to 1440x1024: page 1425, the card 347x544 at y 549, every row on one line (also with the 15px scrollbar),
+     Statistics 260, Expenses Breakdown 212, the page 1125 high, no sideways scroll.
+4. Backend stopped (taskkill on the node process on port 3000). A second tab parked on /balances (Overview's queries
+   never fetched there), Overview from the sidebar: the tabs and the skeleton in the panel at once, the card 544 high
+   (manual-backend-down-skeleton.png); "Something went wrong." over Retry after the request and its 3 retries (7.6 s),
+   the three tabs still there, the card 544, still signed in ("Hello Manual"), the six sections in place
+   (manual-backend-down-error.png). Backend started again (database kept), Retry: the five All rows, no message
+   (manual-backend-back-retry.png).
+5. Servers stopped afterwards; ports 3000 and 5173 free.

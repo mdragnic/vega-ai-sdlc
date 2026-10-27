@@ -41,6 +41,9 @@ describe('bank data in backend/src', () => {
         'auth/auth.service.ts',
         'accounts/accounts.service.ts',
         'accounts/mask-account-number.ts',
+        // Task 016 T6: the Recent Transaction module reads through VisibleTransactions only.
+        'transactions/transactions.service.ts',
+        'transactions/transactions.controller.ts',
       ]),
     );
     expect(outside.length).toBeGreaterThan(10);

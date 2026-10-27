@@ -303,3 +303,15 @@
   width: var(--size-popup-button-width);
   margin: 0 auto;
 }
+
+/* The Recent Transaction card of Overview: inset 24, a column the tabs and the panel share (task 016). */
+.recentCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.itemList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

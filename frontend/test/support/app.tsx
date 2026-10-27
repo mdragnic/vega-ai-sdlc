@@ -3,6 +3,8 @@ import {
   type CurrentUser,
   type ErrorResponse,
   goalProgress,
+  type RecentTransactionRow,
+  type RecentTransactionsResponse,
   type SavingsGoalRequest,
   type SavingsGoalResponse,
   type UpcomingBillsResponse,
@@ -174,12 +176,135 @@ export const upcomingBills = {
     http.get(upcomingBillsPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
 };
 
+/** A row as `GET /api/transactions/recent` sends it. */
+export type RecentTransactionBody = RecentTransactionRow;
+
+/** A demo transaction of October 2026: every one is stored at 12:00 UTC (demo-data.md). */
+const octoberAt = (day: number) => `2026-10-${String(day).padStart(2, '0')}T12:00:00.000Z`;
+
+/** The demo expenses of a first login on 22 Oct 2026, newest first (demo-data.md, "What a first login shows"). */
+export const demoExpenses: RecentTransactionBody[] = [
+  {
+    item: 'Jeans',
+    shopName: 'Denim House',
+    category: 'shopping',
+    direction: 'expense',
+    occurredAt: octoberAt(22),
+    amount: usd(26_600),
+  },
+  {
+    item: 'Movie ticket',
+    shopName: 'Inox',
+    category: 'entertainment',
+    direction: 'expense',
+    occurredAt: octoberAt(21),
+    amount: usd(1_764),
+  },
+  {
+    item: 'Pizza',
+    shopName: 'Pizza Hit',
+    category: 'food',
+    direction: 'expense',
+    occurredAt: octoberAt(20),
+    amount: usd(2_464),
+  },
+  {
+    item: 'Taxi fare',
+    shopName: 'Uber',
+    category: 'transportation',
+    direction: 'expense',
+    occurredAt: octoberAt(19),
+    amount: usd(1_064),
+  },
+  {
+    item: 'Restaurant bill',
+    shopName: 'Spice Garden',
+    category: 'food',
+    direction: 'expense',
+    occurredAt: octoberAt(18),
+    amount: usd(14_784),
+  },
+];
+
+const demoFreelance = (day: number): RecentTransactionBody => ({
+  item: 'Freelance payment',
+  shopName: 'Bright Studio',
+  category: null,
+  direction: 'income',
+  occurredAt: octoberAt(day),
+  amount: usd(17_920),
+});
+
+/** The demo income of a first login on 22 Oct 2026, newest first. */
+export const demoRevenue: RecentTransactionBody[] = [
+  demoFreelance(17),
+  {
+    item: 'Dividend',
+    shopName: 'AB Bank Ltd',
+    category: null,
+    direction: 'income',
+    occurredAt: octoberAt(15),
+    amount: usd(8_400),
+  },
+  demoFreelance(10),
+  demoFreelance(3),
+  {
+    item: 'Design project',
+    shopName: 'Acme Ltd.',
+    category: null,
+    direction: 'income',
+    occurredAt: octoberAt(1),
+    amount: usd(78_400),
+  },
+];
+
+/** The three lists a first login gets on 22 Oct 2026 (task 016 AC1, AC2): no income from 18 to 22 Oct. */
+export const demoRecentTransactions: RecentTransactionsResponse = {
+  all: demoExpenses,
+  revenue: demoRevenue,
+  expenses: demoExpenses,
+};
+
+/** Fewer than 5: 3 rows in All, 1 in Revenue and none in Expenses. */
+export const fewRecentTransactions: RecentTransactionsResponse = {
+  all: [demoExpenses[0]!, demoRevenue[0]!, demoExpenses[1]!],
+  revenue: [demoRevenue[0]!],
+  expenses: [],
+};
+
+const recentTransactionsPath = '*/api/transactions/recent';
+
+/**
+ * `GET /api/transactions/recent` answers: the demo, all empty, Revenue empty only, fewer than 5, pending and
+ * failing.
+ */
+export const recentTransactions = {
+  answers: (body: RecentTransactionsResponse = demoRecentTransactions) =>
+    http.get(recentTransactionsPath, () => HttpResponse.json(body)),
+  none: () => http.get(recentTransactionsPath, () => HttpResponse.json({ all: [], revenue: [], expenses: [] })),
+  noRevenue: () =>
+    http.get(recentTransactionsPath, () => HttpResponse.json({ ...demoRecentTransactions, revenue: [] })),
+  few: () => http.get(recentTransactionsPath, () => HttpResponse.json(fewRecentTransactions)),
+  pending: () =>
+    http.get(recentTransactionsPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoRecentTransactions);
+    }),
+  fails: () =>
+    http.get(recentTransactionsPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+};
+
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
- * its accounts, its goal and its bills without asking: the demo accounts, the demo goal and the demo bills. A test's
- * own `server.use` comes first.
+ * its accounts, its goal, its bills and its recent transactions without asking: the demo data of each. A test's own
+ * `server.use` comes first.
  */
-export const signedInDefaults = () => [accounts.answers(), savingsGoal.answers(), upcomingBills.answers()];
+export const signedInDefaults = () => [
+  accounts.answers(),
+  savingsGoal.answers(),
+  upcomingBills.answers(),
+  recentTransactions.answers(),
+];
 
 /** Every app path in `paths`, with an Account Details path for `/balances/:accountId`. */
 export const appPaths = [

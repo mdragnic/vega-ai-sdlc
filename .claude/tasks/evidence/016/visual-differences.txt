@@ -1,0 +1,61 @@
+Task 016 visual check, 2026-10-27. Playwright MCP (headed Chromium on Windows), backend on the fixed test clock
+(NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite dev server, fresh contexts in
+Europe/Belgrade, new users signed up through the API (the demo data). The 1440 renders at device scale 2 with the
+scrollbar hidden (`html { scrollbar-width: none }`, so the page is 1440 wide like the PNG); the 1920 and 1280 renders
+keep the classic scrollbar (pages 1905 and 1265 wide). Compared with docs/figma/104. Overview.png (2x) by a Node script
+(Playwright's bundled PNG reader, in the session scratchpad): ink boxes per element, in 2x px, relative to the card's
+top. No Figma calls.
+
+Renders:
+- 104-overview-2x.png: /overview at 1440x1024 (the window). overview-1440-full-2x.png: the whole page (1125 high).
+- compare-104-recent-transaction.png: the Recent Transaction section, design | render.
+- tab-revenue-1440-2x.png, tab-expenses-1440-2x.png: the section with Revenue and Expenses selected.
+- overview-1920x1080-{all,revenue,expenses}.png and overview-1280x1024-{all,revenue,expenses}.png (full page, each tab);
+  tabs-1280-all-revenue-expenses.png: the three 1280 cards side by side (#112 a).
+- overview-1440-long-item-amount-2x.png and state-long-item-amount.png: a 120-character item and shop and
+  -$1,000,000,000.00 (page.route on the GET).
+- state-skeleton.png (the GET held), state-error.png (500 on every try), state-empty.png (three empty lists),
+  state-fewer-all-3.png, state-fewer-revenue-1.png, state-fewer-expenses-0.png (3, 1 and 0 rows).
+
+Recent Transaction card, ink boxes, design vs render (2x px; y from the card's top; the card's x is 608 in both):
+  card height             1084                      |  1088                      (1x: 542 vs 544, the grid: 260 + 32 + 40 + 212)
+  "All" underline         x 656-729 y 108-111       |  x 656-729 y 108-111       (identical)
+  tab labels              x 673-711, 788-920, 996-1144 | x 673-711, 788-918, 996-1142
+  tiles (inner, 5)        y 190, 366, 542, 718, 894 |  y 190, 366, 542, 718, 894 (identical: one row every 88 CSS px)
+  dividers (4)            y 310, 486, 662, 838      |  y 310, 486, 662, 838      (identical, Gray/06 #F3F3F3, 1 CSS px)
+  row 1 text (item, shop) x 769-933 y 196-260       |  x 769-919 y 197-255       ("GTR 5 / Gadget & Gear" vs "Jeans / Denim House")
+  row 1 right column      x 1118-1259 y 194-260     |  x 1116-1262 y 193-259     ("$160.00 / 17 May 2023" vs "-$266.00 / 22 Oct, 2026")
+  rows 2 to 5             the same pattern: the text from x 769-770, the right column ending at x 1262 (104: 1259)
+
+Differences, every one seen:
+1. The rows' content (#12): Jeans, Movie ticket, Pizza, Taxi fare, Restaurant bill (Denim House, Inox, Pizza Hit, Uber,
+   Spice Garden) against GTR 5, Polo Shirt, Biriyani, Taxi Fare, Keyboard.
+2. The signs on the amounts (#19): -$266.00, -$17.64, -$24.64, -$10.64, -$147.84 against $160.00 and the others.
+3. The dates with the comma and the demo dates (#11): "22 Oct, 2026" to "18 Oct, 2026" against "17 May 2023".
+4. The icons of the demo categories (#56): Shopping, Entertainment (the clapperboard), Food, Transportation, Food
+   against the gamepad, Shopping, Food, Transportation, Shopping. Each tile, glyph and color as in 104.
+5. The card's position: y 549 instead of 448, moved down by the top row's growth (101, task 015, #111 a); x 304 and
+   352 wide as drawn. The card is 544 high against 542 (Statistics is 260 by #93, task 013).
+6. The right column's ink ends 1.5 CSS px further right than drawn (x 631 against 629.5): the amount and the date are
+   right-aligned at the content's right edge (x 632), as the task's measurement put them. Their tops match within 0.5.
+7. The tab labels: Revenue and Expenses end 1 CSS px earlier than drawn (MenuTab, task 004, unchanged).
+8. Under the last row: 36 CSS px to the card's bottom against 104's 34 (the 24 padding and 12 left over from the grid,
+   against 10, from difference 5). The rows stay at the top of the card.
+9. Revenue and Expenses active (tab-revenue-1440-2x.png, tab-expenses-1440-2x.png): teal Bold with the teal underline,
+   as the designed All (#19); the card the same box on every tab (y 549, 544 high), Statistics 260, Expenses
+   Breakdown 212.
+10. 1920x1080 (#94): every row on one line on every tab, the right column at the content's right edge; the card 507
+    wide and 544 high, the page 1080 high (no scroll).
+11. 1280x1024 (#106, #111 a, #112 a): All and Expenses wrap 1 row (Restaurant bill), Revenue 4 (the three Freelance
+    payment rows and Design project): the amount and the date move under the text, right-aligned. The card is 740
+    high on every tab (Revenue's), its rows at the top; Statistics 358 and Expenses Breakdown 310 (stretched by grid
+    rows 2 and 3); the page 1381 high and nothing moves when the tab changes; no sideways scroll (scrollWidth 1265).
+12. A 120-character item and shop and -$1,000,000,000.00 at 1440: the item wraps in 5 lines and the shop in 3 inside the
+    248 text column, the amount column under them, right-aligned; the card 712 high, Statistics 344 and Expenses
+    Breakdown 296; nothing overlaps or leaves the card's content box; no sideways scroll.
+13. Undesigned states (frontend-design, existing tokens only), the tabs shown in each: the skeleton (five rows of a tile
+    block, two lines on the left and two right-aligned lines, the divider between them, on the rows' grid);
+    "Something went wrong." over Retry, centered in the panel; "No transactions yet" centered in the panel when every
+    list is empty; a tab with fewer rows at the top (3 with 2 dividers, 1 with none) and "No transactions yet" for a
+    tab whose own list is empty. The card 544 high in each (the grid's height, #105 a).
+14. The rest of the page as listed in tasks 013 to 015.

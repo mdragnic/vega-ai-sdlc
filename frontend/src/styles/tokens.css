@@ -138,6 +138,11 @@
   --space-upcoming-bill-text-gap: 4px;
   --space-upcoming-bill-amount-gap: 16px;
   --space-upcoming-bill-wrap-gap: 12px;
+  --space-recent-transaction-list-gap: 12px;
+  --space-recent-transaction-row-padding-y: 24px;
+  --space-recent-transaction-icon-gap: 16px;
+  --space-recent-transaction-amount-gap: 16px;
+  --space-recent-transaction-wrap-gap: 12px;
 
   /* Size */
   --size-sidebar-width: 280px;

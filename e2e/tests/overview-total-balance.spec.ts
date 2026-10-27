@@ -2,7 +2,15 @@ import type { Locator, Page, Route } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectBillAmountsUnderText, expectRing, signUp, tokenColor } from '../helpers';
+import {
+  box,
+  computed,
+  expectBillAmountsUnderText,
+  expectRing,
+  signUp,
+  tokenColor,
+  waitForRecentTransactions,
+} from '../helpers';
 
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' });
 const region = (page: Page, name: string) => page.getByRole('main').getByRole('region', { name });
@@ -32,12 +40,16 @@ const fullNumbers = [
   '3634568966019083',
 ];
 
-/** Signs up a new user and opens Overview with its data, the bills too, so the top row has its height (#111 a). */
+/**
+ * Signs up a new user and opens Overview with its data, the bills too, so the top row has its height (#111 a), and the
+ * recent transactions, so grid rows 2 and 3 have theirs (task 016).
+ */
 async function openOverview(page: Page) {
   await signUp(page.request);
   await page.goto('/overview');
   await expect(totalBalance(page).getByText('$130,254.67')).toBeVisible();
   await expect(region(page, 'Upcoming Bill').getByRole('listitem')).toHaveCount(2);
+  await waitForRecentTransactions(page);
 }
 
 async function expectSlide(page: Page, index: number) {
@@ -279,12 +291,20 @@ for (const [width, height] of [
     near(statistics.title.y, row2, 'Statistics title y');
     near(recent.title.y, row2, 'Recent Transaction title y');
     expect(statistics.card.y).toBe(row2 + 40);
-    expect(statistics.card.height).toBe(260);
+    // 260 and 212 wherever every Recent Transaction row fits on one line (1440 and wider with the demo data). At 1280
+    // the rows wrap and the card grows (task 016): grid rows 2 and 3 grow with it, and Statistics and Expenses
+    // Breakdown stretch to them.
+    if (width >= 1440) {
+      expect(statistics.card.height).toBe(260);
+      expect(expenses.card.height).toBe(212);
+    } else {
+      expect(statistics.card.height).toBeGreaterThanOrEqual(260);
+      expect(expenses.card.height).toBeGreaterThanOrEqual(212);
+    }
     near(statistics.card.x, x[1]!, 'Statistics x');
     near(statistics.card.width, 2 * column + 24, 'Statistics width');
-    near(expenses.title.y, statistics.card.y + 260 + 32, 'Expenses Breakdown title y');
-    expect(expenses.card.y).toBe(statistics.card.y + 260 + 32 + 40);
-    expect(expenses.card.height).toBe(212);
+    near(expenses.title.y, statistics.card.y + statistics.card.height + 32, 'Expenses Breakdown title y');
+    expect(expenses.card.y).toBe(statistics.card.y + statistics.card.height + 32 + 40);
     near(expenses.card.x, x[1]!, 'Expenses Breakdown x');
     near(expenses.card.width, 2 * column + 24, 'Expenses Breakdown width');
     near(recent.card.x, x[0]!, 'Recent Transaction x');

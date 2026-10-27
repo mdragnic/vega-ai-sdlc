@@ -1,11 +1,13 @@
 import { useAccounts } from '../../api/accounts';
 import { useUpcomingBills } from '../../api/bills';
 import { useCurrentSavingsGoal } from '../../api/savings-goals';
+import { useRecentTransactions } from '../../api/transactions';
 import {
   Card,
   DataState,
   Goals,
   GoalsSkeleton,
+  RecentTransaction,
   Section,
   TotalBalance,
   TotalBalanceSkeleton,
@@ -16,13 +18,15 @@ import { paths } from '../../routes/paths';
 import styles from './OverviewPage.module.css';
 
 /**
- * Overview (104): the six sections on a grid that fills the content area (#94). Total Balance, Goals and Upcoming Bill
- * have content; the other cards stay empty, at their 104 heights, until their tasks fill them (#105 a).
+ * Overview (104): the six sections on a grid that fills the content area (#94). Total Balance, Goals, Upcoming Bill and
+ * Recent Transaction have content; the other cards stay empty, at their 104 heights, until their tasks fill them
+ * (#105 a).
  */
 export function OverviewPage() {
   const accounts = useAccounts();
   const savingsGoal = useCurrentSavingsGoal();
   const upcomingBills = useUpcomingBills();
+  const recentTransactions = useRecentTransactions();
 
   return (
     <div className={styles.grid}>
@@ -68,7 +72,9 @@ export function OverviewPage() {
         viewAllTo={paths.transactions}
         className={`${styles.section} ${styles.recentTransaction}`}
       >
-        <Card className={styles.card}>{null}</Card>
+        <Card className={styles.card}>
+          <RecentTransaction query={recentTransactions} />
+        </Card>
       </Section>
       <Section title="Statistics" gap="sm" className={`${styles.section} ${styles.statistics}`}>
         <Card className={`${styles.card} ${styles.statisticsCard}`}>{null}</Card>

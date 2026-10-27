@@ -6,6 +6,8 @@ import {
   parseAmountInput,
   type ExpenseCategory,
   type Money,
+  type RecentTransactionRow,
+  type RecentTransactionsResponse,
   type SavingsGoalResponse,
   type UpcomingBillsResponse,
 } from '@finebank/shared';
@@ -45,6 +47,9 @@ import {
   NavMenu,
   PopupInputSmall,
   Profile,
+  RecentTransaction,
+  RecentTransactionItem,
+  RecentTransactionSkeleton,
   RemindMe,
   Section,
   Skeleton,
@@ -653,6 +658,97 @@ function BillsCard({ children }: { children: ReactNode }) {
         {children}
       </Card>
     </div>
+  );
+}
+
+/** A transaction as `GET /api/transactions/recent` sends it. */
+type SampleTransaction = RecentTransactionRow;
+
+const sampleTransaction = (
+  item: string,
+  shopName: string,
+  category: SampleTransaction['category'],
+  day: number,
+  cents: number,
+): SampleTransaction => ({
+  item,
+  shopName,
+  category,
+  direction: category === null ? 'income' : 'expense',
+  occurredAt: `2026-10-${String(day).padStart(2, '0')}T12:00:00.000Z`,
+  amount: usd(cents),
+});
+
+/** The demo expenses of a first login on 22 Oct 2026, newest first (demo-data.md). */
+const sampleExpenses = [
+  sampleTransaction('Jeans', 'Denim House', 'shopping', 22, 26600),
+  sampleTransaction('Movie ticket', 'Inox', 'entertainment', 21, 1764),
+  sampleTransaction('Pizza', 'Pizza Hit', 'food', 20, 2464),
+  sampleTransaction('Taxi fare', 'Uber', 'transportation', 19, 1064),
+  sampleTransaction('Restaurant bill', 'Spice Garden', 'food', 18, 14784),
+];
+
+/** The demo income of a first login on 22 Oct 2026, newest first. */
+const sampleRevenue = [
+  sampleTransaction('Freelance payment', 'Bright Studio', null, 17, 17920),
+  sampleTransaction('Dividend', 'AB Bank Ltd', null, 15, 8400),
+  sampleTransaction('Freelance payment', 'Bright Studio', null, 10, 17920),
+  sampleTransaction('Freelance payment', 'Bright Studio', null, 3, 17920),
+  sampleTransaction('Design project', 'Acme Ltd.', null, 1, 78400),
+];
+
+/** The three lists of a first login, as the backend sends them (task 016). */
+const sampleRecent: RecentTransactionsResponse = {
+  all: sampleExpenses,
+  revenue: sampleRevenue,
+  expenses: sampleExpenses,
+};
+
+/** A 120-character item and shop and the largest amount, for the wrap rule (#111 a; Marko's notes for task 016). */
+const sampleLongTransaction = sampleTransaction(
+  `Jeans ${'with a very long description '.repeat(5)}`.slice(0, 120),
+  `Denim House ${'Flagship Store on the Main Street '.repeat(4)}`.slice(0, 120),
+  'shopping',
+  22,
+  100000000000,
+);
+
+/** The Recent Transaction card as Overview draws it: 352 wide, inset 24, as high as its rows. */
+function RecentCard({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.sampleCard}>
+      <Card className={styles.recentCard}>{children}</Card>
+    </div>
+  );
+}
+
+/** The card on a local query that answers `answer`, never resolves (`pending`) or fails after a short wait. */
+function RecentExample({ name, answer }: { name: string; answer: RecentTransactionsResponse | 'pending' | 'fails' }) {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'recent-transaction', name],
+    queryFn: () =>
+      answer === 'pending'
+        ? new Promise<RecentTransactionsResponse>(() => undefined)
+        : answer === 'fails'
+          ? waitThenFail<RecentTransactionsResponse>()
+          : Promise.resolve(answer),
+  });
+  return (
+    <RecentCard>
+      <RecentTransaction query={query} />
+    </RecentCard>
+  );
+}
+
+/** One row on its own, in a card as wide as Overview's at 1440. */
+function ItemCard({ transaction }: { transaction: SampleTransaction }) {
+  return (
+    <RecentCard>
+      <ul className={styles.itemList}>
+        <RecentTransactionItem transaction={transaction} divided={false} />
+      </ul>
+    </RecentCard>
   );
 }
 
@@ -1385,6 +1481,51 @@ export function ComponentGallery() {
           <BillsCard>
             <UpcomingBillSkeleton />
           </BillsCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="RecentTransaction" wide>
+        <Example name="The demo transactions (104)">
+          <RecentExample name="demo" answer={sampleRecent} />
+        </Example>
+        <Example name="Fewer than 5: 3, 1 and none">
+          <RecentExample
+            name="fewer"
+            answer={{
+              all: [sampleExpenses[0]!, sampleRevenue[0]!, sampleExpenses[1]!],
+              revenue: [sampleRevenue[0]!],
+              expenses: [],
+            }}
+          />
+        </Example>
+        <Example name="Every list empty">
+          <RecentExample name="empty" answer={{ all: [], revenue: [], expenses: [] }} />
+        </Example>
+        <Example name="Loading">
+          <RecentExample name="loading" answer="pending" />
+        </Example>
+        <Example name="Error">
+          <RecentExample name="error" answer="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="RecentTransactionItem" wide>
+        <Example name="Expense (104)">
+          <ItemCard transaction={sampleExpenses[0]!} />
+        </Example>
+        <Example name="Income: the wallet">
+          <ItemCard transaction={sampleRevenue[0]!} />
+        </Example>
+        <Example name="A long item, shop and amount: the right column moves under (#111 a)">
+          <ItemCard transaction={sampleLongTransaction} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="RecentTransactionSkeleton" wide>
+        <Example name="Loading">
+          <RecentCard>
+            <RecentTransactionSkeleton />
+          </RecentCard>
         </Example>
       </GallerySection>
 

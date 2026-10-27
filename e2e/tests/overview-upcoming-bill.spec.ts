@@ -2,7 +2,15 @@ import type { Locator, Page, Route } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectBillAmountsUnderText, signUp, tokenColor, within2 } from '../helpers';
+import {
+  box,
+  computed,
+  expectBillAmountsUnderText,
+  signUp,
+  tokenColor,
+  waitForRecentTransactions,
+  within2,
+} from '../helpers';
 
 const region = (page: Page, name: string) => page.getByRole('main').getByRole('region', { name });
 const bills = (page: Page) => region(page, 'Upcoming Bill');
@@ -14,11 +22,15 @@ const viewAll = (page: Page) => bills(page).getByRole('link', { name: 'View All'
 const moveBackendClock = async (page: Page, now: string) =>
   expect((await page.request.put('/api/test/clock', { data: { now } })).ok()).toBe(true);
 
-/** Signs up a new user at the backend's clock and opens Overview with its bills. */
+/**
+ * Signs up a new user at the backend's clock and opens Overview with its bills, and its recent transactions, so the
+ * page end has its place (task 016).
+ */
 async function openOverview(page: Page) {
   await signUp(page.request);
   await page.goto('/overview');
   await expect(rows(page).first()).toBeVisible();
+  await waitForRecentTransactions(page);
 }
 
 /** A row as text: the date box, the title, "Last Charge - …" and the amount. */

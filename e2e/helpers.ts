@@ -144,3 +144,13 @@ export async function expectBillAmountsUnderText(page: Page): Promise<void> {
     expect(date.y, `${row} date box at the row's top`).toBeLessThan(lastCharge.y);
   }
 }
+
+/**
+ * Waits until the Overview Recent Transaction panel shows its content (rows, the empty message or the error state),
+ * so a check that depends on the layout of grid rows 2 and 3 measures their final height (task 016).
+ */
+export async function waitForRecentTransactions(page: Page): Promise<void> {
+  const panel = page.getByRole('main').getByRole('region', { name: 'Recent Transaction' }).getByRole('tabpanel');
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('[aria-busy="true"]')).toHaveCount(0);
+}

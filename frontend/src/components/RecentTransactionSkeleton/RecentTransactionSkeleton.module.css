@@ -1,0 +1,57 @@
+/* Not designed (#6): existing tokens only, on the Recent Transaction rows' grid: each row 88 high, the 40px tile 24
+   from its top, the divider its last pixel row; five rows fit the card's content at its height from the grid. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-recent-transaction-icon-gap);
+  padding: var(--space-recent-transaction-row-padding-y) 0;
+}
+
+.divided {
+  padding-bottom: calc(var(--space-recent-transaction-row-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.tile {
+  flex-shrink: 0;
+  width: var(--size-category-tile);
+  height: var(--size-category-tile);
+}
+
+/* Two lines over the tile's height: the item at the top, the shop at the bottom. */
+.lines {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  height: var(--size-category-tile);
+}
+
+/* The amount and the date at the right of the content. */
+.end {
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+/* About as wide as an item in Semibold 16, as high as its letters. */
+.item {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.shop {
+  width: var(--size-amount-box-width);
+  max-width: 100%;
+  height: var(--font-size-12);
+}
+
+.amount {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-16);
+}
+
+.date {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-12);
+}
