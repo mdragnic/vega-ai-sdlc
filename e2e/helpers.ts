@@ -123,3 +123,24 @@ export async function googleSignIn(
   if (profile.emailVerified !== undefined) await page.getByLabel('Email verified').setChecked(profile.emailVerified);
   await page.getByRole('button', { name: button }).click();
 }
+
+/**
+ * The Upcoming Bill rows as #111 a lays them out where the text and the amount box do not fit side by side, as at
+ * 1440 with the demo bills (task 015): each row's amount box under its text, right-aligned in the card's content box
+ * (inset 24), the date box at the row's top.
+ */
+export async function expectBillAmountsUnderText(page: Page): Promise<void> {
+  const region = page.getByRole('main').getByRole('region', { name: 'Upcoming Bill' });
+  const items = region.getByRole('listitem');
+  await expect(items).toHaveCount(2);
+  const cardBox = await box(region.locator(':scope > div').last());
+  for (const [index, item] of (await items.all()).entries()) {
+    const row = `row ${index + 1}`;
+    const date = await box(item.locator('time').first());
+    const lastCharge = await box(item.locator('p').last());
+    const amount = await box(item.locator('time').first().locator('xpath=following-sibling::div[1]/span'));
+    expect(amount.y, `${row} amount box under the text`).toBeGreaterThanOrEqual(lastCharge.y + lastCharge.height);
+    within2(amount.x + amount.width, cardBox.x + cardBox.width - 24, `${row} amount box right-aligned`);
+    expect(date.y, `${row} date box at the row's top`).toBeLessThan(lastCharge.y);
+  }
+}

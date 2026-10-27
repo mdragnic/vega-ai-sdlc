@@ -77,6 +77,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-page-top` | `16px` | measured: PNG 104 and 105, header bottom (y 176) to the section title line box (y 208; glyph top 224 minus 16 for 22/32 text), 32 px, halved |
 | `--space-page-left` | `24px` | measured: PNG 104 and 105, sidebar edge (x 560) to the first card (x 608), 48 px, halved |
 | `--space-page-right` | `32px` | measured: PNG 104 and 105, right edge of the cards and the search field (x 2816) to the frame edge (x 2880), 64 px, halved |
+| `--space-page-bottom` | `32px` | measured: PNG 104, the last cards' bottom (Recent Transaction and Expenses Breakdown, white to y 1979) to the frame bottom (y 2048), 68 px, halved 34, a tie on the 4px grid: 32, as decision #111 sets (the app's last cards end at y 992, #93, 32 above 1024). Under the content of every app screen, where it scrolls. Added in task 015 |
 | `--space-section-title-gap` | `8px` | measured: PNG 104, section title line box bottom (y 272) to card top (y 288), 16 px, halved. Screens use the gap their PNG shows (review, Marko, 2026-10-23) |
 | `--space-section-title-gap-lg` | `16px` | measured: PNG 105, "Balances" title line box bottom (y 272) to card top (y 304), 32 px, halved. Added in review |
 | `--space-card-gap` | `24px` | measured: PNG 104 and 105, card right edge (x 1312) to the next card (x 1360), 48 px, halved |
@@ -149,6 +150,13 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-goals-group-gap` | `24px` | measured: PNG 104 Goals, the "$12,500" 16/24 line box bottom (y 556, see --space-goals-amount-gap) to the "This month Target" 12/16 line box (glyphs from y 610, line from y 604), 48 px, halved; the goal icon's box from y 604 too (ink y 610 to 645). Added in task 014 |
 | `--space-goals-gauge-inset` | `8px` | measured: PNG 104 Goals, the gauge arc's right edge (x 1999, see `--size-gauge-width`) to the card content's right edge (x 2016), 17 px, halved 8.5, rounded: the room the `$20k` label takes past the arc (its ink to x 2015). Added in task 014 |
 | `--space-goals-wrap-gap` | `16px` | decision #108 b: not measured, 104 leaves 35 px or more. The least space between the Target with the pencil and the month, and between the amounts and the gauge; where a line does not fit with it, the right part moves under the left, this far below. Added in task 014 |
+| `--space-upcoming-bill-padding-top` | `32px` | measured: PNG 104 Upcoming Bill, the card top (y 288) to the first date box (y 352), 64 px, halved. Added in task 015 |
+| `--space-upcoming-bill-padding-bottom` | `28px` | measured: PNG 104 Upcoming Bill, the second date box bottom (y 696) to the card bottom (y 752), 56 px, halved. Added in task 015 |
+| `--space-upcoming-bill-date-gap` | `12px` | measured: PNG 104 Upcoming Bill, the date box right edge (x 2248) to the logo and the text (x 2272), 24 px, halved. Added in task 015 |
+| `--space-upcoming-bill-row-gap` | `20px` | measured: PNG 104 Upcoming Bill, the first date box bottom (y 484) to the Gray/06 divider (y 522), 38 px, halved 19, rounded; the divider bottom (y 524) to the second date box (y 564), 40 px, halved. Added in task 015 |
+| `--space-upcoming-bill-text-gap` | `4px` | chosen: the text column fills the 64 px date box (`--size-date-box-height`), its three lines 4 apart, (64 - 16 - 24 - 16) / 2. Checked: PNG 104 Upcoming Bill, the logo ink from y 356 and the "Last Charge" ink to y 477 span the drawn 66 px box (y 352 to 483); at 64 the logo and the title sit 2 px higher than drawn and "Last Charge" where drawn. Matching both would need a 2 px gap, off the 4px grid (#65). Added in task 015 |
+| `--space-upcoming-bill-amount-gap` | `16px` | decision #111 a: not measured, 104 leaves 23.5 px or more between the text and the amount box ("Last Charge - 14 May, 2022" to x 2585, the box from x 2632). The least space between the text column and the amount box, as `--space-goals-wrap-gap` (#108 b); where they do not fit with it, the amount box moves under the text. Added in task 015 |
+| `--space-upcoming-bill-wrap-gap` | `12px` | decision #111 a: the amount box 12 under the text where it moves under it, right-aligned. Added in task 015 |
 
 ## Size
 
@@ -210,6 +218,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-round-arrow` | `24px` | Figma `Frame 40276` 24x24 (`components.md`, possible detached components). Checked: PNG 104, the white disc x 1184 to 1231 and y 552 to 599, 48 px, halved. Added in task 013 |
 | `--size-slider-dot` | `8px` | measured: PNG 104, Previous / Next dots x 920 to 935 and y 684 to 699, 16 px, halved. Added in task 013 |
 | `--size-goals-edit-button` | `32px` | measured: PNG 104 Goals, the pencil box (Figma `Frame 40640`) x 1620 to 1683, y 328 to 391, 64 px, halved; Gray/06 with a 4 px radius (`--radius-button`) around the 16 px `edit` icon. Added in task 014 |
+| `--size-upcoming-bill-logo-height` | `16px` | measured: PNG 104 Upcoming Bill, the Figma wordmark y 356 to 387 (45 wide) and the Adobe logo y 568 to 599 (60 wide), 32 px, halved. Added in task 015 |
 
 ## Radius
 

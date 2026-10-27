@@ -313,6 +313,25 @@ describe('component gallery', () => {
     expect(within(refetch).queryByRole('alert')).toBeNull();
   });
 
+  // Task 015: the Upcoming Bill card, its logos and its skeleton.
+  it('shows the Upcoming Bill samples: two rows, one row, a long title and amount, the logos and the skeleton', async () => {
+    await renderGallery();
+
+    const rowsOf = (name: string) => within(figure('UpcomingBill', name)).getAllByRole('listitem');
+    expect(rowsOf('The demo bills (104)').map((row) => row.textContent)).toEqual([
+      'May15Figma - Yearly PlanLast Charge - 14 May, 2026$150.00',
+      'Jun16Adobe Inc - Yearly PlanLast Charge - 17 Jun, 2026$559.00',
+    ]);
+    expect(rowsOf('One bill')).toHaveLength(1);
+    expect(rowsOf('A long title and amount: the amount box moves under (#111 a)')[0]).toHaveTextContent(
+      '$1,000,000,000.00',
+    );
+    expect(within(figure('UpcomingBillLogo', 'Figma (104)')).getByRole('img')).toHaveAccessibleName('Figma');
+    expect(within(figure('UpcomingBillLogo', 'Adobe (104)')).getByRole('img')).toHaveAccessibleName('Adobe');
+    // Two rows: a date box block, three lines (logo, title, last charge) and an amount box block.
+    expect(figure('UpcomingBillSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(10);
+  });
+
   it('links the popup sections to /dev/popup', async () => {
     await renderGallery();
 

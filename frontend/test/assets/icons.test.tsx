@@ -6,7 +6,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { Logo } from '../../src/assets';
-import { adobeUrl, figmaUrl, googleUrl, mastercardUrl, visacardUrl } from '../../src/assets/brand';
+import { adobeUrl, FigmaWordmark, figmaUrl, googleUrl, mastercardUrl, visacardUrl } from '../../src/assets/brand';
 import * as icons from '../../src/assets/icons';
 
 // Code names from task 000 step 13 (docs/figma/components.md).
@@ -78,6 +78,9 @@ function renderSvg(Component: SvgComponent): SVGSVGElement {
   if (!svg) throw new Error('no <svg> rendered');
   return svg;
 }
+
+/** The `d` of every path in an SVG's markup, in order. */
+const pathsOf = (svg: string) => [...svg.matchAll(/ d="([^"]+)"/g)].map((match) => match[1]);
 
 /** Elements that paint, so not inside <mask> where black and white are mask values. */
 function paintedElements(svg: SVGSVGElement): Element[] {
@@ -152,6 +155,23 @@ describe('brand logos', () => {
     expect(google).toContain('conic-gradient');
     for (const color of ['#3186FF', '#FF4641']) expect(google).toContain(color);
     expect(google).not.toContain('#F2F2F2');
+  });
+
+  // Task 015 (#111 c): 104's Upcoming Bill row draws the Figma wordmark alone, in Gray/01.
+  it('cuts the Figma wordmark from the Figma export: its paths alone, in its clip box, colored by CSS', () => {
+    const exported = readFileSync(resolve(figmaDir, 'Figma.svg'), 'utf8');
+    const wordmarkGroup = /<g clip-path="url\(#clip1_411_5839\)">([\s\S]*?)<\/g>/.exec(exported)![1]!;
+    const svg = renderSvg(FigmaWordmark);
+
+    expect(pathsOf(svg.outerHTML)).toEqual(pathsOf(wordmarkGroup));
+    expect(exported).toContain(
+      '<rect width="65.3333" height="23.3333" fill="white" transform="translate(40 8.33301)"/>',
+    );
+    expect(svg.getAttribute('viewBox')).toBe('40 8.33301 65.3333 23.3333');
+    expect(svg.hasAttribute('width') || svg.hasAttribute('height')).toBe(false);
+    expect([...svg.querySelectorAll('path')].map((path) => path.getAttribute('fill'))).toEqual(
+      Array(4).fill('currentColor'),
+    );
   });
 
   // Vite inlines small SVGs as data URLs and serves larger ones as files; both work as <img src>.

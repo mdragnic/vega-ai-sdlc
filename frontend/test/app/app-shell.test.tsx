@@ -189,13 +189,14 @@ describe('the header date while it loads or fails', () => {
         return HttpResponse.json({ today: TODAY });
       }),
     );
-    const { container } = renderApp('/overview');
+    renderApp('/overview');
     const header = await screen.findByRole('banner');
     const greeting = screen.getByText('Hello Tanzir');
     const [chevron, bell] = header.querySelectorAll('svg');
     const search = screen.getByRole('search');
 
-    expect(container.querySelector('time')).toBeNull();
+    // The header's date; Overview's bill rows have their own `time` elements (task 015).
+    expect(header.querySelector('time')).toBeNull();
     expect(greeting.nextElementSibling).toBe(chevron);
     expect(chevron!.nextElementSibling).toBe(bell);
 
@@ -216,13 +217,14 @@ describe('the header date while it loads or fails', () => {
       http.get('*/api/calendar/today', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
     );
     const todayRequests = countRequests(todayPath);
-    const { container, user } = renderApp('/overview');
+    const { user } = renderApp('/overview');
     await screen.findByText('Hello Tanzir');
 
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(todayRequests()).toBe(4);
-    expect(container.querySelector('time')).toBeNull();
+    // The header's date; Overview's bill rows have their own `time` elements (task 015).
+    expect(screen.getByRole('banner').querySelector('time')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
     // Everything else works.
     await user.click(sidebarLink('Bills'));

@@ -1,0 +1,26 @@
+Task 015 manual checks, 2026-10-27. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), fresh contexts in Europe/Belgrade. Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep the database
+across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. The Upcoming Bill card reads
+   "May 15 | Figma - Yearly Plan | Last Charge - 14 May, 2026 | $150.00" and
+   "Jun 16 | Adobe Inc - Yearly Plan | Last Charge - 17 Jun, 2026 | $559.00": a list of 2 items, the logos images named
+   "Figma" and "Adobe", the `time` values 2027-05-15 and 2026-05-14, 2027-06-16 and 2026-06-17.
+   Tab from the header: Search, Total Balance "All Accounts", Previous, Next, the Goals pencil, Upcoming Bill "View
+   All", Recent Transaction "View All", then the sidebar. No stop in the bill rows.
+   "View All" opens /bills in the shell, Bills current in the sidebar.
+2. Resize (manual-1920.png, manual-1280.png, manual-1440.png; each also scrolled to the end, manual-*-scrolled-end.png):
+   - 1920x1080: page 1905, both rows on one line, the amount boxes at the content's right edge (0 px off), the top row
+     232/232/232, the page 1080 high: no scroll; the last cards end at y 992.
+   - 1280x1024: page 1265, no sideways scroll (scrollWidth 1265), both amount boxes under their text, right-aligned, the
+     top row 393/393/393. Scrolled to the end (scrollY 161 of a 1185 page): Expenses Breakdown ends at y 992 on screen,
+     32 above the window's bottom.
+   - Back to 1440x1024: page 1425, the rows wrapped, the top row 333/333/333, no sideways scroll. Scrolled to the end
+     (scrollY 101 of a 1125 page): the last cards end 32 above the window's bottom.
+3. Backend stopped (taskkill on the node process on port 3000). A second tab parked on /balances (Overview's queries
+   never fetched there), Overview from the sidebar: the Upcoming Bill skeleton at once, the card 232 high
+   (manual-backend-down-skeleton.png); "Something went wrong." over Retry after the request and its 3 retries (7.6 s),
+   the card 232, still signed in ("Hello Manual"), the six sections in place (manual-backend-down-error.png).
+   Backend started again (database kept), Retry: the two demo bills, no message (manual-backend-back-retry.png).
+4. Servers stopped afterwards; ports 3000 and 5173 free.

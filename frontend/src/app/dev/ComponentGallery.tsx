@@ -7,6 +7,7 @@ import {
   type ExpenseCategory,
   type Money,
   type SavingsGoalResponse,
+  type UpcomingBillsResponse,
 } from '@finebank/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -53,6 +54,9 @@ import {
   TextDivider,
   TotalBalance,
   TotalBalanceSkeleton,
+  UpcomingBill,
+  UpcomingBillLogo,
+  UpcomingBillSkeleton,
 } from '../../components';
 import { menuTabId } from '../../components/MenuTab/MenuTab';
 import { navSections } from '../../components/NavMenu/NavMenu';
@@ -614,6 +618,43 @@ const sampleGoal = (target: number, present: number, progress: number): SavingsG
   month: '2026-10',
   goal: { target: usd(target), present: usd(present), progress },
 });
+
+/** An upcoming bill as `GET /api/bills/upcoming` sends it. */
+type SampleBill = UpcomingBillsResponse['bills'][number];
+
+/** The demo bills of a first login (demo-data.md): Figma due 15 May 2027, Adobe due 16 Jun 2027. */
+const sampleFigmaBill: SampleBill = {
+  title: 'Figma - Yearly Plan',
+  logo: 'figma',
+  dueDate: '2027-05-15',
+  lastChargeDate: '2026-05-14',
+  amount: usd(15000),
+};
+const sampleAdobeBill: SampleBill = {
+  title: 'Adobe Inc - Yearly Plan',
+  logo: 'adobe',
+  dueDate: '2027-06-16',
+  lastChargeDate: '2026-06-17',
+  amount: usd(55900),
+};
+
+/** A 120-character title and the largest amount, for the wrap rule (#111 a). */
+const sampleLongBill: SampleBill = {
+  ...sampleFigmaBill,
+  title: `Figma - ${'Organization Plan with every seat '.repeat(4)}`.slice(0, 120),
+  amount: usd(100000000000),
+};
+
+/** The Upcoming Bill card as Overview draws it: 352 wide, inset 32, 24 and 28, at least 232 high. */
+function BillsCard({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.sampleCard}>
+      <Card padding="none" className={styles.billsCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
 
 /** A top row card as Overview draws it (Total Balance, Goals): 352 wide, inset 20 and 24, at least 232 high. */
 function TopRowCard({ children }: { children: ReactNode }) {
@@ -1309,6 +1350,41 @@ export function ComponentGallery() {
           <TopRowCard>
             <GoalsSkeleton />
           </TopRowCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="UpcomingBill" wide>
+        <Example name="The demo bills (104)">
+          <BillsCard>
+            <UpcomingBill data={{ bills: [sampleFigmaBill, sampleAdobeBill] }} />
+          </BillsCard>
+        </Example>
+        <Example name="One bill">
+          <BillsCard>
+            <UpcomingBill data={{ bills: [sampleAdobeBill] }} />
+          </BillsCard>
+        </Example>
+        <Example name="A long title and amount: the amount box moves under (#111 a)">
+          <BillsCard>
+            <UpcomingBill data={{ bills: [sampleLongBill, sampleAdobeBill] }} />
+          </BillsCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="UpcomingBillLogo">
+        <Example name="Figma (104)">
+          <UpcomingBillLogo logo="figma" />
+        </Example>
+        <Example name="Adobe (104)">
+          <UpcomingBillLogo logo="adobe" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="UpcomingBillSkeleton" wide>
+        <Example name="Loading">
+          <BillsCard>
+            <UpcomingBillSkeleton />
+          </BillsCard>
         </Example>
       </GallerySection>
 

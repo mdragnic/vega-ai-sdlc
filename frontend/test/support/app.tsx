@@ -5,6 +5,7 @@ import {
   goalProgress,
   type SavingsGoalRequest,
   type SavingsGoalResponse,
+  type UpcomingBillsResponse,
 } from '@finebank/shared';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -133,12 +134,52 @@ export function goalBackend(initial: SavingsGoalResponse = demoGoal) {
   return { handlers, saved };
 }
 
+/** A bill as `GET /api/bills/upcoming` sends it. */
+type UpcomingBillBody = UpcomingBillsResponse['bills'][number];
+
+/** The demo bills due in a year (demo-data.md, Bills). */
+export const demoFigmaBill = (year: number): UpcomingBillBody => ({
+  title: 'Figma - Yearly Plan',
+  logo: 'figma',
+  dueDate: `${year}-05-15`,
+  lastChargeDate: `${year - 1}-05-14`,
+  amount: usd(15_000),
+});
+export const demoAdobeBill = (year: number): UpcomingBillBody => ({
+  title: 'Adobe Inc - Yearly Plan',
+  logo: 'adobe',
+  dueDate: `${year}-06-16`,
+  lastChargeDate: `${year - 1}-06-17`,
+  amount: usd(55_900),
+});
+
+/** The 4 upcoming bills a first login gets on 22 Oct 2026, soonest first (demo-data.md; task 015 AC1, AC2). */
+export const demoBills: UpcomingBillsResponse = {
+  bills: [demoFigmaBill(2027), demoAdobeBill(2027), demoFigmaBill(2028), demoAdobeBill(2028)],
+};
+
+const upcomingBillsPath = '*/api/bills/upcoming';
+
+/** `GET /api/bills/upcoming` answers: the demo, none, one (Adobe due 16 Jun 2028), pending and failing. */
+export const upcomingBills = {
+  answers: (body: UpcomingBillsResponse = demoBills) => http.get(upcomingBillsPath, () => HttpResponse.json(body)),
+  none: () => http.get(upcomingBillsPath, () => HttpResponse.json({ bills: [] })),
+  one: () => http.get(upcomingBillsPath, () => HttpResponse.json({ bills: [demoAdobeBill(2028)] })),
+  pending: () =>
+    http.get(upcomingBillsPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoBills);
+    }),
+  fails: () =>
+    http.get(upcomingBillsPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+};
+
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
- * its accounts and its goal without asking: the demo accounts and the demo goal. A test's own `server.use` comes
- * first.
+ * its accounts, its goal and its bills without asking: the demo accounts, the demo goal and the demo bills. A test's
+ * own `server.use` comes first.
  */
-export const signedInDefaults = () => [accounts.answers(), savingsGoal.answers()];
+export const signedInDefaults = () => [accounts.answers(), savingsGoal.answers(), upcomingBills.answers()];
 
 /** Every app path in `paths`, with an Account Details path for `/balances/:accountId`. */
 export const appPaths = [

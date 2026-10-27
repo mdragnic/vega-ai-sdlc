@@ -1,0 +1,58 @@
+Task 015 visual check, 2026-10-27. Playwright MCP (headed Chromium on Windows), backend on the fixed test clock
+(NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite dev server, fresh contexts at
+1440x1024, device scale 2, Europe/Belgrade, new users signed up through the API (the demo data). Scrollbars hidden for
+the 1440 renders (`html { scrollbar-width: none }`, so the page is 1440 wide like the PNG); the 1920 and 1280 renders
+keep the classic scrollbar (pages 1905 and 1265 wide). Compared with docs/figma/104. Overview.png (2x) by a Node script
+(built-ins only, in the session scratchpad): ink boxes per element, in 2x px. No Figma calls.
+
+Renders:
+- 104-overview-2x.png: /overview at 1440x1024. compare-104-upcoming-bill.png: the Upcoming Bill section, design | render.
+- overview-1440-full-2x.png: the whole page at 1440 (1125 high: the last cards end at 1093, 32 above the end, #111).
+- overview-1920x1080.png (#94: the rows on one line, the card 232, no vertical scroll), overview-1280x1024.png (#111 a).
+- overview-1440-long-title-amount-2x.png and state-long-title-amount.png: a 120-character title and $1,000,000,000.00
+  (page.route on the bills GET).
+- state-skeleton.png (the GET held), state-error.png (500 on every try), state-one-bill.png (backend clock
+  2028-06-01T10:00:00Z: Adobe due 16 Jun 2028), state-no-bills.png (2028-06-17T10:00:00Z). Each card 232 high.
+- Full-page renders cut the sidebar at the window's height: it is sticky at 100vh (task 003, #5), so a full-page capture
+  shows it once at the top. In the browser it stays in place while the page scrolls.
+
+Upcoming Bill card, ink boxes, design vs render (2x px; the card's x is the same in both):
+  card edges           x 2112-2815 y 288-751  |  x 2112-2815 y 288-953   (1x: x 1056, y 144, 352 wide; 333 high, #111 a)
+  date box 1           x 2160-2247 y 352-483  |  x 2160-2247 y 352-479   (64 high, the task 004 token; 104 draws 66)
+  Figma wordmark       x 2272-2360 y 356-387  |  x 2272-2360 y 352-383   (same width and Gray/01 #666666; 2 CSS px higher)
+  title, row 1         x 2274-2525 y 407-438  |  x 2274-2568 y 403-434   ("Figma - Yearly Plan", #12; 2 CSS px higher)
+  "Last Charge", row 1 x 2274-2584 y 454-477  |  x 2273-2580 y 454-477   (the same rows; "14 May, 2026", #11, #12)
+  amount box 1         x 2632-2767 y 378-457  |  x 2584-2767 y 504-583   (under the text, right edge equal, #111 a; "$150.00")
+  divider              x 2160-2767 y 522-523  |  x 2160-2767 y 624-625   (Gray/06 #F3F3F3, lower by row 1's growth)
+  date box 2           x 2160-2247 y 564-695  |  x 2160-2247 y 666-793   (20 CSS px under the divider in both)
+  card bottom          y 752                  |  y 954                   (28 CSS px under row 2 in both)
+
+Differences, every one seen:
+1. The rows at 1440 (#111 a): the demo titles and the `$150.00` / `$559.00` boxes do not fit side by side in the 304
+   content, so each amount box sits 12 under its text, right-aligned. Row 1 is 116 high, row 2 116; the card is 333
+   high instead of 232, Total Balance and Goals stretch to 333, and the rows below are 101 lower than in 104
+   (Statistics from y 549, Expenses Breakdown ending at y 1093). Overview scrolls at 1440x1024 (page 1125 high).
+2. Titles, dates and amounts: "Figma - Yearly Plan", "Adobe Inc - Yearly Plan", "Last Charge - 14 May, 2026" and
+   "17 Jun, 2026", `$150.00` and `$559.00` against "Figma - Monthly", "Adobe - Yearly", 2022 and 2023, `$150` and
+   `$559` (#11, #12). The amount boxes are 91.6 and 94.2 wide (104: 68, the minimum, task 004).
+3. The logo and the title sit 2 CSS px higher than drawn; the "Last Charge" line is exactly where drawn. The date box
+   is the 64 token (104 draws 66, task 004), and the text column fills it: the logo 16, 4, the title 24, 4, the last
+   charge 16 (`--space-upcoming-bill-text-gap`).
+4. The Figma logo is the wordmark alone in Gray/01, as 104 draws it (#111 c): its ink is the same width (x 2272 to 2360)
+   and color as the PNG's.
+5. Total Balance in the taller top row: its Previous / Next row stays at the card's bottom (task 013), y 437 instead of
+   336; the teal card stays at y 221. The Goals content stays at the top of its card, with space under it.
+6. Row 2's Adobe logo: the component at 16 high (60 wide), as drawn; 2 CSS px higher, as row 1's logo.
+7. "View All" with the chevron: unchanged from task 013 (12 to 13 px right of 104, accepted at that gate).
+8. The page's bottom inset: the last cards end 32 above the end of the page at 1440 (y 1093 of 1125) and at 1280 (y
+   1153 of 1185); 104 shows 34 (#111: 32).
+9. At 1920x1080 each row is on one line as drawn: the amount box at the content's right edge (x 1849 of the card's 1873
+   right edge less 24), centered on the date box (y 188 = 176 + 12); the card and the top row 232; the page 1080 high,
+   no scroll. At 1280x1024 the rows wrap as at 1440; the three top cards are 393 (Goals and Total Balance wrap too,
+   #106, #108 b); no sideways scroll (scrollWidth 1265 = the page).
+10. Long title and amount at 1440: the 120-character title wraps in 4 lines inside the 248 text column, the
+    `$1,000,000,000.00` box (184.5 wide) under it, right-aligned; the card and the top row 405 high; nothing overlaps or
+    leaves the card's content box; no sideways scroll.
+11. Undesigned states (frontend-design, existing tokens only): the skeleton (two rows of a date block, three lines and
+    an amount block with the divider), "Something went wrong." over Retry, one bill at the top with no divider, "No
+    upcoming bills" centered in the content box. Each card 232 high.

@@ -1,0 +1,13 @@
+/* 104: 16 high, as wide as its drawing (the Figma wordmark 45, Adobe 60), at the left of the text column. */
+.logo {
+  display: block;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: auto;
+  height: var(--size-upcoming-bill-logo-height);
+}
+
+/* 104 draws the wordmark in Gray/01 (#111 c). */
+.figma {
+  color: var(--color-gray-01);
+}

@@ -26,6 +26,13 @@ describe('time in backend/src', () => {
     expect(sourceFiles(srcDir).length).toBeGreaterThan(5);
   });
 
+  // Task 015 T6: the upcoming bills read today from the Clock only.
+  it('scans the bills module', () => {
+    const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+
+    expect(files).toEqual(expect.arrayContaining(['bills/bills.service.ts', 'bills/bills.controller.ts']));
+  });
+
   it('never reads the system time outside the clock files', () => {
     const offenders = sourceFiles(srcDir)
       .map((file) => relative(srcDir, file).replaceAll('\\', '/'))

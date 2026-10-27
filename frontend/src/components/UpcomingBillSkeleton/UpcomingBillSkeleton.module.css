@@ -1,0 +1,54 @@
+/* Not designed (#6): existing tokens only, on the Upcoming Bill rows' grid: two 64 high rows with the divider between
+   them fit the card's content box at its 232 minimum (the card inset 32 at the top and 28 at the bottom). */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-upcoming-bill-date-gap);
+}
+
+.divided {
+  margin-top: var(--space-upcoming-bill-row-gap);
+  padding-top: var(--space-upcoming-bill-row-gap);
+  border-top: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.date {
+  flex-shrink: 0;
+  width: var(--size-date-box-width);
+  height: var(--size-date-box-height);
+}
+
+/* The three lines over the date box's height: the logo at the top, the title in the middle, the last charge at the
+   bottom. */
+.text {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  height: var(--size-date-box-height);
+}
+
+.logo {
+  width: var(--size-card-network-logo-width);
+  height: var(--size-upcoming-bill-logo-height);
+}
+
+/* About as wide as a title in Semibold 16, as high as its letters. */
+.title {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.lastCharge {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-12);
+}
+
+.amount {
+  flex-shrink: 0;
+  width: var(--size-amount-box-width);
+  height: var(--size-amount-box-height);
+}

@@ -233,9 +233,9 @@ describe('successful sign up', () => {
         .getQueryCache()
         .getAll()
         .map((query) => query.queryKey),
-      // The new session's own: the header date, Overview's accounts (task 013) and goal (task 014); the earlier
-      // balance is gone.
-    ).toEqual([['session'], ['calendar', 'today'], ['accounts'], ['savings-goals', 'current']]);
+      // The new session's own: the header date, Overview's accounts (task 013), goal (task 014) and upcoming bills
+      // (task 015); the earlier balance is gone.
+    ).toEqual([['session'], ['calendar', 'today'], ['accounts'], ['savings-goals', 'current'], ['bills', 'upcoming']]);
     // The mutation holds the password: it is gone once Sign up is.
     await waitFor(() => expect(appClient!.getMutationCache().getAll()).toEqual([]));
 

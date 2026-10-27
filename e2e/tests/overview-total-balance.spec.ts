@@ -2,7 +2,7 @@ import type { Locator, Page, Route } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, signUp, tokenColor } from '../helpers';
+import { box, computed, expectBillAmountsUnderText, expectRing, signUp, tokenColor } from '../helpers';
 
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' });
 const region = (page: Page, name: string) => page.getByRole('main').getByRole('region', { name });
@@ -32,11 +32,12 @@ const fullNumbers = [
   '3634568966019083',
 ];
 
-/** Signs up a new user and opens Overview with its data. */
+/** Signs up a new user and opens Overview with its data, the bills too, so the top row has its height (#111 a). */
 async function openOverview(page: Page) {
   await signUp(page.request);
   await page.goto('/overview');
   await expect(totalBalance(page).getByText('$130,254.67')).toBeVisible();
+  await expect(region(page, 'Upcoming Bill').getByRole('listitem')).toHaveCount(2);
 }
 
 async function expectSlide(page: Page, index: number) {
@@ -204,11 +205,16 @@ test('shows the skeleton while loading, the error state after the retries, and t
     else if (mode === 'fail') await route.fulfill({ status: 500, json: { message: 'Internal server error' } });
     else await route.continue();
   });
+  // The demo bills grow the top row at 1440 (#111 a, task 015): held until the skeleton's 232 minimum is checked.
+  const heldBills: Route[] = [];
+  await page.route('**/api/bills/upcoming', (route) => heldBills.push(route));
 
   await page.goto('/overview');
   const busy = totalBalance(page).locator('[aria-busy="true"]');
   await expect(busy).toBeVisible();
   expect((await box(card(totalBalance(page)))).height).toBe(232);
+  for (const route of heldBills.splice(0)) await route.continue();
+  await page.unroute('**/api/bills/upcoming');
   await expect(allAccounts(page)).toHaveCount(0);
   for (const name of ['Goals', 'Upcoming Bill', 'Recent Transaction', 'Statistics', 'Expenses Breakdown']) {
     await expect(region(page, name)).toBeVisible();
@@ -259,9 +265,11 @@ for (const [width, height] of [
       expect(cardBox.y).toBe(144);
       expect(cardBox.height).toBe(top.height);
     }
-    // 232 wherever the account card's bottom line fits; below the wrap point the row grows (#106).
-    if (width >= 1440) expect(top.height).toBe(232);
+    // 232 wherever every line fits: the account card's bottom line (#106) and the bill rows (#111 a). At 1440 the
+    // demo bills' amount boxes move under their text and the row grows (task 015); at 1280 the account card's too.
+    if (width >= 1920) expect(top.height).toBe(232);
     else expect(top.height).toBeGreaterThan(232);
+    if (width === 1440) await expectBillAmountsUnderText(page);
 
     // Row 2 starts 32 under the top row: titles, then the cards 8 below them.
     const row2 = top.y + top.height + 32;
@@ -312,12 +320,18 @@ test('places the cards where 104 does at 1440x1024', async ({ page }) => {
   const right = await pageRight(page);
   const shift = 1440 - right;
 
-  expect(await box(card(totalBalance(page)))).toEqual({ x: 304, y: 144, width: 352 - shift / 3, height: 232 });
+  // The top row grows with the Upcoming Bill rows at 1440 (#111 a, task 015): the three cards one height; the
+  // Previous / Next row at the card's bottom and the rows below move down by the growth.
+  await expectBillAmountsUnderText(page);
+  const topRow = (await box(card(region(page, 'Upcoming Bill')))).height;
+  const growth = topRow - 232;
+  expect(growth).toBeGreaterThan(0);
+  expect(await box(card(totalBalance(page)))).toEqual({ x: 304, y: 144, width: 352 - shift / 3, height: topRow });
   const teal = await box(slide(page));
   expect(teal).toMatchObject({ x: 328, y: 221, height: 96 });
-  expect((await box(previousButton(page).locator('..'))).y).toBe(336);
-  expect((await box(card(region(page, 'Expenses Breakdown')))).y + 212).toBe(992);
-  expect((await box(card(region(page, 'Recent Transaction')))).y).toBe(448);
+  expect((await box(previousButton(page).locator('..'))).y).toBe(336 + growth);
+  expect((await box(card(region(page, 'Expenses Breakdown')))).y + 212).toBe(992 + growth);
+  expect((await box(card(region(page, 'Recent Transaction')))).y).toBe(448 + growth);
 });
 
 // T21: AC13: each "View All" opens its page in the shell, without a full page load (#48, #49).

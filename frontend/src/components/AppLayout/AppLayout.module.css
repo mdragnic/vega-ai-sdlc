@@ -22,7 +22,8 @@
   min-width: 0;
 }
 
-/* The content inset shared by the app screens (tokens.md: page top, left and right). */
+/* The content inset shared by the app screens (tokens.md: page top, right, bottom and left): where the content
+   scrolls, it ends 32 above the end of the page (#111). */
 .content {
-  padding: var(--space-page-top) var(--space-page-right) 0 var(--space-page-left);
+  padding: var(--space-page-top) var(--space-page-right) var(--space-page-bottom) var(--space-page-left);
 }

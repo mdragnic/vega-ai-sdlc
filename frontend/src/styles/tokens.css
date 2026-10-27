@@ -58,6 +58,7 @@
   --space-page-top: 16px;
   --space-page-left: 24px;
   --space-page-right: 32px;
+  --space-page-bottom: 32px;
   --space-section-title-gap: 8px;
   --space-section-title-gap-lg: 16px;
   --space-card-gap: 24px;
@@ -130,6 +131,13 @@
   --space-goals-group-gap: 24px;
   --space-goals-gauge-inset: 8px;
   --space-goals-wrap-gap: 16px;
+  --space-upcoming-bill-padding-top: 32px;
+  --space-upcoming-bill-padding-bottom: 28px;
+  --space-upcoming-bill-date-gap: 12px;
+  --space-upcoming-bill-row-gap: 20px;
+  --space-upcoming-bill-text-gap: 4px;
+  --space-upcoming-bill-amount-gap: 16px;
+  --space-upcoming-bill-wrap-gap: 12px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -188,6 +196,7 @@
   --size-round-arrow: 24px;
   --size-slider-dot: 8px;
   --size-goals-edit-button: 32px;
+  --size-upcoming-bill-logo-height: 16px;
 
   /* Radius */
   --radius-input: 8px;

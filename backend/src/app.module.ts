@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountsModule } from './accounts/accounts.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BankDataModule } from './bank-data/bank-data.module.js';
+import { BillsModule } from './bills/bills.module.js';
 import { CalendarModule } from './calendar/calendar.module.js';
 import { ClockModule } from './common/clock/clock.module.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
@@ -26,6 +27,7 @@ export class AppModule {
         AccountsModule,
         CalendarModule,
         GoalsModule,
+        BillsModule,
       ],
       providers: [
         { provide: APP_FILTER, useClass: ApiExceptionFilter },

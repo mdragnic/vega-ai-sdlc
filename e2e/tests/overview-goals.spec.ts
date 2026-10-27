@@ -2,7 +2,17 @@ import type { Locator, Page, Request, Route } from '@playwright/test';
 
 import { FRONTEND_URL, TIME_ZONE } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectNoRingOnMouseFocus, expectRing, newUser, signUp, tokenColor, within2 } from '../helpers';
+import {
+  box,
+  computed,
+  expectBillAmountsUnderText,
+  expectNoRingOnMouseFocus,
+  expectRing,
+  newUser,
+  signUp,
+  tokenColor,
+  within2,
+} from '../helpers';
 
 const region = (page: Page, name: string) => page.getByRole('main').getByRole('region', { name });
 const goals = (page: Page) => region(page, 'Goals');
@@ -23,11 +33,12 @@ const amountOf = (page: Page, term: string) =>
 const moveBackendClock = async (page: Page, now: string) =>
   expect((await page.request.put('/api/test/clock', { data: { now } })).ok()).toBe(true);
 
-/** Signs up a new user and opens Overview with the demo goal. */
+/** Signs up a new user and opens Overview with the demo goal, and the bills, so the top row has its height (#111 a). */
 async function openOverview(page: Page) {
   await signUp(page.request);
   await page.goto('/overview');
   await expect(meter(page)).toBeVisible();
+  await expect(region(page, 'Upcoming Bill').getByRole('listitem')).toHaveCount(2);
 }
 
 /** The `PUT /api/savings-goals` requests the page sends, from now on. */
@@ -315,6 +326,9 @@ test('shows the skeleton while the goal loads, the error state after the retries
     else if (mode === 'fail') await route.fulfill({ status: 500, json: { message: 'Internal server error' } });
     else await route.continue();
   });
+  // The demo bills grow the top row at 1440 (#111 a, task 015): held while the 232 minimum is checked.
+  const heldBills: Route[] = [];
+  await page.route('**/api/bills/upcoming', (route) => heldBills.push(route));
 
   await page.goto('/overview');
   const busy = goals(page).locator('[aria-busy="true"]');
@@ -331,6 +345,8 @@ test('shows the skeleton while the goal loads, the error state after the retries
   await expect(region(page, 'Upcoming Bill').getByRole('link', { name: 'View All' })).toBeVisible();
 
   mode = 'pass';
+  for (const route of heldBills.splice(0)) await route.continue();
+  await page.unroute('**/api/bills/upcoming');
   await goals(page).getByRole('button', { name: 'Retry' }).click();
   await expectDemoCard(page, '$20,000.00', '$16,250.00', 'Oct, 2026');
 });
@@ -420,7 +436,11 @@ test('places the Goals card and its content where 104 does at 1440x1024', async 
   const cardBox = await box(card(goals(page)));
   const column = 352 - shift / 3;
 
-  expect(cardBox).toEqual({ x: 304 + column + 24, y: 144, width: column, height: 232 });
+  // The top row grows with the Upcoming Bill rows at 1440 (#111 a, task 015); the Goals content stays at the top.
+  await expectBillAmountsUnderText(page);
+  const topRow = (await box(card(region(page, 'Upcoming Bill')))).height;
+  expect(topRow).toBeGreaterThan(232);
+  expect(cardBox).toEqual({ x: 304 + column + 24, y: 144, width: column, height: topRow });
   const right = cardBox.x + cardBox.width - 24;
   // The header row 164 to 196: the pencil box 12 after the Target, the month at the right.
   const target = await textBox(card(goals(page)).locator('p').first());

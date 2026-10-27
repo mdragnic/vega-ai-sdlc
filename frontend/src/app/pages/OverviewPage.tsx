@@ -1,16 +1,28 @@
 import { useAccounts } from '../../api/accounts';
+import { useUpcomingBills } from '../../api/bills';
 import { useCurrentSavingsGoal } from '../../api/savings-goals';
-import { Card, DataState, Goals, GoalsSkeleton, Section, TotalBalance, TotalBalanceSkeleton } from '../../components';
+import {
+  Card,
+  DataState,
+  Goals,
+  GoalsSkeleton,
+  Section,
+  TotalBalance,
+  TotalBalanceSkeleton,
+  UpcomingBill,
+  UpcomingBillSkeleton,
+} from '../../components';
 import { paths } from '../../routes/paths';
 import styles from './OverviewPage.module.css';
 
 /**
- * Overview (104): the six sections on a grid that fills the content area (#94). Total Balance and Goals have content;
- * the other cards stay empty, at their 104 heights, until their tasks fill them (#105 a).
+ * Overview (104): the six sections on a grid that fills the content area (#94). Total Balance, Goals and Upcoming Bill
+ * have content; the other cards stay empty, at their 104 heights, until their tasks fill them (#105 a).
  */
 export function OverviewPage() {
   const accounts = useAccounts();
   const savingsGoal = useCurrentSavingsGoal();
+  const upcomingBills = useUpcomingBills();
 
   return (
     <div className={styles.grid}>
@@ -38,7 +50,17 @@ export function OverviewPage() {
         </Card>
       </Section>
       <Section title="Upcoming Bill" gap="sm" viewAllTo={paths.bills} className={`${styles.section} ${styles.bills}`}>
-        <Card className={`${styles.card} ${styles.topCard}`}>{null}</Card>
+        <Card padding="none" className={`${styles.card} ${styles.topCard}`}>
+          <div className={styles.billsCardBody}>
+            <DataState
+              query={upcomingBills}
+              skeleton={<UpcomingBillSkeleton />}
+              empty={{ isEmpty: (data) => data.bills.length === 0, message: 'No upcoming bills' }}
+            >
+              {(data) => <UpcomingBill data={data} />}
+            </DataState>
+          </div>
+        </Card>
       </Section>
       <Section
         title="Recent Transaction"

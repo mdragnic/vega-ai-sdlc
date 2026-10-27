@@ -1,6 +1,6 @@
 # Task 015: Overview: Upcoming Bill
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 004, 013
 - Size: M
@@ -140,9 +140,77 @@ Choices marked "(#111 x)" follow #111 (closed, Marko, 2026-10-27: all three as p
 - INDEX: open questions none; row 015 cites the inset.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-10-27, build (`/next-task 015`)
+- Decisions checked before the start: all cited decisions closed (#6 to #111).
+- Built test first (TDD), watching each test fail for the right reason before the code:
+  - **Shared**: `upcomingBillSchema`, `upcomingBillsResponseSchema` and `billsContract.upcoming` (`GET /bills/upcoming`) in `shared/src/contract/bill.ts`. No single-bill type is exported, because it would clash with the `UpcomingBill` component name.
+  - **Backend** (`backend/src/bills/`, `BillsModule` in `AppModule`): `BillsService.upcoming` takes today from `todayIn(Clock, zone)` and binds it as a `YYYY-MM-DD` string through `MoreThanOrEqual` on the repository. It always filters by `userId`, orders by due date then ID, and maps each row to the contract's keys with `{ cents, currency: 'USD' }`. `BillsController` reads its path from the contract, the user from `@CurrentUser()` and the zone from `@TimeZone()`. No migration.
+  - **Frontend**: `useUpcomingBills()` (`['bills', 'upcoming']`); `UpcomingBill`, `UpcomingBillLogo` and `UpcomingBillSkeleton`, with Code-only rows in `components.md` and gallery sections; the card in `OverviewPage` through `DataState` (empty: "No upcoming bills"), inset 32, 24 and 28.
+  - **Figma wordmark**: `FigmaWordmark.svg` holds the 4 wordmark paths of the exported `Figma.svg`, copied by a script. Its viewBox is the export's wordmark clip box, and it is colored by CSS (Gray/01). It is the only inline brand logo, and `brand/index.ts` says why.
+  - **Bottom inset**: `--space-page-bottom` 32 on `AppLayout`'s content.
+  - **Tokens**, each in `tokens.md` with its source and in `tokens.css`:
+    - From PNG 104 at 2x, halved: `--space-page-bottom`, `--space-upcoming-bill-padding-top` 32, `-padding-bottom` 28, `-date-gap` 12, `-row-gap` 20 and `--size-upcoming-bill-logo-height` 16.
+    - From #111 a, not measured: `-amount-gap` 16 and `-wrap-gap` 12.
+    - Chosen: `-text-gap` 4 (see the review).
+- **The row layout** (#111 a): the date box at the row's top. Then a flex-wrap body: the text column (logo 16, 4, title 24, 4, last charge 16, so 64 high, the date box's height) with `margin-right: auto`, and the amount box. Where they do not fit side by side, the amount box wraps 12 under the text, right-aligned. Long words break inside the column (`overflow-wrap: anywhere`).
+  - At 1440 both demo rows wrap: the card and the top row are 333 high and Overview is 1125 high.
+  - At 1920 and 2560 the rows are on one line and the card is 232.
+- **Existing tests changed**, none weakened:
+  - Listed in Scope:
+    - `overview.test.tsx` T13: three cards still empty.
+    - `sign-up.test.tsx`: adds `['bills', 'upcoming']`.
+    - `overview-total-balance.spec.ts`: T20's 232 now applies only from 1920; at 1440 the row grows and the bill amounts are under the text. The 1440 positions test checks the shared height, and Previous / Next, Recent Transaction and Expenses Breakdown at their 104 positions plus the growth.
+    - `overview-goals.spec.ts`: T31 at 1440 checks the shared height and the wrapped bill rows.
+  - Not listed, follow-ons of the same change:
+    - `app-shell.test.tsx`: the two "no header date" checks look for `time` inside the header (`banner`), because the bill rows have their own `time` elements. The header's date is a `time` in the banner, so the check still has meaning.
+    - Both specs' `openOverview` also waits for the bill rows, since the layout depends on them.
+    - The two skeleton tests (total balance T19, goals T30) hold the bills request while they check the 232 minimum, so the exact `toBe(232)` stays.
+    - `gallery.test.tsx` and `icons.test.tsx` gained tests for the new sections and the wordmark.
+    - `no-direct-time.test.ts` gained a check that it scans `bills/`.
+- **E2E proven able to fail**: removing the bottom inset and turning off the wrap made exactly the 5 wrap and inset tests fail. Restored, they pass.
+- **Validation** (final runs, after the review fixes):
+  1. `npm run lint` exit 0 and `npm run typecheck` exit 0.
+  2. `npm test`: 2,073 passed (shared 683, backend 594, frontend 796).
+  3. `npm run e2e`: 156 passed (14 new).
+  4. Visual: `.claude/tasks/evidence/015/visual-differences.txt`. The card's box is as on 104 (x 1056, y 144, 352 wide). Expected differences:
+     - The rows are wrapped per #111 a (333 high).
+     - Demo titles, dates and amounts.
+     - The logo and title sit 2 px high (the date box is 64, 104 draws 66).
+     - Total Balance's Previous / Next row is at the bottom of the taller card.
+     - The page has the 32 bottom inset.
+     The 1920, 1280, long title, skeleton, error, one-bill and no-bills renders are saved with it.
+  5. Manual: `manual-checks.txt`. Sign up, read the card, Tab order (no stop in the rows), View All, the resizes, the inset at the scroll end, and the backend stopped and started again.
+- **Security review**: no findings (`evidence/015/security-review.md`). The new files were marked intent-to-add so the diff covered them.
+- **Code review**: 0 critical, 0 important, 4 minor:
+  1. The text-gap token was labeled "measured", but it is an even split. The source is reworded as "chosen", and the 2 px offset is kept: matching 104 needs a 2 px gap, off the 4 px grid (#65). For the gate.
+  2. T15's no-bills height is tightened to exactly 232.
+  3. The duplicated wrap helper is merged into `expectBillAmountsUnderText` (`e2e/helpers.ts`), which also checks the right edge.
+  4. The duplicated divider CSS in the skeleton is kept, one module per component as `GoalsSkeleton`.
+  Its "declined to judge" items are accepted as set aside: midnight without a refetch (#100 b), Safari list semantics (Chromium target, the same pattern as `NavBar`), amounts above $1B, mixed rows between about 1477 and 1555 (#111 a), the 64 date box and "May15" (task 004), the skeleton's borrowed tokens, the endpoint returning every bill.
+- Rework loops: 1. Lint and typecheck before the validation steps found 4 oxlint findings (function scoping twice, `consistent-return` in the logo switch, now an exhaustive `Record`, and an unneeded assertion), Prettier on 3 test files and a test table type. All were in new code.
+- Wrong tests caught in the red phase and fixed:
+  - The API tests moved the clock months ahead after signing up, so the session had expired. They now sign up after moving the clock.
+  - The skeleton shape count was 10, not 12.
+- No Figma calls.
+
+### 2026-10-27, at the gate: the due-today test against the task 008 bug (Marko's request)
+- **Mutation**: in `BillsService.upcoming`, today was bound as a `Date` instead of the string: `MoreThanOrEqual(new Date(today) as unknown as string)`, which is UTC midnight of the same day. Nothing else changed. The file was backed up and the SHA-256 of `git diff HEAD` and of `git status --short` were recorded first.
+- **Result**: `npx vitest run test/bills-service.test.ts test/bills.test.ts` (backend) exited 1, with 6 failed and 22 passed of 28. Every failure is the bill due exactly today going missing:
+  - `includes a bill due today in the zone and drops one due yesterday`: expected `['2026-10-22', '2027-05-15', …]`, got `['2027-05-15', '2027-06-16', …]`. The bill due today, 2026-10-22, was dropped.
+  - `at 2027-05-15T22:30:00Z in America/New_York answers today from the Clock in that zone` (service): expected `['2027-05-15', '2027-06-16', …]`, got `['2027-06-16', '2028-05-15', …]`.
+  - `at 2027-05-14T22:00:00Z (00:00 on the due day) includes the bill: true` and `at 2027-05-15T21:59:59Z (the due day's last second) includes the bill: true` (T3): expected `true`, got `false`.
+  - `keeps the bill due today, which a Date parameter for today would drop` (AC9): expected `'2027-05-15'` as the first due date, got `'2027-06-16'`.
+  - `GET /api/bills/upcoming > at 2027-05-15T22:30:00Z in America/New_York answers the bills from today in that zone` (API): the Figma bill due 2027-05-15 was missing from `bills`.
+- The 22 that still passed do not involve a bill due today: the demo bills due later, Belgrade on 16 May, the 00:00-next-day case, 401 and 400, user scoping, the source guard.
+- **Restored** from the backup: `git diff HEAD` hash `60927241…c6d941e8` and `git status --short` hash `fb09f655…5f753f48`, identical before the mutation and after the restore, so no change is left over. The same command then exited 0 with 28 of 28 passing.
+
+### 2026-10-27, approved by human (`/approve-task`)
+- Approved by Marko. His notes: "Checked by Marko in the browser: Upcoming Bill card at 1440 against 104, wrapped rows per #111 a, top row one height with Total Balance's Previous/Next at the card bottom (accepted), 32px bottom inset at 1440 and 1280, resize from full width to 1280, View All to Bills: all good. Accepted: the logo and title 2px higher than 104, kept on the 4px grid (no off-grid gap). The due-today mutation check at the gate is logged in the task file."
+- Status done. Human interventions: 2, the due-today mutation check Marko asked for at the gate and this approval.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-27 09:25
+- Finished: 2026-10-27 10:27
+- Human interventions: 2
+- Rework loops: 1
+- Notes on prompts that failed: the `security-review` skill's diff was empty for uncommitted work, as in task 010. Marking the new files intent-to-add (`git add -N`) let `git diff HEAD` cover them.

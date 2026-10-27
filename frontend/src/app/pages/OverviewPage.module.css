@@ -67,3 +67,11 @@
   flex-direction: column;
   padding: var(--space-overview-card-padding-y) var(--space-card-padding);
 }
+
+/* 104: the Upcoming Bill rows are inset 32 at the top, 28 at the bottom and 24 at the sides. */
+.billsCardBody {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  padding: var(--space-upcoming-bill-padding-top) var(--space-card-padding) var(--space-upcoming-bill-padding-bottom);
+}

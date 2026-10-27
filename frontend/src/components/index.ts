@@ -41,3 +41,6 @@ export { TargetVsAchievementMeter } from './TargetVsAchievementMeter/TargetVsAch
 export { TextDivider } from './TextDivider/TextDivider';
 export { TotalBalance } from './TotalBalance/TotalBalance';
 export { TotalBalanceSkeleton } from './TotalBalanceSkeleton/TotalBalanceSkeleton';
+export { UpcomingBill } from './UpcomingBill/UpcomingBill';
+export { UpcomingBillLogo } from './UpcomingBillLogo/UpcomingBillLogo';
+export { UpcomingBillSkeleton } from './UpcomingBillSkeleton/UpcomingBillSkeleton';
