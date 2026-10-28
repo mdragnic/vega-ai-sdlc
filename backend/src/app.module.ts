@@ -13,6 +13,7 @@ import { validationException } from './common/errors/validation-exception.js';
 import type { AppConfig } from './config/config.js';
 import { databaseOptions } from './database/database-options.js';
 import { GoalsModule } from './goals/goals.module.js';
+import { StatisticsModule } from './statistics/statistics.module.js';
 import { TransactionsModule } from './transactions/transactions.module.js';
 
 @Module({})
@@ -30,6 +31,7 @@ export class AppModule {
         GoalsModule,
         BillsModule,
         TransactionsModule,
+        StatisticsModule,
       ],
       providers: [
         { provide: APP_FILTER, useClass: ApiExceptionFilter },

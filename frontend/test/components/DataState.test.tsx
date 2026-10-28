@@ -1,8 +1,8 @@
 import type { Money } from '@finebank/shared';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState, type ReactNode } from 'react';
+import { StrictMode, useState, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AmountBox, DataState, MenuTab } from '../../src/components';
@@ -401,5 +401,444 @@ describe('DataState error boundary', () => {
     expect(screen.queryByRole('alert')).toBeNull();
     pending.resolve(good);
     expect(await screen.findByText('$150.00')).toBeInTheDocument();
+  });
+});
+
+/** A widget between two buttons, its DataState on a real query that never retries by itself. */
+function RetryWidget({ queryFn }: { queryFn: () => Promise<string> }) {
+  const text = useQuery({ queryKey: ['retry-widget'], queryFn, retry: false });
+  return (
+    <>
+      <button type="button">Before</button>
+      <section aria-label="widget">
+        <DataState query={text} skeleton={<span>Loading the widget</span>}>
+          {(data) => <p>{data}</p>}
+        </DataState>
+      </section>
+      <button type="button">After</button>
+    </>
+  );
+}
+
+/** In StrictMode, as the app renders: React then also detaches and attaches the refs of every new element once. */
+function renderRetryWidget(queryFn: () => Promise<string>) {
+  const user = userEvent.setup();
+  const client = new QueryClient();
+  render(
+    <StrictMode>
+      <QueryClientProvider client={client}>
+        <RetryWidget queryFn={queryFn} />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+  const widget = screen.getByRole('region', { name: 'widget' });
+  /** DataState's root: the one element the widget's section holds. */
+  const root = () => {
+    expect(widget.children).toHaveLength(1);
+    return widget.firstElementChild as HTMLElement;
+  };
+  return { user, widget, root, client };
+}
+
+// T14 (task 017, follow-up 2 of the task 016 gate): Retry never drops focus to the page body; focus stays in the
+// widget, on DataState's root, through the skeleton and the result (#6, #87).
+describe('DataState focus after Retry', () => {
+  it('renders one root in every state, the same element, focusable by script only', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    const first = root();
+    expect(within(widget).getByText('Loading the widget')).toBeInTheDocument();
+
+    expect(await within(widget).findByRole('alert')).toBeInTheDocument();
+    expect(root()).toBe(first);
+    await user.click(within(widget).getByRole('button', { name: 'Retry' }));
+    expect(within(widget).getByText('Loading the widget')).toBeInTheDocument();
+    expect(root()).toBe(first);
+    pending.resolve('Ready');
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+
+    expect(root()).toBe(first);
+    expect(first).toHaveAttribute('tabindex', '-1');
+    expect(first.tabIndex).toBe(-1);
+  });
+
+  it('moves focus to the root on a keyboard Retry and keeps it there through the skeleton and the data', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    await within(widget).findByRole('alert');
+    screen.getByRole('button', { name: 'Before' }).focus();
+    await user.tab();
+    expect(within(widget).getByRole('button', { name: 'Retry' })).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+
+    expect(within(widget).getByText('Loading the widget')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+    pending.resolve('Ready');
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+    expect(document.activeElement).not.toBe(document.body);
+
+    // Tab goes on from the widget to the next focusable element.
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+  });
+
+  it('moves focus to the root on Space too, and to the new Retry when the retry fails again', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    await within(widget).findByRole('alert');
+    within(widget).getByRole('button', { name: 'Retry' }).focus();
+
+    await user.keyboard(' ');
+    expect(root()).toHaveFocus();
+    pending.reject(new Error('still offline'));
+
+    expect(await within(widget).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    await waitFor(() => expect(within(widget).getByRole('button', { name: 'Retry' })).toHaveFocus());
+    await waitFor(() => expect(root()).not.toHaveAttribute('tabindex'));
+  });
+
+  it('moves focus to the root on a click on Retry', async () => {
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce('Ready');
+    const { user, widget, root } = renderRetryWidget(queryFn);
+
+    await user.click(await within(widget).findByRole('button', { name: 'Retry' }));
+
+    expect(root()).toHaveFocus();
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+  });
+
+  // Safari and Firefox on macOS don't focus a button on a click, as fireEvent.click doesn't: Retry focuses itself
+  // first, so focus moves to the root in every browser.
+  it('focuses Retry on a click, before it retries, where the click does not', () => {
+    const refetch = vi.fn<DataStateQuery<number[]>['refetch']>(never);
+    const { container } = render(
+      <StrictMode>
+        <DataState
+          query={query({ status: 'error', fetchStatus: 'idle', data: undefined }, refetch)}
+          skeleton={skeleton}
+        >
+          {(rows) => <p>{rows.length} rows</p>}
+        </DataState>
+      </StrictMode>,
+    );
+    const retry = screen.getByRole('button', { name: 'Retry' });
+    const focus = vi.spyOn(retry, 'focus');
+
+    fireEvent.click(retry);
+
+    expect(focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true });
+    expect(focus).toHaveBeenCalledBefore(refetch);
+    expect(container.firstElementChild).toHaveFocus();
+  });
+
+  it('is never a Tab stop: Tab goes from the button before the widget to the one after it', async () => {
+    const { user, widget, root } = renderRetryWidget(() => Promise.resolve('Ready'));
+    await within(widget).findByText('Ready');
+    screen.getByRole('button', { name: 'Before' }).focus();
+
+    await user.tab();
+
+    expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+    expect(root()).not.toHaveFocus();
+  });
+
+  it('leaves focus where it is when the data arrives without a Retry', async () => {
+    const pending = deferred<string>();
+    const { widget } = renderRetryWidget(() => pending.promise);
+    screen.getByRole('button', { name: 'Before' }).focus();
+
+    pending.resolve('Ready');
+
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Before' })).toHaveFocus();
+  });
+});
+
+// A tabindex="-1" element takes focus from a click too: until a Retry needs it, the root has none, so a click in a
+// widget focuses what it did before (task 016: a click in the Recent Transaction panel focuses the panel).
+describe('DataState root before a Retry', () => {
+  it('has no tabindex until a Retry focuses it, then keeps tabindex="-1"', async () => {
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce('Ready');
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    expect(root()).not.toHaveAttribute('tabindex');
+    await within(widget).findByRole('alert');
+    expect(root()).not.toHaveAttribute('tabindex');
+
+    await user.click(within(widget).getByRole('button', { name: 'Retry' }));
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+
+    expect(root()).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('leaves a click in the content to focus its focusable ancestor, as without DataState', async () => {
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <div tabIndex={0} aria-label="panel" role="region">
+          <RetryWidget queryFn={() => Promise.resolve('Ready')} />
+        </div>
+      </QueryClientProvider>,
+    );
+
+    await user.click(await screen.findByText('Ready'));
+
+    expect(screen.getByRole('region', { name: 'panel' })).toHaveFocus();
+  });
+});
+
+// Code review of task 017: the root is focusable by script only, so it keeps its tabindex only while it holds the
+// focus Retry gave it; a window blur keeps it, so focus comes back to it with the window.
+describe('DataState root after the Retry focus moves on', () => {
+  it('drops the tabindex once focus moves to another element in the page', async () => {
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce('Ready');
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    await user.click(await within(widget).findByRole('button', { name: 'Retry' }));
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+
+    await user.tab();
+
+    expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+    await waitFor(() => expect(root()).not.toHaveAttribute('tabindex'));
+  });
+
+  it('keeps the tabindex when the window loses focus, so focus can come back to the root', async () => {
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce('Ready');
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    await user.click(await within(widget).findByRole('button', { name: 'Retry' }));
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+
+    // The window's blur: the root stays the active element.
+    fireEvent.blur(root());
+    await act(() => new Promise((done) => setTimeout(done, 20)));
+
+    expect(root()).toHaveFocus();
+    expect(root()).toHaveAttribute('tabindex', '-1');
+  });
+
+  // Chromium fires no blur while the page has no system focus (DevTools or another window active), so the root's blur
+  // handler never runs: the new Retry takes the tabindex away when it takes the focus.
+  it('drops the tabindex when the new Retry takes focus, with no blur from the root', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { user, widget, root } = renderRetryWidget(queryFn);
+    await within(widget).findByRole('alert');
+    within(widget).getByRole('button', { name: 'Retry' }).focus();
+    await user.keyboard('{Enter}');
+    expect(root()).toHaveAttribute('tabindex', '-1');
+    root().addEventListener('focusout', (event) => event.stopPropagation());
+
+    pending.reject(new Error('still offline'));
+
+    await waitFor(() => expect(within(widget).getByRole('button', { name: 'Retry' })).toHaveFocus());
+    expect(root()).not.toHaveAttribute('tabindex');
+  });
+
+  it('moves focus to the new Retry when the retried data fails to render', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const client = new QueryClient();
+    const queryFn = vi
+      .fn<() => Promise<Money>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ cents: 12.5, currency: 'USD' });
+    render(
+      <StrictMode>
+        <QueryClientProvider client={client}>
+          <AmountWidget name="first" queryFn={queryFn} />
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+    const retry = await screen.findByRole('button', { name: 'Retry' });
+    retry.focus();
+
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => expect(queryFn).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong.');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry' })).toHaveFocus());
+    const root = screen.getByRole('region', { name: 'first' }).firstElementChild;
+    await waitFor(() => expect(root).not.toHaveAttribute('tabindex'));
+  });
+});
+
+/** The window's return, as TanStack Query hears it: a visibilitychange on the window refetches the stale queries. */
+function windowRegainsFocus() {
+  act(() => {
+    window.dispatchEvent(new Event('visibilitychange'));
+  });
+}
+
+/** Renders the widget in its error state, with Retry focused by Tab from the button before it. */
+async function retryFocusedByKeyboard(queryFn: () => Promise<string>) {
+  const rendered = renderRetryWidget(queryFn);
+  await within(rendered.widget).findByRole('alert');
+  screen.getByRole('button', { name: 'Before' }).focus();
+  await rendered.user.tab();
+  expect(within(rendered.widget).getByRole('button', { name: 'Retry' })).toHaveFocus();
+  return rendered;
+}
+
+// #114 (c), task 017 gate: whenever the focused Retry leaves the page, for any reason, focus moves to the root with
+// the same tabindex handling as after a Retry press, never to the page body.
+describe('DataState focus when the focused Retry leaves without a press', () => {
+  it('moves focus to the root when a refetch on window focus replaces the focused Retry and succeeds', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { user, widget, root } = await retryFocusedByKeyboard(queryFn);
+
+    windowRegainsFocus();
+
+    expect(await within(widget).findByText('Loading the widget')).toBeInTheDocument();
+    expect(queryFn).toHaveBeenCalledTimes(2);
+    expect(root()).toHaveFocus();
+    expect(root()).toHaveAttribute('tabindex', '-1');
+    pending.resolve('Ready');
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+    expect(document.activeElement).not.toBe(document.body);
+
+    // Tab goes on from the widget, and the root is a plain element again.
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+    await waitFor(() => expect(root()).not.toHaveAttribute('tabindex'));
+  });
+
+  it('moves focus to the new Retry when the refetch on window focus fails again', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { widget, root } = await retryFocusedByKeyboard(queryFn);
+
+    windowRegainsFocus();
+    expect(await within(widget).findByText('Loading the widget')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+    pending.reject(new Error('still offline'));
+
+    expect(await within(widget).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    await waitFor(() => expect(within(widget).getByRole('button', { name: 'Retry' })).toHaveFocus());
+    await waitFor(() => expect(root()).not.toHaveAttribute('tabindex'));
+  });
+
+  // The widget may be out of view when a refetch on window focus replaces its Retry: focus moves, the page stays.
+  it('moves focus to the root and to the new Retry without scrolling the page', async () => {
+    const pending = deferred<string>();
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockReturnValueOnce(pending.promise);
+    const { widget, root } = await retryFocusedByKeyboard(queryFn);
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+
+    windowRegainsFocus();
+    expect(await within(widget).findByText('Loading the widget')).toBeInTheDocument();
+    pending.reject(new Error('still offline'));
+    const retry = await within(widget).findByRole('button', { name: 'Retry' });
+    await waitFor(() => expect(retry).toHaveFocus());
+
+    expect(focus.mock.contexts).toContain(root());
+    expect(focus.mock.contexts).toContain(retry);
+    for (const args of focus.mock.calls) expect(args).toEqual([{ preventScroll: true }]);
+  });
+
+  it('moves focus to the root when data arrives without a refetch', async () => {
+    const { widget, root, client } = await retryFocusedByKeyboard(() => Promise.reject(new Error('offline')));
+
+    act(() => {
+      client.setQueryData(['retry-widget'], 'Set elsewhere');
+    });
+
+    expect(await within(widget).findByText('Set elsewhere')).toBeInTheDocument();
+    expect(root()).toHaveFocus();
+    expect(root()).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('leaves focus where it is when Retry leaves without focus', async () => {
+    const queryFn = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce('Ready');
+    const { widget, root } = renderRetryWidget(queryFn);
+    await within(widget).findByRole('alert');
+    screen.getByRole('button', { name: 'Before' }).focus();
+
+    windowRegainsFocus();
+
+    expect(await within(widget).findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Before' })).toHaveFocus();
+    expect(root()).not.toHaveAttribute('tabindex');
+  });
+});
+
+// Code review of #114 (c): a Retry that comes in takes focus only from the root, never from where the user is.
+describe('DataState focus when a Retry comes in', () => {
+  it('leaves focus where it is when the first load fails', async () => {
+    const pending = deferred<string>();
+    const { widget, root } = renderRetryWidget(() => pending.promise);
+    screen.getByRole('button', { name: 'Before' }).focus();
+
+    pending.reject(new Error('offline'));
+
+    expect(await within(widget).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(screen.getByRole('button', { name: 'Before' })).toHaveFocus();
+    expect(root()).not.toHaveAttribute('tabindex');
+  });
+
+  it('leaves focus where it is when new data fails to render and the error state comes in', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const client = new QueryClient();
+    render(
+      <StrictMode>
+        <QueryClientProvider client={client}>
+          <button type="button">Before</button>
+          <AmountWidget name="first" queryFn={() => Promise.resolve(good)} />
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+    expect(await screen.findByText('$150.00')).toBeInTheDocument();
+    screen.getByRole('button', { name: 'Before' }).focus();
+
+    act(() => {
+      client.setQueryData(['amount', 'first'], bad);
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(screen.getByRole('button', { name: 'Before' })).toHaveFocus();
+    expectOnlyTheBadAmountLogged(consoleError);
   });
 });

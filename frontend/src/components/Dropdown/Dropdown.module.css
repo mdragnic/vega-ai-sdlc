@@ -12,10 +12,12 @@
   outline: none;
 }
 
-/* Keyboard focus on the box, plain and inline triggers (#87); none when focus returns after a pointer choice. */
+/* Keyboard focus on the box, plain, inline and comparison triggers (#87); none when focus returns after a pointer
+   choice. */
 .box:focus-visible:not([data-pointer-focus]),
 .plain:focus-visible:not([data-pointer-focus]),
-.inline:focus-visible:not([data-pointer-focus]) {
+.inline:focus-visible:not([data-pointer-focus]),
+.comparison:focus-visible:not([data-pointer-focus]) {
   outline: var(--border-width-focus-ring) solid var(--color-primary);
   outline-offset: var(--space-focus-ring-offset);
 }
@@ -44,6 +46,24 @@
   flex-shrink: 0;
   width: var(--size-icon-sm);
   height: var(--size-icon-sm);
+  color: var(--color-secondary);
+}
+
+/* 104 Statistics "Weekly Comparison" and 109 "Monthly Comparison": the label in Default Black, Semibold 16/24, then
+   DownArrow24 in Secondary, 12 after it; 24 high. */
+.comparison {
+  gap: var(--space-dropdown-comparison-chevron-gap);
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+.comparisonChevron {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
   color: var(--color-secondary);
 }
 

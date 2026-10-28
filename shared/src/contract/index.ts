@@ -7,6 +7,7 @@ export * from './entry.js';
 export * from './error.js';
 export * from './money.js';
 export * from './savings-goal.js';
+export * from './statistics.js';
 export * from './test-clock.js';
 export * from './transaction.js';
 export * from './user.js';

@@ -15,17 +15,19 @@ type DropdownProps = {
   /**
    * The closed look of one place: `box` the 110 Savings Goal period, `plain` the 110 Saving Summary period,
    * `inline` the 111 country code (the label only, in the font and color of its field), `input` the Account
-   * Type select of 106 edit mode, styled like `Input` (#26).
+   * Type select of 106 edit mode, styled like `Input` (#26), `comparison` the chart control of 104 Statistics
+   * ("Weekly Comparison") and 109 ("Monthly Comparison").
    */
-  variant: 'box' | 'plain' | 'inline' | 'input';
+  variant: 'box' | 'plain' | 'inline' | 'input' | 'comparison';
   /** The field name, for a native form submit. */
   name?: string;
 } & ({ 'aria-label': string; 'aria-labelledby'?: never } | { 'aria-labelledby': string; 'aria-label'?: never });
 
 /**
- * The one shared select (#60), on Radix Select: Account Type (#26), the Goals period selectors (#30) and the
- * country code (#33, #43). Each variant keeps its Figma look closed; the open list has one look for all (#90 a)
- * and opens below the trigger, flipping above when there is no room, and scrolls when it is long.
+ * The one shared select (#60), on Radix Select: Account Type (#26), the Goals period selectors (#30), the
+ * country code (#33, #43) and the chart comparisons (#20). Each variant keeps its Figma look closed; the open list
+ * has one look for all (#90 a) and opens below the trigger, flipping above when there is no room, and scrolls when
+ * it is long.
  */
 export function Dropdown({ options, value, onValueChange, variant, name, ...label }: DropdownProps) {
   // Radix moves focus by script, and Chrome then shows the focus ring on the trigger even after a mouse
@@ -64,6 +66,11 @@ export function Dropdown({ options, value, onValueChange, variant, name, ...labe
         {(variant === 'box' || variant === 'plain') && (
           <Select.Icon asChild>
             <ArrowDown2 className={styles.chevron} />
+          </Select.Icon>
+        )}
+        {variant === 'comparison' && (
+          <Select.Icon asChild>
+            <DownArrow24 className={styles.comparisonChevron} />
           </Select.Icon>
         )}
       </Select.Trigger>

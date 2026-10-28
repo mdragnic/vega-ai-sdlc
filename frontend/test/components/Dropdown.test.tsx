@@ -14,7 +14,7 @@ const accountTypes = [
   { value: 'loan', label: 'Loan' },
 ];
 
-type Variant = 'box' | 'plain' | 'inline' | 'input';
+type Variant = 'box' | 'plain' | 'inline' | 'input' | 'comparison';
 
 /** A controlled Dropdown, like a screen keeps it, starting on Checking. */
 function Harness({ onValueChange, variant = 'input' }: { onValueChange: (value: string) => void; variant?: Variant }) {
@@ -219,11 +219,56 @@ describe('Dropdown', () => {
     ['box', true],
     ['plain', true],
     ['input', true],
+    ['comparison', true],
     ['inline', false],
   ] as const)('draws a chevron in the %s variant: %s', (variant, chevron) => {
     const { trigger } = renderDropdown(variant);
 
     expect(within(trigger).queryByText('Checking')).not.toBeNull();
     expect(trigger.querySelector('svg') !== null).toBe(chevron);
+  });
+});
+
+// Task 017 T12, AC7: the comparison look of 104 Statistics ("Weekly Comparison") and 109 ("Monthly Comparison").
+describe('Dropdown comparison look', () => {
+  const comparisons = [{ value: 'weekly', label: 'Weekly Comparison' }];
+
+  function renderComparison() {
+    const onValueChange = vi.fn<(value: string) => void>();
+    render(
+      <Dropdown
+        variant="comparison"
+        options={comparisons}
+        value="weekly"
+        onValueChange={onValueChange}
+        aria-label="Statistics"
+      />,
+    );
+    return { user: userEvent.setup(), onValueChange, trigger: screen.getByRole('combobox', { name: 'Statistics' }) };
+  }
+
+  it('shows the label, then the 24px down chevron, hidden from assistive technology', () => {
+    const { trigger } = renderComparison();
+
+    expect(trigger).toHaveTextContent(/^Weekly Comparison$/);
+    const chevron = trigger.lastElementChild!;
+    expect(chevron.tagName.toLowerCase()).toBe('svg');
+    expect(chevron).toHaveAttribute('viewBox', '0 0 24 24');
+    expect(chevron).toHaveAttribute('aria-hidden', 'true');
+    expect(trigger.firstElementChild).toHaveTextContent('Weekly Comparison');
+  });
+
+  it('opens the shared list with its one option selected; choosing it again changes nothing', async () => {
+    const { user, onValueChange, trigger } = renderComparison();
+
+    await user.click(trigger);
+    const options = within(screen.getByRole('listbox')).getAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual(['Weekly Comparison']);
+    expect(options[0]).toHaveAttribute('aria-selected', 'true');
+    await user.click(options[0]!);
+
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(trigger).toHaveTextContent('Weekly Comparison');
   });
 });

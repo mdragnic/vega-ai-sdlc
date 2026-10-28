@@ -1,0 +1,44 @@
+#114 (c) break-on-purpose on the final code, 2026-10-28T14:02:26+01:00
+sha256 DataState.tsx before: 10de23f5afee5dd0d45424fcba5f5e2681b8aa6bcc3857e5bd14857672c81885
+--- mutation (diff original -> broken): the focus move to the root removed
+71d70
+<       element.focus();
+--- BROKEN, unit:
+     × moves focus to the root when a refetch on window focus replaces the focused Retry and succeeds 153ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: [2mexpect([22m[31melement[39m[2m).toHaveFocus()[22m
+Received element with focus:
+ ❯ test/components/DataState.test.tsx:679:20
+    679|     expect(root()).toHaveFocus();
+--- BROKEN, e2e:
+  ✘  1 [chromium] › tests\overview-statistics.spec.ts:341:1 › moves focus to Statistics’ root with the ring when a refetch on window focus replaces Retry focused by Tab (13.7s)
+    Error: expect(locator).toBeFocused() failed
+    Expected: focused
+    Received: inactive
+  1 failed
+sha256 DataState.tsx after restore: 10de23f5afee5dd0d45424fcba5f5e2681b8aa6bcc3857e5bd14857672c81885
+file, git diff HEAD and git status hashes restored OK
+--- RESTORED, unit:
+      Tests  1 passed | 33 skipped (34)
+--- RESTORED, e2e:
+  ✓  1 [chromium] › tests\overview-statistics.spec.ts:341:1 › moves focus to Statistics’ root with the ring when a refetch on window focus replaces Retry focused by Tab (8.5s)
+  1 passed (16.3s)
+
+Code review of #114 (c), important 1: a Retry that comes in must not take focus from elsewhere. 2026-10-28T15:26:18+01:00
+sha256 DataState.tsx before: 10de23f5afee5dd0d45424fcba5f5e2681b8aa6bcc3857e5bd14857672c81885
+--- mutation (diff original -> broken): the attach always focuses the new Retry
+66c66
+<     if (root.current !== null && document.activeElement === root.current) button.focus();
+---
+>     button.focus();
+--- BROKEN, unit:
+     × leaves focus where it is when the first load fails 102ms
+     × leaves focus where it is when new data fails to render and the error state comes in 26ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ test/components/DataState.test.tsx:748:60
+ ❯ test/components/DataState.test.tsx:771:60
+      Tests  2 failed | 34 skipped (36)
+sha256 DataState.tsx after restore: 10de23f5afee5dd0d45424fcba5f5e2681b8aa6bcc3857e5bd14857672c81885
+file, git diff HEAD and git status hashes restored OK
+--- RESTORED, unit:
+      Tests  2 passed | 34 skipped (36)

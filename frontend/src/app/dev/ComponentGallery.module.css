@@ -315,3 +315,10 @@
   padding: 0;
   list-style: none;
 }
+
+/* The Overview Statistics card: a flex column at its 260 minimum, as OverviewPage draws it (#105 a). */
+.statisticsCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-statistics-card-height);
+}

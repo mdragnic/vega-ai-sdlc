@@ -40,6 +40,17 @@ export function formatDateBox(value: string): { month: string; day: string } {
   return { month: format(date, 'MMM'), day: format(date, 'dd') };
 }
 
+/**
+ * The Statistics chart's x labels: the two-digit day and the 3-letter weekday, `19 Mon`, `01 Sun` (#84). Plain dates
+ * only, like the days the backend sends; display only, no zone and no arithmetic.
+ */
+export function formatDayLabel(value: string): string {
+  if (!plainDateSchema.safeParse(value).success) {
+    throw new RangeError(`Not a plain date: ${value}`);
+  }
+  return format(parseISO(value), 'dd EEE');
+}
+
 /** Month labels: `May, 2023` (#11). `month` runs from 1 (January) to 12. */
 export function formatMonthLabel(year: number, month: number): string {
   const firstDay = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;

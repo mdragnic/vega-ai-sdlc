@@ -24,6 +24,12 @@ const figure = (region: string, name: string) =>
 const amountField = (name: string) => within(figure('PopupInputSmall', name)).getByRole('textbox');
 const chartState = (name: string) => figure('ComparisonBarChart', name);
 const dropdownTrigger = (name: string) => within(figure('Dropdown', name)).getByRole('combobox');
+/** One column of a chart's hidden table, its header row left out. */
+const cells = (table: HTMLElement, column: number) =>
+  within(table)
+    .getAllByRole('row')
+    .slice(1)
+    .map((row) => row.children[column]!.textContent);
 
 // The dev gallery (AC12): one section per shared component. Vitest runs in development mode.
 describe('component gallery', () => {
@@ -333,6 +339,34 @@ describe('component gallery', () => {
   });
 
   // Task 016: the Recent Transaction card, its row and its skeleton.
+  // Task 017 T17: the comparison look and the Statistics card in every state, on sample data with no network.
+  it('shows the comparison look and the Statistics samples: the demo week, a quiet week, all 0, loading and error', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    expect(dropdownTrigger('comparison, like 104 Statistics')).toHaveTextContent(/^Weekly Comparison$/);
+    await user.click(dropdownTrigger('comparison, like 104 Statistics'));
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Weekly Comparison']);
+    await user.keyboard('{Escape}');
+
+    const chartTable = (name: string) =>
+      within(figure('Statistics', name)).findByRole('table', { name: 'Expenses per day, this week and last week' });
+    const demo = await chartTable('The demo week (104)');
+    expect(cells(demo, 0)).toEqual(['19 Mon', '20 Tue', '21 Wed', '22 Thu', '23 Fri', '24 Sat', '25 Sun']);
+    expect(cells(demo, 2)).toEqual(['$10.64', '$24.64', '$17.64', '$266.00', '', '', '']);
+    expect(
+      within(figure('Statistics', 'The demo week (104)')).getByRole('combobox', { name: 'Statistics' }),
+    ).toHaveTextContent('Weekly Comparison');
+    expect(cells(await chartTable('This week all 0'), 2)).toEqual(['$0.00', '$0.00', '$0.00', '$0.00', '', '', '']);
+    expect(
+      await within(figure('Statistics', 'Every value 0')).findByText('No expenses this week or last week'),
+    ).toBeVisible();
+    expect(figure('Statistics', 'Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    const error = figure('Statistics', 'Error');
+    expect(await within(error).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(within(error).getByRole('combobox', { name: 'Statistics' })).toBeInTheDocument();
+  });
+
   it('shows the Recent Transaction samples: the tabs, the states, a long row and the skeleton', async () => {
     const user = userEvent.setup();
     await renderGallery();

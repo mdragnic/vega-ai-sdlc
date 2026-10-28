@@ -1,0 +1,51 @@
+Task 017 visual validation, 2026-10-28. Playwright MCP, fresh Chromium contexts in Europe/Belgrade, 1440x1024 at
+device scale 2, scrollbars hidden (as tasks 013 to 016). Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite dev server, a user signed up through the API at
+that clock (the demo data). No Figma calls: compared with docs/figma/104. Overview.png only.
+
+Files
+- overview-1440-2x.png: /overview at 1440x1024, 2x.
+- statistics-card-1440-2x.png: the Statistics card alone (728x260 at x 680, y 549).
+- 104-statistics-card-2x.png: the same box cut from 104. Overview.png (x 1360, y 896 at 2x, 1456x520).
+- compare-104-statistics.png: 104 above, built below, then both overlaid at 50% with the card tops aligned.
+- open-list-1440-2x.png, overview-1920x1080.png, overview-1280x1024.png, state-skeleton-2x.png, state-error-2x.png,
+  state-empty-2x.png, retry-keyboard-ring-skeleton-2x.png, retry-keyboard-ring-chart-2x.png: evidence only.
+
+Measured at 2x on both crops, relative to the card's top-left (a Node script with built-ins only, ink boxes):
+- "Weekly Comparison" ink: 104 x 49-354, y 44-73; built x 50-355, y 60-89.
+- The chevron ink: 104 x 392-419, y 48-63; built x 394-421, y 64-79.
+- The legend's teal swatch: 104 x 1028-1059, y 48-63; built x 1034-1065, y 64-79. The legend text ends at x 1405 in 104
+  and 1407 built.
+- The grid lines: built at y 126-127, 198-199, 270-271, 342-343 and 414-415; 104's top line at y 126-127 and the others
+  at the same rows (seen in the overlay; the probe column is under a bar in 104).
+- The first gray bar: x 220-251 and its base at y 415 in both.
+- The first x label: y 445-465 in both. The y labels' right edge: x 142 in 104, 141 built.
+
+Differences
+1. The header row is 8 lower (16 at 2x): the control's text, the chevron and the legend (#93 a, expected).
+2. The y labels are $0, $100, $200, $300, $400 against 104's $0, $2k, $10k, $50k, $250k, so every bar's height differs
+   (#55, #91, expected).
+3. The demo values and the labels 19 Mon to 25 Sun against 17 Sun to 23 Sat (#12, #20, expected).
+4. No teal bar on Fri, Sat and Sun: the days after today (#55, expected).
+5. The card is 260 high against 258 (#93, expected) and starts at y 549, 101 lower than 104's 448: the top row's growth
+   (task 015, expected).
+6. The legend starts 3 px further right at 1x (swatch x 1034 against 1028 at 2x) and ends 1 px further right: the
+   ChartLegend of task 006 (item and swatch gaps rounded to 24 and 8 from 25 and 8.5), out of scope here.
+7. The chevron is 1 px further right at 1x (the 12 gap token against the measured 11.5).
+8. The control text is 0.5 px further right at 1x (Inter Variable in Chromium against Figma's rendering).
+9. The rest of the page as listed in tasks 013 to 016.
+
+Evidence only
+- The open list: one option, "Weekly Comparison", teal and semibold (selected, #90 a), highlighted in Gray/06, 8 under
+  the trigger, as wide as it (191.5); the trigger at x 704, y 573, 191.5x24.
+- 1920x1080: the card at x 840, y 448, 1048x260; the groups wider apart.
+- 1280x1024: the card at x 626.7, y 609, 621.3x358 (grid rows 2 and 3 grown by Recent Transaction, task 016); the
+  header row and the 188 chart box at the card's top, the extra height empty below (#113 a).
+- The skeleton, the error state and "No expenses this week or last week" (the backend clock at 2021-12-31T10:00:00Z)
+  fill the 188 box under the header row; the card 260 in each.
+- After a keyboard Retry (Tab from Recent Transaction's panel to the control, Tab to Retry, Enter): focus on DataState's
+  root (tabindex -1, aria-busy true) with the #87 ring (2px solid rgb(41, 157, 145), :focus-visible) through the
+  skeleton, and still there with the ring when the chart shows; never the body.
+- Observation for the gate: the ring goes round the 188 box with its 2 px offset, so its top edge (y 44 to 46 under the
+  card's top) touches the descenders of "Weekly Comparison" (ink to about y 45.5) by about 1.5 px. Undesigned (#87
+  applied as is); no new offset was invented.

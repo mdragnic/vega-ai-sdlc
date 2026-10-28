@@ -151,14 +151,20 @@ test('tabs from "View All" to the selected tab and the panel with the ring, then
   await expectSelected(page, 'Expenses');
   await expectRing(page, tab(page, 'Expenses'));
 
-  // One tab stop in the tablist: the selected tab, then the panel, then out of the page's content.
+  // One tab stop in the tablist: the selected tab, then the panel, then the next card's first focusable element, the
+  // "Weekly Comparison" control (task 017), then out of the page's content.
+  const statisticsControl = region(page, 'Statistics').getByRole('combobox', { name: 'Statistics' });
   await page.keyboard.press('Tab');
   await expect(panel(page)).toBeFocused();
   await expectRing(page, panel(page));
   await page.keyboard.press('Tab');
+  await expect(statisticsControl).toBeFocused();
+  await page.keyboard.press('Tab');
   expect(await page.evaluate(() => document.querySelector('main')!.contains(document.activeElement))).toBe(false);
 
-  await panel(page).focus();
+  await statisticsControl.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(panel(page)).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(tab(page, 'Expenses')).toBeFocused();
   await page.keyboard.press('Shift+Tab');
@@ -304,8 +310,9 @@ test('shows the tabs and the skeleton while loading, the error state after the r
   await expect(rows(page)).toHaveCount(0);
   await expect(region(page, 'Total Balance').getByText('$130,254.67')).toBeVisible();
   await expect(region(page, 'Upcoming Bill').getByRole('listitem')).toHaveCount(2);
-  // The skeleton inside the card's content box, the card ending with Expenses Breakdown.
-  const skeleton = await box(busy);
+  // The skeleton inside the card's content box, the card ending with Expenses Breakdown. DataState's busy root fills
+  // the panel, so measure the skeleton itself (task 017).
+  const skeleton = await box(busy.locator(':scope > [aria-hidden="true"]'));
   const cardBox = await box(card(recent(page)));
   const expenses = await box(card(region(page, 'Expenses Breakdown')));
   expect(skeleton.y + skeleton.height).toBeLessThanOrEqual(cardBox.y + cardBox.height - 24);

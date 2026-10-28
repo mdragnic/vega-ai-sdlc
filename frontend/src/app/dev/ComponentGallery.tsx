@@ -10,6 +10,7 @@ import {
   type RecentTransactionsResponse,
   type SavingsGoalResponse,
   type UpcomingBillsResponse,
+  type WeeklyComparisonResponse,
 } from '@finebank/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -55,6 +56,7 @@ import {
   Skeleton,
   SliderOption,
   Spinner,
+  Statistics,
   TargetVsAchievementMeter,
   TextDivider,
   TotalBalance,
@@ -267,7 +269,12 @@ function DataStateReady() {
   return (
     <Card>
       <DataState query={query} skeleton={<Skeleton shape="block" className={styles.skeletonAmount} />}>
-        {(amount) => <AmountBox amount={amount} size="compact" />}
+        {(amount) => (
+          // A block of its own, so DataState's column does not stretch the box.
+          <div>
+            <AmountBox amount={amount} size="compact" />
+          </div>
+        )}
       </DataState>
     </Card>
   );
@@ -406,7 +413,7 @@ function DropdownExample({
   initial,
   label,
 }: {
-  variant: 'box' | 'plain' | 'inline' | 'input';
+  variant: 'box' | 'plain' | 'inline' | 'input' | 'comparison';
   options: DropdownOption[];
   initial: string;
   label: string;
@@ -738,6 +745,60 @@ function RecentExample({ name, answer }: { name: string; answer: RecentTransacti
     <RecentCard>
       <RecentTransaction query={query} />
     </RecentCard>
+  );
+}
+
+/** One day of the weekly comparison as the backend sends it: this week's date, both weeks' cents, null after today. */
+const comparisonDay = (date: string, lastWeek: number, thisWeek: number | null) => ({
+  date,
+  lastWeek: usd(lastWeek),
+  thisWeek: thisWeek === null ? null : usd(thisWeek),
+});
+
+// Task 017: the Statistics samples as the backend sends them, ticks included, so the gallery computes nothing (#11).
+const sampleWeek: WeeklyComparisonResponse = {
+  days: [
+    comparisonDay('2026-10-19', 5_880, 1_064),
+    comparisonDay('2026-10-20', 1_064, 2_464),
+    comparisonDay('2026-10-21', 2_016, 1_764),
+    comparisonDay('2026-10-22', 32_200, 26_600),
+    comparisonDay('2026-10-23', 1_478, null),
+    comparisonDay('2026-10-24', 18_816, null),
+    comparisonDay('2026-10-25', 14_784, null),
+  ],
+  ticks: [0, 10_000, 20_000, 30_000, 40_000].map(usd),
+};
+
+/** This week all 0: last week's gray bars only, the same ticks. */
+const sampleQuietWeek: WeeklyComparisonResponse = {
+  days: sampleWeek.days.map((day) => ({ ...day, thisWeek: day.thisWeek && usd(0) })),
+  ticks: sampleWeek.ticks,
+};
+
+/** Every value 0: no ticks, the empty message (#55, #91 c). */
+const sampleZeroWeek: WeeklyComparisonResponse = {
+  days: sampleWeek.days.map(({ date, thisWeek }) => comparisonDay(date, 0, thisWeek === null ? null : 0)),
+  ticks: null,
+};
+
+/** The Statistics card as Overview draws it at 1440 (728 wide, at least 260 high), on a local query. */
+function StatisticsExample({ name, answer }: { name: string; answer: WeeklyComparisonResponse | 'pending' | 'fails' }) {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'statistics', name],
+    queryFn: () =>
+      answer === 'pending'
+        ? new Promise<WeeklyComparisonResponse>(() => undefined)
+        : answer === 'fails'
+          ? waitThenFail<WeeklyComparisonResponse>()
+          : Promise.resolve(answer),
+  });
+  return (
+    <div className={styles.sampleWide}>
+      <Card className={styles.statisticsCard}>
+        <Statistics query={query} />
+      </Card>
+    </div>
   );
 }
 
@@ -1262,6 +1323,16 @@ export function ComponentGallery() {
             <DropdownExample variant="input" options={accountTypes} initial="checking" label="Account Type" />
           </Card>
         </Example>
+        <Example name="comparison, like 104 Statistics">
+          <Card>
+            <DropdownExample
+              variant="comparison"
+              options={[{ value: 'weekly', label: 'Weekly Comparison' }]}
+              initial="weekly"
+              label="Statistics"
+            />
+          </Card>
+        </Example>
         <Example name="60 months">
           <Card>
             <DropdownExample variant="box" options={monthOptions(60)} initial="2026-10" label="Month" />
@@ -1526,6 +1597,24 @@ export function ComponentGallery() {
           <RecentCard>
             <RecentTransactionSkeleton />
           </RecentCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="Statistics" wide>
+        <Example name="The demo week (104)">
+          <StatisticsExample name="demo" answer={sampleWeek} />
+        </Example>
+        <Example name="This week all 0">
+          <StatisticsExample name="quiet" answer={sampleQuietWeek} />
+        </Example>
+        <Example name="Every value 0">
+          <StatisticsExample name="zero" answer={sampleZeroWeek} />
+        </Example>
+        <Example name="Loading">
+          <StatisticsExample name="loading" answer="pending" />
+        </Example>
+        <Example name="Error">
+          <StatisticsExample name="error" answer="fails" />
         </Example>
       </GallerySection>
 

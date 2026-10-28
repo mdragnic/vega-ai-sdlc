@@ -9,7 +9,8 @@ import { type Redirect, GoogleSignInService } from './google-sign-in.service.js'
 import { clearSignInCookieOptions, GOOGLE_SIGN_IN_COOKIE, signInCookieOptions } from './sign-in-cookie.js';
 
 /**
- * `/api/auth/google` and its callback (#75): page navigations that answer `302` with no body and `no-store`. Both
+ * `/api/auth/google` and its callback (#75): page navigations that answer `302` with no body (`no-store` comes from
+ * `configureApp`, as on every `/api` response). Both
  * are GET, which Nest's CSRF protection lets pass; the state check protects the callback from login CSRF.
  */
 @Public()
@@ -41,7 +42,6 @@ export class GoogleAuthController {
     const http = this.adapterHost.httpAdapter;
     if (signInCookie !== undefined) http.setCookie(response, GOOGLE_SIGN_IN_COOKIE, signInCookie, signInCookieOptions);
     if (sessionToken !== undefined) http.setCookie(response, SESSION_COOKIE, sessionToken, sessionCookieOptions(true));
-    http.setHeader(response, 'Cache-Control', 'no-store');
     http.setHeader(response, 'Location', location);
     http.status(response, HttpStatus.FOUND);
     http.end(response);

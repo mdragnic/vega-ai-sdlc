@@ -40,6 +40,7 @@ export { Section } from './Section/Section';
 export { Skeleton } from './Skeleton/Skeleton';
 export { SliderOption } from './SliderOption/SliderOption';
 export { Spinner } from './Spinner/Spinner';
+export { Statistics } from './Statistics/Statistics';
 export { TargetVsAchievementMeter } from './TargetVsAchievementMeter/TargetVsAchievementMeter';
 export { TextDivider } from './TextDivider/TextDivider';
 export { TotalBalance } from './TotalBalance/TotalBalance';

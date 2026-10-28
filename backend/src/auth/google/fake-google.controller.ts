@@ -50,7 +50,6 @@ export class FakeGoogleController {
 
   @Get(FAKE_GOOGLE_AUTHORIZE_PATH)
   @Header('Content-Type', 'text/html; charset=utf-8')
-  @Header('Cache-Control', 'no-store')
   page(@Query({ schema: authorizationRequestSchema }) request: AuthorizationRequest): string {
     return fakeGooglePage(request);
   }
@@ -71,7 +70,6 @@ export class FakeGoogleController {
     answer.set('state', decision.state);
 
     const http = this.adapterHost.httpAdapter;
-    http.setHeader(response, 'Cache-Control', 'no-store');
     http.setHeader(response, 'Location', `${GOOGLE_REDIRECT_URI}?${answer.toString()}`);
     http.status(response, HttpStatus.FOUND);
     http.end(response);

@@ -1,3 +1,19 @@
+/* The one root of every state, where focus goes when the focused Retry leaves (task 016 gate, #114). A flex column
+   that takes the room its parent gives (a flex column's free height, or a fixed height), so each state lays out as
+   directly in the parent. */
+.root {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+/* Keyboard focus (#87): when Retry had focus from the keyboard, whatever made it leave (a press, a refetch); none
+   when a click gave it focus. */
+.root:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
 /* Not designed (#6): the message centered in the widget's content area, Retry below it. It fills a parent
    with a fixed height, or grows in a flex column. */
 .message {

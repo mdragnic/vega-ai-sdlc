@@ -8,6 +8,7 @@ import {
   type SavingsGoalRequest,
   type SavingsGoalResponse,
   type UpcomingBillsResponse,
+  type WeeklyComparisonResponse,
 } from '@finebank/shared';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -16,6 +17,7 @@ import { createMemoryRouter, type RouteObject } from 'react-router';
 
 import { AppProviders } from '../../src/app/AppProviders';
 import { routes } from '../../src/app/routes';
+import dataStateStyles from '../../src/components/DataState/DataState.module.css';
 
 /** The signed-in user as `GET /api/auth/me` returns it. */
 export const signedInUser: CurrentUser = {
@@ -294,17 +296,82 @@ export const recentTransactions = {
     http.get(recentTransactionsPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
 };
 
+/** A day of `GET /api/statistics/weekly-comparison`: this week's date and both weeks' cents, `null` after today. */
+const comparisonDay = (date: string, lastWeek: number, thisWeek: number | null) => ({
+  date,
+  lastWeek: usd(lastWeek),
+  thisWeek: thisWeek === null ? null : usd(thisWeek),
+});
+
+/**
+ * The answer a first login gets on Thu 22 Oct 2026 in Belgrade (demo-data.md, "What a first login shows"; task 017
+ * AC1): Mon 19 to Sun 25 Oct, last week's values every day, this week's to today, the ticks $0 to $400.
+ */
+export const demoWeeklyComparison: WeeklyComparisonResponse = {
+  days: [
+    comparisonDay('2026-10-19', 5_880, 1_064),
+    comparisonDay('2026-10-20', 1_064, 2_464),
+    comparisonDay('2026-10-21', 2_016, 1_764),
+    comparisonDay('2026-10-22', 32_200, 26_600),
+    comparisonDay('2026-10-23', 1_478, null),
+    comparisonDay('2026-10-24', 18_816, null),
+    comparisonDay('2026-10-25', 14_784, null),
+  ],
+  ticks: [0, 10_000, 20_000, 30_000, 40_000].map(usd),
+};
+
+/** Every value of both weeks 0: no ticks, the empty state (#55). */
+export const allZeroWeeklyComparison: WeeklyComparisonResponse = {
+  days: demoWeeklyComparison.days.map(({ date, thisWeek }) => comparisonDay(date, 0, thisWeek === null ? null : 0)),
+  ticks: null,
+};
+
+/** This week all 0 with last week's values and their ticks. */
+export const quietWeekComparison: WeeklyComparisonResponse = {
+  days: demoWeeklyComparison.days.map((day) => ({ ...day, thisWeek: day.thisWeek && usd(0) })),
+  ticks: demoWeeklyComparison.ticks,
+};
+
+const weeklyComparisonPath = '*/api/statistics/weekly-comparison';
+
+/** `GET /api/statistics/weekly-comparison` answers: the demo, all 0, this week all 0, pending and failing. */
+export const weeklyComparison = {
+  answers: (body: WeeklyComparisonResponse = demoWeeklyComparison) =>
+    http.get(weeklyComparisonPath, () => HttpResponse.json(body)),
+  allZero: () => http.get(weeklyComparisonPath, () => HttpResponse.json(allZeroWeeklyComparison)),
+  quietWeek: () => http.get(weeklyComparisonPath, () => HttpResponse.json(quietWeekComparison)),
+  pending: () =>
+    http.get(weeklyComparisonPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoWeeklyComparison);
+    }),
+  fails: () =>
+    http.get(weeklyComparisonPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+};
+
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
- * its accounts, its goal, its bills and its recent transactions without asking: the demo data of each. A test's own
- * `server.use` comes first.
+ * its accounts, its goal, its bills, its recent transactions and its weekly comparison without asking: the demo data
+ * of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
   savingsGoal.answers(),
   upcomingBills.answers(),
   recentTransactions.answers(),
+  weeklyComparison.answers(),
 ];
+
+/** DataState's root (task 017): where focus goes after Retry, with tabindex="-1" from then on; never a Tab stop. */
+const isDataStateRoot = (element: Element) =>
+  element.classList.contains(dataStateStyles.root!) && element.getAttribute('tabindex') === '-1';
+
+/** The DataState root inside `container` after a Retry: exactly one. */
+export function dataStateRootIn(container: Element): HTMLElement {
+  const roots = [...container.querySelectorAll('[tabindex="-1"]')].filter(isDataStateRoot);
+  if (roots.length !== 1) throw new Error(`Expected one DataState root, found ${roots.length}`);
+  return roots[0] as HTMLElement;
+}
 
 /** Every app path in `paths`, with an Account Details path for `/balances/:accountId`. */
 export const appPaths = [

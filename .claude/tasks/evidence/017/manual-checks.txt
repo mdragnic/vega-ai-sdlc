@@ -1,0 +1,47 @@
+Task 017 manual checks, 2026-10-28. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), fresh contexts in Europe/Belgrade. Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep the database
+across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. The Statistics region reads: the combobox
+   "Statistics" showing "Weekly Comparison"; the legend list "This week", "Last week"; the table "Expenses per day,
+   this week and last week": 19 Mon $58.80 | $10.64, 20 Tue $10.64 | $24.64, 21 Wed $20.16 | $17.64,
+   22 Thu $322.00 | $266.00, 23 Fri $14.78 | (empty), 24 Sat $188.16 | (empty), 25 Sun $147.84 | (empty).
+2. Hover and click on three bars (Mon gray, Thu teal, Sat gray): the region's HTML unchanged, no tooltip, still
+   /overview.
+3. Mouse: a click opens the shared list with one option, "Weekly Comparison"; choosing it closes the list, focus back on
+   the control with no ring (:focus-visible false, outline none); no request sent (one weekly-comparison request in all,
+   the page load's).
+4. Keyboard (manual-control-keyboard-ring.png): from Recent Transaction's panel, Tab: the control with the teal ring
+   (2px solid rgb(41, 157, 145), :focus-visible). Enter opens the list, Escape closes it, focus and ring back on the
+   control; Space opens it, Enter chooses "Weekly Comparison", closed, focus and ring back. Tab: out of the page's
+   content (body). Shift+Tab from the control: the tab panel.
+   (A first scripted pass read the focus within milliseconds of the key presses, before Radix returns focus to the
+   trigger, and got stale values; read again after 200 to 300 ms, as a person would, every value was as above.)
+5. Resizes (manual-1920.png, manual-1280.png), card box [x, y, width, height]:
+   - 1920x1080: [835, 448, 1038, 260]; the control at (24, 24) from the card's corner, the legend 24 from its right
+     edge, the chart's box at (24, 48), 990x188; no sideways scroll.
+   - 1280x1024, on All, Revenue, Expenses and All again: [621.7, 609, 611.3, 358] every time; the control at (24, 24),
+     the legend 24 from the right, the chart's box at (24, 48), 563.3x188, the rest of the card empty below; switching
+     tabs moved nothing; no sideways scroll.
+   - Back to 1440x1024: [675, 549, 718, 260]; the same offsets; the chart's box 670x188.
+6. Backend stopped (taskkill on the node process on port 3000):
+   - A full reload of /overview with the backend down goes to /login?returnTo=%2Foverview (the session check fails;
+     tasks 009 to 011 behaviour, unchanged here). So, as in task 016: a fresh tab parked on /balances, then the
+     backend stopped, then Overview from the sidebar.
+   - The skeleton under the header row at once ("Weekly Comparison" and the legend shown), the card 260
+     (manual-backend-down-skeleton.png); "Something went wrong." over Retry after the request and its 3 retries
+     (7.6 s), the card 260, still signed in ("Hello Manual"), the six sections in place, the control still opens its
+     list (manual-backend-down-error.png).
+7. Backend started again (database kept):
+   - Statistics: from the control, Tab: Retry; Enter: focus on DataState's root (div, tabindex -1) with the teal ring
+     during the skeleton and still there with the ring when the chart shows; never the body
+     (manual-statistics-keyboard-retry-ring.png).
+   - Upcoming Bill: from its "View All", Tab: Retry; Enter: the same, the root with the ring through the skeleton and
+     the two bills (manual-upcoming-bill-keyboard-retry-ring.png); Tab from there: Recent Transaction's "View All".
+   - Goals, with the mouse: a click on Retry; focus on its root, no ring (:focus-visible false, outline none), the
+     goal shown.
+8. Network: the /api responses of the sign-up and Overview (GET /api/auth/me 401, POST /api/auth/signup 201, GET
+   /api/accounts, /api/savings-goals/current, /api/bills/upcoming, /api/transactions/recent,
+   /api/statistics/weekly-comparison, /api/calendar/today, all 200) each carry Cache-Control: no-store.
+9. Servers stopped afterwards; ports 3000 and 5173 free.

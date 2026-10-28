@@ -189,8 +189,9 @@ test('shows the skeleton while the bills load, the error state after the retries
   await expect(rows(page)).toHaveCount(0);
   await expect(region(page, 'Total Balance').getByText('$130,254.67')).toBeVisible();
   await expect(region(page, 'Goals').getByRole('button', { name: 'Edit savings goal' })).toBeVisible();
-  // The skeleton inside the card's content box.
-  const skeleton = await box(busy);
+  // The skeleton inside the card's content box: DataState's busy root fills that box, so measure the skeleton itself
+  // (task 017).
+  const skeleton = await box(busy.locator(':scope > [aria-hidden="true"]'));
   const cardBox = await box(card(bills(page)));
   expect(skeleton.y + skeleton.height).toBeLessThanOrEqual(cardBox.y + cardBox.height - 28);
 

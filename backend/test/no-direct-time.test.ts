@@ -42,6 +42,15 @@ describe('time in backend/src', () => {
     );
   });
 
+  // Task 017 T9: the weekly comparison reads today from the Clock only.
+  it('scans the statistics module', () => {
+    const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+
+    expect(files).toEqual(
+      expect.arrayContaining(['statistics/statistics.service.ts', 'statistics/statistics.controller.ts']),
+    );
+  });
+
   it('never reads the system time outside the clock files', () => {
     const offenders = sourceFiles(srcDir)
       .map((file) => relative(srcDir, file).replaceAll('\\', '/'))

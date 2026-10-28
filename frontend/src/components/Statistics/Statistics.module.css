@@ -1,0 +1,22 @@
+/* At the top of the card's content box: in a card that grid rows 2 and 3 have made taller (#112), the header row and
+   the chart's box keep their size and place, the extra height empty below (#113 a). */
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* #93 a: one 24px row inside the card's padding, 8 lower than in Figma: the control at the left, the legend at the
+   right; a wider card widens the space between them (#94). */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* The chart's box right under the header row (#92): the chart, its skeleton, the empty message and the error state
+   all fill it, so the card keeps its 260 in every state (#105 a). */
+.chartBox {
+  display: flex;
+  flex-direction: column;
+  height: var(--size-chart-height);
+}

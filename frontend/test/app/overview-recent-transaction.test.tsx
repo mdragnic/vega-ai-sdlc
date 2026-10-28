@@ -219,7 +219,8 @@ describe('the Recent Transaction tabs', () => {
     expect(panel()).toHaveAccessibleName('Expenses');
   });
 
-  it('tabs from "View All" to the selected tab, the panel, then out of the page content, and back with Shift+Tab', async () => {
+  // Task 017: after the panel, Tab reaches the next card's first focusable element, the "Weekly Comparison" control.
+  it('tabs from "View All" to the selected tab, the panel, then the Statistics control, and back with Shift+Tab', async () => {
     const { user } = await openOverview();
     await list();
     await user.click(tab('Revenue'));
@@ -236,9 +237,13 @@ describe('the Recent Transaction tabs', () => {
     await user.tab();
     expect(panel()).toHaveFocus();
     await user.tab();
+    expect(screen.getByRole('combobox', { name: 'Statistics' })).toHaveFocus();
+    await user.tab();
     expect(main.contains(document.activeElement)).toBe(false);
 
-    panel().focus();
+    screen.getByRole('combobox', { name: 'Statistics' }).focus();
+    await user.tab({ shift: true });
+    expect(panel()).toHaveFocus();
     await user.tab({ shift: true });
     expect(tab('Revenue')).toHaveFocus();
     await user.tab({ shift: true });
