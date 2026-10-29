@@ -269,8 +269,8 @@ const widgets = [
     pending: weeklyComparison.pending,
     answers: () => weeklyComparison.answers(),
     content: () => within(statistics()).findByRole('table'),
-    // The last focusable element of the page's content (Expenses Breakdown holds nothing focusable until task 018).
-    nextHasFocus: () => !screen.getByRole('main').contains(document.activeElement),
+    // Expenses Breakdown's first right arrow (task 018).
+    nextHasFocus: () => document.activeElement === screen.getByRole('link', { name: 'Housing expenses' }),
   },
   {
     name: 'Upcoming Bill',
@@ -352,19 +352,20 @@ describe.each(widgets)('Retry in $name', ({ name, fails, pending, answers, conte
   });
 });
 
-// T15: AC15, the Tab order: Recent Transaction's panel, the control, then out of the page's content (#87, #112).
+// T15: AC15, the Tab order: Recent Transaction's panel, the control, then Expenses Breakdown's first right arrow
+// (task 018) (#87, #112).
 describe('the Statistics Tab order', () => {
-  it('tabs from Recent Transaction’s panel to the control, then out of the page content; Shift+Tab goes back', async () => {
+  it('tabs from Recent Transaction’s panel to the control, then to Expenses Breakdown; Shift+Tab goes back', async () => {
     const { user } = await openOverview();
     await table();
-    const main = screen.getByRole('main');
+    const housing = await screen.findByRole('link', { name: 'Housing expenses' });
     const panel = within(screen.getByRole('region', { name: 'Recent Transaction' })).getByRole('tabpanel');
 
     panel.focus();
     await user.tab();
     expect(control()).toHaveFocus();
     await user.tab();
-    expect(main.contains(document.activeElement)).toBe(false);
+    expect(housing).toHaveFocus();
 
     control().focus();
     await user.tab({ shift: true });

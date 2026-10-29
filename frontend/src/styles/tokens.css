@@ -144,6 +144,15 @@
   --space-recent-transaction-icon-gap: 16px;
   --space-recent-transaction-amount-gap: 16px;
   --space-recent-transaction-wrap-gap: 12px;
+  --space-expenses-breakdown-column-gap: 40px;
+  --space-expenses-breakdown-row-gap: 24px;
+  --space-expenses-breakdown-line-x: 20px;
+  --space-expenses-breakdown-line-y: 12px;
+  --space-expenses-item-padding-y: 8px;
+  --space-expenses-item-padding-x: 16px;
+  --space-expenses-item-icon-gap: 16px;
+  --space-expenses-item-text-gap: 4px;
+  --space-expenses-item-change-gap: 8px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -196,6 +205,7 @@
   --size-overview-card-height: 232px;
   --size-statistics-card-height: 260px;
   --size-expenses-breakdown-card-height: 212px;
+  --size-expenses-item-height: 74px;
   --size-account-slide-height: 96px;
   --size-card-network-logo-width: 48px;
   --size-card-network-logo-height: 32px;
@@ -233,4 +243,7 @@
   --shadow-card: 0 20px 24px rgb(76 103 100 / 10%);
   --shadow-search: 0 28px 16px rgb(124 45 87 / 5%);
   --shadow-popup: none;
+
+  /* Opacity */
+  --opacity-expenses-arrow: 50%;
 }

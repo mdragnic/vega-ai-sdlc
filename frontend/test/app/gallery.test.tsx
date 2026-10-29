@@ -31,6 +31,9 @@ const cells = (table: HTMLElement, column: number) =>
     .slice(1)
     .map((row) => row.children[column]!.textContent);
 
+/** The visible lines of an Expenses Breakdown item: its paragraphs' text. */
+const itemLines = (element: HTMLElement) => [...element.querySelectorAll('p')].map((line) => line.textContent);
+
 // The dev gallery (AC12): one section per shared component. Vitest runs in development mode.
 describe('component gallery', () => {
   it('has a section for every exported component', async () => {
@@ -402,6 +405,48 @@ describe('component gallery', () => {
     );
     // Five rows: a tile block, two lines on the left and two on the right.
     expect(figure('RecentTransactionSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(25);
+  });
+
+  // Task 018 T15: the Expenses Breakdown item, card and skeleton, on sample data with no network.
+  it('shows the Expenses Breakdown samples: the item’s changes, the card in every state and the skeleton', async () => {
+    await renderGallery();
+
+    const item = (name: string) => within(figure('ExpensesItem', name)).getByRole('listitem');
+    expect(itemLines(item('Up (104)'))).toEqual(['Food', '$510.04', '7%*']);
+    expect(itemLines(item('Down'))).toEqual(['Hous­ing', '$252.00', '17%*']);
+    expect(itemLines(item('0%: no arrow'))).toEqual(['Hous­ing', '$200.00', '0%*']);
+    expect(itemLines(item('No change: last month $0.00'))).toEqual(['Trans­por­ta­tion', '$53.20', '']);
+    expect(itemLines(item('$0.00 after a month with expenses'))).toEqual(['Food', '$0.00', '100%*']);
+    expect(itemLines(item('A long total: the arrow moves under (#115 b)'))[1]).toBe('$1,000,000,000.00');
+    expect(within(item('Up (104)')).getByRole('link', { name: 'Food expenses' })).toHaveAttribute('href', '/expenses');
+
+    const cardItems = (name: string) =>
+      within(figure('OverviewExpensesBreakdown', name))
+        .findAllByRole('listitem')
+        .then((all) => all.map((each) => itemLines(each)[1]));
+    expect(await cardItems('The demo month (104)')).toEqual([
+      '$252.00',
+      '$510.04',
+      '$53.20',
+      '$282.24',
+      '$658.00',
+      '$138.32',
+    ]);
+    expect(await cardItems('Last month $0.00')).toEqual([
+      '$237.50',
+      '$273.79',
+      '$36.11',
+      '$74.10',
+      '$305.91',
+      '$111.15',
+    ]);
+    expect(await cardItems('No expenses at all')).toEqual(Array.from({ length: 6 }, () => '$0.00'));
+    expect(figure('OverviewExpensesBreakdown', 'Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(figure('OverviewExpensesBreakdown', 'Error')).findByRole('alert')).toHaveTextContent(
+      'Something went wrong.',
+    );
+    // Six items: a tile block, three lines and an arrow block each.
+    expect(figure('OverviewExpensesBreakdownSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(30);
   });
 
   it('links the popup sections to /dev/popup', async () => {

@@ -152,7 +152,7 @@ test('tabs from "View All" to the selected tab and the panel with the ring, then
   await expectRing(page, tab(page, 'Expenses'));
 
   // One tab stop in the tablist: the selected tab, then the panel, then the next card's first focusable element, the
-  // "Weekly Comparison" control (task 017), then out of the page's content.
+  // "Weekly Comparison" control (task 017), then Expenses Breakdown's first right arrow (task 018).
   const statisticsControl = region(page, 'Statistics').getByRole('combobox', { name: 'Statistics' });
   await page.keyboard.press('Tab');
   await expect(panel(page)).toBeFocused();
@@ -160,7 +160,7 @@ test('tabs from "View All" to the selected tab and the panel with the ring, then
   await page.keyboard.press('Tab');
   await expect(statisticsControl).toBeFocused();
   await page.keyboard.press('Tab');
-  expect(await page.evaluate(() => document.querySelector('main')!.contains(document.activeElement))).toBe(false);
+  await expect(region(page, 'Expenses Breakdown').getByRole('link', { name: 'Housing expenses' })).toBeFocused();
 
   await statisticsControl.focus();
   await page.keyboard.press('Shift+Tab');

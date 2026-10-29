@@ -234,7 +234,8 @@ describe('successful sign up', () => {
         .getAll()
         .map((query) => query.queryKey),
       // The new session's own: the header date, Overview's accounts (task 013), goal (task 014), upcoming bills
-      // (task 015), recent transactions (task 016) and weekly comparison (task 017); the earlier balance is gone.
+      // (task 015), recent transactions (task 016), weekly comparison (task 017) and expenses breakdown (task 018); the
+      // earlier balance is gone.
     ).toEqual([
       ['session'],
       ['calendar', 'today'],
@@ -243,6 +244,7 @@ describe('successful sign up', () => {
       ['bills', 'upcoming'],
       ['transactions', 'recent'],
       ['statistics', 'weekly-comparison'],
+      ['expenses', 'breakdown'],
     ]);
     // The mutation holds the password: it is gone once Sign up is.
     await waitFor(() => expect(appClient!.getMutationCache().getAll()).toEqual([]));

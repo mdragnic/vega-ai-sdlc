@@ -163,6 +163,15 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-recent-transaction-icon-gap` | `16px` | measured: PNG 104 Recent Transaction, the tile right edge (x 736) to the item and the shop (x 768), 32 px, halved. Added in task 016 |
 | `--space-recent-transaction-amount-gap` | `16px` | Marko's notes for task 016, as `--space-upcoming-bill-amount-gap` (#111 a): not measured, 104 leaves 91.5 px or more between the text and the right column (rows 1 and 5: the text ink to x 934, the amount ink from x 1117). The least space between the text column and the amount column; where they do not fit with it, the amount column moves under the text. Added in task 016 |
 | `--space-recent-transaction-wrap-gap` | `12px` | Marko's notes for task 016, as `--space-upcoming-bill-wrap-gap` (#111 a): the amount column 12 under the text where it moves under it, right-aligned. Added in task 016 |
+| `--space-expenses-breakdown-column-gap` | `40px` | measured: PNG 104 Expenses Breakdown, the tiles at x 1440, 1920 and 2400, one column every 480 px, halved 240, less the 200 px item (Figma `Expences Item` 200x74). Added in task 018 |
+| `--space-expenses-breakdown-row-gap` | `24px` | measured: PNG 104 Expenses Breakdown, the tiles at y 1612 and 1808, one row every 196 px, halved 98, less the 74 px item (`--size-expenses-item-height`). Added in task 018 |
+| `--space-expenses-breakdown-line-x` | `20px` | task 018, half of `--space-expenses-breakdown-column-gap`: each vertical line starts 20 after the item on its left, in the middle of the gap. PNG 104 draws them at x 1850 to 1851 and 2330 to 2331, 21 after the items (1 to the right of the middle) and 4 longer than the two rows. Added in task 018 |
+| `--space-expenses-breakdown-line-y` | `12px` | measured: PNG 104 Expenses Breakdown, the horizontal line y 1766 to 1767 ends 24 px above the second row's top (y 1792, its tiles at y 1808 less the item's 16), halved: it ends in the middle of the row gap. Added in task 018 |
+| `--space-expenses-item-padding-y` | `8px` | measured: PNG 104 Expenses Breakdown, the card's top (y 1556) and its 40 px inset (`--space-overview-card-padding-y`) to the first tiles (y 1612), 16 px, halved: the tile 8 under the item's top. Added in task 018 |
+| `--space-expenses-item-padding-x` | `16px` | measured: PNG 104 Expenses Breakdown, the content's left (x 1408: the card at x 1360 and its 48 px inset) to the first tile (x 1440), 32 px, halved; the hovered right arrow's ink ends at x 1773, its 24 px box (`ArrowRight24`, the ink 1 px inside) at x 1776, 32 px before the item's right edge (x 1808). Added in task 018 |
+| `--space-expenses-item-icon-gap` | `16px` | measured: PNG 104 Expenses Breakdown, the tile's right edge (x 1520) to the name and the amount (ink from x 1554, 1 to 2 px of side bearing), 32 px, halved. Added in task 018 |
+| `--space-expenses-item-text-gap` | `4px` | measured: PNG 104 Expenses Breakdown, the name's line box (Regular 12/16) from y 1611 to 1643, the tile's top (its cap top at y 1618, 3.6 px under the box at 1x), and the amount's line box (Semibold 16 in a 20 px line) from y 1653 (its digits from y 1661, 4.2 px under the box at 1x): 10 px, halved 5, on the 4px grid 4. The percentage line follows the amount's directly: its glyphs from y 1702, 5.6 px under a 20 px line box (1x) from y 1691, the amount's box ending at y 1693. Added in task 018 |
+| `--space-expenses-item-change-gap` | `8px` | measured: PNG 104 Expenses Breakdown, "15%*" ink to x 1608 and the `UpArrow` ink from x 1633, 2.6 px inside its 16 px box (from x 1628): 20 px, halved 10, less the asterisk's side bearing (about 1 px), 9, rounded. Chromium's `%` is wider than Figma's, so the arrow sits about 3 px further right (task 018 References). Added in task 018 |
 
 ## Size
 
@@ -218,6 +227,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-overview-card-height` | `232px` | measured: PNG 104, Total Balance, Goals and Upcoming Bill cards y 288 to 751, 464 px, halved. The least height of the top row cards in every state (decision #105 a); the row grows with its tallest card (#106). Added in task 013 |
 | `--size-statistics-card-height` | `260px` | decision #93: PNG 104 Statistics card y 896 to 1411, 516 px, halved 258, built 260 (the 188 px chart under a 24 px header row inside the 24 px card padding). The least height in every state (#105 a). Added in task 013 |
 | `--size-expenses-breakdown-card-height` | `212px` | measured: PNG 104, Expenses Breakdown card y 1556 to 1979, 424 px, halved. The least height in every state (decision #105 a). Added in task 013 |
+| `--size-expenses-item-height` | `74px` | Figma `Expences Item` 42:777, 200x74 (`components.md`), kept off the 4px grid: the grid as 104 draws it (200x74 items, 40 and 24 apart, 20 + 74 + 24 + 74 + 20 = 212) was accepted with the task 018 file (Marko, 2026-10-29). Checked: PNG 104 Expenses Breakdown, the card's content from y 1596 (y 1556 plus the 40 px inset) to y 1939 (y 1979 less 40) holds two rows and the 48 px row gap: (343 - 48) / 2 = 147.5 px, halved 74. The least height of an item; it grows where its right arrow moves under the text (#115 b). Added in task 018 |
 | `--size-account-slide-height` | `96px` | measured: PNG 104, teal account card in Total Balance y 440 to 631, 192 px, halved. Its height wherever its bottom line fits on one line (decision #106). Added in task 013 |
 | `--size-card-network-logo-width` | `48px` | Figma `Mastercard` 408:5979 and `Visacard` 410:5467, both exported 48x32 (`frontend/src/assets/brand/`). Checked: PNG 104 Mastercard ink x 1146 to 1223 and y 476 to 523, the 43x24 image area of the 48x32 box at 2x. Added in task 013 |
 | `--size-card-network-logo-height` | `32px` | Figma `Mastercard` 408:5979 and `Visacard` 410:5467, both exported 48x32. Added in task 013 |
@@ -270,6 +280,12 @@ Fitted as a Gaussian blur (CSS blur = 2 sigma) with x-offset 0 and spread 0, fro
 | `--shadow-card` | `0 20px 24px rgb(76 103 100 / 10%)` | measured: PNG 105 (Credit Card and Add Accounts cards) and PNG 104 (Upcoming Bill), fit offset-y 20, blur 24, fit error 0.3 of 255. Darkening at full cover (17, 14, 14) per channel, matched within 1 by this color |
 | `--shadow-search` | `0 28px 16px rgb(124 45 87 / 5%)` | measured: PNG 104 header search, fit offset-y 28.5 (rounded to 28), blur 16, fit error 0.6 of 255. Darkening at full cover (6, 10, 8): the tint is known, the alpha of 5% is assumed |
 | `--shadow-popup` | `none` | measured: PNG 104.1, the dimmed content around the popup is a uniform `#DDDDDD` on all sides, no shadow |
+
+## Opacity
+
+| CSS variable | Value | Source |
+|--------------|-------|--------|
+| `--opacity-expenses-arrow` | `50%` | measured: PNG 104 Expenses Breakdown, the right arrows are `#CFCFCF`, Gray/03 `#9F9F9F` at 50% on white exactly ((159 + 255) / 2 = 207); Housing's, drawn hovered, is `#94CEC8`, Primary `#299D91` at 50% on white exactly. The whole icon at 50%, so its two strokes do not darken where they meet. Added in task 018 |
 
 ## Review (Marko, 2026-10-23)
 

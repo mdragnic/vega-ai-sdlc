@@ -1,0 +1,105 @@
+/* 104 `Expences Item`: 74 high, the 40x56 tile 8 under its top and 16 from its left, 16 to the text; the right arrow
+   16 from its right. The text column is 60 high, so the 74 is a minimum height with no inset below; where the item
+   grows (#115 b), the row gap keeps the next row apart. The tile stays at the top. */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-expenses-item-icon-gap);
+  min-height: var(--size-expenses-item-height);
+  padding: var(--space-expenses-item-padding-y) var(--space-expenses-item-padding-x) 0;
+}
+
+/* The text column on the left and the right arrow on the right, the arrow centred on the text. Where they do not fit
+   side by side, the arrow moves under the text, right-aligned (#106, #108 b, #111 a, #115 b). Wider items widen the
+   space between them (#94). */
+.body {
+  display: flex;
+  flex-grow: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+}
+
+/* The name, the total and the change. A name longer than the column breaks at its soft hyphens with a hyphen drawn;
+   browsers with a dictionary hyphenate on their own; what has no break point breaks anywhere (#115 b). */
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-right: auto;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 104 "Housing": Gray/02, Regular 12/16, level with the tile's top. */
+.name {
+  margin: 0;
+  color: var(--color-gray-02);
+  font: var(--font-regular-12-16);
+}
+
+/* 104 "$250.00": Default Black, Semibold 16 (104's widths match Semibold, not Bold) in a 20px line, 4 under the name. */
+.amount {
+  margin: var(--space-expenses-item-text-gap) 0 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-20);
+}
+
+/* 104 "15%*": Gray/03, Regular 12 in a 20px line with the 16px arrow centred on it, 8 after the text. The line keeps
+   its height when there is no change, so the six items line up (#21). */
+.change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-expenses-item-change-gap);
+  min-height: var(--line-height-20);
+  margin: 0;
+  color: var(--color-gray-03);
+  font: var(--font-regular-12-16);
+  line-height: var(--line-height-20);
+}
+
+.up,
+.down {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+/* #21: red up for an increase, green down for a decrease. */
+.up {
+  color: var(--color-special-red);
+}
+
+.down {
+  color: var(--color-special-green);
+}
+
+/* 104: the right arrow, Gray/03 at 50%; Primary at 50% under the pointer (US-10 criterion 6, #21). Its 24px box is the
+   link. */
+.arrow {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-gray-03);
+}
+
+.arrow:hover {
+  color: var(--color-primary);
+}
+
+/* Keyboard focus (#87): the ring at full strength around the 24px box; none after a click. */
+.arrow:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* The whole icon at 50%, so its two strokes do not darken where they meet (104's #CFCFCF and #94CEC8 are exact). */
+.arrowIcon {
+  width: var(--size-icon);
+  height: var(--size-icon);
+  opacity: var(--opacity-expenses-arrow);
+}

@@ -51,6 +51,13 @@ describe('time in backend/src', () => {
     );
   });
 
+  // Task 018 T8: the expenses breakdown reads today from the Clock only.
+  it('scans the expenses module', () => {
+    const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+
+    expect(files).toEqual(expect.arrayContaining(['expenses/expenses.service.ts', 'expenses/expenses.controller.ts']));
+  });
+
   it('never reads the system time outside the clock files', () => {
     const offenders = sourceFiles(srcDir)
       .map((file) => relative(srcDir, file).replaceAll('\\', '/'))

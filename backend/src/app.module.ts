@@ -12,6 +12,7 @@ import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 import { validationException } from './common/errors/validation-exception.js';
 import type { AppConfig } from './config/config.js';
 import { databaseOptions } from './database/database-options.js';
+import { ExpensesModule } from './expenses/expenses.module.js';
 import { GoalsModule } from './goals/goals.module.js';
 import { StatisticsModule } from './statistics/statistics.module.js';
 import { TransactionsModule } from './transactions/transactions.module.js';
@@ -32,6 +33,7 @@ export class AppModule {
         BillsModule,
         TransactionsModule,
         StatisticsModule,
+        ExpensesModule,
       ],
       providers: [
         { provide: APP_FILTER, useClass: ApiExceptionFilter },

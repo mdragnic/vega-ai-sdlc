@@ -16,6 +16,7 @@ export { ComparisonBarChartSkeleton } from './ComparisonBarChartSkeleton/Compari
 export { DataState, type DataStateQuery } from './DataState/DataState';
 export { DateBox } from './DateBox/DateBox';
 export { Dropdown, type DropdownOption } from './Dropdown/Dropdown';
+export { ExpensesItem } from './ExpensesItem/ExpensesItem';
 export { FieldError } from './FieldError/FieldError';
 export { FormError } from './FormError/FormError';
 export { GoalPopupInput } from './GoalPopupInput/GoalPopupInput';
@@ -28,6 +29,8 @@ export { Logout } from './Logout/Logout';
 export { MenuTab } from './MenuTab/MenuTab';
 export { NavBar } from './NavBar/NavBar';
 export { NavMenu, type NavSection } from './NavMenu/NavMenu';
+export { OverviewExpensesBreakdown } from './OverviewExpensesBreakdown/OverviewExpensesBreakdown';
+export { OverviewExpensesBreakdownSkeleton } from './OverviewExpensesBreakdownSkeleton/OverviewExpensesBreakdownSkeleton';
 export { Popup } from './Popup/Popup';
 export { PopupInputSmall } from './PopupInputSmall/PopupInputSmall';
 export { Profile } from './Profile/Profile';

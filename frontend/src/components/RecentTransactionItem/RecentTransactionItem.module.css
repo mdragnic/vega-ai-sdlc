@@ -28,13 +28,15 @@
   min-height: var(--size-category-tile);
 }
 
-/* The item over the shop. A long word breaks inside the column. */
+/* The item over the shop. A long word breaks inside the column, with a hyphen where the browser can hyphenate
+   (#115 b). */
 .text {
   display: flex;
   flex-direction: column;
   min-width: 0;
   margin-right: auto;
   overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 /* 104 "GTR 5": Default Black, Semibold 16/24. */

@@ -1,0 +1,39 @@
+Task 018 manual checks, 2026-10-29. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), fresh contexts in Europe/Belgrade. Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep the database
+across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. The Expenses Breakdown region reads (aria snapshot):
+   heading "Expenses Breakdown"; paragraph "*Compare to last month"; a list of six items, each "<name>", "<total>",
+   "<change in words>", link "<name> expenses" to /expenses: Housing $252.00 "down 17% compared to last month", Food
+   $510.04 "up 7% ...", Transportation $53.20 "down 32% ...", Entertainment $282.24 "up 16% ...", Shopping $658.00
+   "up 14% ...", Others $138.32 "down 31% ...". No soft hyphen in the tree.
+2. Hover, each of the six right arrows: rgb(159, 159, 159) at opacity 0.5 at rest, rgb(41, 157, 145) at 0.5 under the
+   pointer (Gray/03 and Primary at 50%).
+3. A click on Shopping's right arrow opens /expenses with the sidebar's Expenses active (aria-current="page"; read in
+   the same tick as the URL change it was still Overview, 500 ms later Expenses: the shell re-renders after the URL
+   changes). Back: /overview with the six items.
+4. Keyboard: from the "Weekly Comparison" control, Tab: Housing, Food, Transportation, Entertainment, Shopping, Others
+   expenses, each with the teal ring (rgb(41, 157, 145) solid 2px, :focus-visible), then out of main (the sidebar).
+   Shift+Tab from Others: Shopping, Entertainment, Transportation, Food, Housing, then the "Weekly Comparison" control.
+5. Resizes (the card's box; arrows under the text; lines of each name):
+   - 1920x1080 (page 1905): the card 212 high, no arrow under its text, every name on one line, no sideways scroll.
+   - 1280x1024 (page 1265, manual-1280.png): the card 611.3x344 at (621.7, 1005), every right arrow under its text;
+     Transportation and Entertainment on two lines ("Transporta-" over "tion", "Entertain-" over "ment"), the others on
+     one; no sideways scroll. Recent Transaction's tabs Revenue, Expenses, All: the card's box the same every time.
+   - Back to 1440x1024 (page 1425, the classic scrollbar): the card 212 high, nothing wraps.
+6. Backend stopped (taskkill on the node process on port 3000), a fresh tab parked on /balances first (a full reload
+   with the backend down goes to Login, tasks 009 to 011; Overview's queries would otherwise come from the cache):
+   - Overview from the sidebar: the skeleton at once, the card 718x212 (manual-backend-down-skeleton.png);
+     "Something went wrong." over Retry 7.0 s later, after the request and its 3 retries, the card 212, still signed
+     in ("Hello Manual"), the six sections in place (manual-backend-down-error.png, manual-backend-down-page.png).
+7. Backend started again (`npm run start -w backend`, database kept):
+   - Keyboard: from the "Weekly Comparison" control, Tab reached Statistics' own Retry first (Statistics was in its
+     error state too, the backend having been down): Enter retried Statistics and focus went to Statistics' root,
+     as task 017 built. Then from the control, Tab: Expenses Breakdown's Retry with the ring; Enter: focus on its
+     DataState root (div, tabindex -1) with the teal ring during the load and still there with the ring when the six
+     items show, never the body (manual-keyboard-retry-ring.png); Tab from there: "Housing expenses" with the ring.
+   - Mouse: in a fresh tab with the breakdown answered 500 by a route until Retry (the backend up), a click on Retry:
+     focus on the card's root, no ring (:focus-visible false, outline none), the six items shown. A mouse press on
+     Food's right arrow focuses it with no ring.
+8. Servers stopped afterwards; ports 3000 and 5173 free.

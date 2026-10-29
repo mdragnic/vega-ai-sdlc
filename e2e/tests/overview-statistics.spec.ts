@@ -155,8 +155,8 @@ test('opens "Weekly Comparison" with its one option by mouse and keyboard; the r
   expect(requests.filter((url) => url.includes('/api/'))).toEqual([]);
 });
 
-// T18: AC15, the Tab order (#87, #112).
-test('tabs from Recent Transaction’s panel to the control, then out of the page content; Shift+Tab goes back', async ({
+// T18: AC15, the Tab order, then Expenses Breakdown's first right arrow (task 018) (#87, #112).
+test('tabs from Recent Transaction’s panel to the control, then to Expenses Breakdown; Shift+Tab goes back', async ({
   page,
 }) => {
   await openOverview(page);
@@ -165,7 +165,7 @@ test('tabs from Recent Transaction’s panel to the control, then out of the pag
   await page.keyboard.press('Tab');
   await expect(control(page)).toBeFocused();
   await page.keyboard.press('Tab');
-  expect(await page.evaluate(() => document.querySelector('main')!.contains(document.activeElement))).toBe(false);
+  await expect(region(page, 'Expenses Breakdown').getByRole('link', { name: 'Housing expenses' })).toBeFocused();
 
   await control(page).focus();
   await page.keyboard.press('Shift+Tab');

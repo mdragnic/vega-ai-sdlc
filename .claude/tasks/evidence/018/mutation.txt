@@ -1,0 +1,132 @@
+# Mutation runs, task 018 step 4 (2026-10-29T10:18:25.758Z)
+tree before: diff 7f11b50c52f2a0a393e17360b94b4928c1d254394b0e39e978441612f6de1c63, status 7b53fa50405f9b8e601446070fdcbff9fa052192bd3ba1a32e5f000d2f7c327a
+
+## M1a today in UTC (backend/src/expenses/expenses.service.ts)
+$ (backend) npx vitest run test/expenses-service.test.ts
+exit 1
+Test Files  1 failed (1)
+Tests  3 failed | 26 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+       × at 2026-10-31T23:00:00Z (00:00 Sun 1 Nov in Belgrade) answers 1 Nov against October 75ms
+       × in New York answers October at 2026-11-01T03:59:59Z and November at 04:00:00Z 71ms
+         × at 2026-10-31T23:00:00Z counts both as last month in Belgrade 81ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > at 2026-10-31T23:00:00Z (00:00 Sun 1 Nov in Belgrade) answers 1 Nov against October
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > in New York answers October at 2026-11-01T03:59:59Z and November at 04:00:00Z
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > with a $500.00 Shopping row at 2026-09-30T22:30:00Z and a $300.00 Food row at 2026-10-31T22:30:00Z > at 2026-10-31T23:00:00Z counts both as last month in Belgrade
+restored: yes, hashes match
+
+## M1b each row's month in UTC (backend/src/expenses/expenses.service.ts)
+$ (backend) npx vitest run test/expenses-service.test.ts
+exit 1
+Test Files  1 failed (1)
+Tests  3 failed | 26 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+         × at 2026-10-31T22:59:59Z counts both in October in Belgrade (00:30 on 1 Oct, 23:30 on 31 Oct) 72ms
+         × at 2026-11-01T10:00:00Z counts the $500.00 in October, last month, in Belgrade 73ms
+         × at the fixed clock counts the $500.00 this month in Belgrade and last month in New York 76ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > with a $500.00 Shopping row at 2026-09-30T22:30:00Z and a $300.00 Food row at 2026-10-31T22:30:00Z > at 2026-10-31T22:59:59Z counts both in October in Belgrade (00:30 on 1 Oct, 23:30 on 31 Oct)
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > with a $500.00 Shopping row at 2026-09-30T22:30:00Z and a $300.00 Food row at 2026-10-31T22:30:00Z > at 2026-11-01T10:00:00Z counts the $500.00 in October, last month, in Belgrade
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > with a $500.00 Shopping row at 2026-09-30T22:30:00Z and a $300.00 Food row at 2026-10-31T22:30:00Z > at the fixed clock counts the $500.00 this month in Belgrade and last month in New York
+restored: yes, hashes match
+
+## M2a month start with today's offset (backend/src/expenses/expenses.service.ts)
+$ (backend) npx vitest run test/expenses-service.test.ts
+exit 1
+Test Files  1 failed (1)
+Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+         × at 2026-11-01T10:00:00Z counts the $500.00 in October, last month, in Belgrade 74ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > with a $500.00 Shopping row at 2026-09-30T22:30:00Z and a $300.00 Food row at 2026-10-31T22:30:00Z > at 2026-11-01T10:00:00Z counts the $500.00 in October, last month, in Belgrade
+restored: yes, hashes match
+
+## M2b month end as its start plus the month's days x 24 hours (backend/src/expenses/expenses.service.ts)
+$ (backend) npx vitest run test/expenses-service.test.ts
+exit 1
+Test Files  1 failed (1)
+Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+         × at 2026-10-31T22:59:59Z counts both in October in Belgrade (00:30 on 1 Oct, 23:30 on 31 Oct) 75ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the month change > with a $500.00 Shopping row at 2026-09-30T22:30:00Z and a $300.00 Food row at 2026-10-31T22:30:00Z > at 2026-10-31T22:59:59Z counts both in October in Belgrade (00:30 on 1 Oct, 23:30 on 31 Oct)
+restored: yes, hashes match
+
+## M3 the last-month-$0.00 guard removed (backend/src/expenses/percent-change.ts)
+$ (backend) npx vitest run test/percent-change.test.ts test/expenses-service.test.ts
+exit 1
+Test Files  2 failed (2)
+Tests  14 failed | 47 passed (61)
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+     × answers no change when last month was $0.00: $0.00 to $50.00 2ms
+     × answers no change when last month was $0.00: $0.00 to $0.00 0ms
+       × answers only the user’s own transactions 143ms
+       × at 2022-01-15T10:00:00Z answers 1 to 15 Jan with no change: December 2021 is before the dataset 71ms
+       × at 2021-12-31T10:00:00Z answers six $0.00 with no change 83ms
+       × $200.00 to $225.00 76ms
+       × $200.00 to $175.00 73ms
+       × $200.00 to $201.00 83ms
+       × $200.00 to $199.00 80ms
+       × $200.00 to $200.99 73ms
+       × $200.00 to $199.20 74ms
+       × $200.00 to $200.00 82ms
+       × $200.00 to $0.00 70ms
+       × $0.00 to $50.00 72ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > a first login > answers only the user’s own transactions
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > an empty month > at 2022-01-15T10:00:00Z answers 1 to 15 Jan with no change: December 2021 is before the dataset
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > an empty month > at 2021-12-31T10:00:00Z answers six $0.00 with no change
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $225.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $175.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $201.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $199.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $200.99
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $199.20
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $200.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $0.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $0.00 to $50.00
+ FAIL  test/percent-change.test.ts > expenseChange > answers no change when last month was $0.00: $0.00 to $50.00
+ FAIL  test/percent-change.test.ts > expenseChange > answers no change when last month was $0.00: $0.00 to $0.00
+restored: yes, hashes match
+
+## M4 rounding on the signed value (Math.round) (backend/src/expenses/percent-change.ts)
+$ (backend) npx vitest run test/percent-change.test.ts test/expenses-service.test.ts
+exit 1
+Test Files  2 failed (2)
+Tests  4 failed | 57 passed (61)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+     × $200.00 to $175.00, -12.5% 4ms
+     × $200.00 to $199.00, -0.5% 1ms
+       × $200.00 to $175.00 72ms
+       × $200.00 to $199.00 70ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $175.00
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $199.00
+ FAIL  test/percent-change.test.ts > expenseChange > $200.00 to $175.00, -12.5%
+ FAIL  test/percent-change.test.ts > expenseChange > $200.00 to $199.00, -0.5%
+restored: yes, hashes match
+
+## M5 direction from the unrounded sign (backend/src/expenses/percent-change.ts)
+$ (backend) npx vitest run test/percent-change.test.ts test/expenses-service.test.ts
+exit 1
+Test Files  2 failed (2)
+Tests  5 failed | 56 passed (61)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+     × $200.00 to $200.99, +0.495% 4ms
+     × $200.00 to $199.20, -0.4% 1ms
+     × $999,999,999.99 to $1,000,000,000.00 0ms
+       × $200.00 to $200.99 89ms
+       × $200.00 to $199.20 80ms
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $200.99
+ FAIL  test/expenses-service.test.ts > ExpensesService.breakdown > the rounding > $200.00 to $199.20
+ FAIL  test/percent-change.test.ts > expenseChange > $200.00 to $200.99, +0.495%
+ FAIL  test/percent-change.test.ts > expenseChange > $999,999,999.99 to $1,000,000,000.00
+ FAIL  test/percent-change.test.ts > expenseChange > $200.00 to $199.20, -0.4%
+restored: yes, hashes match
+# Mutation runs, task 018 step 4 (2026-10-29T10:19:08.129Z)
+tree before: diff 7f11b50c52f2a0a393e17360b94b4928c1d254394b0e39e978441612f6de1c63, status 7b53fa50405f9b8e601446070fdcbff9fa052192bd3ba1a32e5f000d2f7c327a
+
+## M6 names shown with categoryLabel (no soft hyphens) (frontend/src/components/ExpensesItem/ExpensesItem.tsx)
+$ (e2e) npx playwright test tests/overview-expenses-breakdown.spec.ts --reporter=line --grep "at 1280x1024"
+exit 1
+1 failed
+  1) [chromium] › tests\overview-expenses-breakdown.spec.ts:637:1 › moves every right arrow under its text at 1280x1024 and breaks "Transporta-tion" and "Entertain-ment" with a hyphen
+    Error: tion width: 14.296875 vs 21.125
+    Expected: <= 2
+    Received:    6.828125
+restored: yes, hashes match

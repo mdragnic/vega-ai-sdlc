@@ -60,8 +60,10 @@
   min-height: var(--size-expenses-breakdown-card-height);
 }
 
-/* 104: the Total Balance and Goals content is inset 20 at the top and the bottom and 24 at the sides. */
-.topCardBody {
+/* 104: the Total Balance, Goals and Expenses Breakdown content is inset 20 at the top and the bottom and 24 at the
+   sides. */
+.topCardBody,
+.expensesBreakdownCardBody {
   display: flex;
   flex-grow: 1;
   flex-direction: column;

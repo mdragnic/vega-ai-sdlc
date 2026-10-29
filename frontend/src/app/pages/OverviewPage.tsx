@@ -1,5 +1,6 @@
 import { useAccounts } from '../../api/accounts';
 import { useUpcomingBills } from '../../api/bills';
+import { useExpensesBreakdown } from '../../api/expenses';
 import { useCurrentSavingsGoal } from '../../api/savings-goals';
 import { useWeeklyComparison } from '../../api/statistics';
 import { useRecentTransactions } from '../../api/transactions';
@@ -8,6 +9,7 @@ import {
   DataState,
   Goals,
   GoalsSkeleton,
+  OverviewExpensesBreakdown,
   RecentTransaction,
   Section,
   Statistics,
@@ -20,9 +22,8 @@ import { paths } from '../../routes/paths';
 import styles from './OverviewPage.module.css';
 
 /**
- * Overview (104): the six sections on a grid that fills the content area (#94). Total Balance, Goals, Upcoming Bill,
- * Recent Transaction and Statistics have content; Expenses Breakdown stays empty, at its 104 height, until its task
- * fills it (#105 a).
+ * Overview (104): the six sections on a grid that fills the content area (#94): Total Balance, Goals, Upcoming Bill,
+ * Recent Transaction, Statistics and Expenses Breakdown, each card at least its 104 height (#105 a).
  */
 export function OverviewPage() {
   const accounts = useAccounts();
@@ -30,6 +31,7 @@ export function OverviewPage() {
   const upcomingBills = useUpcomingBills();
   const recentTransactions = useRecentTransactions();
   const weeklyComparison = useWeeklyComparison();
+  const expensesBreakdown = useExpensesBreakdown();
 
   return (
     <div className={styles.grid}>
@@ -90,7 +92,11 @@ export function OverviewPage() {
         note="*Compare to last month"
         className={`${styles.section} ${styles.expensesBreakdown}`}
       >
-        <Card className={`${styles.card} ${styles.expensesBreakdownCard}`}>{null}</Card>
+        <Card padding="none" className={`${styles.card} ${styles.expensesBreakdownCard}`}>
+          <div className={styles.expensesBreakdownCardBody}>
+            <OverviewExpensesBreakdown query={expensesBreakdown} />
+          </div>
+        </Card>
       </Section>
     </div>
   );

@@ -1,0 +1,53 @@
+/* 104: three columns that share the content's width (#94), 40 between them and 24 between the two rows; each row as
+   high as its highest item, the items stretched to it with their content at the top. The grid keeps its height in a
+   taller card, the rest empty below (#113 a). The skeleton uses the same grid and lines. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-expenses-breakdown-row-gap) var(--space-expenses-breakdown-column-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The lines, #F6F6F6, are drawn by the items of the first two columns and the first row, so they follow the rows'
+   heights without measuring. */
+.grid > * {
+  position: relative;
+}
+
+/* The vertical lines: 20 to the right of the first and the second column, in the middle of the gap (104 draws them
+   1 further right), the height of the item's row. */
+.grid > :not(:nth-child(3n))::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 100%;
+  height: 100%;
+  margin-left: var(--space-expenses-breakdown-line-x);
+  border-left: var(--border-width-table-line) solid var(--color-divider-light);
+}
+
+/* In the first row they reach on through the row gap, so each line runs the height of both rows. */
+.grid > :nth-child(-n + 2)::before {
+  box-sizing: content-box;
+  padding-bottom: var(--space-expenses-breakdown-row-gap);
+}
+
+/* The horizontal line across the content box, its bottom 12 under the first row, in the middle of the row gap: each
+   item of the first row draws its width and the column gap after it. */
+.grid > :nth-child(-n + 3)::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  box-sizing: content-box;
+  width: 100%;
+  margin-top: calc(var(--space-expenses-breakdown-line-y) - var(--border-width-table-line));
+  padding-right: var(--space-expenses-breakdown-column-gap);
+  border-top: var(--border-width-table-line) solid var(--color-divider-light);
+}
+
+.grid > :nth-child(3)::after {
+  padding-right: 0;
+}

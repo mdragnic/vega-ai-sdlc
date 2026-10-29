@@ -5,6 +5,8 @@ import {
   formatMonthLabel,
   parseAmountInput,
   type ExpenseCategory,
+  type ExpensesBreakdownCategory,
+  type ExpensesBreakdownResponse,
   type Money,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
@@ -35,6 +37,7 @@ import {
   DateBox,
   Dropdown,
   type DropdownOption,
+  ExpensesItem,
   FieldError,
   FormError,
   Goals,
@@ -46,6 +49,8 @@ import {
   MenuTab,
   NavBar,
   NavMenu,
+  OverviewExpensesBreakdown,
+  OverviewExpensesBreakdownSkeleton,
   PopupInputSmall,
   Profile,
   RecentTransaction,
@@ -799,6 +804,93 @@ function StatisticsExample({ name, answer }: { name: string; answer: WeeklyCompa
         <Statistics query={query} />
       </Card>
     </div>
+  );
+}
+
+/** One category as `GET /api/expenses/breakdown` sends it: this month's total so far and its change, null without. */
+const breakdownItem = (
+  category: ExpenseCategory,
+  cents: number,
+  change: ExpensesBreakdownCategory['change'],
+): ExpensesBreakdownCategory => ({ category, total: usd(cents), change });
+
+const changeUp = (percent: number) => ({ percent, direction: 'up' }) as const;
+const changeDown = (percent: number) => ({ percent, direction: 'down' }) as const;
+
+// Task 018: the Expenses Breakdown samples as the backend sends them, changes included, so the gallery computes
+// nothing (#11).
+const sampleBreakdown: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownItem('housing', 25_200, changeDown(17)),
+    breakdownItem('food', 51_004, changeUp(7)),
+    breakdownItem('transportation', 5_320, changeDown(32)),
+    breakdownItem('entertainment', 28_224, changeUp(16)),
+    breakdownItem('shopping', 65_800, changeUp(14)),
+    breakdownItem('others', 13_832, changeDown(31)),
+  ],
+};
+
+/** Last month $0.00 for every category: no percentage and no arrow (#21). */
+const sampleNoLastMonth: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownItem('housing', 23_750, null),
+    breakdownItem('food', 27_379, null),
+    breakdownItem('transportation', 3_611, null),
+    breakdownItem('entertainment', 7_410, null),
+    breakdownItem('shopping', 30_591, null),
+    breakdownItem('others', 11_115, null),
+  ],
+};
+
+/** No expenses in either month: six $0.00, still all shown (#61). */
+const sampleNoExpenses: ExpensesBreakdownResponse = {
+  categories: sampleBreakdown.categories.map(({ category }) => breakdownItem(category, 0, null)),
+};
+
+/** The Expenses Breakdown card as Overview draws it at 1440 (728 wide, inset 20 and 24, at least 212 high). */
+function ExpensesBreakdownCard({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.sampleWide}>
+      <Card padding="none" className={styles.expensesBreakdownCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+/** The card's content on a local query that answers `answer`, never resolves (`pending`) or fails after a short wait. */
+function ExpensesBreakdownExample({
+  name,
+  answer,
+}: {
+  name: string;
+  answer: ExpensesBreakdownResponse | 'pending' | 'fails';
+}) {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'expenses-breakdown', name],
+    queryFn: () =>
+      answer === 'pending'
+        ? new Promise<ExpensesBreakdownResponse>(() => undefined)
+        : answer === 'fails'
+          ? waitThenFail<ExpensesBreakdownResponse>()
+          : Promise.resolve(answer),
+  });
+  return (
+    <ExpensesBreakdownCard>
+      <OverviewExpensesBreakdown query={query} />
+    </ExpensesBreakdownCard>
+  );
+}
+
+/** One item in the first of three columns, as wide as on Overview at 1440 (200). */
+function ExpensesItemExample({ item }: { item: ExpensesBreakdownCategory }) {
+  return (
+    <ExpensesBreakdownCard>
+      <ul className={styles.expensesItemList}>
+        <ExpensesItem item={item} />
+      </ul>
+    </ExpensesBreakdownCard>
   );
 }
 
@@ -1615,6 +1707,53 @@ export function ComponentGallery() {
         </Example>
         <Example name="Error">
           <StatisticsExample name="error" answer="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ExpensesItem" wide>
+        <Example name="Up (104)">
+          <ExpensesItemExample item={breakdownItem('food', 51_004, changeUp(7))} />
+        </Example>
+        <Example name="Down">
+          <ExpensesItemExample item={breakdownItem('housing', 25_200, changeDown(17))} />
+        </Example>
+        <Example name="0%: no arrow">
+          <ExpensesItemExample item={breakdownItem('housing', 20_000, { percent: 0, direction: null })} />
+        </Example>
+        <Example name="No change: last month $0.00">
+          <ExpensesItemExample item={breakdownItem('transportation', 5_320, null)} />
+        </Example>
+        <Example name="$0.00 after a month with expenses">
+          <ExpensesItemExample item={breakdownItem('food', 0, changeDown(100))} />
+        </Example>
+        <Example name="A long total: the arrow moves under (#115 b)">
+          <ExpensesItemExample item={breakdownItem('shopping', 100_000_000_000, changeUp(250))} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="OverviewExpensesBreakdown" wide>
+        <Example name="The demo month (104)">
+          <ExpensesBreakdownExample name="demo" answer={sampleBreakdown} />
+        </Example>
+        <Example name="Last month $0.00">
+          <ExpensesBreakdownExample name="no-last-month" answer={sampleNoLastMonth} />
+        </Example>
+        <Example name="No expenses at all">
+          <ExpensesBreakdownExample name="none" answer={sampleNoExpenses} />
+        </Example>
+        <Example name="Loading">
+          <ExpensesBreakdownExample name="loading" answer="pending" />
+        </Example>
+        <Example name="Error">
+          <ExpensesBreakdownExample name="error" answer="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="OverviewExpensesBreakdownSkeleton" wide>
+        <Example name="Loading">
+          <ExpensesBreakdownCard>
+            <OverviewExpensesBreakdownSkeleton />
+          </ExpensesBreakdownCard>
         </Example>
       </GallerySection>
 

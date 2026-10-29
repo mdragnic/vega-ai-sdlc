@@ -80,6 +80,7 @@ describe('Cache-Control on /api', () => {
         shared.testClockContract.set,
         shared.savingsGoalsContract.save,
         shared.statisticsContract.weeklyComparison,
+        shared.expensesContract.breakdown,
       ]),
     );
     expect(registeredRoutes(app)).toEqual(expectedRoutes);

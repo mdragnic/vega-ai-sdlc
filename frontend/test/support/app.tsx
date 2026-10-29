@@ -2,6 +2,7 @@ import {
   type AccountsResponse,
   type CurrentUser,
   type ErrorResponse,
+  type ExpensesBreakdownResponse,
   goalProgress,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
@@ -349,10 +350,87 @@ export const weeklyComparison = {
     http.get(weeklyComparisonPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
 };
 
+type BreakdownCategory = ExpensesBreakdownResponse['categories'][number];
+
+/** One category of `GET /api/expenses/breakdown`: this month's total so far and its change, null without one. */
+const breakdownCategory = (
+  category: BreakdownCategory['category'],
+  total: number,
+  change: BreakdownCategory['change'],
+): BreakdownCategory => ({ category, total: usd(total), change });
+
+const up = (percent: number) => ({ percent, direction: 'up' }) as const;
+const down = (percent: number) => ({ percent, direction: 'down' }) as const;
+
+/**
+ * The answer a first login gets on Thu 22 Oct 2026 in Belgrade: 1 to 22 Oct against all of Sep (demo-data.md, "What a
+ * first login shows"; task 018 AC1).
+ */
+export const demoExpensesBreakdown: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownCategory('housing', 25_200, down(17)),
+    breakdownCategory('food', 51_004, up(7)),
+    breakdownCategory('transportation', 5_320, down(32)),
+    breakdownCategory('entertainment', 28_224, up(16)),
+    breakdownCategory('shopping', 65_800, up(14)),
+    breakdownCategory('others', 13_832, down(31)),
+  ],
+};
+
+/** Last month $0.00 for every category: the totals with no change (task 018 AC5, at 2022-01-15). */
+export const noLastMonthBreakdown: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownCategory('housing', 23_750, null),
+    breakdownCategory('food', 27_379, null),
+    breakdownCategory('transportation', 3_611, null),
+    breakdownCategory('entertainment', 7_410, null),
+    breakdownCategory('shopping', 30_591, null),
+    breakdownCategory('others', 11_115, null),
+  ],
+};
+
+/** Nothing in either month: six $0.00 with no change (task 018 AC5, at 2021-12-31). */
+export const allZeroBreakdown: ExpensesBreakdownResponse = {
+  categories: demoExpensesBreakdown.categories.map(({ category }) => breakdownCategory(category, 0, null)),
+};
+
+/**
+ * A mix (task 018 AC3, AC14): Housing `0%` with no arrow, Food `$0.00` with `100%` down, Transportation with no change,
+ * Entertainment `$1,000,000,000.00`, Shopping and Others as the demo.
+ */
+export const mixedBreakdown: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownCategory('housing', 20_000, { percent: 0, direction: null }),
+    breakdownCategory('food', 0, down(100)),
+    breakdownCategory('transportation', 5_320, null),
+    breakdownCategory('entertainment', 100_000_000_000, up(250)),
+    breakdownCategory('shopping', 65_800, up(14)),
+    breakdownCategory('others', 13_832, down(31)),
+  ],
+};
+
+const expensesBreakdownPath = '*/api/expenses/breakdown';
+
+/** `GET /api/expenses/breakdown` answers: the demo, last month $0.00, all $0.00, the mix, pending and failing. */
+export const expensesBreakdown = {
+  answers: (body: ExpensesBreakdownResponse = demoExpensesBreakdown) =>
+    http.get(expensesBreakdownPath, () => HttpResponse.json(body)),
+  noLastMonth: () => http.get(expensesBreakdownPath, () => HttpResponse.json(noLastMonthBreakdown)),
+  allZero: () => http.get(expensesBreakdownPath, () => HttpResponse.json(allZeroBreakdown)),
+  mixed: () => http.get(expensesBreakdownPath, () => HttpResponse.json(mixedBreakdown)),
+  pending: () =>
+    http.get(expensesBreakdownPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoExpensesBreakdown);
+    }),
+  fails: () =>
+    http.get(expensesBreakdownPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+};
+
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
- * its accounts, its goal, its bills, its recent transactions and its weekly comparison without asking: the demo data
- * of each. A test's own `server.use` comes first.
+ * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
+ * asking: the demo data of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
@@ -360,6 +438,7 @@ export const signedInDefaults = () => [
   upcomingBills.answers(),
   recentTransactions.answers(),
   weeklyComparison.answers(),
+  expensesBreakdown.answers(),
 ];
 
 /** DataState's root (task 017): where focus goes after Retry, with tabindex="-1" from then on; never a Tab stop. */

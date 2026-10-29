@@ -1,0 +1,56 @@
+Task 018 visual validation, 2026-10-29. Playwright MCP (headed Chromium on Windows), fresh contexts in Europe/Belgrade,
+1440x1024 at device scale 2, scrollbars hidden for the 1440 renders (`html { scrollbar-width: none }`, the page 1440 wide
+like the PNG, as tasks 013 to 017); the 1920 and 1280 renders keep the classic scrollbar (pages 1905 and 1265 wide).
+Backend on the fixed test clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite
+dev server, a user signed up through the API at that clock (the demo data). No Figma calls: compared with
+docs/figma/104. Overview.png only.
+
+Files
+- overview-1440-2x.png: /overview at 1440x1024, 2x, full page.
+- expenses-breakdown-card-1440-2x.png: the card alone (728x212 at x 680, y 881).
+- 104-expenses-breakdown-card-2x.png: the same box cut from 104. Overview.png (x 1360, y 1556 at 2x, 1456x424).
+- compare-104-expenses-breakdown.png: 104 above, built in the middle, both overlaid at 50% below (card tops aligned).
+- expenses-breakdown-card-hover-housing-2x.png: the card with the pointer on Housing's right arrow.
+- Evidence only: overview-1920x1080.png, overview-1280x1024.png, expenses-breakdown-card-1280-2x.png (the arrows
+  under the text, "Transporta-" over "tion", "Entertain-" over "ment"), state-skeleton-2x.png, state-error-2x.png,
+  state-no-last-month-2x.png, state-all-zero-2x.png, state-mixed-2x.png (`0%*` with no arrow, `$0.00` with `100%*` down,
+  no change, a $1,000,000,000.00 total wrapped with its arrow under it), state-stretched-card-2x.png (long transaction
+  names: the card 576 high, the grid at its top, the rest empty), ring-right-arrow-keyboard-2x.png.
+
+Measured at 2x on both crops, relative to the card's top-left (a Playwright canvas script in the session scratchpad;
+ink boxes as x from-to, y from-to):
+- Housing's tile: x 80, y 56 to 167 in both. The second column's tile at x 560 and the second row's at y 252 in both.
+- The name "Housing": 104 x 194 to 284, y 62 to 84; built x 194 to 283, y 62 to 84.
+- The total: 104 "$250.00" x 194 to 325, y 102 to 130; built "$252.00" x 194 to 321, y 102 to 130.
+- The percentage: 104 "15%*" x 193 to 248, y 146 to 164; built "17%*" x 193 to 251, y 146 to 164.
+- The small arrow: 104 x 273 to 294, y 145 to 166; built x 275 to 296, y 143 to 164.
+- The right arrow: x 372 to 413 in both; 104 y 98 to 129, built y 100 to 131.
+- The horizontal line: y 210 to 211 in both, across the content box.
+- The vertical lines: 104 x 490 to 491, y 41 to 390; built x 488 to 489, y 40 to 383.
+- The right arrows' color: #CFCFCF in both (281 and 282 ink pixels); Housing hovered #93CEC8 built, #94CEC8 in 104.
+- The card: x 680, 728x212 in both; y 881 built (780 plus the top row's growth of 101), 778 in 104.
+
+Differences
+1. The demo values and arrows (#12, expected): $252.00 17%* down against $250.00 15%* up, and so on for the six.
+2. Figma's "08%*" shows as "7%*" (no leading zero, #61; the value per #12, expected).
+3. The small arrows 1 px further right (2 at 2x) on Housing: Chromium's "17%*" is 1.5 px wider than Figma's "15%*"
+   (Figma's `%` is narrower, task 018 References, expected); and 1 px higher (2 at 2x): the percentage line is a 20 px
+   line under a 20 px total line, as the text-gap token records.
+4. The right arrows 1 px lower (2 at 2x): they centre on the 60 px text column, Figma on the 56 px tile.
+5. The vertical lines 1 px left (centred in the 40 gaps, expected) and 3.5 px shorter at the bottom, ending with the
+   second row (Figma 4 longer, expected); they start 0.5 px higher.
+6. The card 103 px lower than 104 (y 881 against 778): the top row's growth of 101 (task 015, the bill rows wrapped)
+   and Statistics 2 px taller (#93), expected.
+7. Figma draws Housing's arrow hovered; here every arrow is gray at rest and teal under the pointer (#21, expected).
+   The hover color is 1 of 255 off in red (#93 against #94), from blending 50% opacity.
+8. The names' ink is up to 1.5 px narrower than Figma's in places (e.g. "Housing" 1 px at 2x): Chromium's Inter
+   rendering; Figma's "Transportation" and "Entertainment" are about 1 px wider at 1x (task 018 References).
+9. The rest of the page as listed in tasks 013 to 017.
+
+Nothing else differs in the overlay (compare-104-expenses-breakdown.png): tiles, icons, text lines, arrows and lines
+coincide apart from the demo values.
+
+The 1280 render (expenses-breakdown-card-1280-2x.png): every right arrow under its text, right-aligned 16 from the
+item's right; "Transporta-" over "tion" and "Entertain-" over "ment" with the hyphen drawn, the other names on one
+line; the card 344 high (Recent Transaction's height), the grid at its top, Recent Transaction ending with it (y 1349).
+The 1920 render: the card 1038x212 at x 835, every item on one line.

@@ -5,6 +5,7 @@ export * from './calendar.js';
 export * from './category.js';
 export * from './entry.js';
 export * from './error.js';
+export * from './expenses.js';
 export * from './money.js';
 export * from './savings-goal.js';
 export * from './statistics.js';

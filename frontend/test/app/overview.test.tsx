@@ -351,10 +351,10 @@ describe('the Total Balance card states', () => {
 
 // T13: the page grid of 104 with its six sections (AC13; #48, #49, #94, #105 a).
 describe('the Overview page', () => {
-  // Goals, Upcoming Bill, Recent Transaction and Statistics have their content from tasks 014 to 017 (overview-goals,
-  // overview-upcoming-bill, overview-recent-transaction and overview-statistics tests); Expenses Breakdown stays empty
-  // until task 018.
-  it('shows the six sections in 104’s order, the links and the note, and the unbuilt card empty', async () => {
+  // Goals, Upcoming Bill, Recent Transaction, Statistics and Expenses Breakdown have their content from tasks 014 to
+  // 018 (overview-goals, overview-upcoming-bill, overview-recent-transaction, overview-statistics and
+  // overview-expenses-breakdown tests); no card is left empty.
+  it('shows the six sections in 104’s order, the links and the note, and no empty card', async () => {
     await openOverview();
     await within(totalBalance()).findByText('$130,254.67');
     const main = screen.getByRole('main');
@@ -375,7 +375,8 @@ describe('the Overview page', () => {
     );
     expect(within(region('Expenses Breakdown')).getByText('*Compare to last month')).toBeInTheDocument();
     expect(within(main).getAllByRole('link', { name: 'View All' })).toHaveLength(2);
-    expect(region('Expenses Breakdown').lastElementChild).toBeEmptyDOMElement();
+    await within(region('Expenses Breakdown')).findByRole('list');
+    for (const section of regions) expect(section.lastElementChild).not.toBeEmptyDOMElement();
   });
 
   it('opens Bills and Transactions from their "View All" in the shell', async () => {

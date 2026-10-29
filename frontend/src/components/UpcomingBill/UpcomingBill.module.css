@@ -35,7 +35,8 @@
   min-height: var(--size-date-box-height);
 }
 
-/* 104: the logo, the title and "Last Charge", 4 apart: as high as the date box. A long word breaks inside it. */
+/* 104: the logo, the title and "Last Charge", 4 apart: as high as the date box. A long word breaks inside it, with a
+   hyphen where the browser can hyphenate (#115 b). */
 .text {
   display: flex;
   flex-direction: column;
@@ -43,6 +44,7 @@
   min-width: 0;
   margin-right: auto;
   overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 /* 104 "Figma - Monthly": Secondary, Semibold 16/24. */

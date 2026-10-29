@@ -1,6 +1,6 @@
 # Task 018: Overview: Expenses Breakdown
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 004, 013
 - Size: L
@@ -181,9 +181,74 @@ The Scope follows #115 (closed, Marko, 2026-10-29): (a) as proposed; (b) hyphens
 - Updated: References (#115 closed, the hyphenation check), the Scope note, `hyphenatedCategoryLabel` in Shared, the rounding in Backend, the `ExpensesItem` name, screen reader and narrow-width items, the `hyphens: auto` item for `RecentTransactionItem` and `UpcomingBill`, the existing tests changed, Out of scope (no soft hyphens in data text, no hyphenation library, no same-period comparison), AC3, AC11, AC14, AC17 (new), T1b, T17, T20 and T21, the broken-on-purpose list (the names without soft hyphens), the visual and manual checks, the Human checkpoint (choices accepted). INDEX: row 018 cites #115 as answered, open questions none.
 - Not started. No Figma calls.
 
+### 2026-10-29, build and validation (`/next-task 018`)
+- Built test first (shared, backend, frontend, then e2e), each RED for the missing feature before the code:
+  - **Shared:** `expensesContract.breakdown` and its schemas in `shared/src/contract/expenses.ts`. The contract enforces the invariants as well as the shapes: an arrow exactly when the percent is above 0, a $0.00 total with a change only as `100` down, exactly six categories in the designed order, unknown keys dropped. `hyphenatedCategoryLabel` sits beside `categoryLabel`.
+  - **Backend:** an `ExpensesModule` in `backend/src/expenses/`, registered in `AppModule`.
+    - `expenseChange` rounds `floor((200 x |this - last| + last) / (2 x last))` in BigInt, takes the direction from the sign only when the rounded percent is above 0, and answers `null` when last month is 0. It throws a `RangeError` for cents that are not safe whole numbers 0 or more, or for an unsafe result.
+    - `ExpensesService.breakdown` reads today from `Clock` in the zone and makes one `VisibleTransactions.list` read from the start of last month to the start of next month (`startOfDay` on plain `YYYY-MM-01` dates). It assigns each row to a month by its own date in the zone, counts Complete rows only, and returns the six categories from `expenseCategorySchema.options`.
+    - The controller takes the path from the contract, `@CurrentUser()` and `@TimeZone()`.
+  - **Frontend:**
+    - `useExpensesBreakdown` under `['expenses', 'breakdown']`.
+    - `ExpensesItem`: the name drawn with soft hyphens but `aria-hidden`, with a visually hidden clean label; the change in words ("down 17% compared to last month"); the right arrow a link named "<Category> expenses" at Gray/03, Primary on hover, the icon at 50% opacity.
+    - `OverviewExpensesBreakdown`, which uses `DataState` with no empty state.
+    - `OverviewExpensesBreakdownSkeleton`, which uses the same grid and lines.
+    - The card body uses the existing 20 and 24 insets.
+    - `hyphens: auto` on the wrapping text of `RecentTransactionItem` and `UpcomingBill`.
+    - New tokens: nine spacing, one size (74, the Figma item height, off the 4px grid; the source cites the accepted task file), and one opacity in a new Opacity section. Rows in `components.md`: the † on `ExpensesItem` resolved, two Code-only rows. Gallery sections for the three components.
+- Choices made while building:
+  - **The grid lines** are drawn by the items' `::before` and `::after`, not by boxes on the grid areas. Stylelint allows `calc()` only over tokens (no `0px`, `100%` or negatives), so the lines use positive offsets: `left: 100%` plus a margin, and `content-box` padding to reach through the gaps. They follow the rows' heights with no JavaScript.
+  - **The item:** the text column is 60 high (name 16, 4, total 20, percentage line 20 with the 16px arrow centred). That puts the total and the percentage where 104 draws them. The item is 74 as a minimum height with no inset below.
+  - **The arrow under the text** sits with no gap. The arrow's box keeps 4px of air above its ink. These are undesigned states, built with `frontend-design` using tokens only.
+- Existing tests changed by the Scope (none weakened):
+  - Overview T13 now checks that no card is empty.
+  - The sign-up cache list adds `['expenses', 'breakdown']`.
+  - The Tab order after "Weekly Comparison" now reaches Housing's right arrow. This changed task 016's T8 (unit and e2e), task 017's T15 and its Statistics `nextHasFocus`, and task 017's e2e T18.
+  - `cache-control.test.ts`, `bank-data-source.test.ts` and `no-direct-time.test.ts` list the new module.
+  - The 1280 checks of tasks 016 and 017 pass unchanged.
+- Validation:
+  1. **Lint and typecheck.** Failed once: four findings in the new e2e spec (2 `consistent-function-scoping`, 2 `no-unnecessary-type-assertion`; oxlint and tsc disagreed on which `!` was needed). Fixed, then lint exit 0 and typecheck exit 0. Rework loop 1.
+  2. **Unit tests** pass: shared 831, backend 754, frontend 914 (2,499).
+  3. **E2E** passes: 197 (184 before, 13 new). Final run on the final tree: 197 passed, exit 0.
+  4. **Broken on purpose** (`.claude/tasks/evidence/018/mutation.txt`; files backed up, the `git diff HEAD` and `git status` SHA-256 checked after each restore, all matched):
+     - Today in UTC: 3 T4 tests fail (23:00:00Z in Belgrade, New York at 04:00:00Z, the edge rows at 23:00:00Z).
+     - Each row's month in UTC: 3 fail (the $500.00 row in Belgrade, at 1 Nov, and at the fixed clock).
+     - October's start taken with today's offset: caught only by a T4 case added at this step (2026-11-01T10:00:00Z in Belgrade, the $500.00 row of 00:30 on 1 Oct in last month: Shopping `92%*` down). As this service assigns each row to its month by its own date, that mistake can only show at the start of last month, and the planned cases did not reach it.
+     - The month's end as its start plus 31 x 24 h: 1 fails (the $300.00 row).
+     - The last-month-$0.00 guard removed: 14 fail (T2 and T5; a division by zero).
+     - `Math.round` of the signed change: 4 fail (-12.5% and -0.5% in T2 and T5).
+     - The direction from the unrounded sign: 5 fail (+0.495%, -0.4% and $999,999,999.99 to $1B).
+     - The names with `categoryLabel`: T17 fails at 1280 ("tion width: 14.3 vs 21.1", that is "Transportati" over "on").
+  5. **Visual** (`visual-differences.txt`, 104 cut and overlaid): tiles, names, totals, percentage lines and the horizontal line match 104 to the pixel at 2x; the arrow colors match (#CFCFCF; hover #93CEC8 against #94CEC8). Differences:
+     - The demo values and arrows (#12), and `7%*` for Figma's `08%*`.
+     - The small arrows 1px further right and 1px higher.
+     - The right arrows 1px lower: they are centred on the 60px text column, not the 56px tile. References measured the box at y 823; the e2e test pins the build's 824.
+     - The vertical lines 1px left and 3.5px shorter (expected).
+     - The card 103 lower (the top row's growth and Statistics' 260).
+     - Figma's Housing arrow is drawn hovered.
+  6. **Manual** (`manual-checks.txt`, headed Chromium with classic scrollbars): the aria snapshot; hover on all six; click to Expenses and back; the Tab order with the ring; 1920, 1280 (hyphenated names, the card unmoved by tab switches) and 1440 (nothing wraps); the backend stopped (skeleton, then the error after 7.0 s, the card 212); restarted (keyboard Retry keeps focus on the card's root with the ring, then Tab to Housing; mouse Retry with no ring).
+- **Security review** (`security-review.md`): no findings. The user is from the session only, reads go through `VisibleTransactions`, the Clock and `X-Time-Zone` are validated, money is integer cents, the percent uses BigInt, and the response has only the contract's keys.
+- **Code review** (`superpowers:requesting-code-review`): 0 critical, 0 important, 5 minor.
+  - Fixed: the skeleton's own list of the six categories replaced by `expenseCategorySchema.options`; the 74px token's source now cites the accepted task file instead of reading as an unexplained off-grid value.
+  - For the gate: the 1px offsets of the right arrow and the small arrow.
+  - Noted: the skeleton imports `OverviewExpensesBreakdown.module.css` (the first cross-component CSS import; deliberate, so nothing moves on load).
+  - For task 024: `expenses.test.ts`'s path guard and its 404 list will need updating when the Expenses routes arrive.
+- No Figma calls.
+
+### 2026-10-29, gate (`/approve-task`)
+- Approved by human (Marko).
+- Checked by Marko in the browser, all good:
+  - Expenses Breakdown at 1440 against 104.
+  - Hover teal and the click to Expenses on every arrow.
+  - Tab through the six arrows with the ring.
+  - 1280 with the arrows under the text and soft hyphens on Transportation and Entertainment.
+  - The whole Overview at 1440 and 1280: scroll, bottom inset, the full Tab order, side by side with 104.
+- Accepted: the right arrows 1px lower and the small up/down arrows 1px higher than 104 (centred on the 60px text column, pinned by e2e).
+- Added to INDEX row 024, as Marko asked: its new Expenses routes need the route-guard test from task 018 updated (`backend/test/expenses.test.ts`: the path guard and its 404 list).
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 2 (the #115 answer with the task file's approval; the soft-hyphen choice for (b))
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-29 10:33
+- Finished: 2026-10-29 11:57
+- Human interventions: 3 (the #115 answer with the task file's approval; the soft-hyphen choice for (b); the gate approval)
+- Rework loops: 1 (step 1, lint: four findings in the new e2e spec)
+- Notes on prompts that failed: none in the build. The security-review diff needed `git add -N` again, as in tasks 015 to 017.

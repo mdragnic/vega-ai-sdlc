@@ -47,6 +47,10 @@ describe('bank data in backend/src', () => {
         // Task 017 T9: the Statistics module reads through VisibleTransactions only.
         'statistics/statistics.service.ts',
         'statistics/statistics.controller.ts',
+        // Task 018 T8: the Expenses Breakdown module reads through VisibleTransactions only.
+        'expenses/expenses.service.ts',
+        'expenses/expenses.controller.ts',
+        'expenses/percent-change.ts',
       ]),
     );
     expect(outside.length).toBeGreaterThan(10);

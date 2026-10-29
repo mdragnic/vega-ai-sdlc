@@ -1,0 +1,59 @@
+/* Not designed (#6): existing tokens only, on the items' grid: each item 74 high, the tile 8 from its top and 16 from
+   its left, the right arrow's 24px box 16 from its right, centred on the text. */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-expenses-item-icon-gap);
+  min-height: var(--size-expenses-item-height);
+  padding: var(--space-expenses-item-padding-y) var(--space-expenses-item-padding-x);
+}
+
+.tile {
+  flex-shrink: 0;
+  width: var(--size-category-tile);
+  height: var(--size-category-tile-tall);
+}
+
+.body {
+  display: flex;
+  flex-grow: 1;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-expenses-item-change-gap);
+  min-width: 0;
+  height: var(--size-category-tile-tall);
+}
+
+/* Three lines over the tile's height: the name at the top, the percentage at the bottom. */
+.lines {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  height: var(--size-category-tile-tall);
+}
+
+/* Each about as wide as its text, as high as its letters. */
+.name {
+  width: var(--size-amount-box-width);
+  max-width: 100%;
+  height: var(--font-size-12);
+}
+
+.amount {
+  width: var(--size-amount-box-width);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.change {
+  width: var(--size-category-tile);
+  max-width: 100%;
+  height: var(--font-size-12);
+}
+
+.arrow {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+}

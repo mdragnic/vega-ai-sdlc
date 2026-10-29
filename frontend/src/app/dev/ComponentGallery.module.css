@@ -322,3 +322,22 @@
   flex-direction: column;
   min-height: var(--size-statistics-card-height);
 }
+
+/* The Overview Expenses Breakdown card: inset 20 and 24, a flex column at its 212 minimum, as OverviewPage draws it
+   (#105 a; task 018). */
+.expensesBreakdownCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-expenses-breakdown-card-height);
+  padding: var(--space-overview-card-padding-y) var(--space-card-padding);
+}
+
+/* One item in the first of three columns, as wide as on Overview at 1440. */
+.expensesItemList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-expenses-breakdown-column-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
