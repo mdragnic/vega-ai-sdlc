@@ -1,0 +1,64 @@
+Task 019 visual validation, 2026-10-30. Playwright MCP (headed Chromium on Windows), fresh contexts in Europe/Belgrade,
+1440x1024 at device scale 2, the scrollbar hidden for the 1440 render (`html { scrollbar-width: none }`, the page 1440
+wide like the PNG, as tasks 013 to 018); the 1920 and 1280 renders keep the classic scrollbar (pages 1905 and 1265 wide).
+Backend on the fixed test clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`), Vite
+dev server, a user signed up through the API at that clock (the demo data). No Figma calls: compared with
+docs/figma/105. Balances.png only.
+
+Files
+- balances-1440-2x.png: /balances at 1440x1024, 2x.
+- 105-balances-content-2x.png and balances-content-1440-2x.png: the content area (x 592, y 196, 2240x1340 at 2x) of
+  105 and of the build.
+- compare-105-credit-card.png: the Credit Card card (x 600, y 296, 720x592 at 2x): 105 above, built in the middle, both
+  overlaid at 50% below.
+- compare-105-add-accounts.png: the Add Accounts cell, the same way.
+- Evidence only: balances-1920x1080.png, balances-1280x1024.png (nothing wraps, 288 everywhere, no scroll either way),
+  state-long-bank-name-1280.png and state-long-bank-name-1440.png (a 100-character Bank Name on Checking: the name and
+  VISA under the type, right-aligned, wrapped, the logo centred on the name; row 1 stretched to 344 at 1280 with
+  "Remove" and "Details" at every card's bottom), state-long-bank-name-loan-1440.png (on Loan: row 2 stretched, the
+  Add Accounts group centred in its taller cell), state-eight-accounts-end.png (8 accounts, scrolled to the end: the
+  last row's bottom at 1080 of a 1112 page, 32 above its end), state-skeleton-2x.png (three skeleton cards at 304, 675
+  and 1046, each 347x288), state-error-2x.png and state-no-accounts-2x.png (one white card 1089x288 across the grid,
+  radius 8, no Add Accounts cell), state-keyboard-retry-ring-2x.png (focus on DataState's root with the ring after a
+  keyboard Retry), ring-details-keyboard-2x.png (the 2px teal ring on Checking's "Details"),
+  account-details-route-2x.png (/balances/2 after "Details": Balances active, an empty content area).
+
+Measured at 2x on both PNGs (a Node PNG reader in the session scratchpad; ink boxes as absolute 2x pixels, x from-to,
+y from-to):
+- The card edges: white from x 608 and to y 879 in both; the shadow's first pixels at x 607 (#ECEDEF in 105, #EAECEB
+  built) and y 880 (#E3E7E9, #E3E6E5).
+- The header row band: y 360 to 407 in both (the logo's height). The type "Credit Card": 105 x 657 to 833, built
+  x 657 to 831, y 371 to 396 in both, #878787 in both. "Master Card": 105 x 1020 to 1097 and 1106 to 1157, built
+  x 1020 to 1098 and 1106 to 1158, y 374 to 392 (built 391), the darkest pixel #666666 in both. The Mastercard logo:
+  x 1178 to 1255, y 360 to 407 in both.
+- The divider: rows 438 and 439, #F3F3F3, in both.
+- "Account Number": y 545 to 566 in both, x 657 to 878 (105) and 656 to 879 (built). "Total amount": y 681 to 702 in
+  both, x 657 to 827 in both.
+- The number and the balance: their ink tops at y 484 and 617 in both (the content differs, below).
+- The bottom row: y 760 to 831 in both. "Remove": x 658 to 775 and y 784 to 808 (105), x 658 to 776 and y 785 to 808
+  (built). "Details": 105 x 1042 to 1261, built x 1044 to 1263, y 760 to 831 in both (110x36); its text 105 x 1084 to
+  1171, built x 1087 to 1174; the chevron 105 x 1201 to 1210, built x 1203 to 1212; y the same.
+- The Add Accounts cell: identical boxes. The button x 2256 to 2671, y 1144 to 1239 (208x48); "Edit Accounts" ink
+  x 2360 to 2568, y 1284 to 1308.
+
+Differences
+1. The masked numbers: `**** **** **** 2598` in the one format of #25 against 105's partial numbers such as
+   `3388 4556  8860 8***` (expected).
+2. The balances: `$21,019.18` and so on against `$25000` (#11 and #57, the values per #12; expected). With its comma
+   the balance's ink reaches 4 px lower at 2x (to y 657 against 653).
+3. The header date (`22 Oct, 2026` against `May 19, 2023`) and the initials avatar "TR" against the photo (task 011,
+   #38; expected).
+4. "Details" 1 px further right (2 at 2x): 105 ends the button at x 630.5, 1.5 px inside the content's right edge (632);
+   the build puts it at the edge, as References measured (x 522 to 632). Its text a further 0.5 px right (Chromium's
+   "Details" in Medium 14 is 87 wide at 2x in both, placed 20 from the button's edge).
+5. The type "Credit Card" 1 px narrower (2 at 2x) in Chromium's Inter Bold than in Figma's.
+6. With a classic scrollbar (the 1920 and 1280 renders, the e2e browser) every x moves left with the 15 px gutter, as
+   #101 sets; measured from the page's right edge it is as above.
+Nothing else differs: the overlays in compare-105-credit-card.png and compare-105-add-accounts.png match outside 1, 2
+and 4.
+
+After the code review (Minor 1, the same day): the type keeps its 32px row when the Bank Name moves under it, so a
+wrapped card's type is level with its neighbours' (it was 4 px higher). balances-1440-2x.png, the comparisons and the
+three state-long-bank-name renders were taken again; every measurement above is unchanged at 1440 (the unwrapped
+layout), and in the wrapped renders every type's centre is at the same y as the others in its row (192 in row 1 at
+1280 and 1440, 512 in row 2 with the name on Loan).

@@ -1,0 +1,48 @@
+Task 019, validation step 4: the key tests fail when the code is broken on purpose, 2026-10-30.
+
+Method (as the task 016 to 018 gates): new files intent-to-add (`git add -N`); before each mutation the SHA-256 of
+`git diff HEAD` plus `git status --short` recorded and the file backed up in the session scratchpad; one mutation; the
+named tests run; the file restored; the hash checked. Every restore matched its hash ("RESTORED: hashes match"). Unit
+tests with Vitest (backend in-memory SQLite, frontend MSW); e2e with `npx playwright test --grep` in e2e/ (the backend
+rebuilt from src by `start:e2e`, the frontend served from src by Vite).
+
+1. A full account number in the response.
+   a. `maskedNumber: account.accountNumber` in AccountsService.summary:
+      backend: 9 failed of 44 in accounts-service, accounts and bank-data-source: T6 "uses accountNumber only in
+      bank-data/, demo/ and its allowed files"; T2 "answers with the contract's fields only, the number masked"; T3
+      "answers 200 with the total and the 5 accounts oldest first ..."; T4 "never sends a full number, a 12-digit
+      prefix, ..."; the three clock cases and both user-scoping tests (the body no longer parses).
+      e2e T16 "shows a first login's five cards ...": failed, "element(s) not found ... getByText('$130,254.67')":
+      the frontend's contract parse rejects the body, so Overview shows its error state.
+   b. An extra `accountNumber` key next to the mask:
+      first run: T6, T2, T4 and T5 failed but T3 passed: it compared the body after `accountsResponseSchema.parse`,
+      which drops an unknown key. Fixed (rework): T3 now compares the body as sent (and that it parses unchanged).
+      Re-run: 5 failed of 44: T6, T2, T3, T4, T5.
+2. Another user's accounts.
+   a. `listAccounts(userId + 1)` in AccountsService: 18 failed of 31: every service case (the fake provider is called
+      with another id), T3, T4, the clock cases, T5 "keeps another user's change out of this user's accounts" and
+      "ignores a userId and an accountId in the query".
+   b. The provider's `listAccounts` without its user filter (`find({ order: { id: 'ASC' } })`):
+      first run: T5 and the query test failed, T3 passed: in its in-memory database the first user was alone when T3
+      ran. Fixed (rework): the suite signs up another user first, so every test reads past another user's accounts.
+      Re-run: 7 failed of 19: T3, T4, the three clock cases, T5 and the query test.
+3. Every card given the first account's Bank Name.
+   a. Backend, `bankName: accounts[0]!.bankName`: 5 failed of 31: T2 (both: the exact accounts and "gives each account
+      its own Bank Name, whatever the order"), T3, T4 (the Bank Names with their accounts), T5.
+   b. Frontend, BalancesPage passing `{ ...account, bankName: data.accounts[0]!.bankName }`: 10 failed of 42 in
+      balances.test.tsx, among them T7 "lists the five accounts in the order sent, each read as ..." and T11 "names each
+      "Details" link ..., described by its card's type and Bank Name".
+4. "Details" to the list position (1-based) instead of the account's id (BalancesPage passing `id: index + 1`):
+   frontend: T8 "links each card to its own account id, as sent" failed (expected /balances/12, 17, 30 for the extra
+   accounts) and T13 "never calculates, sorts, filters or masks" (the `+ 1`). Before this check the extra accounts had
+   ids 6 to 8, their positions; changed to 12, 17 and 30 while preparing it.
+   e2e T17 "opens /balances/<id> from each "Details" ...": first run passed: in the fresh e2e database the first user's
+   account ids are 1 to 5, their positions. Fixed (rework): the test signs up another user first. Re-run: failed,
+   "Expected: http://localhost:5173/balances/6, Received: http://localhost:5173/balances/1"; unmutated it passes.
+5. The logo whatever the card network (`const logo = cardNetworkLogos.mastercard;` in AccountType):
+   frontend: 10 failed of 42, among them T7 "shows the Mastercard logo on Credit Card and the VISA logo on Checking
+   only" and the read-outs; e2e T16: failed (toEqual on the cards' logos).
+6. The header row kept on one line (`flex-wrap: nowrap` on the header row, `white-space: nowrap` on the Bank Name):
+   e2e T19 at 1280, "moves a 100-character Bank Name under the type at 1280 ..." and "breaks a 100-character Bank Name
+   with no space ...": both failed, "Checking: the name under the type"; the demo-data layout test at 1280 still passed
+   (nothing wraps with the demo names).

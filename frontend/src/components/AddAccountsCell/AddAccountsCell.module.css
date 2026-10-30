@@ -1,0 +1,27 @@
+/* Fills its grid cell, so it takes the row's height beside a taller card. */
+.cell {
+  display: flex;
+  flex-grow: 1;
+}
+
+/* 105: the button and "Edit Accounts" 16 under it, as one group centred both ways in the card, 288 high at least. */
+.card {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-add-accounts-gap);
+  min-height: var(--size-account-card-height);
+}
+
+/* 105 "Edit Accounts": Gray/03, Medium 16/24. Visual only (#22): the default cursor. */
+.editAccounts {
+  color: var(--color-gray-03);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+  cursor: default;
+}

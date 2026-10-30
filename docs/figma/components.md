@@ -18,7 +18,7 @@ Sorted by use count, highest first.
 | Expences Item † | `ExpensesItem` | `42:777` | - | 104, 104.1 (Expenses Breakdown) | 12 |
 | Item | `RecentTransactionItem` | `407:5649` | - | 104, 104.1 (Recent Transaction) | 10 |
 | chevron-right | `ChevronRight` | `14:745` | - | 104, 104.1 (View All, Previous, Next) | 8 |
-| Account Type | `AccountType` | `410:5353` | - | 105 | 5 |
+| Account Type ¶ | `AccountType` | `410:5353` | - | 105 | 5 |
 | Header | `Header` | `411:6067` | - | 104, 104.1, 105 | 3 |
 | Nav bar | `NavBar` | `411:6442` | - | 104, 104.1, 105 | 3 |
 | Input | `Input` | `402:5191` (set) | Type=Name-Email, Password, Show Password, Phone number x Active=Yes/No (8) | 101 | 2 |
@@ -33,7 +33,8 @@ Sorted by use count, highest first.
 | Button/secondary | `ButtonSecondary` | `402:5233` (set) | Icon=Yes, Icon=No | 101 | 1 |
 
 † The instances are named `Item` but are 200x74, the exact size of `Expences Item`. `Item` itself is 303x88. Matched by size, not by name. Verified in task 018 on PNG 104 (no Figma call): the tiles and right arrows place each item at 200x74, 16 at the sides and 8 above the tile, in a 3x2 grid 40 and 24 apart; built as `ExpensesItem`.
-‡ Two components share this name. Matched by exact size: Button Big 208x48 and Popup Input 488x392. `GoalPopupInput` holds `PopupInputSmall` fields (`Popup Input (small)` `416:6338`): two in 104.1 and 110.1, one in 110.2 (task 005).
+‡ Two components share this name. Matched by exact size: Button Big 208x48 and Popup Input 488x392. `GoalPopupInput` holds `PopupInputSmall` fields (`Popup Input (small)` `416:6338`): two in 104.1 and 110.1, one in 110.2 (task 005). `AddAccountsButtonBig` was built in task 019 from PNG 105 (no Figma call): the 208x48 teal "Add Accounts", visual only (#22), in `AddAccountsCell`.
+¶ Verified in task 019 on PNG 105 (no Figma call): each card 352x288 (on Overview's grid, narrowing with the window, #94), the type and the Bank Name with the card network logo over a Gray/06 divider, the masked number and the balance each over its label, then "Remove" (visual only, #23) and the nested `Button` "Details >" (110x36); built as `AccountType`, with `Button` as a link to Account Details (#50).
 
 Used in 2+ screens: Expences Item, Item, chevron-right, Header, Nav bar, Mastercard, edit, Award and octicon:goal-16 (9). Only Header and Nav bar appear in 2 distinct screens (Overview and Balances) when 104 and 104.1 count as one screen.
 
@@ -56,7 +57,7 @@ Matched by look and approximate size in the PNGs (pixel size / 2). Verify with `
 | Goal Item | `GoalItem` | `413:8749` | 110 category cards | Card is about 352x104 |
 | Popup Input | `GoalPopupInput` | `416:6381` | 110.1 | Same popup as 104.1 (Target Amounts, Present Amounts, Save) |
 | Settings Input | `SettingsInput` | `54:2202` | 111, 112 fields | Label + value block, 540 wide |
-| Button | `Button` | `43:1161` | 105 "Details >" (nested in Account Type) | About 110x36 |
+| Button | `Button` | `43:1161` | 105 "Details >" (nested in Account Type) | About 110x36; built in task 019 from PNG 105 as a link (it navigates), 36 high, 20 to each edge and 8 to the chevron |
 | Category icons (Housing, Food, Trasnport, Movie, Shopping, Others, gamepad-2) | `Housing`, `Food`, `Transport`, `Movie`, `Shopping`, `Others`, `Gamepad2` | see table below | 104, 107, 109, 110 | Same glyphs |
 
 The 110.2 popup (Target Amounts only) has no matching component size. In code it is `GoalPopupInput` with one `PopupInputSmall` field, 280 high (task 005).
@@ -148,7 +149,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`; task 013 added `TotalBalance`, `AccountTypeSlide`, `SliderOption` and `TotalBalanceSkeleton`; task 014 added `Goals`, `GoalsSkeleton` and `SavingsGoalPopup`; task 015 added `UpcomingBill`, `UpcomingBillLogo` and `UpcomingBillSkeleton`; task 016 added `RecentTransaction` and `RecentTransactionSkeleton` (`RecentTransactionItem` has its Figma row above); task 017 added `Statistics`; task 018 added `OverviewExpensesBreakdown` and `OverviewExpensesBreakdownSkeleton` (`ExpensesItem` has its Figma row above).
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`; task 013 added `TotalBalance`, `AccountTypeSlide`, `SliderOption` and `TotalBalanceSkeleton`; task 014 added `Goals`, `GoalsSkeleton` and `SavingsGoalPopup`; task 015 added `UpcomingBill`, `UpcomingBillLogo` and `UpcomingBillSkeleton`; task 016 added `RecentTransaction` and `RecentTransactionSkeleton` (`RecentTransactionItem` has its Figma row above); task 017 added `Statistics`; task 018 added `OverviewExpensesBreakdown` and `OverviewExpensesBreakdownSkeleton` (`ExpensesItem` has its Figma row above); task 019 added `AddAccountsCell` and `AccountTypeSkeleton` (`AccountType`, `Button` and `AddAccountsButtonBig` have their Figma rows above).
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -191,6 +192,8 @@ Code components with no Figma component. They are built from tokens, and their n
 | `Statistics` | The content of the Overview Statistics card (Figma section `Statistics` `66:4933`, no component): the 24px header row (#93 a) with `Dropdown` `comparison` named "Statistics" at the left ("Weekly Comparison", the one option, #20) and `ChartLegend` "This week" and "Last week" at the right, in every state; under it the chart's 188 box with `DataState` (`ComparisonBarChartSkeleton` of 7 groups, the error state, "No expenses this week or last week" when the backend sends no ticks) and `ComparisonBarChart` of the 7 days as sent, the labels from `formatDayLabel`. Both keep their size and place at the top of a taller card (#113 a). Maps and formats; calculates nothing | #6, #20, #55, #91, #93, #105 a, #113 |
 | `OverviewExpensesBreakdown` | The content of the Overview Expenses Breakdown card (Figma section `Expenses Breakdown` `66:4999`, no component; `ExpensesBreakdown` is the 109 card, task 024): `DataState` with `OverviewExpensesBreakdownSkeleton`, the error state and no empty state (the six always show), then the six `ExpensesItem` in the order sent, a list on 104's 3x2 grid (three columns sharing the width, 40 and 24 apart) with a `#F6F6F6` line in the middle of each gap, drawn by the items so it follows the rows' heights. The grid keeps its size and place at the top of a taller card (#113 a). Maps; calculates, sorts and filters nothing | #6, #21, #56, #61, #94, #112, #113 |
 | `OverviewExpensesBreakdownSkeleton` | The loading skeleton of the Expenses Breakdown card for `DataState`: six items on the same grid and lines, each a block in the tile's place, three lines for the name, the total and the percentage, and a block in the right arrow's place. Not designed | #6, #105 a |
+| `AddAccountsCell` | The last cell of the Balances grid (Figma frame `410:5516`, no component): a white `Card`, 288 high at least, with `AddAccountsButtonBig` and "Edit Accounts" (Medium 16/24, Gray/03) 16 under it, centred both ways; it stretches with its row. Visual only: no button or link, no Tab stop, the default cursor, nothing on a click, the whole cell hidden from assistive technology | #22, #24 |
+| `AccountTypeSkeleton` | The loading skeleton of one Balances card for `DataState`, on `AccountType`'s layout at its 288: lines for the type and the Bank Name over the divider, two lines each for the number and the balance with their labels, a line for "Remove" and a block in the "Details" box. Three of them fill the grid's first row while the accounts load. Not designed | #6, #105 |
 
 ## Totals
 

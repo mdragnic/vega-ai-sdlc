@@ -1,14 +1,8 @@
-import { type AccountSummary, accountTypeLabel, type CardNetwork, formatMoney } from '@finebank/shared';
+import { type AccountSummary, accountTypeLabel, formatMoney } from '@finebank/shared';
 
-import { mastercardUrl, visacardUrl } from '../../assets/brand';
+import { cardNetworkLogos } from '../../assets/brand';
 import { ArrowUpRight } from '../../assets/icons';
 import styles from './AccountTypeSlide.module.css';
-
-/** The logo of each card network, an image with its own colors (#24, #66). */
-const logos: Record<CardNetwork, { src: string; name: string }> = {
-  mastercard: { src: mastercardUrl, name: 'Mastercard' },
-  visa: { src: visacardUrl, name: 'VISA' },
-};
 
 type AccountTypeSlideProps = {
   /** One account as the backend sends it: the number already masked (#25), the balance calculated (#57). */
@@ -24,7 +18,7 @@ type AccountTypeSlideProps = {
  * and the arrow move to the next line and the card grows (#106).
  */
 export function AccountTypeSlide({ account, label }: AccountTypeSlideProps) {
-  const logo = account.cardNetwork === null ? null : logos[account.cardNetwork];
+  const logo = account.cardNetwork === null ? null : cardNetworkLogos[account.cardNetwork];
 
   return (
     <div role="group" aria-label={label} className={styles.slide}>

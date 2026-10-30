@@ -143,7 +143,7 @@ describe('AccountsService.summary', () => {
     expect(listTransactions).not.toHaveBeenCalled();
   });
 
-  // AC8, #25: only the contract's fields, the number masked.
+  // AC8, #25; task 019 T2, AC6 and AC7: only the contract's fields, the number masked, each account's own Bank Name.
   it('answers with the contract’s fields only, the number masked', async () => {
     const { service } = serviceWith([creditCard, { ...checking, cardNetwork: null }], []);
 
@@ -154,13 +154,50 @@ describe('AccountsService.summary', () => {
       {
         id: 10,
         accountType: 'credit-card',
+        bankName: 'Master Card',
         cardNetwork: 'mastercard',
         maskedNumber: '**** **** **** 2598',
         balance: usd(100_000),
       },
-      { id: 11, accountType: 'checking', cardNetwork: null, maskedNumber: '**** **** **** 7310', balance: usd(50_000) },
+      {
+        id: 11,
+        accountType: 'checking',
+        bankName: 'AB Bank Ltd',
+        cardNetwork: null,
+        maskedNumber: '**** **** **** 7310',
+        balance: usd(50_000),
+      },
     ]);
-    expect(JSON.stringify(summary)).not.toMatch(/3388|69345|Master Card|AB Bank|openingBalance|bankName/);
+    expect(Object.keys(summary).toSorted()).toEqual(['accounts', 'totalBalance']);
+    for (const account of summary.accounts) {
+      expect(Object.keys(account).toSorted()).toEqual([
+        'accountType',
+        'balance',
+        'bankName',
+        'cardNetwork',
+        'id',
+        'maskedNumber',
+      ]);
+    }
+    expect(JSON.stringify(summary)).not.toMatch(/3388|69345|Main Branch|Park Street|openingBalance|branchName/);
+  });
+
+  // Task 019 T2, AC6: the Bank Name of each account is its own, in the provider's order (#57).
+  it('gives each account its own Bank Name, whatever the order', async () => {
+    const { service } = serviceWith(
+      [
+        { ...checking, bankName: 'City Bank Ltd.' },
+        { ...creditCard, bankName: 'Brac Bank Ltd.' },
+      ],
+      [],
+    );
+
+    const summary = await service.summary(USER_ID, ZONE);
+
+    expect(summary.accounts.map(({ id, bankName }) => [id, bankName])).toEqual([
+      [11, 'City Bank Ltd.'],
+      [10, 'Brac Bank Ltd.'],
+    ]);
   });
 
   // #11: an amount past Number.MAX_SAFE_INTEGER cents is an error (a 500), never a wrong amount.

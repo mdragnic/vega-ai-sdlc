@@ -109,6 +109,12 @@ const overviewSections = [
   'Expenses Breakdown',
 ];
 
+/** The sections of the screens built so far (Overview, task 013; Balances, task 019); the others are empty. */
+const builtSections: Partial<Record<(typeof appPaths)[number], string[]>> = {
+  '/overview': overviewSections,
+  '/balances': ['Balances'],
+};
+
 // T4: every app path opens in the shell with the signed-in user and today's date (AC1, AC2, AC4).
 describe('the shell on each app path', () => {
   it.each(appPaths)('shows the user, the date and the section of %s', async (path) => {
@@ -122,20 +128,32 @@ describe('the shell on each app path', () => {
     expect(within(sidebar().parentElement!).getByText('Tanzir Rahman')).toBeInTheDocument();
     const avatar = screen.getByRole('img', { name: 'Tanzir Rahman' });
     expect(avatar).toHaveTextContent('TR');
-    // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013).
-    expect((path === '/overview' ? sidebar().parentElement! : container).querySelector('img')).toBeNull();
+    // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013), and the
+    // Balances cards theirs (task 019).
+    const sections = builtSections[path] ?? [];
+    expect((sections.length > 0 ? sidebar().parentElement! : container).querySelector('img')).toBeNull();
     expect(currentLinks()).toEqual([activeItem[path]]);
     // The greeting on Overview only.
     expect(screen.queryByText(/Hello/)?.textContent ?? null).toBe(path === '/overview' ? 'Hello Tanzir' : null);
-    // Overview holds its six sections (task 013); the other screens are empty until their tasks.
+    // Overview holds its six sections (task 013) and Balances its one (task 019); the other screens are empty until
+    // their tasks, Account Details (`/balances/12`) until task 021.
     const main = screen.getByRole('main');
     expect(
       within(main)
         .queryAllByRole('region')
         .map((region) => within(region).getByRole('heading', { level: 2 }).textContent),
-    ).toEqual(path === '/overview' ? overviewSections : []);
-    expect(main.childNodes.length === 0).toBe(path !== '/overview');
+    ).toEqual(sections);
+    expect(main.childNodes.length === 0).toBe(sections.length === 0);
     expect(url()).toBe(path);
+  });
+
+  // Task 019: Balances fills its content; its cards show the card network logos.
+  it('shows the Balances section with its cards’ logos on /balances', async () => {
+    server.use(me.signedIn(), today.answers());
+    renderApp('/balances');
+
+    const logos = await within(await screen.findByRole('main')).findAllByRole('img');
+    expect(logos.map((logo) => logo.getAttribute('alt'))).toEqual(['Mastercard', 'VISA']);
   });
 
   it('greets with the first word of the Full Name', async () => {

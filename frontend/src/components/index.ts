@@ -1,10 +1,15 @@
 // Shared components, exported by their code name from docs/figma/components.md: the Code name column,
 // or the Code-only table for components with no Figma component (#36). test/components/names.test.ts checks it.
+export { AccountType } from './AccountType/AccountType';
+export { AccountTypeSkeleton } from './AccountTypeSkeleton/AccountTypeSkeleton';
 export { AccountTypeSlide } from './AccountTypeSlide/AccountTypeSlide';
+export { AddAccountsButtonBig } from './AddAccountsButtonBig/AddAccountsButtonBig';
+export { AddAccountsCell } from './AddAccountsCell/AddAccountsCell';
 export { AmountBox } from './AmountBox/AmountBox';
 export { AppLayout } from './AppLayout/AppLayout';
 export { AuthLayout } from './AuthLayout/AuthLayout';
 export { Avatar } from './Avatar/Avatar';
+export { Button } from './Button/Button';
 export { ButtonPrimary } from './ButtonPrimary/ButtonPrimary';
 export { ButtonSecondary } from './ButtonSecondary/ButtonSecondary';
 export { ButtonSmall } from './ButtonSmall/ButtonSmall';

@@ -19,7 +19,10 @@ function safeCents(cents: number): number {
 /** `a + b` in integer cents, each of them and the sum safe integers. */
 const addCents = (a: number, b: number): number => safeCents(safeCents(a) + safeCents(b));
 
-/** The accounts of the Total Balance card (#17), calculated here, never in the frontend (#11, #77). */
+/**
+ * The accounts of the Total Balance card (#17) and the Balances cards (#24), calculated here, never in the frontend
+ * (#11, #77).
+ */
 @Injectable()
 export class AccountsService {
   constructor(
@@ -28,10 +31,10 @@ export class AccountsService {
   ) {}
 
   /**
-   * The user's accounts, oldest first (#24), each with its balance: the opening balance plus the account's
-   * Complete transactions dated up to today in `timeZone`, income added and expenses subtracted (#53, #57). The
-   * total is the sum of the balances. Only the contract's fields: the number masked (#25), no opening balance,
-   * Bank Name or transaction.
+   * The user's accounts, oldest first (#24), each with its Bank Name and its balance: the opening balance plus the
+   * account's Complete transactions dated up to today in `timeZone`, income added and expenses subtracted (#53,
+   * #57). The total is the sum of the balances. Only the contract's fields: the number masked (#25), no opening
+   * balance, Branch Name or transaction.
    */
   async summary(userId: number, timeZone: string): Promise<AccountsResponse> {
     const accounts = await this.bankData.listAccounts(userId);
@@ -52,6 +55,7 @@ export class AccountsService {
       accounts: accounts.map((account) => ({
         id: account.id,
         accountType: account.accountType,
+        bankName: account.bankName,
         cardNetwork: account.cardNetwork,
         maskedNumber: maskAccountNumber(account),
         balance: usd(balances.get(account.id)!),

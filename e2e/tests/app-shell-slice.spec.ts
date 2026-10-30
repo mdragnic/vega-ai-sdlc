@@ -16,6 +16,12 @@ const overviewSections = [
   'Expenses Breakdown',
 ];
 
+/** The sections of the screens built so far (Overview, task 013; Balances, task 019); the others are empty. */
+const builtSections: Partial<Record<string, string[]>> = {
+  '/overview': overviewSections,
+  '/balances': ['Balances'],
+};
+
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' });
 const navBar = (page: Page) => sidebar(page).locator('..');
 const activeItem = (page: Page) => sidebar(page).locator('a[aria-current="page"]');
@@ -72,17 +78,23 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     await expect(page).toHaveURL(`${FRONTEND_URL}${path}`);
     await expect(navBar(page).getByText('Tanzir Rahman', { exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Tanzir Rahman' })).toHaveText('TR');
-    // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013).
-    await expect((path === '/overview' ? navBar(page) : page).locator('img')).toHaveCount(0);
+    const pageSections = builtSections[path] ?? [];
+    // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013), and the
+    // Balances cards theirs (task 019).
+    await expect((pageSections.length > 0 ? navBar(page) : page).locator('img')).toHaveCount(0);
     await expect(activeItem(page)).toHaveCount(1);
     await expect(activeItem(page)).toHaveText(item);
     await expect(header(page).getByText(/^Hello /)).toHaveCount(path === '/overview' ? 1 : 0);
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
-    // Overview holds its six sections (task 013); the other screens are empty until their tasks.
-    await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(
-      path === '/overview' ? overviewSections : [],
-    );
-    if (path !== '/overview') await expect(page.getByRole('main')).toBeEmpty();
+    // Overview holds its six sections (task 013) and Balances its one with the cards' logos (task 019); the other
+    // screens are empty until their tasks, Account Details (`/balances/abc`) until task 021.
+    await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(pageSections);
+    if (path === '/balances') {
+      await expect(page.getByRole('main').getByRole('img')).toHaveCount(2);
+      await expect(page.getByRole('main').getByRole('img', { name: 'Mastercard' })).toBeVisible();
+      await expect(page.getByRole('main').getByRole('img', { name: 'VISA' })).toBeVisible();
+    }
+    if (pageSections.length === 0) await expect(page.getByRole('main')).toBeEmpty();
   }
 });
 

@@ -1,0 +1,67 @@
+/* Not designed (#6): existing tokens only, on AccountType's grid. A white card at 288, inset 24, the bottom row at its
+   bottom. */
+.card {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  min-height: var(--size-account-card-height);
+}
+
+/* The 32px header row and the divider 12 under it. */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(var(--size-card-network-logo-height) + var(--space-account-card-divider-gap));
+  padding-bottom: calc(var(--space-account-card-divider-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* As wide as "Credit Card" in Bold 16, as high as its letters. */
+.type {
+  width: var(--size-amount-box-width-lg);
+  height: var(--line-height-16);
+}
+
+/* About as wide as "Master Card" in Medium 12. */
+.bankName {
+  width: var(--size-amount-box-width);
+  height: var(--line-height-16);
+}
+
+/* A value's 28px line and its label's 20px line, 4 apart, 16 under the divider and under the value above. */
+.value {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-account-card-label-gap);
+  margin-top: var(--space-account-card-group-gap);
+}
+
+.amount {
+  width: var(--size-popup-button-width);
+  height: var(--line-height-28);
+}
+
+.label {
+  width: var(--size-amount-box-width-lg);
+  height: var(--line-height-20);
+}
+
+/* "Remove" at the left and the "Details" box at the right, on the button's 36px row at the card's bottom. */
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--size-button-details-height);
+  margin-top: auto;
+}
+
+.remove {
+  width: var(--size-category-tile-tall);
+  height: var(--line-height-16);
+}
+
+.details {
+  width: var(--size-amount-box-width-lg);
+  height: var(--size-button-details-height);
+}

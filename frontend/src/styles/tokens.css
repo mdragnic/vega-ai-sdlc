@@ -153,6 +153,15 @@
   --space-expenses-item-icon-gap: 16px;
   --space-expenses-item-text-gap: 4px;
   --space-expenses-item-change-gap: 8px;
+  --space-account-card-divider-gap: 12px;
+  --space-account-card-group-gap: 16px;
+  --space-account-card-label-gap: 4px;
+  --space-account-card-bottom-gap: 24px;
+  --space-account-card-logo-gap: 4px;
+  --space-account-card-header-gap: 16px;
+  --space-button-details-padding-x: 20px;
+  --space-button-details-icon-gap: 8px;
+  --space-add-accounts-gap: 16px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -213,6 +222,9 @@
   --size-slider-dot: 8px;
   --size-goals-edit-button: 32px;
   --size-upcoming-bill-logo-height: 16px;
+  --size-account-card-height: 288px;
+  --size-button-details-height: 36px;
+  --size-add-accounts-button-width: 208px;
 
   /* Radius */
   --radius-input: 8px;

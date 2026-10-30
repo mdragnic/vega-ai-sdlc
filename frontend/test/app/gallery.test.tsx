@@ -449,6 +449,51 @@ describe('component gallery', () => {
     expect(figure('OverviewExpensesBreakdownSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(30);
   });
 
+  // Task 019 T15: the Balances parts on sample data, with no request.
+  it('shows the Balances samples: the cards, a long Bank Name and balance, Details, the Add Accounts cell and the skeleton', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    await renderGallery();
+
+    const card = (name: string) => figure('AccountType', name);
+    const headerOf = (name: string) => [
+      within(card(name)).getByRole('heading', { level: 3 }).textContent,
+      ...within(card(name))
+        .queryAllByRole('img')
+        .map((img) => img.getAttribute('alt')),
+    ];
+    expect(headerOf('Credit Card with Mastercard (105)')).toEqual(['Credit Card', 'Mastercard']);
+    expect(headerOf('Checking with VISA')).toEqual(['Checking', 'VISA']);
+    expect(headerOf('No card network')).toEqual(['Savings']);
+    expect(within(card('Credit Card with Mastercard (105)')).getByText('Master Card')).toBeInTheDocument();
+    expect(
+      within(card('A 100-character Bank Name: under the type, wrapped (#106)')).getByText(
+        'The First Community Cooperative Savings and Commercial Bank of Greater Dhaka and Chittagong Division',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(card('The longest balance the contract allows')).getByText('-$90,071,992,547,409.91'),
+    ).toBeInTheDocument();
+    expect(within(card('Credit Card with Mastercard (105)')).getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      '/balances/1',
+    );
+
+    expect(
+      within(figure('Button', 'Details (105): a link to Account Details')).getByRole('link', { name: 'Details' }),
+    ).toHaveAttribute('href', '/balances/1');
+    expect(figure('AddAccountsButtonBig', 'Add Accounts (105): visual only')).toHaveTextContent('Add Accounts');
+    const cell = figure('AddAccountsCell', 'The last Balances cell (105): visual only');
+    expect(cell).toHaveTextContent('Add AccountsEdit Accounts');
+    expect(within(cell).queryAllByRole('button', { hidden: true })).toEqual([]);
+    expect(cell.querySelector('[aria-hidden="true"]')).toHaveTextContent('Add AccountsEdit Accounts');
+    // Two lines in the header row, two per value, a "Remove" line and the "Details" block.
+    expect(figure('AccountTypeSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(8);
+    const fetched = fetchSpy.mock.calls.map(([input]) =>
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+    );
+    expect(fetched.filter((url) => url.includes('/api/accounts'))).toEqual([]);
+  });
+
   it('links the popup sections to /dev/popup', async () => {
     await renderGallery();
 

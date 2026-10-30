@@ -16,13 +16,17 @@ export type CardNetwork = z.infer<typeof cardNetworkSchema>;
 /** The one format of an account number outside the backend: the last 4 digits only (#25). */
 export const maskedAccountNumberSchema = z.string().regex(/^\*{4} \*{4} \*{4} \d{4}$/);
 
+/** The Bank Name: required, at most 100 characters (#26). Shown on a Balances card (#57), edited on Account Details. */
+export const bankNameSchema = z.string().min(1).max(100);
+
 /**
- * One account of the Total Balance carousel (#17): never the full number, the opening balance or the Bank Name
- * (#25). The balance is calculated in the backend (#11, #57).
+ * One account of the Total Balance carousel (#17) and of a Balances card (#24, #57): never the full number, the
+ * opening balance or the Branch Name (#25). The balance is calculated in the backend (#11, #57).
  */
 export const accountSummarySchema = z.object({
   id: z.number().int().positive(),
   accountType: accountTypeSchema,
+  bankName: bankNameSchema,
   cardNetwork: cardNetworkSchema.nullable(),
   maskedNumber: maskedAccountNumberSchema,
   balance: moneySchema,

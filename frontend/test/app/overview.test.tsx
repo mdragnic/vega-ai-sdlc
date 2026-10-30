@@ -271,6 +271,18 @@ describe('the Total Balance card', () => {
   });
 
   // T13: the frontend formats the cents it gets and adds nothing (AC11; #11).
+  // Task 019 T14, AC16: the response grew by the Bank Name, which 104's teal card does not draw.
+  it('shows no Bank Name on any account’s teal card', async () => {
+    const { user } = await openOverview();
+    await within(totalBalance()).findByText('$130,254.67');
+
+    for (const account of demoAccounts.accounts) {
+      expect(slide()).not.toHaveTextContent(account.bankName);
+      if (account !== demoAccounts.accounts.at(-1)) await user.click(nextButton());
+    }
+    expect(totalBalance()).not.toHaveTextContent(/Master Card|AB Bank|Brac Bank|City Bank/);
+  });
+
   it('shows the total as sent, not the sum of the balances', async () => {
     await openOverview(accounts.answers({ ...demoAccounts, totalBalance: { cents: 1, currency: 'USD' } }));
 

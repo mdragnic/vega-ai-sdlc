@@ -20,11 +20,16 @@ import { Link } from 'react-router';
 
 import { googleUrl } from '../../assets/brand';
 import {
+  AccountType,
+  AccountTypeSkeleton,
   AccountTypeSlide,
+  AddAccountsButtonBig,
+  AddAccountsCell,
   AmountBox,
   AppLayout,
   AuthLayout,
   Avatar,
+  Button,
   ButtonPrimary,
   ButtonSecondary,
   ButtonSmall,
@@ -612,23 +617,56 @@ function GaugeExample({ present, target, progress }: { present: number; target: 
   );
 }
 
-/** The demo accounts on 22 Oct 2026 (demo-data.md), as `GET /api/accounts` sends them (task 013). */
+/** The demo accounts on 22 Oct 2026 (demo-data.md), as `GET /api/accounts` sends them (tasks 013 and 019). */
 const sampleAccounts: AccountsResponse = {
   totalBalance: usd(13025467),
   accounts: [
     {
       id: 1,
       accountType: 'credit-card',
+      bankName: 'Master Card',
       cardNetwork: 'mastercard',
       maskedNumber: '**** **** **** 2598',
       balance: usd(2101918),
     },
-    { id: 2, accountType: 'checking', cardNetwork: 'visa', maskedNumber: '**** **** **** 7310', balance: usd(3336248) },
-    { id: 3, accountType: 'savings', cardNetwork: null, maskedNumber: '**** **** **** 4421', balance: usd(2735680) },
-    { id: 4, accountType: 'investment', cardNetwork: null, maskedNumber: '**** **** **** 6652', balance: usd(2950300) },
-    { id: 5, accountType: 'loan', cardNetwork: null, maskedNumber: '**** **** **** 9083', balance: usd(1901321) },
+    {
+      id: 2,
+      accountType: 'checking',
+      bankName: 'AB Bank Ltd',
+      cardNetwork: 'visa',
+      maskedNumber: '**** **** **** 7310',
+      balance: usd(3336248),
+    },
+    {
+      id: 3,
+      accountType: 'savings',
+      bankName: 'Brac Bank Ltd.',
+      cardNetwork: null,
+      maskedNumber: '**** **** **** 4421',
+      balance: usd(2735680),
+    },
+    {
+      id: 4,
+      accountType: 'investment',
+      bankName: 'AB Bank Ltd',
+      cardNetwork: null,
+      maskedNumber: '**** **** **** 6652',
+      balance: usd(2950300),
+    },
+    {
+      id: 5,
+      accountType: 'loan',
+      bankName: 'City Bank Ltd.',
+      cardNetwork: null,
+      maskedNumber: '**** **** **** 9083',
+      balance: usd(1901321),
+    },
   ],
 };
+
+/** A 100-character Bank Name in words, the longest #26 allows (task 019). */
+const longBankName =
+  'The First Community Cooperative Savings and Commercial Bank of Greater Dhaka and Chittagong Division';
 
 /** The goal of a month, as `GET /api/savings-goals/current` sends it; the progress as the backend calculates it. */
 const sampleGoal = (target: number, present: number, progress: number): SavingsGoalResponse => ({
@@ -1578,6 +1616,62 @@ export function ComponentGallery() {
           <TopRowCard>
             <TotalBalanceSkeleton />
           </TopRowCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AccountType" wide>
+        <Example name="Credit Card with Mastercard (105)">
+          <div className={styles.sampleCard}>
+            <AccountType account={sampleAccounts.accounts[0]!} />
+          </div>
+        </Example>
+        <Example name="Checking with VISA">
+          <div className={styles.sampleCard}>
+            <AccountType account={sampleAccounts.accounts[1]!} />
+          </div>
+        </Example>
+        <Example name="No card network">
+          <div className={styles.sampleCard}>
+            <AccountType account={sampleAccounts.accounts[2]!} />
+          </div>
+        </Example>
+        <Example name="A 100-character Bank Name: under the type, wrapped (#106)">
+          <div className={styles.sampleCard}>
+            <AccountType account={{ ...sampleAccounts.accounts[1]!, bankName: longBankName }} />
+          </div>
+        </Example>
+        <Example name="The longest balance the contract allows">
+          <div className={styles.sampleCard}>
+            <AccountType account={{ ...sampleAccounts.accounts[3]!, balance: usd(-9007199254740991) }} />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="Button">
+        <Example name="Details (105): a link to Account Details">
+          <Button to="/balances/1">Details</Button>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AddAccountsButtonBig">
+        <Example name="Add Accounts (105): visual only">
+          <AddAccountsButtonBig />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AddAccountsCell" wide>
+        <Example name="The last Balances cell (105): visual only">
+          <div className={styles.sampleCard}>
+            <AddAccountsCell />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AccountTypeSkeleton" wide>
+        <Example name="Loading">
+          <div className={styles.sampleCard}>
+            <AccountTypeSkeleton />
+          </div>
         </Example>
       </GallerySection>
 

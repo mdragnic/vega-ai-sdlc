@@ -1,0 +1,17 @@
+/* 105 "Add Accounts": 208x48, white Bold 16/24 centred on Primary. Visual only (#22): the default cursor. */
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-add-accounts-button-width);
+  height: var(--size-button-height);
+  border-radius: var(--radius-button);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+  cursor: default;
+}

@@ -1,0 +1,36 @@
+/* The section's content, a flex column so DataState's states take its room. */
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Not designed (#6, #116 a): the error and the empty message in one white card across the grid's width, 288 high at
+   least, drawn here whenever the content holds neither the grid nor the skeleton. The card's look is `Card`'s
+   (components/Card/Card.module.css): keep the two the same. */
+.content:not(:has(.grid, .skeletonRow)) {
+  min-height: var(--size-account-card-height);
+  padding: var(--space-card-padding);
+  border-radius: var(--radius-card);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+/* 105: three equal columns that fill the content area at any width (#94), 24 apart, the rows 32 apart, wrapping to
+   more rows (#24). Each row is as high as its tallest card, and the cells stretch to it. */
+.grid,
+.skeletonRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-card-row-gap) var(--space-card-gap);
+}
+
+.grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A cell's card fills it. */
+.cell {
+  display: flex;
+}

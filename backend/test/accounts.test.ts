@@ -7,6 +7,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { Account } from '../src/bank-data/account.entity.js';
 import { Transaction } from '../src/bank-data/transaction.entity.js';
 import { FixedClock } from '../src/common/clock/fixed-clock.js';
 import { cookieFor, signUp } from './helpers/auth.js';
@@ -22,18 +23,46 @@ const NEW_YORK = 'America/New_York';
 
 const usd = (cents: number) => ({ cents, currency: 'USD' });
 
-/** The demo accounts on 22 Oct 2026 (demo-data.md "What a first login shows"), oldest first (#24, #25). */
+/**
+ * The demo accounts on 22 Oct 2026 (demo-data.md "What a first login shows"), oldest first, each with its Bank Name
+ * (#24, #25, #57).
+ */
 const firstLoginAccounts = [
   {
     accountType: 'credit-card',
+    bankName: 'Master Card',
     cardNetwork: 'mastercard',
     maskedNumber: '**** **** **** 2598',
     balance: usd(2_101_918),
   },
-  { accountType: 'checking', cardNetwork: 'visa', maskedNumber: '**** **** **** 7310', balance: usd(3_336_248) },
-  { accountType: 'savings', cardNetwork: null, maskedNumber: '**** **** **** 4421', balance: usd(2_735_680) },
-  { accountType: 'investment', cardNetwork: null, maskedNumber: '**** **** **** 6652', balance: usd(2_950_300) },
-  { accountType: 'loan', cardNetwork: null, maskedNumber: '**** **** **** 9083', balance: usd(1_901_321) },
+  {
+    accountType: 'checking',
+    bankName: 'AB Bank Ltd',
+    cardNetwork: 'visa',
+    maskedNumber: '**** **** **** 7310',
+    balance: usd(3_336_248),
+  },
+  {
+    accountType: 'savings',
+    bankName: 'Brac Bank Ltd.',
+    cardNetwork: null,
+    maskedNumber: '**** **** **** 4421',
+    balance: usd(2_735_680),
+  },
+  {
+    accountType: 'investment',
+    bankName: 'AB Bank Ltd',
+    cardNetwork: null,
+    maskedNumber: '**** **** **** 6652',
+    balance: usd(2_950_300),
+  },
+  {
+    accountType: 'loan',
+    bankName: 'City Bank Ltd.',
+    cardNetwork: null,
+    maskedNumber: '**** **** **** 9083',
+    balance: usd(1_901_321),
+  },
 ];
 
 /** The full numbers stored for every user (demo-data.md, Accounts), never returned (#25). */
@@ -44,7 +73,8 @@ const fullNumbers = [
   '6984568662016652',
   '3634568966019083',
 ];
-const bankNames = ['Master Card', 'AB Bank Ltd', 'Brac Bank Ltd.', 'City Bank Ltd.'];
+/** The demo Branch Names, never returned here (task 021 shows them on Account Details). */
+const branchNames = ['Main Branch', 'Park Street Branch', 'Gulshan Branch', 'Motijheel Branch'];
 
 const withSpaces = (digits: string) => digits.replace(/(\d{4})(?=\d)/g, '$1 ');
 
@@ -59,6 +89,8 @@ describe('GET /api/accounts', () => {
     app = await createTestApp({ config: { nodeEnv: 'test', testNow: FIXED_NOW } });
     clock = app.get(FixedClock);
     db = app.get(DataSource);
+    // Another user's accounts come first in the database, so every test reads past them (#39).
+    await signUp(app);
     const signedUp = await signUp(app);
     token = signedUp.token;
     userId = (await userIdOf(db, signedUp.user.email))!;
@@ -84,12 +116,13 @@ describe('GET /api/accounts', () => {
     const response = await get({ token, zone: BELGRADE });
 
     expect(response.status).toBe(200);
-    const body = accountsResponseSchema.parse(response.body);
     const ids = (await financeRows(db, userId)).accounts.map((account) => account.id);
-    expect(body).toEqual({
+    // The body as sent, not as the schema parses it (which drops an unknown key): exactly these keys and values.
+    expect(response.body).toEqual({
       totalBalance: usd(13_025_467),
       accounts: firstLoginAccounts.map((account, index) => ({ id: ids[index], ...account })),
     });
+    expect(accountsResponseSchema.parse(response.body)).toEqual(response.body);
   });
 
   it('answers 401 without a session', async () => {
@@ -110,8 +143,9 @@ describe('GET /api/accounts', () => {
     expect(errorResponseSchema.strict().parse(response.body).message).toMatch(/X-Time-Zone/);
   });
 
-  // T4: AC8, nothing but the contract's fields; no number with more than its last 4 digits (#25).
-  it('never sends a full number, a 12-digit prefix, an opening balance, a Bank Name or a transaction', async () => {
+  // T4: AC8, nothing but the contract's fields; no number with more than its last 4 digits (#25). Task 019 T4, AC7:
+  // the Bank Name now sent, each with its own account; the Branch Name still not.
+  it('never sends a full number, a 12-digit prefix, an opening balance, a Branch Name or a transaction', async () => {
     const response = await get({ token, zone: BELGRADE });
     const text = response.text;
     const { transactions } = await financeRows(db, userId);
@@ -125,13 +159,28 @@ describe('GET /api/accounts', () => {
     }
     // Outside the masks, nothing shaped like an account number: no 13 digits in a row, no two 4-digit groups.
     expect(text.replace(/\*{4} \*{4} \*{4} \d{4}/g, '')).not.toMatch(/\d{13}|\d{4} \d{4}/);
-    for (const name of [...bankNames, 'openingBalance', 'opening_balance', 'bankName', 'branchName', receipt]) {
+    for (const name of [...branchNames, 'Branch', 'openingBalance', 'opening_balance', 'branchName', receipt]) {
       expect(text).not.toContain(name);
     }
     expect(Object.keys(response.body as object).toSorted()).toEqual(['accounts', 'totalBalance']);
-    for (const account of (response.body as { accounts: object[] }).accounts) {
-      expect(Object.keys(account).toSorted()).toEqual(['accountType', 'balance', 'cardNetwork', 'id', 'maskedNumber']);
+    const accounts = (response.body as { accounts: Record<string, unknown>[] }).accounts;
+    for (const account of accounts) {
+      expect(Object.keys(account).toSorted()).toEqual([
+        'accountType',
+        'balance',
+        'bankName',
+        'cardNetwork',
+        'id',
+        'maskedNumber',
+      ]);
     }
+    expect(accounts.map(({ maskedNumber, bankName }) => [maskedNumber, bankName])).toEqual([
+      ['**** **** **** 2598', 'Master Card'],
+      ['**** **** **** 7310', 'AB Bank Ltd'],
+      ['**** **** **** 4421', 'Brac Bank Ltd.'],
+      ['**** **** **** 6652', 'AB Bank Ltd'],
+      ['**** **** **** 9083', 'City Bank Ltd.'],
+    ]);
   });
 
   // T5: AC9, Complete transactions dated up to today in the user's zone (#53, #54, #57, #80).
@@ -150,7 +199,8 @@ describe('GET /api/accounts', () => {
     expect(body.accounts[0]!.balance).toEqual(usd(creditCard));
   });
 
-  // T6: AC10, each user sees only their own accounts; no parameter selects another user (#39, #46).
+  // T6: AC10, each user sees only their own accounts; no parameter selects another user (#39, #46). Task 019 T5,
+  // AC8: the two users also differ by Bank Name.
   it('keeps another user’s change out of this user’s accounts', async () => {
     const other = await signUp(app);
     const otherId = (await userIdOf(db, other.user.email))!;
@@ -159,6 +209,10 @@ describe('GET /api/accounts', () => {
     const before = (await get({ token, zone: BELGRADE })).body as object;
     const otherBefore = accountsResponseSchema.parse((await get({ token: other.token, zone: BELGRADE })).body);
 
+    const otherNames = ['Other Bank One', 'Other Bank Two', 'Other Bank Three', 'Other Bank Four', 'Other Bank Five'];
+    for (const [index, account] of otherAccounts.entries()) {
+      await db.getRepository(Account).update({ id: Number(account.id) }, { bankName: otherNames[index]! });
+    }
     await db.getRepository(Transaction).insert({
       accountId: Number(otherAccounts[0]!.id),
       occurredAt: new Date('2026-10-22T08:00:00Z'),
@@ -175,22 +229,29 @@ describe('GET /api/accounts', () => {
     const otherAfter = accountsResponseSchema.parse((await get({ token: other.token, zone: BELGRADE })).body);
     expect(after).toEqual(before);
     expect(after.accounts.map((account) => account.id)).toEqual(ownIds);
+    expect(after.accounts.map((account) => account.bankName)).toEqual(
+      firstLoginAccounts.map((account) => account.bankName),
+    );
+    expect(otherAfter.accounts.map((account) => account.bankName)).toEqual(otherNames);
     expect(otherAfter.totalBalance.cents).toBe(otherBefore.totalBalance.cents - 12_345);
     expect(otherAfter.accounts[0]!.balance.cents).toBe(otherBefore.accounts[0]!.balance.cents - 12_345);
     expect(otherAfter.accounts.map((account) => account.id)).toEqual(otherAccounts.map((account) => account.id));
   });
 
-  it('ignores a userId in the query: the session decides', async () => {
+  it('ignores a userId and an accountId in the query: the session decides', async () => {
     const other = await signUp(app);
     const otherId = (await userIdOf(db, other.user.email))!;
+    const otherAccountId = (await financeRows(db, otherId)).accounts[0]!.id;
     const ownIds = (await financeRows(db, userId)).accounts.map((account) => account.id);
+    const own = (await get({ token, zone: BELGRADE })).body as object;
 
     const response = await request(app.getHttpServer())
-      .get(`${accountsPath}?userId=${otherId}`)
+      .get(`${accountsPath}?userId=${otherId}&accountId=${String(otherAccountId)}`)
       .set('Cookie', cookieFor(token))
       .set('X-Time-Zone', BELGRADE);
 
     expect(response.status).toBe(200);
+    expect(response.body).toEqual(own);
     expect(accountsResponseSchema.parse(response.body).accounts.map((account) => account.id)).toEqual(ownIds);
   });
 

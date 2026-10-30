@@ -1,22 +1,56 @@
 import { describe, expect, it } from 'vitest';
 
-import { accountsContract, accountsResponseSchema, accountSummarySchema, accountTypeLabel } from '../src/index.js';
+import {
+  accountsContract,
+  accountsResponseSchema,
+  accountSummarySchema,
+  accountTypeLabel,
+  bankNameSchema,
+} from '../src/index.js';
 
 const usd = (cents: number) => ({ cents, currency: 'USD' });
 
-/** The first demo account as `GET /api/accounts` lists it (demo-data.md, task 013 AC1). */
+/** The first demo account as `GET /api/accounts` lists it (demo-data.md, task 013 AC1, task 019 AC2). */
 const creditCard = {
   id: 1,
   accountType: 'credit-card',
+  bankName: 'Master Card',
   cardNetwork: 'mastercard',
   maskedNumber: '**** **** **** 2598',
   balance: usd(2_101_918),
 };
 
-// T8, AC7 and AC8: one account of the Total Balance carousel, as the backend sends it (#11, #24, #25, #96).
+/** `account` without the key `key`. */
+const without = (account: object, key: string) =>
+  Object.fromEntries(Object.entries(account).filter(([k]) => k !== key));
+
+// Task 019 T1, AC6: the Bank Name, required and at most 100 characters (#26), reused by task 022.
+describe('bankNameSchema', () => {
+  it.each([
+    ['a demo name', 'Brac Bank Ltd.'],
+    ['1 character', 'A'],
+    ['100 characters', 'B'.repeat(100)],
+  ])('accepts %s', (_case, name) => {
+    expect(bankNameSchema.parse(name)).toBe(name);
+  });
+
+  it.each([
+    ['an empty name', ''],
+    ['101 characters', 'B'.repeat(101)],
+    ['a number', 42],
+    ['null', null],
+    ['nothing', undefined],
+  ])('rejects %s', (_case, name) => {
+    expect(bankNameSchema.safeParse(name).success).toBe(false);
+  });
+});
+
+// T8, AC7 and AC8: one account of the Total Balance carousel and of a Balances card, as the backend sends it (#11,
+// #24, #25, #57, #96).
 describe('accountSummarySchema', () => {
   it.each([
     ['the Credit Card', creditCard],
+    ['a 100-character Bank Name', { ...creditCard, bankName: 'B'.repeat(100) }],
     ['an account without a card network', { ...creditCard, id: 3, accountType: 'savings', cardNetwork: null }],
     ['a VISA account', { ...creditCard, id: 2, accountType: 'checking', cardNetwork: 'visa' }],
     ['a negative balance', { ...creditCard, balance: usd(-1_250) }],
@@ -35,7 +69,12 @@ describe('accountSummarySchema', () => {
     ['an unknown account type', { ...creditCard, accountType: 'credit' }],
     ['the account type label', { ...creditCard, accountType: 'Credit Card' }],
     ['an unknown card network', { ...creditCard, cardNetwork: 'amex' }],
-    ['no card network key', Object.fromEntries(Object.entries(creditCard).filter(([key]) => key !== 'cardNetwork'))],
+    ['no card network key', without(creditCard, 'cardNetwork')],
+    ['no Bank Name key', without(creditCard, 'bankName')],
+    ['an empty Bank Name', { ...creditCard, bankName: '' }],
+    ['a 101-character Bank Name', { ...creditCard, bankName: 'B'.repeat(101) }],
+    ['a Bank Name that is a number', { ...creditCard, bankName: 7 }],
+    ['a null Bank Name', { ...creditCard, bankName: null }],
     ['the full number', { ...creditCard, maskedNumber: '3388455688602598' }],
     ['the full number with spaces', { ...creditCard, maskedNumber: '3388 4556 8860 2598' }],
     ['more than the last 4 digits', { ...creditCard, maskedNumber: '**** **** **60 2598' }],
@@ -73,6 +112,7 @@ describe('accountsResponseSchema', () => {
     ['no total', { accounts: [] }],
     ['no accounts', { totalBalance: usd(0) }],
     ['an invalid account', { totalBalance: usd(0), accounts: [{ ...creditCard, maskedNumber: '2598' }] }],
+    ['an account without its Bank Name', { totalBalance: usd(0), accounts: [without(creditCard, 'bankName')] }],
   ])('rejects %s', (_case, body) => {
     expect(accountsResponseSchema.safeParse(body).success).toBe(false);
   });

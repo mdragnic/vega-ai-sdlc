@@ -172,6 +172,15 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-expenses-item-icon-gap` | `16px` | measured: PNG 104 Expenses Breakdown, the tile's right edge (x 1520) to the name and the amount (ink from x 1554, 1 to 2 px of side bearing), 32 px, halved. Added in task 018 |
 | `--space-expenses-item-text-gap` | `4px` | measured: PNG 104 Expenses Breakdown, the name's line box (Regular 12/16) from y 1611 to 1643, the tile's top (its cap top at y 1618, 3.6 px under the box at 1x), and the amount's line box (Semibold 16 in a 20 px line) from y 1653 (its digits from y 1661, 4.2 px under the box at 1x): 10 px, halved 5, on the 4px grid 4. The percentage line follows the amount's directly: its glyphs from y 1702, 5.6 px under a 20 px line box (1x) from y 1691, the amount's box ending at y 1693. Added in task 018 |
 | `--space-expenses-item-change-gap` | `8px` | measured: PNG 104 Expenses Breakdown, "15%*" ink to x 1608 and the `UpArrow` ink from x 1633, 2.6 px inside its 16 px box (from x 1628): 20 px, halved 10, less the asterisk's side bearing (about 1 px), 9, rounded. Chromium's `%` is wider than Figma's, so the arrow sits about 3 px further right (task 018 References). Added in task 018 |
+| `--space-account-card-divider-gap` | `12px` | measured: PNG 105 Credit Card, the header row's bottom (the logo box's, y 416) to the divider's bottom edge (y 440), 24 px, halved; the 1px Gray/06 line is the last pixel of the gap. Added in task 019 |
+| `--space-account-card-group-gap` | `16px` | measured: PNG 105 Credit Card, the divider's bottom edge (y 440) to the number's 20/28 line box (y 472), and "Account Number"'s 14/20 line box bottom (y 576) to the balance's line box (y 608), 32 px, halved. Added in task 019 |
+| `--space-account-card-label-gap` | `4px` | measured: PNG 105 Credit Card, the number's line box bottom (y 528) to "Account Number"'s (y 536), and the balance's (y 664) to "Total amount"'s (y 672), 8 px, halved. Added in task 019 |
+| `--space-account-card-bottom-gap` | `24px` | measured: PNG 105 Credit Card, "Total amount"'s line box bottom (y 712) to the bottom row, the "Details" button's top (y 760), 48 px, halved. The least space above the bottom row; in a card stretched by a taller one in its row it grows (decision #107). Added in task 019 |
+| `--space-account-card-logo-gap` | `4px` | measured: PNG 105, the Bank Name's ink ("Master Card", "AB Bank Ltd") ends 9 and 10 px before the 48x32 logo box (x 1168 in the first card), halved 4.5 and 5, less the side bearing of the final letter, 4. Added in task 019 |
+| `--space-account-card-header-gap` | `16px` | task 019, the wrap rule of decisions #106, #108 b, #111 a and #115 b: not measured, 105 leaves 70 to 90 px between the type and the Bank Name. The least space between them before the Bank Name and its logo move under the type; on the 4px grid, and small enough that every demo header row (at most 211.4 px) stays on one line in a 1280 window with a classic scrollbar (246.3 px of content). Added in task 019 |
+| `--space-button-details-padding-x` | `20px` | measured: PNG 105, `Button` "Details" in the first card (x 1044 to 1263): its left edge to the text, and the chevron's 16 px box to its right edge, 40 px, halved. Added in task 019 |
+| `--space-button-details-icon-gap` | `8px` | measured: PNG 105, `Button` "Details": the text's end to the chevron's 16 px box, 16 px, halved. Added in task 019 |
+| `--space-add-accounts-gap` | `16px` | measured: PNG 105, the Add Accounts button's bottom (y 1240) to the "Edit Accounts" 16/24 line box (y 1272), 32 px, halved. Added in task 019 |
 
 ## Size
 
@@ -235,6 +244,9 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-slider-dot` | `8px` | measured: PNG 104, Previous / Next dots x 920 to 935 and y 684 to 699, 16 px, halved. Added in task 013 |
 | `--size-goals-edit-button` | `32px` | measured: PNG 104 Goals, the pencil box (Figma `Frame 40640`) x 1620 to 1683, y 328 to 391, 64 px, halved; Gray/06 with a 4 px radius (`--radius-button`) around the 16 px `edit` icon. Added in task 014 |
 | `--size-upcoming-bill-logo-height` | `16px` | measured: PNG 104 Upcoming Bill, the Figma wordmark y 356 to 387 (45 wide) and the Adobe logo y 568 to 599 (60 wide), 32 px, halved. Added in task 015 |
+| `--size-account-card-height` | `288px` | measured: PNG 105, the account cards y 304 to 879 and 944 to 1519, 576 px, halved (24 + 32 + 12 + 16 + 28 + 4 + 20 + 16 + 28 + 4 + 20 + 24 + 36 + 24). The least height of a Balances card, the Add Accounts cell, the skeleton cards and the error and empty card; a row grows with its tallest card (decision #106). Added in task 019 |
+| `--size-button-details-height` | `36px` | Figma `Button` 43:1161, 110x36 (`components.md`). Checked: PNG 105, "Details" in the first card y 760 to 831, 72 px, halved. Added in task 019 |
+| `--size-add-accounts-button-width` | `208px` | Figma `Button Big` 410:5537, 208x48 (`components.md`). Checked: PNG 105, the Add Accounts button x 2256 to 2671, 416 px, halved; its height is `--size-button-height`. Added in task 019 |
 
 ## Radius
 

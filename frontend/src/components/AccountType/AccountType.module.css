@@ -1,0 +1,125 @@
+/* 105: the white card inset 24, 288 high where its header row fits on one line. Stretched by a taller card in its row,
+   it keeps the bottom row at its bottom and the space above it grows (as #107). */
+.card {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  min-height: var(--size-account-card-height);
+}
+
+/* 105: the type at the left, the Bank Name and the logo at the right, centred on the logo's 32px row; the Gray/06
+   divider 12 under the row, as the gap's last pixel. Where the Bank Name and its logo do not fit beside the type with
+   16 between them, they move under it, right-aligned, and the row grows (#106, #108 b, #111 a, #115 b). */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: var(--space-account-card-header-gap);
+  /* The 32px row with the gap and the divider under it (border-box), also on a card without a logo. */
+  min-height: calc(var(--size-card-network-logo-height) + var(--space-account-card-divider-gap));
+  padding-bottom: calc(var(--space-account-card-divider-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* 105 "Credit Card": Gray/02, Bold 16/24, on one line, centred on the 32px row: also when the Bank Name moves under it,
+   so it stays level with the types of the cards beside it. */
+.type {
+  display: flex;
+  align-items: center;
+  min-height: var(--size-card-network-logo-height);
+  margin: 0;
+  color: var(--color-gray-02);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* The Bank Name, then the logo 4 after it, at the row's right end; under the type it stays right-aligned and, longer
+   than the room left of the logo, wraps inside it with the logo centred on its lines. */
+.bank {
+  display: flex;
+  align-items: center;
+  gap: var(--space-account-card-logo-gap);
+  min-width: 0;
+  margin-left: auto;
+}
+
+/* 105 "Master Card": Gray/01, Medium 12/16. Data: hyphenated where the browser can, broken anywhere as the fallback
+   (#115 b), never cut. */
+.bankName {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-gray-01);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-16);
+  text-align: right;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+/* The exported 48x32 asset, as on Overview's teal card. */
+.logo {
+  flex-shrink: 0;
+  width: var(--size-card-network-logo-width);
+  height: var(--size-card-network-logo-height);
+}
+
+/* The number and the balance: 16 under the divider and 16 apart; the bottom row at least 24 under them. */
+.values {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-account-card-group-gap);
+  margin: var(--space-account-card-group-gap) 0 var(--space-account-card-bottom-gap);
+}
+
+/* Each value with its label 4 under it: the label comes first in the source, so it is read first. */
+.value {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-account-card-label-gap);
+}
+
+/* 105 "Account Number" and "Total amount": Gray/03, Regular 14/20. */
+.label {
+  margin: 0;
+  color: var(--color-gray-03);
+  font: var(--font-regular-14-20);
+}
+
+/* 105 "3388 4556 8860 8***" and "$25000": Default Black, Semibold 20/28. Every balance the contract allows fits on
+   one line from a 1280 window; breaking anywhere is the fallback. */
+.number,
+.balance {
+  margin: 0;
+  color: var(--color-default-black);
+  font: var(--font-semibold-20-28);
+}
+
+.balance {
+  overflow-wrap: anywhere;
+}
+
+/* 105: "Remove" at the left and "Details" at the right, centred on the button's 36px row, at the card's bottom. */
+.bottomRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.bottomRow > :last-child {
+  margin-left: auto;
+}
+
+/* 105 "Remove": Primary, Regular 16/24. Visual only (#23): the default cursor, no hover change. */
+.remove {
+  color: var(--color-primary);
+  font: var(--font-regular-16-24);
+  cursor: default;
+}

@@ -51,13 +51,17 @@ export const today = {
 
 const usd = (cents: number) => ({ cents, currency: 'USD' }) as const;
 
-/** The demo accounts on 22 Oct 2026 as `GET /api/accounts` returns them (demo-data.md, task 013 AC1, AC2). */
+/**
+ * The demo accounts on 22 Oct 2026 as `GET /api/accounts` returns them, with their Bank Names (demo-data.md, task 013
+ * AC1, AC2; task 019 AC2).
+ */
 export const demoAccounts: AccountsResponse = {
   totalBalance: usd(13_025_467),
   accounts: [
     {
       id: 1,
       accountType: 'credit-card',
+      bankName: 'Master Card',
       cardNetwork: 'mastercard',
       maskedNumber: '**** **** **** 2598',
       balance: usd(2_101_918),
@@ -65,32 +69,116 @@ export const demoAccounts: AccountsResponse = {
     {
       id: 2,
       accountType: 'checking',
+      bankName: 'AB Bank Ltd',
       cardNetwork: 'visa',
       maskedNumber: '**** **** **** 7310',
       balance: usd(3_336_248),
     },
-    { id: 3, accountType: 'savings', cardNetwork: null, maskedNumber: '**** **** **** 4421', balance: usd(2_735_680) },
+    {
+      id: 3,
+      accountType: 'savings',
+      bankName: 'Brac Bank Ltd.',
+      cardNetwork: null,
+      maskedNumber: '**** **** **** 4421',
+      balance: usd(2_735_680),
+    },
     {
       id: 4,
       accountType: 'investment',
+      bankName: 'AB Bank Ltd',
       cardNetwork: null,
       maskedNumber: '**** **** **** 6652',
       balance: usd(2_950_300),
     },
-    { id: 5, accountType: 'loan', cardNetwork: null, maskedNumber: '**** **** **** 9083', balance: usd(1_901_321) },
+    {
+      id: 5,
+      accountType: 'loan',
+      bankName: 'City Bank Ltd.',
+      cardNetwork: null,
+      maskedNumber: '**** **** **** 9083',
+      balance: usd(1_901_321),
+    },
   ],
 };
 
-/** `GET /api/accounts` answers. */
+/**
+ * Three more accounts, after the demo ones, for a grid of 6 or 8 (#24); their ids are not their positions. The total
+ * is the backend's, as sent.
+ */
+const extraAccounts: AccountsResponse['accounts'] = [
+  {
+    id: 12,
+    accountType: 'savings',
+    bankName: 'Eastern Bank Ltd.',
+    cardNetwork: 'visa',
+    maskedNumber: '**** **** **** 1206',
+    balance: usd(1_000_000),
+  },
+  {
+    id: 17,
+    accountType: 'checking',
+    bankName: 'Prime Bank',
+    cardNetwork: 'mastercard',
+    maskedNumber: '**** **** **** 3317',
+    balance: usd(-25_050),
+  },
+  {
+    id: 30,
+    accountType: 'investment',
+    bankName: 'Dhaka Bank',
+    cardNetwork: null,
+    maskedNumber: '**** **** **** 5530',
+    balance: usd(0),
+  },
+];
+
+/** A 100-character Bank Name in words, the longest #26 allows. */
+export const longBankNameInWords =
+  'The First Community Cooperative Savings and Commercial Bank of Greater Dhaka and Chittagong Division';
+/** A 100-character Bank Name with no space. */
+export const longBankNameNoSpace =
+  'InternationalcommercialandcooperativesavingsbankInternationalcommercialandcooperativesavingsbankInte';
+
+/** The demo accounts with Checking's Bank Name replaced by `bankName`. */
+const withCheckingBankName = (bankName: string): AccountsResponse => ({
+  ...demoAccounts,
+  accounts: demoAccounts.accounts.map((account) => (account.id === 2 ? { ...account, bankName } : account)),
+});
+
+/** The first `count` accounts of the demo ones and the extra ones. */
+const firstAccounts = (count: number): AccountsResponse => ({
+  ...demoAccounts,
+  accounts: [...demoAccounts.accounts, ...extraAccounts].slice(0, count),
+});
+
+const accountsPath = '*/api/accounts';
+const accountsFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/**
+ * `GET /api/accounts` answers: the demo, none, one, six and eight accounts, a 100-character Bank Name on Checking in
+ * words or with no space, pending, failing, and failing on the first try and its 3 retries, then the demo (a Retry).
+ */
 export const accounts = {
-  answers: (body: AccountsResponse = demoAccounts) => http.get('*/api/accounts', () => HttpResponse.json(body)),
+  answers: (body: AccountsResponse = demoAccounts) => http.get(accountsPath, () => HttpResponse.json(body)),
+  none: () => http.get(accountsPath, () => HttpResponse.json({ totalBalance: usd(0), accounts: [] })),
+  one: () => http.get(accountsPath, () => HttpResponse.json(firstAccounts(1))),
+  six: () => http.get(accountsPath, () => HttpResponse.json(firstAccounts(6))),
+  eight: () => http.get(accountsPath, () => HttpResponse.json(firstAccounts(8))),
+  longBankName: () => http.get(accountsPath, () => HttpResponse.json(withCheckingBankName(longBankNameInWords))),
+  longBankNameNoSpace: () => http.get(accountsPath, () => HttpResponse.json(withCheckingBankName(longBankNameNoSpace))),
   pending: () =>
-    http.get('*/api/accounts', async () => {
+    http.get(accountsPath, async () => {
       await delay('infinite');
       return HttpResponse.json(demoAccounts);
     }),
-  fails: () =>
-    http.get('*/api/accounts', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+  fails: () => http.get(accountsPath, accountsFailure),
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(accountsPath, () => {
+      tries += 1;
+      return tries <= 4 ? accountsFailure() : HttpResponse.json(demoAccounts);
+    });
+  },
 };
 
 /** The demo goal of Oct 2026 as `GET /api/savings-goals/current` returns it (demo-data.md; task 014 AC1, AC2). */

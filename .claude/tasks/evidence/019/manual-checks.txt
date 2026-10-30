@@ -1,0 +1,47 @@
+Task 019 manual checks, 2026-10-30. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), a fresh context in Europe/Belgrade with the page clock at 2026-10-22T10:00:00Z. Backend
+on the fixed test clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later
+`npm run start -w backend` to keep the database across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview.
+2. Balances from the sidebar: /balances, the sidebar's Balances active (aria-current="page"), no greeting, the header
+   date "22 Oct, 2026". The region reads (aria snapshot):
+     region "Balances": heading "Balances" [level=2]; a list of five list items, each: heading [level=3], paragraph
+     (the Bank Name), img (where set), term "Account Number", definition (the number), term "Total amount", definition
+     (the balance), link "Details" (/url /balances/<id>):
+     Credit Card, Master Card, img "Mastercard", **** **** **** 2598, $21,019.18, /balances/6;
+     Checking, AB Bank Ltd, img "VISA", **** **** **** 7310, $33,362.48, /balances/7;
+     Savings, Brac Bank Ltd., **** **** **** 4421, $27,356.80, /balances/8;
+     Investment, AB Bank Ltd, **** **** **** 6652, $29,503.00, /balances/9;
+     Loan, City Bank Ltd., **** **** **** 9083, $19,013.21, /balances/10.
+   "Remove", "Add Accounts" and "Edit Accounts" are not in the tree. (A first read taken in the same tick as the click
+   still showed Overview: the shell re-renders after the URL changes, as task 018 noted; read again once the region
+   showed.)
+3. Balances from Overview's "All Accounts": /balances with the same five cards.
+4. Each "Details", then Back: /balances/6, /7, /8, /9 and /10 in turn, each with Balances active and an empty content
+   area (main has no child); Back returns to the five cards; no page load event in the whole run.
+5. "Remove" (Credit Card's), "Add Accounts" and "Edit Accounts": hovered and clicked. Colors and cursors before and
+   under the pointer the same: Remove rgb(41, 157, 145) on transparent, cursor default; Add Accounts white on
+   rgb(41, 157, 145), default; Edit Accounts rgb(159, 159, 159), default. After each click the URL stays /balances,
+   focus on the body (it was there), no dialog; no /api request in the 400 ms after the clicks.
+6. Keyboard, from the search field: Tab gives the five "Details" in card order, each with its description and the teal
+   ring (rgb(41, 157, 145), 2px, :focus-visible): "Credit Card Master Card", "Checking AB Bank Ltd", "Savings Brac Bank
+   Ltd.", "Investment AB Bank Ltd", "Loan City Bank Ltd."; the sixth Tab leaves main (the body).
+7. Shift+Tab from there: the five "Details" backwards, then the search field.
+8. Resizes (the cells' boxes; whether each header row is on one line; scrolling):
+   - 1920x1080 (page 1905): cells 507 wide, every cell 288, every header row on one line, no scroll either way.
+   - 1280x1024 (page 1265, manual-1280.png): cells 293.7 wide, every cell 288, every header row on one line, no scroll
+     either way.
+   - Back to 1440x1024 (page 1425): cells 347 wide, 288, one line each, no scroll.
+9. Backend stopped (taskkill on the node process on port 3000), with two fresh tabs parked on /bills beforehand (a full
+   reload with the backend down goes to Login, tasks 009 to 011; a tab that had shown Balances keeps its cards from the
+   cache, #89):
+   - In each tab, Balances from the sidebar: the three skeleton cards at once, each 288 (manual-backend-down-skeleton.png);
+     "Something went wrong." over Retry 7.6 s and 7.5 s later, after the request and its 3 retries, in one white card
+     1089x288 across the grid, no Add Accounts cell (manual-backend-down-error.png).
+10. Backend started again (`npm run start -w backend`, database kept):
+   - First tab, keyboard: Tab from the search field reaches Retry; Enter: the five cards; focus on DataState's root
+     (a DIV with tabindex="-1" inside the Balances section), never the body, with the teal ring (:focus-visible, solid
+     rgb(41, 157, 145); manual-keyboard-retry-ring.png); the next Tab goes to Credit Card's "Details" (/balances/6).
+   - Second tab, mouse: a click on Retry: the five cards; focus on the same root, no ring (:focus-visible false,
+     outline none; manual-mouse-retry-no-ring.png).
