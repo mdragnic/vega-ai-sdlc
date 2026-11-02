@@ -385,3 +385,13 @@
   padding: 0;
   list-style: none;
 }
+
+/* A visible label above a Dropdown, in `Input`'s label look (task 022). */
+.formLabel {
+  display: block;
+  margin-bottom: var(--space-form-label-gap);
+  color: var(--color-form-label);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-24);
+}

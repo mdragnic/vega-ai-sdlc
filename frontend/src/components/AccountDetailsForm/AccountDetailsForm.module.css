@@ -1,0 +1,48 @@
+/* 106 edit mode, not designed (#26): view mode's content box, columns and row gap (AccountDetailsCard), so the title,
+   the card's edges and insets, the columns and the read-only values stay where view mode has them; the card grows
+   downward only. Each item at the top of its row: a row is as high as its tallest field with its error. */
+.values {
+  align-items: start;
+}
+
+/* The Account Type label in `Input`'s label look (101): Medium 16/24 in the form label color, 8 above the field. */
+.label {
+  display: block;
+  margin-bottom: var(--space-form-label-gap);
+  color: var(--color-form-label);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-24);
+}
+
+/* Balance and Account Number: one label and value each, as in view mode. */
+.readOnly {
+  margin: 0;
+}
+
+/* The buttons 36 under the last row, as "Edit Details" in view mode; a server error above them, 16 apart, like the row
+   above Login on 101 (#6, #97 a). */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-small-gap);
+  margin-top: var(--space-account-details-buttons-gap);
+}
+
+/* Save and Cancel in "Edit Details"' place, 16 apart (the gap of the form rows of 101); "Remove" after them. */
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-form-small-gap);
+}
+
+/* Each button 160x48, as "Edit Details" (ButtonPrimary and ButtonSecondary take their parent's width). */
+.button {
+  flex-shrink: 0;
+  width: var(--size-edit-details-width);
+}
+
+/* "Remove" 40 after Cancel, as after "Edit Details" in view mode. */
+.remove {
+  margin-left: calc(var(--space-account-details-remove-gap) - var(--space-form-small-gap));
+}

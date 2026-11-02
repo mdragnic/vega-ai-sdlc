@@ -464,8 +464,13 @@ describe('component gallery', () => {
         .getAllByRole('definition')
         .map((value) => value.textContent),
     ).toEqual(['AB Bank Ltd', 'Checking', '$33,362.48', 'Park Street Branch', '**** **** **** 7310']);
-    expect(within(card).queryByRole('button')).toBeNull();
-    expect(within(card).getByText('Edit Details').closest('[aria-hidden="true"]')).not.toBeNull();
+    // Task 022: "Edit Details" is a button; "Remove" stays visual only (#23).
+    expect(
+      within(card)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Edit Details']);
+    expect(within(card).getByText('Remove').closest('[aria-hidden="true"]')).not.toBeNull();
     expect(
       within(figure('AccountDetailsCard', 'The lowest balance the contract allows, on one line')).getByText(
         '-$90,071,992,547,409.91',
@@ -625,5 +630,62 @@ describe('component gallery', () => {
     expect(await within(example).findByText('Query status: error')).toBeInTheDocument();
     expect(within(example).getByText('$150.00')).toBeInTheDocument();
     expect(within(example).queryByRole('alert')).toBeNull();
+  });
+
+  // Task 022 T22: the 106 edit mode samples and the Dropdown named by a visible label.
+  it('shows the Account Details form samples: prefilled, the field errors on Save, saving, the server error, long names', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    const prefilled = figure('AccountDetailsForm', 'Prefilled with Checking (106 edit mode, not designed)');
+    expect(within(prefilled).getByRole('textbox', { name: 'Bank Name' })).toHaveValue('AB Bank Ltd');
+    expect(within(prefilled).getByRole('textbox', { name: 'Branch Name' })).toHaveValue('Park Street Branch');
+    expect(within(prefilled).getByRole('combobox', { name: 'Account Type' })).toHaveTextContent('Checking');
+    expect(
+      within(prefilled)
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Balance', 'Account Number']);
+    expect(
+      within(prefilled)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Save', 'Cancel']);
+    // The gallery opens with focus nowhere in the forms.
+    expect(prefilled.contains(document.activeElement)).toBe(false);
+
+    const invalid = figure(
+      'AccountDetailsForm',
+      'Field errors: Save checks the shared rule (a Bank Name of spaces, a 101-character Branch Name)',
+    );
+    await user.click(within(invalid).getByRole('button', { name: 'Save' }));
+    expect(await within(invalid).findByText('Bank Name is required')).toBeInTheDocument();
+    expect(within(invalid).getByText('Branch Name must be at most 100 characters')).toBeInTheDocument();
+
+    const saving = figure('AccountDetailsForm', 'Saving: Save in its loading pattern, the fields locked');
+    expect(within(saving).getByRole('button', { name: 'Save' })).toHaveAttribute('aria-busy', 'true');
+    expect(within(saving).getByRole('textbox', { name: 'Bank Name' })).toHaveAttribute('readonly');
+    expect(within(saving).getByRole('combobox', { name: 'Account Type' })).toBeDisabled();
+
+    expect(
+      within(figure('AccountDetailsForm', 'The server error above the buttons (#97 a)')).getByRole('alert'),
+    ).toHaveTextContent('Something went wrong.');
+    const long = figure(
+      'AccountDetailsForm',
+      '100-character names in words and with no space, on one line in their fields',
+    );
+    expect(within(long).getByRole('textbox', { name: 'Bank Name' })).toHaveValue(
+      'The First Community Cooperative Savings and Commercial Bank of Greater Dhaka and Chittagong Division',
+    );
+  });
+
+  it('shows the input Dropdown named by a visible label, which a click on the label focuses', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+    const example = figure('Dropdown', 'input with a visible label (task 022, the id prop)');
+
+    await user.click(within(example).getByText('Account Type'));
+
+    expect(within(example).getByRole('combobox', { name: 'Account Type' })).toHaveFocus();
   });
 });

@@ -1,4 +1,13 @@
-import { authContract, type CurrentUser, type LoginRequest, type SignUpRequest } from '@finebank/shared';
+import {
+  authContract,
+  type ContractEntry,
+  type CurrentUser,
+  type LoginRequest,
+  type ParamsSchema,
+  type QuerySchema,
+  type SignUpRequest,
+  writeGuardMessages,
+} from '@finebank/shared';
 import {
   matchMutation,
   type Mutation,
@@ -11,10 +20,12 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import type { z } from 'zod';
 
-import { ApiError, apiRequest } from './client';
+import { ApiError, apiRequest, apiWrite, type RequestArgs } from './client';
 
-const sessionQueryKey = ['session'] as const;
+/** The session query: who this tab shows as signed in. */
+export const sessionQueryKey = ['session'] as const;
 const loginMutationKey = ['session', 'login'] as const;
 const signUpMutationKey = ['session', 'signUp'] as const;
 const logoutMutationKey = ['session', 'logout'] as const;
@@ -176,6 +187,35 @@ export function useSessionStartInProgress(): boolean {
   return statuses.some((status) => status === 'pending' || status === 'success');
 }
 
+/**
+ * Sends a write behind the session guard (#119). Every user-data mutation calls its contract entry through this one
+ * helper, so the request carries the email of the user this tab shows (the session query's user: its last check, login
+ * or sign up) in `X-Expected-User`; the backend refuses it with 409 when the session is another user's, as after a
+ * logout and another sign-in in another tab (#110). Throws before anything is sent when no user is known (still
+ * checking, or signed out). Login, sign up and logout start or end a session and are sent without it.
+ */
+export async function sendWrite<
+  Req extends z.ZodType | undefined,
+  Res extends z.ZodType,
+  Search extends QuerySchema | undefined = undefined,
+  Params extends ParamsSchema | undefined = undefined,
+>(
+  queryClient: QueryClient,
+  entry: ContractEntry<Req, Res, Search, Params>,
+  ...args: RequestArgs<Req, Search, Params>
+): Promise<z.output<Res>> {
+  const user = queryClient.getQueryData<CurrentUser | null>(sessionQueryKey);
+  if (!user) throw new Error('No signed-in user is known in this tab: the write was not sent');
+  return apiWrite(user.email, entry, ...args);
+}
+
+/** The write guard's 409 (#119): another user is signed in, so nothing was saved. */
+const isOtherUserSignedIn = (error: unknown) =>
+  error instanceof ApiError &&
+  error.fromServer &&
+  error.status === 409 &&
+  error.body.message === writeGuardMessages.otherUser;
+
 /** The app's retry rule for queries: 3 retries, none for a 401 (the session ended). */
 export const retryQuery = (failureCount: number, error: unknown): boolean => !isUnauthorized(error) && failureCount < 3;
 
@@ -183,7 +223,9 @@ export const retryQuery = (failureCount: number, error: unknown): boolean => !is
  * The app's query client. A 401 from any query or mutation means the session ended (expired, or deleted by a
  * logout elsewhere): the session becomes signed out, which opens Login, and every cached query is removed, so
  * the next user in this tab never sees this user's data (#3, #39, #75). A failed login's 401 is wrong
- * credentials, not a session end. A 401 is not retried.
+ * credentials, not a session end. A 401 is not retried. A write refused by the write guard's 409 (another user is
+ * signed in, #119) asks for the session again at once: the check finds that user and clears this tab's data, so the
+ * page shows the signed-in user (`useSession`).
  */
 export function createQueryClient(): QueryClient {
   const queryClient: QueryClient = new QueryClient({
@@ -196,6 +238,7 @@ export function createQueryClient(): QueryClient {
       onError: (error, _variables, _context, mutation) => {
         if (isUnauthorized(error) && !matchMutation({ mutationKey: loginMutationKey, exact: true }, mutation))
           setSessionUser(queryClient, null);
+        if (isOtherUserSignedIn(error)) void queryClient.invalidateQueries({ queryKey: sessionQueryKey, exact: true });
       },
     }),
     defaultOptions: {

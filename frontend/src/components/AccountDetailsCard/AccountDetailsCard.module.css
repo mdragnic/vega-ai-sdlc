@@ -56,24 +56,11 @@
   margin-top: var(--space-account-details-buttons-gap);
 }
 
-/* 106 "Edit Details": the `Button/primary` look, 160x48, white Bold 16/24 centred on Primary. Visual only: the default
-   cursor. */
-.editDetails {
-  display: flex;
+/* 106 "Edit Details": `ButtonPrimary` (the `Button/primary` look, white Bold 16/24 centred on Primary), 160 wide, the
+   width its parent gives it (task 022). */
+.button {
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
   width: var(--size-edit-details-width);
-  height: var(--size-button-height);
-  border-radius: var(--radius-button);
-  background-color: var(--color-primary);
-  color: var(--color-white);
-  font-family: var(--font-family-inter);
-  font-size: var(--font-size-16);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-24);
-  white-space: nowrap;
-  cursor: default;
 }
 
 /* 106 "Remove": Gray/01, Medium 14/20 (by ink density: the build's ink is 0.87 of 106's at Medium, the ratio of the texts

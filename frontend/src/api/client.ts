@@ -2,6 +2,7 @@ import {
   type ContractEntry,
   type ErrorResponse,
   errorResponseSchema,
+  EXPECTED_USER_HEADER,
   type ParamsSchema,
   type QuerySchema,
 } from '@finebank/shared';
@@ -65,6 +66,9 @@ type ParamsArgs<Params> = Params extends z.ZodType ? [params: z.input<Params>] :
 type BodyArgs<Req> = Req extends z.ZodType ? [body: z.input<Req>] : [];
 type QueryArgs<Query> = Query extends z.ZodType ? [query: z.input<Query>] : [];
 
+/** The arguments of a call to a contract entry: its path parameters, its body, then its query, for an entry that has them. */
+export type RequestArgs<Req, Query, Params> = [...ParamsArgs<Params>, ...BodyArgs<Req>, ...QueryArgs<Query>];
+
 /**
  * The entry's path with each `:name` replaced by its parameter, parsed with the entry's params schema first and
  * encoded (task 021), so a value stays inside its one segment: a slash, `?` or `#` is encoded, and `.` and `..`, which
@@ -88,14 +92,36 @@ function pathWith(entry: ContractEntry, params: unknown): string {
  * schemas before anything is sent, so the frontend never sends what the backend rejects (#74); absent query values are
  * left out.
  */
-export async function apiRequest<
+export function apiRequest<
+  Req extends z.ZodType | undefined,
+  Res extends z.ZodType,
+  Query extends QuerySchema | undefined = undefined,
+  Params extends ParamsSchema | undefined = undefined,
+>(entry: ContractEntry<Req, Res, Query, Params>, ...args: RequestArgs<Req, Query, Params>): Promise<z.output<Res>> {
+  return send(entry, args, {});
+}
+
+/**
+ * `apiRequest` for a write behind the session guard (#119), with `expectedUser`, the email of the user the tab shows, in
+ * `X-Expected-User`. Called only through the session's `sendWrite`, which knows that user.
+ */
+export function apiWrite<
   Req extends z.ZodType | undefined,
   Res extends z.ZodType,
   Query extends QuerySchema | undefined = undefined,
   Params extends ParamsSchema | undefined = undefined,
 >(
+  expectedUser: string,
   entry: ContractEntry<Req, Res, Query, Params>,
-  ...args: [...ParamsArgs<Params>, ...BodyArgs<Req>, ...QueryArgs<Query>]
+  ...args: RequestArgs<Req, Query, Params>
+): Promise<z.output<Res>> {
+  return send(entry, args, { [EXPECTED_USER_HEADER]: expectedUser });
+}
+
+async function send<Res extends z.ZodType>(
+  entry: ContractEntry<z.ZodType | undefined, Res>,
+  args: unknown[],
+  extraHeaders: Record<string, string>,
 ): Promise<z.output<Res>> {
   const rest: unknown[] = [...args];
   const params = entry.params ? rest.shift() : undefined;
@@ -107,7 +133,11 @@ export async function apiRequest<
       if (value !== undefined) url.searchParams.set(name, value);
     }
   }
-  const headers: Record<string, string> = { Accept: 'application/json', 'X-Time-Zone': browserTimeZone() };
+  const headers: Record<string, string> = {
+    ...extraHeaders,
+    Accept: 'application/json',
+    'X-Time-Zone': browserTimeZone(),
+  };
   const init: RequestInit = { method: entry.method, headers, credentials: 'same-origin' };
   if (entry.request) {
     headers['Content-Type'] = 'application/json';

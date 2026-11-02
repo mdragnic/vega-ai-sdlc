@@ -1,5 +1,5 @@
 import { Select } from 'radix-ui';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ArrowDown2, DownArrow24 } from '../../assets/icons';
 import styles from './Dropdown.module.css';
@@ -21,7 +21,17 @@ type DropdownProps = {
   variant: 'box' | 'plain' | 'inline' | 'input' | 'comparison';
   /** The field name, for a native form submit. */
   name?: string;
-} & ({ 'aria-label': string; 'aria-labelledby'?: never } | { 'aria-labelledby': string; 'aria-label'?: never });
+  /**
+   * Radix Select's: the list does not open while it is set, as a form's fields while it saves (task 022). The look
+   * stays the same; the trigger is a disabled button, out of the Tab order.
+   */
+  disabled?: boolean;
+} & (
+  | { 'aria-label': string; 'aria-labelledby'?: never; id?: never }
+  | { 'aria-labelledby': string; 'aria-label'?: never; id?: never }
+  /** The trigger's id, for a visible `<label htmlFor>` that names it; a click on the label focuses it (task 022). */
+  | { id: string; 'aria-label'?: never; 'aria-labelledby'?: never }
+);
 
 /**
  * The one shared select (#60), on Radix Select: Account Type (#26), the Goals period selectors (#30), the
@@ -29,12 +39,33 @@ type DropdownProps = {
  * has one look for all (#90 a) and opens below the trigger, flipping above when there is no room, and scrolls when
  * it is long.
  */
-export function Dropdown({ options, value, onValueChange, variant, name, ...label }: DropdownProps) {
+export function Dropdown({ options, value, onValueChange, variant, name, disabled, ...label }: DropdownProps) {
   // Radix moves focus by script, and Chrome then shows the focus ring on the trigger even after a mouse
   // choice. The ring is for the keyboard only (#87), so it is hidden when focus comes back after a pointer:
   // a choice in the list or a press outside it, which closes it.
   const pointerUsed = useRef(false);
   const [pointerFocus, setPointerFocus] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const triggerId = 'id' in label ? label.id : undefined;
+
+  // A click on a visible `<label for>` focuses the trigger, as a label does for a native select, and opens nothing: the
+  // label's own activation, which would forward a click that Radix takes for a touch and opens the list on, is
+  // cancelled. The trigger's own clicks are left to Radix, so a click with no pointer press (assistive technology) still
+  // opens the list.
+  useEffect(() => {
+    const element = trigger.current;
+    if (triggerId === undefined || element === null) return undefined;
+    const labels = [...element.labels];
+    const focusOnly = (event: MouseEvent) => {
+      event.preventDefault();
+      element.focus();
+    };
+    for (const labelElement of labels) labelElement.addEventListener('click', focusOnly);
+    return () => {
+      for (const labelElement of labels) labelElement.removeEventListener('click', focusOnly);
+    };
+  }, [triggerId]);
+
   const notePointer = () => {
     pointerUsed.current = true;
   };
@@ -44,9 +75,10 @@ export function Dropdown({ options, value, onValueChange, variant, name, ...labe
   };
 
   return (
-    <Select.Root value={value} onValueChange={onValueChange} name={name}>
+    <Select.Root value={value} onValueChange={onValueChange} name={name} disabled={disabled}>
       <Select.Trigger
         {...label}
+        ref={trigger}
         className={`${styles.trigger} ${styles[variant]}`}
         data-pointer-focus={pointerFocus || undefined}
         onPointerDown={notePointer}

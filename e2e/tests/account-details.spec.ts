@@ -369,20 +369,28 @@ test('opens Balances for another user’s, an unknown and a malformed ID, showin
 });
 
 // T27: AC3, AC15 and AC16, the keyboard and the visual-only parts (#23, #26, #87, #117 a, #118 a).
-test('tabs from the search field to "Load More" with the ring, then out; Edit Details and Remove do nothing', async ({
+// Task 022: "Edit Details" is a button and a Tab stop between the search field and "Load More"; "Remove" keeps every
+// visual-only check (#23).
+test('tabs from the search field to "Edit Details" and "Load More" with the ring, then out; Remove does nothing', async ({
   page,
 }) => {
   await openAccount(page);
+  const editDetails = detailsCard(page).getByRole('button', { name: 'Edit Details' });
   await expect(main(page).getByRole('link')).toHaveCount(0);
-  await expect(main(page).getByRole('button')).toHaveText(['Load More']);
+  await expect(main(page).getByRole('button')).toHaveText(['Edit Details', 'Load More']);
 
   await search(page).focus();
+  await page.keyboard.press('Tab');
+  await expect(editDetails).toBeFocused();
+  await expectRing(page, editDetails);
   await page.keyboard.press('Tab');
   await expect(loadMore(page)).toBeFocused();
   await expectRing(page, loadMore(page));
   await page.keyboard.press('Tab');
   expect(await main(page).evaluate((element) => element.contains(document.activeElement))).toBe(false);
   await loadMore(page).focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(editDetails).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(search(page)).toBeFocused();
 
@@ -407,10 +415,10 @@ test('tabs from the search field to "Load More" with the ring, then out; Edit De
   expect(await clickedRow.evaluate((node) => node.matches(':focus-visible'))).toBe(false);
   expect(await computed(clickedRow, 'outline-style')).toBe('none');
 
-  // The visual-only parts and a row: nothing happens, no pointer.
+  // The visual-only part and a row: nothing happens, no pointer.
   const url = page.url();
   const sent = recordAccountRequests(page);
-  for (const text of ['Edit Details', 'Remove']) {
+  for (const text of ['Remove']) {
     const element = detailsCard(page).getByText(text, { exact: true });
     expect(await computed(element, 'cursor')).toBe('default');
     expect(await element.evaluate((node) => node.closest('[inert]') !== null)).toBe(true);
@@ -590,7 +598,7 @@ async function expectLayout(page: Page) {
     expect(values[index]!.lines, `${labels[index]} value on one line`).toBe(1);
     near(values[index]!.x, columnX(column), `${labels[index]} value under its label`, 1);
   }
-  const edit = await box(detailsCard(page).getByText('Edit Details', { exact: true }));
+  const edit = await box(detailsCard(page).getByRole('button', { name: 'Edit Details' }));
   near(edit.x, 336, 'Edit Details x');
   near(edit.y, 356, 'Edit Details y');
   near(edit.width, 160, 'Edit Details width');
@@ -743,7 +751,7 @@ for (const [width, height] of [
       expect(values[3]!.lines, 'Branch Name wraps').toBeGreaterThan(1);
       expect(values[2]!.lines, 'balance on one line').toBe(1);
       await expect(detailsCard(page).locator('dd').nth(2)).toHaveText('-$90,071,992,547,409.91');
-      const edit = await box(detailsCard(page).getByText('Edit Details', { exact: true }));
+      const edit = await box(detailsCard(page).getByRole('button', { name: 'Edit Details' }));
       expect(edit.y, 'buttons under the values').toBeGreaterThanOrEqual(Math.max(...values.map((v) => v.y + v.height)));
       expect(card.height, 'the details card grows').toBeGreaterThan(292);
 

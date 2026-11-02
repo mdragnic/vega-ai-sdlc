@@ -332,6 +332,8 @@ describe('saving the goal', () => {
     expect(backend.saved).toEqual([
       { month: '2026-10', target: usd(2_500_050), present: usd(0) },
     ] satisfies SavingsGoalRequest[]);
+    // Task 022 T21 (#119): the email of the user the tab shows, on the PUT.
+    expect(backend.expectedUsers).toEqual([signedInUser.email]);
     expect(within(goals()).getAllByText('$25,000.50')).toHaveLength(2);
     expect(amounts()).toEqual([
       ['Target Achieved', '$0.00'],
@@ -772,6 +774,41 @@ describe('a user switch in another tab', () => {
     await user.click(pencil());
     await screen.findByRole('dialog');
     expect(targetField()).toHaveValue('20000');
+  });
+
+  // Task 022 T21, AC11 and AC12 (#110, #119): a save from a stale tab, before its session check runs, is refused by the
+  // write guard; the tab shows the message, asks for the session at once and then shows the signed-in user.
+  it('shows the guard’s 409 above Save, then asks for the session at once and shows the other user', async () => {
+    const backend = goalBackend();
+    const { user } = await openOverview(...backend.handlers);
+    await openPopup(user);
+    await retype(user, targetField(), '45000');
+    const { promise: meHeld, resolve: releaseMe } = Promise.withResolvers<void>();
+    server.use(
+      http.get('*/api/auth/me', async () => {
+        await meHeld;
+        return HttpResponse.json(otherUser);
+      }),
+      http.put('*/api/savings-goals', () =>
+        HttpResponse.json({ message: 'Another user is signed in. Nothing was saved.' } satisfies ErrorResponse, {
+          status: 409,
+        }),
+      ),
+    );
+    const meBefore = count('GET /api/auth/me');
+
+    await user.click(saveButton());
+
+    expect(await within(dialog()).findByRole('alert')).toHaveTextContent(
+      'Another user is signed in. Nothing was saved.',
+    );
+    await waitFor(() => expect(count('GET /api/auth/me')).toBe(meBefore + 1));
+    expect(saveButton()).toHaveFocus();
+    releaseMe();
+    expect(await screen.findByText('Hello Ada')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(count('GET /api/auth/me')).toBe(meBefore + 1);
+    expect(backend.saved).toEqual([]);
   });
 
   // The shell keys the page on the user: state typed on any page, not only in a data widget, is gone.

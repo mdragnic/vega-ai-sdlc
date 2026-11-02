@@ -310,7 +310,25 @@ describe('accounts sources', () => {
     expect(controller).not.toMatch(/accountParamsSchema|details\.params|ParseIntPipe/);
   });
 
-  it.each(["@Get('/accounts')", "@Controller('accounts')", 'const path = `/accounts`;'])('flags %s', (code) => {
+  // Task 022 T9, AC20: the PATCH's path and its empty-segment form from the contract, the ID parsed the same way, the
+  // body by the contract's request schema.
+  it('takes the update path from the contract, parses the ID itself and the body with the contract’s schema', () => {
+    const controller = readFileSync(join(srcDir, 'accounts/accounts.controller.ts'), 'utf8');
+
+    expect(controller).toMatch(
+      /@Patch\(\[accountsContract\.updateDetails\.path, emptyAccountIdPath\(accountsContract\.updateDetails\.path\)\]\)/,
+    );
+    expect(controller).toMatch(/@Body\(\{ schema: accountsContract\.updateDetails\.request \}\)/);
+    expect(controller.match(/accountIdFrom\(rawAccountId\)/g)).toHaveLength(2);
+    expect(controller).not.toMatch(/updateDetails\.params/);
+  });
+
+  it.each([
+    "@Get('/accounts')",
+    "@Controller('accounts')",
+    'const path = `/accounts`;',
+    "@Patch('/accounts/:accountId')",
+  ])('flags %s', (code) => {
     expect(declaresPath.test(code)).toBe(true);
   });
 

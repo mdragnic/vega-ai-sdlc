@@ -61,6 +61,12 @@ export class UsersService {
     return this.dataSource.getRepository(User).findOneBy({ email });
   }
 
+  /** The user's stored email, trimmed and lowercase (#15), or undefined when the user is gone. Reads only the email. */
+  async emailOf(id: number): Promise<string | undefined> {
+    const user = await this.dataSource.getRepository(User).findOne({ select: { email: true }, where: { id } });
+    return user?.email;
+  }
+
   async currentUser(id: number): Promise<CurrentUser> {
     return toCurrentUser(await this.dataSource.getRepository(User).findOneByOrFail({ id }));
   }

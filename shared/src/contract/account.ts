@@ -16,8 +16,49 @@ export type CardNetwork = z.infer<typeof cardNetworkSchema>;
 /** The one format of an account number outside the backend: the last 4 digits only (#25). */
 export const maskedAccountNumberSchema = z.string().regex(/^\*{4} \*{4} \*{4} \d{4}$/);
 
-/** The Bank Name: required, at most 100 characters (#26). Shown on a Balances card (#57), edited on Account Details. */
-export const bankNameSchema = z.string().min(1).max(100);
+/** The texts of the Edit Details rules (#120 b4): one message per field, its first failing rule (#95 a). */
+export const accountMessages = {
+  bankNameRequired: 'Bank Name is required',
+  bankNameControl: 'Bank Name cannot contain tabs or line breaks',
+  bankNameMax: 'Bank Name must be at most 100 characters',
+  branchNameRequired: 'Branch Name is required',
+  branchNameControl: 'Branch Name cannot contain tabs or line breaks',
+  branchNameMax: 'Branch Name must be at most 100 characters',
+  accountTypeInvalid: 'Choose an Account Type',
+} as const;
+
+/** The most characters of a name (#26), counted in code points (#120 b1). */
+const MAX_NAME_CODE_POINTS = 100;
+
+/** Nothing visible: only whitespace, control (Cc) and format (Cf) characters, such as a zero-width space (#120 b3). */
+const invisibleOnly = /^[\p{White_Space}\p{Cc}\p{Cf}]*$/u;
+
+/** A control character (Cc), such as a tab or a line break (#120 b3). */
+const controlCharacter = /\p{Cc}/u;
+
+/**
+ * The one rule of a Bank Name and a Branch Name (#26, #120 b), for the form, the API and the responses (#74): the text
+ * trimmed at both ends with JavaScript's `trim()` (#120 b2), then, one message per field, its first failing rule
+ * (#95 a): nothing visible left is "required" (#120 b3); a control character anywhere is refused (#120 b3); more than
+ * 100 code points is too long (#120 b1: code points, so the form and the API count alike in every runtime, the size is
+ * bounded, and SQLite's `length()` counts the same). The output is the trimmed text, with no Unicode normalisation.
+ */
+const nameSchema = (messages: { required: string; control: string; max: string }) =>
+  z
+    .string({ error: messages.required })
+    .trim()
+    .refine((text) => !invisibleOnly.test(text), { error: messages.required, abort: true })
+    .refine((text) => !controlCharacter.test(text), { error: messages.control, abort: true })
+    // The spread counts code points on purpose: the decided unit (#120 b1), not graphemes.
+    // oxlint-disable-next-line typescript/no-misused-spread
+    .refine((text) => [...text].length <= MAX_NAME_CODE_POINTS, { error: messages.max });
+
+/** The Bank Name (#26, #120 b). Shown on a Balances card (#57), edited on Account Details. */
+export const bankNameSchema = nameSchema({
+  required: accountMessages.bankNameRequired,
+  control: accountMessages.bankNameControl,
+  max: accountMessages.bankNameMax,
+});
 
 /**
  * One account of the Total Balance carousel (#17) and of a Balances card (#24, #57): never the full number, the
@@ -59,8 +100,12 @@ export const accountParamsSchema = z.object({ accountId: accountIdSchema });
 
 export type AccountParams = z.input<typeof accountParamsSchema>;
 
-/** The Branch Name: required, at most 100 characters (#26), as the Bank Name. Shown on Account Details. */
-export const branchNameSchema = z.string().min(1).max(100);
+/** The Branch Name, by the Bank Name's rule (#26, #120 b). Shown on Account Details. */
+export const branchNameSchema = nameSchema({
+  required: accountMessages.branchNameRequired,
+  control: accountMessages.branchNameControl,
+  max: accountMessages.branchNameMax,
+});
 
 /**
  * One account on Account Details (106, US-12 criterion 2): exactly its Bank Name, Account Type, Balance, Branch Name and
@@ -78,8 +123,23 @@ export const accountDetailsSchema = z.object({
 export type AccountDetailsResponse = z.infer<typeof accountDetailsSchema>;
 
 /**
+ * `PATCH /accounts/:accountId`, Edit Details (#26): exactly the three editable fields, all required (the form always
+ * sends all three), the names by the one rule and trimmed (#120 b), the type one of the five. Unknown keys are dropped,
+ * so an ID, a user, the number, the card network, the opening balance or a balance never reaches the backend's logic.
+ * The form uses it as is, so the form and the API apply one rule (#74).
+ */
+export const accountDetailsRequestSchema = z.object({
+  bankName: bankNameSchema,
+  branchName: branchNameSchema,
+  accountType: z.enum(accountTypeSchema.options, { error: accountMessages.accountTypeInvalid }),
+});
+
+export type AccountDetailsRequest = z.infer<typeof accountDetailsRequestSchema>;
+
+/**
  * The signed-in user's accounts (#39), in the user's time zone from `X-Time-Zone` (#53, #54): `list` all of them with
- * the Total Balance, `details` one of them by the ID in its path, not found (404) unless it is the user's (#39).
+ * the Total Balance, `details` one of them by the ID in its path, not found (404) unless it is the user's (#39), and
+ * `updateDetails` its three editable fields (#26), answering its details as `details` does.
  */
 export const accountsContract = {
   list: { method: 'GET', path: '/accounts', request: undefined, response: accountsResponseSchema },
@@ -88,6 +148,13 @@ export const accountsContract = {
     path: '/accounts/:accountId',
     params: accountParamsSchema,
     request: undefined,
+    response: accountDetailsSchema,
+  },
+  updateDetails: {
+    method: 'PATCH',
+    path: '/accounts/:accountId',
+    params: accountParamsSchema,
+    request: accountDetailsRequestSchema,
     response: accountDetailsSchema,
   },
 } as const satisfies Record<string, ContractEntry>;

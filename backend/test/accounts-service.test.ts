@@ -1,4 +1,4 @@
-import { accountsResponseSchema } from '@finebank/shared';
+import { type AccountDetailsRequest, accountsResponseSchema } from '@finebank/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AccountsService } from '../src/accounts/accounts.service.js';
@@ -392,5 +392,121 @@ describe('AccountsService.hasAccount', () => {
     expect(getAccount).toHaveBeenCalledExactlyOnceWith(userId, accountId);
     expect(listAccounts).not.toHaveBeenCalled();
     expect(list).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The service on a fake provider that stores the details only for its user and an account it has, in one call, as the
+ * provider's one `UPDATE` does, and answers the stored account (null when no row matched); every provider and
+ * VisibleTransactions call is recorded in order.
+ */
+function updateServiceWith(accounts: BankAccount[], transactions: BankTransaction[]) {
+  const calls: string[] = [];
+  const stored = accounts.map((account) => ({ ...account }));
+  const updateAccountDetails = vi.fn<BankDataProvider['updateAccountDetails']>((userId, accountId, details) => {
+    calls.push('updateAccountDetails');
+    const account = userId === USER_ID ? stored.find((row) => row.id === accountId) : undefined;
+    if (account === undefined) return Promise.resolve(null);
+    Object.assign(account, details);
+    return Promise.resolve({ ...account });
+  });
+  const getAccount = vi.fn<BankDataProvider['getAccount']>((userId, accountId) => {
+    calls.push('getAccount');
+    return Promise.resolve(userId === USER_ID ? (stored.find((row) => row.id === accountId) ?? null) : null);
+  });
+  const listAccounts = vi.fn<BankDataProvider['listAccounts']>((userId) => {
+    calls.push('listAccounts');
+    return Promise.resolve(userId === USER_ID ? stored : []);
+  });
+  const listTransactions = vi.fn<BankDataProvider['listTransactions']>(() => {
+    throw new Error('Transactions are read through VisibleTransactions only');
+  });
+  const provider: BankDataProvider = { listAccounts, getAccount, updateAccountDetails, listTransactions };
+  const list = vi.fn<VisibleTransactions['list']>((userId, _zone, filter = {}) => {
+    calls.push('list');
+    return Promise.resolve({
+      transactions:
+        userId === USER_ID
+          ? transactions.filter((row) => filter.accountId === undefined || row.accountId === filter.accountId)
+          : [],
+      nextCursor: null,
+    });
+  });
+  const visible = { list } as unknown as VisibleTransactions;
+  return { service: new AccountsService(provider, visible), calls, updateAccountDetails, list, listTransactions };
+}
+
+const nordic: AccountDetailsRequest = { bankName: 'Nordic Bank', branchName: 'Harbour Branch', accountType: 'savings' };
+
+// T2, AC7, AC9 and AC20: the write is the provider's one update (#77), never after a read of the account (#39); the
+// answer is the account's details from the one balance calculation (#57).
+describe('AccountsService.updateDetails', () => {
+  it('stores the three fields through updateAccountDetails once and answers exactly the five keys', async () => {
+    const { service, updateAccountDetails } = updateServiceWith([creditCard, checking], mixedRows());
+
+    const details = await service.updateDetails(USER_ID, ZONE, 11, nordic);
+
+    expect(updateAccountDetails).toHaveBeenCalledExactlyOnceWith(USER_ID, 11, nordic);
+    expect(details).toEqual({
+      accountType: 'savings',
+      bankName: 'Nordic Bank',
+      branchName: 'Harbour Branch',
+      maskedNumber: '**** **** **** 7310',
+      balance: usd(48_766),
+    });
+    expect(Object.keys(details!).toSorted()).toEqual([
+      'accountType',
+      'balance',
+      'bankName',
+      'branchName',
+      'maskedNumber',
+    ]);
+    expect(JSON.stringify(details)).not.toMatch(/6934|5669|9012|openingBalance|cardNetwork|visa|"id"/);
+  });
+
+  it('writes first, reading no account before it and never listAccounts; then the account’s transactions', async () => {
+    const { service, calls, list, listTransactions } = updateServiceWith([creditCard, checking], mixedRows());
+
+    await service.updateDetails(USER_ID, ZONE, 11, nordic);
+
+    expect(calls).toEqual(['updateAccountDetails', 'list']);
+    expect(list).toHaveBeenCalledExactlyOnceWith(USER_ID, ZONE, { accountId: 11 });
+    expect(listTransactions).not.toHaveBeenCalled();
+  });
+
+  it('passes only the three editable fields, whatever else the request object holds', async () => {
+    const { service, updateAccountDetails } = updateServiceWith([creditCard, checking], mixedRows());
+    const request = {
+      ...nordic,
+      id: 10,
+      userId: USER_ID + 1,
+      accountNumber: '1111222233334444',
+      cardNetwork: null,
+      openingBalanceCents: 1,
+    } as AccountDetailsRequest;
+
+    await service.updateDetails(USER_ID, ZONE, 11, request);
+
+    expect(updateAccountDetails).toHaveBeenCalledExactlyOnceWith(USER_ID, 11, nordic);
+  });
+
+  it('gives the balance details gives the account after the write', async () => {
+    const { service } = updateServiceWith([creditCard, checking], mixedRows());
+
+    const updated = await service.updateDetails(USER_ID, ZONE, 10, nordic);
+
+    expect(updated!.balance).toEqual((await service.details(USER_ID, ZONE, 10))!.balance);
+    expect(updated!.balance).toEqual(usd(115_000));
+  });
+
+  it.each([
+    ['an ID no account has', USER_ID, 99],
+    ['another user’s request for this user’s account', USER_ID + 1, 10],
+  ])('answers null for %s, reading no transaction', async (_case, userId, accountId) => {
+    const { service, calls, listTransactions } = updateServiceWith([creditCard, checking], mixedRows());
+
+    expect(await service.updateDetails(userId, ZONE, accountId, nordic)).toBeNull();
+    expect(calls).toEqual(['updateAccountDetails']);
+    expect(listTransactions).not.toHaveBeenCalled();
   });
 });

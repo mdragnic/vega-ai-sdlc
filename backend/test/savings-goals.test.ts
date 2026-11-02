@@ -68,9 +68,13 @@ describe('the savings goal API', () => {
     clock.set(new Date(FIXED_NOW));
   });
 
+  /** Each signed-up session's email, which every write sends as `X-Expected-User` (task 022, #119). */
+  const emails = new Map<string, string>();
+
   /** A new user signed up through the API, with the demo goals. */
   async function newUser() {
     const { user, token } = await signUp(app);
+    emails.set(token, user.email);
     return { token, id: (await userIdOf(db, user.email))! };
   }
 
@@ -83,7 +87,9 @@ describe('the savings goal API', () => {
 
   const put = (body: unknown, options: { token?: string; zone?: string; path?: string }) => {
     let req = request(app.getHttpServer()).put(options.path ?? savePath);
-    if (options.token !== undefined) req = req.set('Cookie', cookieFor(options.token));
+    if (options.token !== undefined) {
+      req = req.set('Cookie', cookieFor(options.token)).set('X-Expected-User', emails.get(options.token)!);
+    }
     if (options.zone !== undefined) req = req.set('X-Time-Zone', options.zone);
     return req.send(body as object);
   };

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -226,6 +226,115 @@ describe('Dropdown', () => {
 
     expect(within(trigger).queryByText('Checking')).not.toBeNull();
     expect(trigger.querySelector('svg') !== null).toBe(chevron);
+  });
+});
+
+/** The Account Type select of 106 edit mode: an `id` on the trigger, named by a visible `<label for>` (task 022). */
+function Labelled({
+  disabled = false,
+  onValueChange = () => undefined,
+}: {
+  disabled?: boolean;
+  onValueChange?: () => void;
+}) {
+  const [value, setValue] = useState('checking');
+  return (
+    <>
+      <label htmlFor="account-type">Account Type</label>
+      <Dropdown
+        id="account-type"
+        variant="input"
+        options={accountTypes}
+        value={value}
+        onValueChange={(next) => {
+          onValueChange();
+          setValue(next);
+        }}
+        disabled={disabled}
+      />
+      <button type="button">Elsewhere</button>
+    </>
+  );
+}
+
+// Task 022 T11, AC2 and AC4: the `id` prop for a visible label (task 005 review item 10) and `disabled` for a form
+// while it saves.
+describe('Dropdown with a visible label and disabled', () => {
+  it('is named by its <label for> through its id', () => {
+    render(<Labelled />);
+
+    const trigger = screen.getByRole('combobox', { name: 'Account Type' });
+    expect(trigger).toHaveAttribute('id', 'account-type');
+    expect(trigger).toHaveTextContent('Checking');
+  });
+
+  it('takes focus on a click on its label, the list staying closed', async () => {
+    render(<Labelled />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByText('Account Type'));
+
+    expect(screen.getByRole('combobox', { name: 'Account Type' })).toHaveFocus();
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('still opens on a click on the trigger itself', async () => {
+    render(<Labelled />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('combobox', { name: 'Account Type' }));
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  // Code review of task 022: a click with no pointer press before it, as assistive technology sends one, opens every
+  // variant as Radix does, the labelled one too; only the label's own click is turned into a focus.
+  it.each(['box', 'plain', 'inline', 'input', 'comparison'] as const)(
+    'opens the %s variant on a click with no pointer press, as assistive technology clicks',
+    async (variant) => {
+      const { trigger } = renderDropdown(variant);
+
+      act(() => trigger.click());
+
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    },
+  );
+
+  it('opens the labelled one on a click with no pointer press', async () => {
+    render(<Labelled />);
+
+    act(() => screen.getByRole('combobox', { name: 'Account Type' }).click());
+
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('does not open while disabled, by a click or a key, and keeps its value and its look', async () => {
+    const onValueChange = vi.fn<() => void>();
+    const { rerender } = render(<Labelled onValueChange={onValueChange} />);
+    const user = userEvent.setup();
+    const enabledClass = screen.getByRole('combobox', { name: 'Account Type' }).className;
+
+    rerender(<Labelled disabled onValueChange={onValueChange} />);
+    const trigger = screen.getByRole('combobox', { name: 'Account Type' });
+    await user.click(trigger);
+    trigger.focus();
+    for (const key of ['{Enter}', ' ', '{ArrowDown}', '{ArrowUp}']) await user.keyboard(key);
+
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(trigger).toHaveTextContent('Checking');
+    expect(trigger).toBeDisabled();
+    expect(trigger.className).toBe(enabledClass);
+  });
+
+  it('opens again once enabled', async () => {
+    const { rerender } = render(<Labelled disabled />);
+    const user = userEvent.setup();
+
+    rerender(<Labelled />);
+    await user.click(screen.getByRole('combobox', { name: 'Account Type' }));
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
   });
 });
 

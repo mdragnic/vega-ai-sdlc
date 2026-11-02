@@ -1,8 +1,11 @@
 import {
+  type AccountDetailsRequest,
   type AccountDetailsResponse,
   type AccountsResponse,
+  type AccountType,
   type CurrentUser,
   type ErrorResponse,
+  EXPECTED_USER_HEADER,
   type ExpensesBreakdownResponse,
   goalProgress,
   type RecentTransactionRow,
@@ -16,6 +19,7 @@ import {
   type TransactionsTab,
   type UpcomingBillsResponse,
   type WeeklyComparisonResponse,
+  writeGuardMessages,
 } from '@finebank/shared';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -212,16 +216,27 @@ export const savingsGoal = {
     http.get(currentGoalPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
 };
 
+/** The write guard's 400 for a write without `X-Expected-User` (task 022, #119), as the backend answers it. */
+const expectedUserMissing = () =>
+  HttpResponse.json({ message: writeGuardMessages.expectedUserInvalid } satisfies ErrorResponse, { status: 400 });
+
+/** The write guard's 409 body: another user is signed in (#119). */
+export const otherUserSignedIn: ErrorResponse = { message: writeGuardMessages.otherUser };
+
 /**
  * A backend's goal for one test: `GET /api/savings-goals/current` answers it; `PUT /api/savings-goals` records the
- * body, saves it with the progress from `goalProgress`, as the backend does, and answers it.
+ * body and its `X-Expected-User`, saves it with the progress from `goalProgress`, as the backend does, and answers it;
+ * without the header it answers the write guard's 400 and saves nothing, as the backend (task 022).
  */
 export function goalBackend(initial: SavingsGoalResponse = demoGoal) {
   let current = initial;
   const saved: SavingsGoalRequest[] = [];
+  const expectedUsers: (string | null)[] = [];
   const handlers = [
     http.get(currentGoalPath, () => HttpResponse.json(current)),
     http.put(saveGoalPath, async ({ request }) => {
+      expectedUsers.push(request.headers.get(EXPECTED_USER_HEADER));
+      if (!request.headers.get(EXPECTED_USER_HEADER)) return expectedUserMissing();
       const body = (await request.json()) as SavingsGoalRequest;
       saved.push(body);
       current = {
@@ -231,7 +246,7 @@ export function goalBackend(initial: SavingsGoalResponse = demoGoal) {
       return HttpResponse.json(current);
     }),
   ];
-  return { handlers, saved };
+  return { handlers, saved, expectedUsers };
 }
 
 /** A bill as `GET /api/bills/upcoming` sends it. */
@@ -699,6 +714,128 @@ export const accountDetails = {
     });
   },
   notFound: () => http.get(accountDetailsPath, accountNotFoundResponse),
+};
+
+/** A `PATCH /api/accounts/:accountId` as the backend received it (task 022). */
+export type DetailsWrite = {
+  accountId: string;
+  body: unknown;
+  expectedUser: string | null;
+  zone: string | null;
+};
+
+async function readWrite(request: Request, accountId: unknown): Promise<DetailsWrite> {
+  return {
+    accountId: String(accountId),
+    body: (await request.clone().json()) as unknown,
+    expectedUser: request.headers.get(EXPECTED_USER_HEADER),
+    zone: request.headers.get('X-Time-Zone'),
+  };
+}
+
+/** Each demo account's ID by the type it starts with: each demo account has its own type (demo-data.md). */
+const demoAccountIdByType: Record<AccountType, number> = {
+  'credit-card': 1,
+  checking: 2,
+  savings: 3,
+  investment: 4,
+  loan: 5,
+};
+
+/**
+ * A stateful demo backend for Account Details' writes (task 022), as the real one: `GET /api/accounts`,
+ * `GET /api/accounts/:accountId` and `GET /api/transactions` answer the demo with every saved change (the Bank Name and
+ * the type on the accounts list, the three fields on the details, the type as the Payment Method of the account's rows
+ * on every tab); `PATCH /api/accounts/:accountId` records the request, stores the three fields it is sent (the form
+ * sends them trimmed) and answers the details; 404 for an account it does not know, the write guard's 400 without
+ * `X-Expected-User`. `hold` keeps the next PATCHes waiting until `release`.
+ */
+export function accountsBackend(pages: TransactionPages = demoTransactionPages) {
+  const details: Record<number, AccountDetailsResponse> = structuredClone(demoAccountDetails);
+  const writes: DetailsWrite[] = [];
+  let held: PromiseWithResolvers<void> | null = null;
+  const list = (): AccountsResponse => ({
+    ...demoAccounts,
+    accounts: demoAccounts.accounts.map((account) => ({
+      ...account,
+      bankName: details[account.id]!.bankName,
+      accountType: details[account.id]!.accountType,
+    })),
+  });
+  const withTypes = (): TransactionPages =>
+    Object.fromEntries(
+      Object.entries(pages).map(([tab, tabPages]) => [
+        tab,
+        tabPages.map((page) => ({
+          ...page,
+          transactions: page.transactions.map((row) => ({
+            ...row,
+            paymentMethod: details[demoAccountIdByType[row.paymentMethod]]!.accountType,
+          })),
+        })),
+      ]),
+    ) as TransactionPages;
+  const handlers = [
+    http.get(accountsPath, () => HttpResponse.json(list())),
+    http.get(accountDetailsPath, ({ params }) => answerDetails(details, params.accountId)),
+    http.get(transactionsPath, ({ request }) => answerPages(withTypes(), request)),
+    http.patch(accountDetailsPath, async ({ params, request }) => {
+      const write = await readWrite(request, params.accountId);
+      writes.push(write);
+      if (held) await held.promise;
+      if (!write.expectedUser) return expectedUserMissing();
+      const id = Number(params.accountId);
+      const found = details[id];
+      if (!found) return accountNotFoundResponse();
+      const { bankName, branchName, accountType } = write.body as AccountDetailsRequest;
+      details[id] = { ...found, bankName, branchName, accountType };
+      return HttpResponse.json(details[id]);
+    }),
+  ];
+  return {
+    handlers,
+    writes,
+    details,
+    hold: () => {
+      held = Promise.withResolvers<void>();
+    },
+    release: () => {
+      held?.resolve();
+      held = null;
+    },
+  };
+}
+
+/**
+ * `PATCH /api/accounts/:accountId` failures (task 022), each recording the request in `writes`: 500, a network error,
+ * 400 with `fieldErrors`, the one 404 and the write guard's 409.
+ */
+export const updateAccountDetails = {
+  fails: (writes: DetailsWrite[] = []) =>
+    http.patch(accountDetailsPath, async ({ params, request }) => {
+      writes.push(await readWrite(request, params.accountId));
+      return HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }),
+  networkError: (writes: DetailsWrite[] = []) =>
+    http.patch(accountDetailsPath, async ({ params, request }) => {
+      writes.push(await readWrite(request, params.accountId));
+      return HttpResponse.error();
+    }),
+  fieldErrors: (fieldErrors: Record<string, string>, writes: DetailsWrite[] = []) =>
+    http.patch(accountDetailsPath, async ({ params, request }) => {
+      writes.push(await readWrite(request, params.accountId));
+      return HttpResponse.json({ message: 'Validation failed', fieldErrors } satisfies ErrorResponse, { status: 400 });
+    }),
+  notFound: (writes: DetailsWrite[] = []) =>
+    http.patch(accountDetailsPath, async ({ params, request }) => {
+      writes.push(await readWrite(request, params.accountId));
+      return accountNotFoundResponse();
+    }),
+  otherUser: (writes: DetailsWrite[] = []) =>
+    http.patch(accountDetailsPath, async ({ params, request }) => {
+      writes.push(await readWrite(request, params.accountId));
+      return HttpResponse.json(otherUserSignedIn, { status: 409 });
+    }),
 };
 
 /** A history row as `GET /api/accounts/:accountId/transactions` sends it: the demo's are stored at 12:00 UTC. */

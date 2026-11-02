@@ -2,6 +2,7 @@
 // or the Code-only table for components with no Figma component (#36). test/components/names.test.ts checks it.
 export { AccountDetailsCard } from './AccountDetailsCard/AccountDetailsCard';
 export { AccountDetailsCardSkeleton } from './AccountDetailsCardSkeleton/AccountDetailsCardSkeleton';
+export { AccountDetailsForm, type AccountDetailsSaveHandlers } from './AccountDetailsForm/AccountDetailsForm';
 export { AccountType } from './AccountType/AccountType';
 export { AccountTypeSkeleton } from './AccountTypeSkeleton/AccountTypeSkeleton';
 export { AccountTypeSlide } from './AccountTypeSlide/AccountTypeSlide';

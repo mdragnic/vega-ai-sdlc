@@ -27,6 +27,7 @@ import { googleUrl } from '../../assets/brand';
 import {
   AccountDetailsCard,
   AccountDetailsCardSkeleton,
+  AccountDetailsForm,
   AccountType,
   AccountTypeSkeleton,
   AccountTypeSlide,
@@ -443,6 +444,20 @@ function DropdownExample({
 }) {
   const [value, setValue] = useState(initial);
   return <Dropdown variant={variant} options={options} value={value} onValueChange={setValue} aria-label={label} />;
+}
+
+/** The `input` Dropdown named by a visible `<label htmlFor>` through its `id`, as on 106 edit mode (task 022). */
+function LabelledDropdownExample() {
+  const [value, setValue] = useState('checking');
+  const id = useId();
+  return (
+    <>
+      <label className={styles.formLabel} htmlFor={id}>
+        Account Type
+      </label>
+      <Dropdown id={id} variant="input" options={accountTypes} value={value} onValueChange={setValue} />
+    </>
+  );
 }
 
 // Task 006: chart samples as the backend will send them, ticks included (axisTicks of the highest value), so
@@ -1067,6 +1082,35 @@ function AccountDetailsSampleCard({ history = false, children }: { history?: boo
   );
 }
 
+/** "Edit Details" in the gallery: no edit mode to open here (the page opens it, task 022). */
+const noEdit = () => undefined;
+
+/**
+ * 106 edit mode on a sample account (task 022): Save checks the shared rule and shows its messages, but saves nothing
+ * here (the page saves through the API); Cancel does nothing.
+ */
+function AccountDetailsFormExample({
+  account = sampleAccountDetails,
+  saving = false,
+  formError,
+}: {
+  account?: AccountDetailsResponse;
+  saving?: boolean;
+  formError?: string;
+}) {
+  return (
+    <AccountDetailsSampleCard>
+      <AccountDetailsForm
+        account={account}
+        saving={saving}
+        formError={formError}
+        onSave={(_request, { onSettled }) => onSettled()}
+        onCancel={noEdit}
+      />
+    </AccountDetailsSampleCard>
+  );
+}
+
 /** The history table on fixed pages: "Load More" here only adds the sample page again, as a stand-in for the next. */
 function TransactionsHistoryTableExample({
   pages,
@@ -1628,6 +1672,11 @@ export function ComponentGallery() {
             <DropdownExample variant="input" options={accountTypes} initial="checking" label="Account Type" />
           </Card>
         </Example>
+        <Example name="input with a visible label (task 022, the id prop)">
+          <Card>
+            <LabelledDropdownExample />
+          </Card>
+        </Example>
         <Example name="comparison, like 104 Statistics">
           <Card>
             <DropdownExample
@@ -2009,19 +2058,23 @@ export function ComponentGallery() {
       <GallerySection name="AccountDetailsCard" wide>
         <Example name="Checking (106)">
           <AccountDetailsSampleCard>
-            <AccountDetailsCard account={sampleAccountDetails} />
+            <AccountDetailsCard account={sampleAccountDetails} onEdit={noEdit} />
           </AccountDetailsSampleCard>
         </Example>
         <Example name="100-character names wrap inside their columns (#115 b)">
           <AccountDetailsSampleCard>
             <AccountDetailsCard
               account={{ ...sampleAccountDetails, bankName: longBankName, branchName: longBankName.toUpperCase() }}
+              onEdit={noEdit}
             />
           </AccountDetailsSampleCard>
         </Example>
         <Example name="The lowest balance the contract allows, on one line">
           <AccountDetailsSampleCard>
-            <AccountDetailsCard account={{ ...sampleAccountDetails, balance: usd(-9_007_199_254_740_991) }} />
+            <AccountDetailsCard
+              account={{ ...sampleAccountDetails, balance: usd(-9_007_199_254_740_991) }}
+              onEdit={noEdit}
+            />
           </AccountDetailsSampleCard>
         </Example>
       </GallerySection>
@@ -2031,6 +2084,28 @@ export function ComponentGallery() {
           <AccountDetailsSampleCard>
             <AccountDetailsCardSkeleton />
           </AccountDetailsSampleCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AccountDetailsForm" wide>
+        <Example name="Prefilled with Checking (106 edit mode, not designed)">
+          <AccountDetailsFormExample />
+        </Example>
+        <Example name="Field errors: Save checks the shared rule (a Bank Name of spaces, a 101-character Branch Name)">
+          <AccountDetailsFormExample
+            account={{ ...sampleAccountDetails, bankName: '   ', branchName: 'P'.repeat(101) }}
+          />
+        </Example>
+        <Example name="Saving: Save in its loading pattern, the fields locked">
+          <AccountDetailsFormExample saving />
+        </Example>
+        <Example name="The server error above the buttons (#97 a)">
+          <AccountDetailsFormExample formError="Something went wrong." />
+        </Example>
+        <Example name="100-character names in words and with no space, on one line in their fields">
+          <AccountDetailsFormExample
+            account={{ ...sampleAccountDetails, bankName: longBankName, branchName: longBankName.replaceAll(' ', '') }}
+          />
         </Example>
       </GallerySection>
 

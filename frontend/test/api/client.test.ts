@@ -1,10 +1,18 @@
-import { accountsContract, type ContractEntry, type ErrorResponse, transactionsContract } from '@finebank/shared';
+import {
+  accountsContract,
+  authContract,
+  type ContractEntry,
+  type ErrorResponse,
+  savingsGoalsContract,
+  transactionsContract,
+} from '@finebank/shared';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { ApiError, apiRequest, formErrorFor, formErrorMessage, serverFieldErrors } from '../../src/api/client';
+import { createQueryClient, sendWrite, sessionQueryKey } from '../../src/api/session';
 
 const echo = {
   method: 'PUT',
@@ -372,6 +380,152 @@ describe('apiRequest with path parameters', () => {
     await apiRequest(echo, { name: 'Marko' });
 
     expect(urls).toEqual(['/api/probe/echo']);
+    server.events.removeAllListeners();
+  });
+});
+
+/** A session user as the session query holds it. */
+const sessionUser = { fullName: 'A User', email: 'a@x.com', username: 'auser' };
+
+/** A query client whose session query holds `user` (`undefined`: still checking; `null`: signed out). */
+function clientWithSession(user: typeof sessionUser | null | undefined) {
+  const queryClient = createQueryClient();
+  if (user !== undefined) queryClient.setQueryData(sessionQueryKey, user);
+  return queryClient;
+}
+
+// Task 022 T10, AC4, AC11 and AC20: every write behind the session guard carries the email of the user the tab shows
+// (#119), through one helper; reads and the session's own requests do not.
+describe('sendWrite', () => {
+  /** Every request a probe receives: its method, path, body and the two headers. */
+  const received: { method: string; path: string; body: string; expectedUser: string | null; zone: string | null }[] =
+    [];
+  const record = async (request: Request) => {
+    received.push({
+      method: request.method,
+      path: new URL(request.url).pathname,
+      body: await request.clone().text(),
+      expectedUser: request.headers.get('X-Expected-User'),
+      zone: request.headers.get('X-Time-Zone'),
+    });
+  };
+  const checking = {
+    accountType: 'savings',
+    bankName: 'Nordic Bank',
+    branchName: 'Harbour Branch',
+    maskedNumber: '**** **** **** 7310',
+    balance: { cents: 3_336_248, currency: 'USD' },
+  };
+
+  afterEach(() => {
+    received.length = 0;
+  });
+
+  it('sends the PATCH to the account’s path with the JSON body, X-Expected-User and X-Time-Zone', async () => {
+    mockBrowserTimeZone('Europe/Belgrade');
+    server.use(
+      http.patch('*/api/accounts/:accountId', async ({ request }) => {
+        await record(request);
+        return HttpResponse.json(checking);
+      }),
+    );
+    const request = { bankName: 'Nordic Bank', branchName: 'Harbour Branch', accountType: 'savings' } as const;
+
+    const details = await sendWrite(
+      clientWithSession(sessionUser),
+      accountsContract.updateDetails,
+      { accountId: '42' },
+      request,
+    );
+
+    expect(details).toEqual(checking);
+    expect(received).toEqual([
+      {
+        method: 'PATCH',
+        path: '/api/accounts/42',
+        body: JSON.stringify(request),
+        expectedUser: 'a@x.com',
+        zone: 'Europe/Belgrade',
+      },
+    ]);
+  });
+
+  it('sends the goal PUT with the header', async () => {
+    server.use(
+      http.put('*/api/savings-goals', async ({ request }) => {
+        await record(request);
+        return HttpResponse.json({ month: '2026-10', goal: null });
+      }),
+    );
+
+    await sendWrite(clientWithSession(sessionUser), savingsGoalsContract.save, {
+      month: '2026-10',
+      target: { cents: 100, currency: 'USD' },
+      present: { cents: 0, currency: 'USD' },
+    });
+
+    expect(received.map(({ method, path, expectedUser }) => [method, path, expectedUser])).toEqual([
+      ['PUT', '/api/savings-goals', 'a@x.com'],
+    ]);
+  });
+
+  it.each([
+    ['still checking', undefined],
+    ['signed out', null],
+  ])('throws before anything is sent while the session is %s', async (_case, user) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(
+      sendWrite(
+        clientWithSession(user),
+        accountsContract.updateDetails,
+        { accountId: '42' },
+        {
+          bankName: 'A',
+          branchName: 'B',
+          accountType: 'loan',
+        },
+      ),
+    ).rejects.toThrow(/signed-in user/);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it.each(['abc', '01', '../42', ''])('rejects the account ID %j before any request', async (accountId) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(
+      sendWrite(
+        clientWithSession(sessionUser),
+        accountsContract.updateDetails,
+        { accountId },
+        {
+          bankName: 'A',
+          branchName: 'B',
+          accountType: 'loan',
+        },
+      ),
+    ).rejects.toBeInstanceOf(z.ZodError);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('leaves the header out of reads and of the session’s own requests', async () => {
+    const headers: (string | null)[] = [];
+    server.events.on('request:start', ({ request }) => headers.push(request.headers.get('X-Expected-User')));
+    server.use(
+      http.get('*/api/auth/me', () => HttpResponse.json(sessionUser)),
+      http.post('*/api/auth/login', () => HttpResponse.json(sessionUser)),
+      http.post('*/api/auth/signup', () => HttpResponse.json(sessionUser)),
+      http.post('*/api/auth/logout', () => new HttpResponse(null, { status: 204 })),
+    );
+
+    await apiRequest(authContract.me);
+    await apiRequest(authContract.login, { email: 'a@x.com', password: 'abcdef12', keepSignedIn: true });
+    await apiRequest(authContract.signUp, { fullName: 'A', email: 'a@x.com', password: 'abcdef12' });
+    await apiRequest(authContract.logout);
+
+    expect(headers).toEqual([null, null, null, null]);
     server.events.removeAllListeners();
   });
 });

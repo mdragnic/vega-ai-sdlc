@@ -1,0 +1,68 @@
+Task 022 visual check, 2026-11-02 (Validation step 5). Playwright MCP, a fresh context at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed instant
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`), the Vite dev server, a new user on the demo data.
+Edit mode is not designed (US-12 States, #26), so it is checked as References says: each control against its drawn
+source, the layout against rules, and the undesigned states as evidence. No Figma calls.
+
+View mode, Checking, against docs/figma/106. Account Details.png (view-1440-2x.png)
+- Matches with task 021's listed differences: the demo values (#12: "AB Bank Ltd" without the dot, $33,362.48 for
+  $25,056.00, **** **** **** 7310 for 133 456 886 8****), 10 history rows instead of 4 (the card 748 high, "Load More"
+  below the fold, the page scrolls), the 2026 dates, the Debit and Credit mix, the signs on the amounts (#19), the header
+  date and the initials avatar (task 011), the divider Gray/06 #F3F3F3 against #F4F4F4, row 2 of the details 2 px off
+  (#65), Chromium's text 1 to 3 px narrower at 2x.
+- "Edit Details", now a real ButtonPrimary, in the drawn box: x 336, y 356, 160x48; Primary rgb(41, 157, 145), white
+  Bold 16/24, radius 4, the pointer cursor; "Remove" 40 after it (x 536). The card 304,152 1104x292, the history card
+  y 524, as task 021 measured. Keyboard focus from the search field: the teal 2 px ring (view-edit-details-ring-2x.png).
+
+Edit mode, controls against their drawn sources (measured)
+- Bank Name and Branch Name fields against 101 Login's Input: 48 high, 1 px border Input-border rgb(208, 213, 221)
+  (Input-active rgb(75, 87, 104) while focused, #63), radius 8, the text 16 inside (15 padding + 1 border), the label
+  Medium 16/24 in the form label color rgb(25, 29, 35) 8 above the field. Same as 101.
+- Account Type select against task 005's approved render-dropdown-input.png: the `input` variant, 48 high, the same
+  border, radius and inset, DownArrow24; on keyboard focus the darker border and no ring (#121). Its label in Input's
+  label look (Medium 16/24, form label color, 8 above). The open list against open-list-input.png: the shared list
+  (Popup radius, card shadow, 1 px Gray/05 border), 8 under the select, as wide (301), the five types in #26's order, the
+  current one teal Semibold on the Gray/06 highlight (edit-open-account-type-list-2x.png). Same look.
+- Save against 106's "Edit Details": 160x48, Primary, white Bold 16/24, radius 4. Same.
+- Cancel against 101's "Continue with Google" without its icon: 160x48, Button-secondary rgb(228, 231, 235), Regular
+  16/24 in Input-active rgb(75, 87, 104), radius 4. Same.
+
+Edit mode, layout rules (measured at 1440; e2e T30 measures them at 1440 and 1280 on every run)
+- The title, the card's left edge (304), width (1104) and top (152) unchanged; the card grows downward only (292 to
+  356); the history card moves down by the same 64 (524 to 588).
+- The three columns at view mode's x: Bank Name and Branch Name 336, Account Type 653, Balance 970; each field 301 wide
+  (its column 333.6 less the 32 kept free at its end).
+- Balance stays at view mode's place (970, 184). Difference: Account Number keeps its column (x 653) but moves down 32
+  px (y 272 to 304): the first row holds the 80-high fields (label 24 + 8 + field 48) instead of view mode's 48-high
+  label and value, and the rows stay 40 apart. Validation step 5 (2) and T30's plan wording said "at view mode's
+  places" for both; T30 checks the Account Number's column and that it sits at the top of its row (code review item 5).
+- Save and Cancel 36 under the last row (y 420), 16 apart (Save 336, Cancel 512), "Remove" 40 after Cancel (712); the
+  card ends 40 under the buttons. With the server error, the message sits 36 under the last row and the buttons 16 under
+  it (Save y 456).
+- Nothing overlaps, is cut or scrolls sideways at 1440 and 1280 (scrollWidth 1440 and 1280).
+
+Evidence of the undesigned states (for the human checkpoint)
+- edit-prefilled-1440-2x.png: edit mode opened by keyboard, focus in Bank Name (its darker border).
+- edit-focus-1-bank-name-2x.png to edit-focus-5-cancel-2x.png: keyboard focus on each control in Tab order: the fields
+  and the select with the darker border (#63, #121), Save and Cancel with the teal ring.
+- edit-open-account-type-list-2x.png: the open list.
+- edit-field-errors-2x.png: "Bank Name is required" and "Branch Name must be at most 100 characters" under their red
+  fields, the second wrapped inside its column.
+- edit-saving-2x.png: Save gray with the spinner, aria-busy, the fields read-only, the select disabled, looks unchanged.
+- edit-server-error-2x.png: "Something went wrong." above the buttons, the typed values kept, Save enabled.
+- edit-long-names-1440-2x.png, edit-long-names-1280-2x.png: a 100-character Bank Name in words and a 100-character
+  Branch Name with no space, each on one line in its field, scrolling inside it.
+- view-after-save-long-names-1440-2x.png, view-after-save-long-names-1280-2x.png: view mode after saving them, wrapped
+  inside their columns as task 021 draws them.
+- after-save-balances-2x.png, after-save-overview-carousel-2x.png, after-save-transactions-all-2x.png: Checking saved as
+  Savings with Bank Name "Nordic Bank": Balances' second card "Savings / Nordic Bank", the carousel's "Account 2 of 5"
+  Savings, Transactions All's Jeans with Payment Method Savings.
+- loan-mastercard-balances-2x.png, loan-mastercard-overview-2x.png: the Credit Card saved as Loan keeps its Mastercard
+  logo on Balances and in the carousel (#120 a).
+
+Differences, all listed
+1. View mode: task 021's differences above, nothing new; "Edit Details" is the same box, now a button.
+2. Edit mode (not designed): the three editable labels take Input's label look (Medium 16/24, the form label color)
+   while Balance and Account Number keep 106's (Regular 16/24, Gray/03), as the task file chose.
+3. Edit mode: the Account Number moves 32 px down in its column (see the layout rules).
+4. Edit mode: the field texts show in Input's muted color when not focused, the components page's Input look.

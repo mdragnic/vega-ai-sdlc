@@ -1,0 +1,667 @@
+=== 01-update-without-user: mutated backend/src/bank-data/typeorm-bank-data-provider.ts
+--- cd backend && npx vitest run test/account-details-edit.test.ts -t "not-found rule"
+ ❯ test/account-details-edit.test.ts (55 tests | 3 failed | 50 skipped) 493ms
+       × answers 404 with the GET’s status, headers and body for every case, changing nothing 128ms
+       × runs one UPDATE on accounts whose WHERE holds the account and the user, with no read of accounts before it 8ms
+       × runs the same one UPDATE for another user’s account, which matches no row 5ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed | 50 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the not-found rule > answers 404 with the GET’s status, headers and body for every case, changing nothing
+AssertionError: expected [ { id: 1, user_id: 1, …(6) }, …(9) ] to deeply equal [ { id: 1, user_id: 1, …(6) }, …(9) ]
+- Expected
++ Received
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the not-found rule > runs one UPDATE on accounts whose WHERE holds the account and the user, with no read of accounts before it
+AssertionError: expected ' "id" = 7' to match /"user_id"\s*=\s*2\b/
+- Expected:
++ Received:
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the not-found rule > runs the same one UPDATE for another user’s account, which matches no row
+AssertionError: expected ' "id" = 2' to match /"user_id"\s*=\s*2\b/
+- Expected:
++ Received:
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "same 404"
+    Error: expect(received).toEqual(expected) // deep equality
+    - Expected  - 2
+    + Received  + 2
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 2/2
+=== 02-read-before-write: mutated backend/src/accounts/accounts.service.ts
+--- cd backend && npx vitest run test/accounts-service.test.ts -t updateDetails
+ ❯ test/accounts-service.test.ts (30 tests | 3 failed | 24 skipped) 8ms
+     × writes first, reading no account before it and never listAccounts; then the account’s transactions 4ms
+     × answers null for an ID no account has, reading no transaction 1ms
+     × answers null for another user’s request for this user’s account, reading no transaction 0ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed | 24 skipped (30)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/accounts-service.test.ts > AccountsService.updateDetails > writes first, reading no account before it and never listAccounts; then the account’s transactions
+AssertionError: expected [ 'getAccount', …(2) ] to deeply equal [ 'updateAccountDetails', 'list' ]
+- Expected
++ Received
+ FAIL  test/accounts-service.test.ts > AccountsService.updateDetails > answers null for an ID no account has, reading no transaction
+ FAIL  test/accounts-service.test.ts > AccountsService.updateDetails > answers null for another user’s request for this user’s account, reading no transaction
+AssertionError: expected [ 'getAccount' ] to deeply equal [ 'updateAccountDetails' ]
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd backend && npx vitest run test/account-details-edit.test.ts -t "UPDATE"
+ ❯ test/account-details-edit.test.ts (55 tests | 2 failed | 53 skipped) 347ms
+       × runs one UPDATE on accounts whose WHERE holds the account and the user, with no read of accounts before it 22ms
+       × runs the same one UPDATE for another user’s account, which matches no row 9ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 53 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the not-found rule > runs one UPDATE on accounts whose WHERE holds the account and the user, with no read of accounts before it
+AssertionError: expected [ Array(1) ] to deeply equal []
+- Expected
++ Received
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the not-found rule > runs the same one UPDATE for another user’s account, which matches no row
+AssertionError: expected [] to have a length of 1 but got +0
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd backend && npx vitest run test/bank-data-source.test.ts
+ ❯ test/bank-data-source.test.ts (23 tests | 1 failed) 20ms
+     × reads no account in AccountsService.updateDetails: the write is the check 3ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/bank-data-source.test.ts > one account in backend/src > reads no account in AccountsService.updateDetails: the write is the check
+AssertionError: expected '\n  async updateDetails(\n    userId:…' not to match /\b(getAccount|listAccounts|hasAccount…/
+- Expected:
++ Received:
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 03-raw-header-compared: mutated backend/src/auth/session.guard.ts
+--- cd backend && npx vitest run test/account-details-edit.test.ts -t "another case"
+ ❯ test/account-details-edit.test.ts (55 tests | 1 failed | 54 skipped) 335ms
+       × answers 200 for the user’s own email in another case: compared in the stored form, never raw 18ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 54 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the order and the protections > answers 200 for the user’s own email in another case: compared in the stored form, never raw
+AssertionError: expected 409 to be 200 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd backend && npx vitest run test/write-guard.test.ts -t "another case"
+ ❯ test/write-guard.test.ts (16 tests | 2 failed | 14 skipped) 332ms
+       × answers 200 with the session user’s email in another case, with spaces and stores the write 14ms
+       × answers 200 with the session user’s email in another case, with spaces and stores the write 4ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PATCH /accounts/:accountId > answers 200 with the session user’s email in another case, with spaces and stores the write
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PUT /savings-goals > answers 200 with the session user’s email in another case, with spaces and stores the write
+AssertionError: expected 409 to be 200 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 2/2
+=== 04-guard-removed: mutated backend/src/auth/session.guard.ts
+--- cd backend && npx vitest run test/account-details-edit.test.ts -t "order and the protections"
+ ❯ test/account-details-edit.test.ts (55 tests | 5 failed | 37 skipped) 464ms
+       × answers 400 with no X-Expected-User, changing nothing 16ms
+       × answers 400 with one that is not an email, changing nothing 7ms
+       × answers 400 with an empty one, changing nothing 21ms
+       × answers 409 with the shared message for another user’s email, with no query on accounts 9ms
+       × answers a request failing two checks with the earlier one: another email and an invalid body: 409 4ms
+ Test Files  1 failed (1)
+      Tests  5 failed | 13 passed | 37 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the order and the protections > answers 400 with no X-Expected-User, changing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the order and the protections > answers 400 with one that is not an email, changing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the order and the protections > answers 400 with an empty one, changing nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+- Expected
++ Received
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the order and the protections > answers 409 with the shared message for another user’s email, with no query on accounts
+AssertionError: expected 200 to be 409 // Object.is equality
+- Expected
++ Received
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the order and the protections > answers a request failing two checks with the earlier one: another email and an invalid body: 409
+AssertionError: expected 400 to be 409 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd backend && npx vitest run test/write-guard.test.ts
+ ❯ test/write-guard.test.ts (16 tests | 8 failed) 715ms
+       × answers 409 with another user’s email and stores nothing 20ms
+       × answers 400 without the header and stores nothing 10ms
+       × answers 400 with a value that is not an email and stores nothing 7ms
+       × answers 409 with another user’s email and stores nothing 4ms
+       × answers 400 without the header and stores nothing 3ms
+       × answers 400 with a value that is not an email and stores nothing 12ms
+     × answers 409 to a value that is a valid email of nobody, and never logs it 3ms
+     × refuses the goal PUT and the account PATCH sent with B’s cookie and A’s email, storing nothing 180ms
+ Test Files  1 failed (1)
+      Tests  8 failed | 8 passed (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PATCH /accounts/:accountId > answers 409 with another user’s email and stores nothing
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PUT /savings-goals > answers 409 with another user’s email and stores nothing
+AssertionError: expected 200 to be 409 // Object.is equality
+- Expected
++ Received
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PATCH /accounts/:accountId > answers 400 without the header and stores nothing
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PATCH /accounts/:accountId > answers 400 with a value that is not an email and stores nothing
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PUT /savings-goals > answers 400 without the header and stores nothing
+ FAIL  test/write-guard.test.ts > the write guard (#119) > PUT /savings-goals > answers 400 with a value that is not an email and stores nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+- Expected
++ Received
+    149|       const response = await send(key, 222_222, expectedUser);
+ FAIL  test/write-guard.test.ts > the write guard (#119) > answers 409 to a value that is a valid email of nobody, and never logs it
+AssertionError: expected 200 to be 409 // Object.is equality
+- Expected
++ Received
+ FAIL  test/write-guard.test.ts > the stale tab (#110, #119) > refuses the goal PUT and the account PATCH sent with B’s cookie and A’s email, storing nothing
+AssertionError: expected 200 to be 409 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "stale tab"
+    Error: expect(locator).toHaveText(expected) failed
+    Expected: "Another user is signed in. Nothing was saved."
+    Error: element(s) not found
+    Error: expect(locator).toHaveText(expected) failed
+    Expected: "Another user is signed in. Nothing was saved."
+    Error: element(s) not found
+  2 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 05-frontend-no-header: mutated frontend/src/api/client.ts
+--- cd frontend && npx vitest run test/api/client.test.ts -t sendWrite
+ ❯ test/api/client.test.ts (66 tests | 2 failed | 57 skipped) 66ms
+     × sends the PATCH to the account’s path with the JSON body, X-Expected-User and X-Time-Zone 42ms
+     × sends the goal PUT with the header 5ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed | 57 skipped (66)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/api/client.test.ts > sendWrite > sends the PATCH to the account’s path with the JSON body, X-Expected-User and X-Time-Zone
+AssertionError: expected [ { method: 'PATCH', …(4) } ] to deeply equal [ { method: 'PATCH', …(4) } ]
+- Expected
++ Received
+-     "expectedUser": "a@x.com",
++     "expectedUser": null,
+ FAIL  test/api/client.test.ts > sendWrite > sends the goal PUT with the header
+AssertionError: expected [ [ 'PUT', …(2) ] ] to deeply equal [ [ 'PUT', …(2) ] ]
+- Expected
++ Received
+    467|     expect(received.map(({ method, path, expectedUser }) => [method, p…
+RESULT: FAILED (the mutation was caught)
+--- cd frontend && npx vitest run test/app/account-details-edit.test.tsx -t "a save"
+ ❯ test/app/account-details-edit.test.tsx (52 tests | 3 failed | 49 skipped) 4242ms
+     × sends one PATCH with the three trimmed fields and both headers, locks the form, then shows view mode 803ms
+     × saves with Enter in Branch Name, then shows the stored values when edited again 1375ms
+     × shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab 2060ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 49 skipped (52)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/account-details-edit.test.tsx > a save > sends one PATCH with the three trimmed fields and both headers, locks the form, then shows view mode
+AssertionError: expected { Object (accountId, body, ...) } to deeply equal { Object (accountId, body, ...) }
+- Expected
++ Received
+-   "expectedUser": "tanzir@example.com",
++   "expectedUser": null,
+ FAIL  test/app/account-details-edit.test.tsx > a save > saves with Enter in Branch Name, then shows the stored values when edited again
+TestingLibraryElementError: Unable to find role="button" and name "Edit Details"
+            [0mThe X-Expected-User header must hold the email of the signed-in user[0m
+ FAIL  test/app/account-details-edit.test.tsx > each screen after a save > shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab
+TestingLibraryElementError: Unable to find role="button" and name "Edit Details"
+            [0mThe X-Expected-User header must hold the email of the signed-in user[0m
+RESULT: FAILED (the mutation was caught)
+--- cd frontend && npx vitest run test/app/overview-goals.test.tsx -t "saving the goal"
+ ❯ test/app/overview-goals.test.tsx (41 tests | 3 failed | 38 skipped) 4553ms
+     × sends the amounts in cents, closes, shows the saved goal and asks again for the goal only 1632ms
+     × saves the maximum Target and a Present above the Target (#31) 1713ms
+     × removes the save and its amounts from the mutation cache once the popup has closed 1205ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 38 skipped (41)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/overview-goals.test.tsx > saving the goal > sends the amounts in cents, closes, shows the saved goal and asks again for the goal only
+AssertionError: expected <div role="dialog" …(7)>…(3)</div> to be null
+- Expected:
++ Received:
+        The X-Expected-User header must hold the email of the signed-in user
+ FAIL  test/app/overview-goals.test.tsx > saving the goal > saves the maximum Target and a Present above the Target (#31)
+AssertionError: expected <div role="dialog" …(7)>…(3)</div> to be null
+- Expected:
++ Received:
+        The X-Expected-User header must hold the email of the signed-in user
+ FAIL  test/app/overview-goals.test.tsx > saving the goal > removes the save and its amounts from the mutation cache once the popup has closed
+AssertionError: expected <div role="dialog" …(7)>…(3)</div> to be null
+- Expected:
++ Received:
+        The X-Expected-User header must hold the email of the signed-in user
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "saves Checking|keyboard|Mastercard"
+    Error: expect(locator).toBeFocused() failed
+    Expected: focused
+    Error: element(s) not found
+    Error: expect(locator).toBeFocused() failed
+    Expected: focused
+    Error: element(s) not found
+    Error: expect(locator).toBeFocused() failed
+    Expected: focused
+    Error: element(s) not found
+  3 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 4/4
+=== 06-no-session-check-after-409: mutated frontend/src/api/session.ts
+--- cd frontend && npx vitest run test/app/account-details-edit.test.tsx -t "409"
+ ❯ test/app/account-details-edit.test.tsx (52 tests | 1 failed | 51 skipped) 1512ms
+   ❯ a failed save (6)
+     × shows the guard’s 409, asks for the session once, then shows the signed-in user (Balances) 1508ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 skipped (52)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/account-details-edit.test.tsx > a failed save > shows the guard’s 409, asks for the session once, then shows the signed-in user (Balances)
+AssertionError: expected [ 'GET /api/auth/me' ] to have a length of 2 but got 1
+- Expected
++ Received
+    513|     expect(writes.map((write) => write.expectedUser)).toEqual([signedI…
+RESULT: FAILED (the mutation was caught)
+--- cd frontend && npx vitest run test/app/overview-goals.test.tsx -t "409"
+ ❯ test/app/overview-goals.test.tsx (41 tests | 1 failed | 38 skipped) 2384ms
+     × shows the guard’s 409 above Save, then asks for the session at once and shows the other user 1402ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 38 skipped (41)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/overview-goals.test.tsx > a user switch in another tab > shows the guard’s 409 above Save, then asks for the session at once and shows the other user
+AssertionError: expected 2 to be 3 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "stale tab"
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: element(s) not found
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: element(s) not found
+  2 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 07-untrimmed-name-stored: mutated shared/src/contract/account.ts
+--- cd shared && npx vitest run test/account-edit-contract.test.ts
+ ❯ test/account-edit-contract.test.ts (90 tests | 7 failed) 15ms
+     × accepts spaces around it, trimmed, the output trimmed 3ms
+     × accepts a no-break and an ideographic space around it, trimmed, the output trimmed 0ms
+     × accepts 100 letters and spaces around them, the output trimmed 1ms
+     × accepts spaces around it, trimmed, the output trimmed 0ms
+     × accepts a no-break and an ideographic space around it, trimmed, the output trimmed 0ms
+     × accepts 100 letters and spaces around them, the output trimmed 0ms
+     × trims both names 1ms
+ Test Files  1 failed (1)
+      Tests  7 failed | 83 passed (90)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > accepts spaces around it, trimmed, the output trimmed
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > accepts spaces around it, trimmed, the output trimmed
+AssertionError: expected '  AB Bank Ltd  ' to be 'AB Bank Ltd' // Object.is equality
+Expected: "AB Bank Ltd"
+Received: "  AB Bank Ltd  "
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > accepts a no-break and an ideographic space around it, trimmed, the output trimmed
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > accepts a no-break and an ideographic space around it, trimmed, the output trimmed
+AssertionError: expected ' AB Bank　' to be 'AB Bank' // Object.is equality
+Expected: "AB Bank"
+Received: " AB Bank　"
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > accepts 100 letters and spaces around them, the output trimmed
+ZodError: [
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > accepts 100 letters and spaces around them, the output trimmed
+ZodError: [
+ FAIL  test/account-edit-contract.test.ts > accountDetailsRequestSchema > trims both names
+AssertionError: expected { bankName: '  Nordic Bank  ', …(2) } to deeply equal { bankName: 'Nordic Bank', …(2) }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd backend && npx vitest run test/account-details-edit.test.ts -t "an own account"
+ ❯ test/account-details-edit.test.ts (55 tests | 1 failed | 51 skipped) 379ms
+       × answers 200 with exactly the five keys, the names trimmed, and stores only Checking’s three columns 27ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed | 51 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > an own account > answers 200 with exactly the five keys, the names trimmed, and stores only Checking’s three columns
+AssertionError: expected { accountType: 'savings', …(4) } to deeply equal { accountType: 'savings', …(4) }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "saves Checking"
+    Error: expect(received).toBe(expected) // Object.is equality
+    Expected: "{\"bankName\":\"Nordic Bank\",\"branchName\":\"Harbour Branch\",\"accountType\":\"savings\"}"
+    Received: "{\"bankName\":\"  Nordic Bank  \",\"branchName\":\"Harbour Branch\",\"accountType\":\"savings\"}"
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 08-whitespace-only-stored: mutated shared/src/contract/account.ts
+--- cd shared && npx vitest run test/account-edit-contract.test.ts
+ ❯ test/account-edit-contract.test.ts (90 tests | 19 failed) 16ms
+     × rejects an empty name with its one message 3ms
+     × rejects three spaces with its one message 0ms
+     × rejects a no-break and an ideographic space with its one message 0ms
+     × rejects a zero-width space with its one message 0ms
+     × rejects two soft hyphens with its one message 0ms
+     × rejects a tab alone, trimmed away with its one message 0ms
+     × rejects a control character alone with its one message 1ms
+     × rejects a zero-width space between spaces with its one message 0ms
+     × rejects an empty name with its one message 0ms
+     × rejects three spaces with its one message 0ms
+     × rejects a no-break and an ideographic space with its one message 0ms
+     × rejects a zero-width space with its one message 0ms
+     × rejects two soft hyphens with its one message 0ms
+     × rejects a tab alone, trimmed away with its one message 0ms
+     × rejects a control character alone with its one message 0ms
+     × rejects a zero-width space between spaces with its one message 0ms
+     × gives one message per field, each field its own, when both names fail 0ms
+     × rejects a whitespace-only Bank Name in the details 0ms
+     × rejects an invisible-only Branch Name in the details 0ms
+ Test Files  1 failed (1)
+      Tests  19 failed | 71 passed (90)
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects an empty name with its one message
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects three spaces with its one message
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects a no-break and an ideographic space with its one message
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects a zero-width space with its one message
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects two soft hyphens with its one message
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects a tab alone, trimmed away with its one message
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > rejects a zero-width space between spaces with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects an empty name with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects three spaces with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects a no-break and an ideographic space with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects a zero-width space with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects two soft hyphens with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects a tab alone, trimmed away with its one message
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > rejects a zero-width space between spaces with its one message
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd backend && npx vitest run test/account-details-edit.test.ts -t "the rules"
+ ❯ test/account-details-edit.test.ts (55 tests | 11 failed | 28 skipped) 457ms
+       × answers 400 for a Bank Name empty, with its field error, storing nothing 20ms
+       × answers 400 for a Bank Name three spaces, with its field error, storing nothing 9ms
+       × answers 400 for a Bank Name a no-break and an ideographic space, with its field error, storing nothing 7ms
+       × answers 400 for a Bank Name a zero-width space, with its field error, storing nothing 6ms
+       × answers 400 for a Bank Name two soft hyphens, with its field error, storing nothing 6ms
+       × answers 400 for a Branch Name empty, with its field error, storing nothing 5ms
+       × answers 400 for a Branch Name three spaces, with its field error, storing nothing 5ms
+       × answers 400 for a Branch Name a no-break and an ideographic space, with its field error, storing nothing 5ms
+       × answers 400 for a Branch Name a zero-width space, with its field error, storing nothing 6ms
+       × answers 400 for a Branch Name two soft hyphens, with its field error, storing nothing 10ms
+       × answers both messages when both names fail 3ms
+ Test Files  1 failed (1)
+      Tests  11 failed | 16 passed | 28 skipped (55)
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Bank Name empty, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Bank Name three spaces, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Bank Name a no-break and an ideographic space, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Bank Name a zero-width space, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Bank Name two soft hyphens, with its field error, storing nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+- Expected
++ Received
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Branch Name empty, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Branch Name three spaces, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Branch Name a no-break and an ideographic space, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Branch Name a zero-width space, with its field error, storing nothing
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers 400 for a Branch Name two soft hyphens, with its field error, storing nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+- Expected
++ Received
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > answers both messages when both names fail
+AssertionError: expected { message: 'Validation failed', …(1) } to deeply equal { message: 'Validation failed', …(1) }
+- Expected
++ Received
+    "message": "Validation failed",
+    338|         message: 'Validation failed',
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd frontend && npx vitest run test/app/account-details-edit.test.tsx -t "rules"
+ ❯ test/app/account-details-edit.test.tsx (52 tests | 11 failed | 28 skipped) 20221ms
+     × refuses a Bank Name empty on Save: the message under it, red, focused, nothing sent 1371ms
+     × refuses a Bank Name three spaces on Save: the message under it, red, focused, nothing sent 1210ms
+     × refuses a Bank Name a no-break and an ideographic space on Save: the message under it, red, focused, nothing sent 1309ms
+     × refuses a Bank Name a zero-width space on Save: the message under it, red, focused, nothing sent 1316ms
+     × refuses a Bank Name two soft hyphens on Save: the message under it, red, focused, nothing sent 1196ms
+     × refuses a Branch Name empty on Enter in it: the message under it, focused 1321ms
+     × refuses a Branch Name three spaces on Enter in it: the message under it, focused 1382ms
+     × refuses a Branch Name a no-break and an ideographic space on Enter in it: the message under it, focused 1381ms
+     × refuses a Branch Name a zero-width space on Enter in it: the message under it, focused 1362ms
+     × refuses a Branch Name two soft hyphens on Enter in it: the message under it, focused 1287ms
+     × shows one message under each field when both fail, focus on Bank Name, the first 1458ms
+ Test Files  1 failed (1)
+      Tests  11 failed | 13 passed | 28 skipped (52)
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Error: intercepted a request without a matching request handler:
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Bank Name empty on Save: the message under it, red, focused, nothing sent
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Bank Name three spaces on Save: the message under it, red, focused, nothing sent
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Bank Name a no-break and an ideographic space on Save: the message under it, red, focused, nothing sent
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Bank Name a zero-width space on Save: the message under it, red, focused, nothing sent
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Bank Name two soft hyphens on Save: the message under it, red, focused, nothing sent
+Error: [2mexpect([22m[31melement[39m[2m).toHaveAccessibleDescription()[22m
+Expected element to have accessible description:
+Received:
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Branch Name empty on Enter in it: the message under it, focused
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Branch Name three spaces on Enter in it: the message under it, focused
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Branch Name a no-break and an ideographic space on Enter in it: the message under it, focused
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Branch Name a zero-width space on Enter in it: the message under it, focused
+ FAIL  test/app/account-details-edit.test.tsx > the form’s rules > refuses a Branch Name two soft hyphens on Enter in it: the message under it, focused
+Error: [2mexpect([22m[31melement[39m[2m).toHaveAccessibleDescription()[22m
+Expected element to have accessible description:
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 09-utf16-units-counted: mutated shared/src/contract/account.ts
+--- cd shared && npx vitest run test/account-edit-contract.test.ts
+ ❯ test/account-edit-contract.test.ts (90 tests | 5 failed) 12ms
+     × accepts 100 letters beyond the BMP (200 UTF-16 code units), the output trimmed 2ms
+     × accepts 95 letters and a family emoji (100 code points), the output trimmed 0ms
+     × accepts 100 letters beyond the BMP (200 UTF-16 code units), the output trimmed 0ms
+     × accepts 95 letters and a family emoji (100 code points), the output trimmed 0ms
+     × accepts 100 letters beyond the BMP in the details 0ms
+ Test Files  1 failed (1)
+      Tests  5 failed | 85 passed (90)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > accepts 100 letters beyond the BMP (200 UTF-16 code units), the output trimmed
+ FAIL  test/account-edit-contract.test.ts > the Bank Name rule > accepts 95 letters and a family emoji (100 code points), the output trimmed
+ZodError: [
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > accepts 100 letters beyond the BMP (200 UTF-16 code units), the output trimmed
+ FAIL  test/account-edit-contract.test.ts > the Branch Name rule > accepts 95 letters and a family emoji (100 code points), the output trimmed
+ZodError: [
+ FAIL  test/account-edit-contract.test.ts > the response schemas with the name rule > accepts 100 letters beyond the BMP in the details
+ZodError: [
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd backend && npx vitest run test/account-details-edit.test.ts -t "the rules"
+ ❯ test/account-details-edit.test.ts (55 tests | 1 failed | 28 skipped) 459ms
+       × stores 100 letters beyond the BMP, whose length in SQLite is 100 6ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed | 28 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > the rules > stores 100 letters beyond the BMP, whose length in SQLite is 100
+AssertionError: expected 400 to be 200 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 2/2
+=== 10-mass-assignment: mutated shared/src/contract/account.ts, backend/src/accounts/accounts.service.ts, backend/src/bank-data/typeorm-bank-data-provider.ts
+--- npm run build -w shared && cd backend && npx vitest run test/account-details-edit.test.ts -t "an own account"
+ ❯ test/account-details-edit.test.ts (55 tests | 1 failed | 51 skipped) 386ms
+       × answers 200 with exactly the five keys, the names trimmed, and stores only Checking’s three columns 22ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed | 51 skipped (55)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/account-details-edit.test.ts > PATCH /api/accounts/:accountId > an own account > answers 200 with exactly the five keys, the names trimmed, and stores only Checking’s three columns
+AssertionError: expected 500 to be 200 // Object.is equality
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 1/1
+=== 11a-no-transactions-reset: mutated frontend/src/api/accounts.ts
+--- cd frontend && npx vitest run test/api/update-account-details.test.tsx
+ ❯ test/api/update-account-details.test.tsx (7 tests | 2 failed) 288ms
+     × after a save changing only the type: the details from the response, and only those dropped 17ms
+     × after a save changing all three: the details from the response, and only those dropped 12ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing only the type: the details from the response, and only those dropped
+AssertionError: expected { …(4) } to deeply equal { …(4) }
+- Expected
++ Received
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing all three: the details from the response, and only those dropped
+AssertionError: expected { …(4) } to deeply equal { …(4) }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd frontend && npx vitest run test/app/account-details-edit.test.tsx -t "each screen"
+ ❯ test/app/account-details-edit.test.tsx (52 tests | 1 failed | 51 skipped) 1942ms
+     × shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab 1938ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 skipped (52)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/account-details-edit.test.tsx > each screen after a save > shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab
+AssertionError: expected 'Balances\nCredit CardMaster CardAccou…' not to contain 'Checking'
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "saves Checking"
+    Error: expect(received).not.toContain(expected) // indexOf
+    Expected substring: not "Checking"
+    Received string:        "Balances
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 11b-no-accounts-reset: mutated frontend/src/api/accounts.ts
+--- cd frontend && npx vitest run test/api/update-account-details.test.tsx
+ ❯ test/api/update-account-details.test.tsx (7 tests | 3 failed) 271ms
+     × after a save changing only the Bank Name: the details from the response, and only those dropped 17ms
+     × after a save changing only the type: the details from the response, and only those dropped 13ms
+     × after a save changing all three: the details from the response, and only those dropped 15ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing only the Bank Name: the details from the response, and only those dropped
+AssertionError: expected { name: '["accounts"]', …(3) } to deeply equal { name: '["accounts"]', …(3) }
+- Expected
++ Received
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing only the type: the details from the response, and only those dropped
+AssertionError: expected { name: '["accounts"]', …(3) } to deeply equal { name: '["accounts"]', …(3) }
+- Expected
++ Received
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing all three: the details from the response, and only those dropped
+AssertionError: expected { name: '["accounts"]', …(3) } to deeply equal { name: '["accounts"]', …(3) }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd frontend && npx vitest run test/app/account-details-edit.test.tsx -t "each screen"
+ ❯ test/app/account-details-edit.test.tsx (52 tests | 1 failed | 51 skipped) 1989ms
+     × shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab 1985ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 skipped (52)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/account-details-edit.test.tsx > each screen after a save > shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab
+AssertionError: expected 'BalancesCredit CardMaster CardAccount…' not to contain 'Checking'
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "saves Checking"
+    Error: expect(received).not.toContain(expected) // indexOf
+    Expected substring: not "Checking"
+    Received string:        "BalancesCredit CardMaster CardAccount Number**** **** **** 2598Total amount$21,019.18RemoveDetailsCheckingAB Bank LtdAccount Number**** **** **** 7310Total amount$33,362.48RemoveDetailsSavingsBrac Bank Ltd.Account Number**** **** **** 4421Total amount$27,356.80RemoveDetailsInvestmentAB Bank LtdAccount Number**** **** **** 6652Total amount$29,503.00RemoveDetailsLoanCity Bank Ltd.Account Number**** **** **** 9083Total amount$19,013.21RemoveDetailsAdd AccountsEdit Accounts
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 3/3
+=== 11c-everything-invalidated: mutated frontend/src/api/accounts.ts
+--- cd frontend && npx vitest run test/api/update-account-details.test.tsx
+ ❯ test/api/update-account-details.test.tsx (7 tests | 5 failed) 284ms
+     × after a save changing only the Branch Name: the details from the response, and only those dropped 49ms
+     × after a save changing only the Bank Name: the details from the response, and only those dropped 15ms
+     × after a save changing only the type: the details from the response, and only those dropped 16ms
+     × after a save changing all three: the details from the response, and only those dropped 14ms
+     × after a save changing nothing: the details from the response, and only those dropped 16ms
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing only the Branch Name: the details from the response, and only those dropped
+AssertionError: expected { name: '["session"]', …(3) } to deeply equal { name: '["session"]', …(3) }
+- Expected
++ Received
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing only the Bank Name: the details from the response, and only those dropped
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing only the type: the details from the response, and only those dropped
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing all three: the details from the response, and only those dropped
+AssertionError: expected { name: '["accounts"]', …(3) } to deeply equal { name: '["accounts"]', …(3) }
+- Expected
++ Received
+ FAIL  test/api/update-account-details.test.tsx > useUpdateAccountDetails > after a save changing nothing: the details from the response, and only those dropped
+AssertionError: expected { name: '["session"]', …(3) } to deeply equal { name: '["session"]', …(3) }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 1/1
+=== 12-no-focus-after-save: mutated frontend/src/app/pages/AccountDetailsPage.tsx
+--- cd frontend && npx vitest run test/app/account-details-edit.test.tsx -t "a save"
+ ❯ test/app/account-details-edit.test.tsx (52 tests | 3 failed | 49 skipped) 5508ms
+     × sends one PATCH with the three trimmed fields and both headers, locks the form, then shows view mode 2171ms
+     × saves with Enter in Branch Name, then shows the stored values when edited again 1360ms
+     × shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab 1972ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 49 skipped (52)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/account-details-edit.test.tsx > a save > sends one PATCH with the three trimmed fields and both headers, locks the form, then shows view mode
+Error: [2mexpect([22m[31melement[39m[2m).toHaveFocus()[22m
+Expected element with focus:
+Received element with focus:
+ FAIL  test/app/account-details-edit.test.tsx > a save > saves with Enter in Branch Name, then shows the stored values when edited again
+Error: [2mexpect([22m[31melement[39m[2m).toHaveFocus()[22m
+Expected element with focus:
+Received element with focus:
+ FAIL  test/app/account-details-edit.test.tsx > each screen after a save > shows the new type and Bank Name on Balances, the Overview carousel and every Transactions tab
+Error: [2mexpect([22m[31melement[39m[2m).toHaveFocus()[22m
+Expected element with focus:
+Received element with focus:
+RESULT: FAILED (the mutation was caught)
+--- cd e2e && npx playwright test tests/account-details-edit.spec.ts --reporter=line --grep "keyboard"
+    Error: expect(locator).toBeFocused() failed
+    Expected: focused
+    Received: inactive
+        14 × locator resolved to <button type="button" class="_button_dmf4h_1">…</button>
+           - unexpected value "inactive"
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 6bcfa5e3a2af / da5f31b890aa
+commands caught it: 2/2

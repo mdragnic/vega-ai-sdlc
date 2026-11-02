@@ -232,17 +232,20 @@ describe('Account Details', () => {
     ]);
   });
 
-  it('draws "Edit Details" and "Remove" visual only: inert, hidden from assistive technology, no button or link', async () => {
+  // Task 022 changed "Edit Details" into a button (its own tests in account-details-edit.test.tsx); "Remove" keeps
+  // every visual-only assertion (#23).
+  it('draws "Remove" visual only: inert, hidden from assistive technology, no button or link', async () => {
     await openAccount();
     await detailsReadOut();
 
-    for (const text of ['Edit Details', 'Remove']) {
+    for (const text of ['Remove']) {
       const element = within(detailsRegion()).getByText(text);
       expect(element.closest('[aria-hidden="true"]')).not.toBeNull();
       expect(element.closest('[inert]')).not.toBeNull();
       expect(element.closest('button, a, [tabindex], [role="button"]')).toBeNull();
       expect(screen.queryByRole('button', { name: text, hidden: true })).toBeNull();
     }
+    expect(within(detailsRegion()).getByRole('button', { name: 'Edit Details' })).toBeVisible();
   });
 
   it('shows the table with its five column headers and Checking’s 10 rows in the order sent, and "Load More"', async () => {
@@ -279,7 +282,7 @@ describe('Account Details', () => {
     expect((await summaries())[4]).toEqual(['16 Oct, 2026', 'Failed', 'Debit', 'CFP5E9VV2Fn', '-$24.64']);
   });
 
-  it('has no back or breadcrumb control: nothing in the content is a link, its only button is "Load More"', async () => {
+  it('has no back or breadcrumb control: nothing in the content is a link, its buttons "Edit Details" and "Load More"', async () => {
     await openAccount();
     await table();
     const main = screen.getByRole('main');
@@ -289,7 +292,7 @@ describe('Account Details', () => {
       within(main)
         .getAllByRole('button', { hidden: true })
         .map((button) => button.textContent),
-    ).toEqual(['Load More']);
+    ).toEqual(['Edit Details', 'Load More']);
   });
 
   it('asks for the details and the first page once each, with no cursor and the browser’s zone', async () => {
@@ -307,7 +310,8 @@ describe('Account Details', () => {
 
 // T16: AC3, AC15 and AC16, the visual-only parts and the Tab order (#23, #26, #87).
 describe('the Account Details visual-only parts and keyboard', () => {
-  it.each(['Edit Details', 'Remove'])('does nothing on a click on "%s"', async (text) => {
+  // "Edit Details" opens edit mode since task 022 (account-details-edit.test.tsx).
+  it.each(['Remove'])('does nothing on a click on "%s"', async (text) => {
     const { user, url } = await openAccount();
     await table();
     const focused = document.activeElement;
@@ -322,18 +326,24 @@ describe('the Account Details visual-only parts and keyboard', () => {
     expect(await detailsReadOut()).toEqual(checkingReadOut);
   });
 
-  it('tabs from the search field to "Load More", then out of the content; Shift+Tab goes back', async () => {
+  // Task 022: "Edit Details" is a Tab stop between the search field and "Load More" (AC16's order gains it).
+  it('tabs from the search field to "Edit Details", "Load More", then out of the content; Shift+Tab goes back', async () => {
     const { user } = await openAccount();
     await table();
     const main = screen.getByRole('main');
+    const editDetails = within(detailsRegion()).getByRole('button', { name: 'Edit Details' });
 
     search().focus();
+    await user.tab();
+    expect(editDetails).toHaveFocus();
     await user.tab();
     expect(loadMore()).toHaveFocus();
     await user.tab();
     expect(main.contains(document.activeElement)).toBe(false);
 
     loadMore().focus();
+    await user.tab({ shift: true });
+    expect(editDetails).toHaveFocus();
     await user.tab({ shift: true });
     expect(search()).toHaveFocus();
   });

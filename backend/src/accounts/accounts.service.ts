@@ -1,5 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AccountDetailsResponse, AccountsResponse, AccountType, Money } from '@finebank/shared';
+import type {
+  AccountDetailsRequest,
+  AccountDetailsResponse,
+  AccountsResponse,
+  AccountType,
+  Money,
+} from '@finebank/shared';
 
 import {
   BANK_DATA_PROVIDER,
@@ -87,7 +93,33 @@ export class AccountsService {
   async details(userId: number, timeZone: string, accountId: number): Promise<AccountDetailsResponse | null> {
     const account = await this.bankData.getAccount(userId, accountId);
     if (account === null) return null;
-    const { transactions } = await this.visibleTransactions.list(userId, timeZone, { accountId });
+    return this.detailsOf(userId, timeZone, account);
+  }
+
+  /**
+   * Edit Details (#26): stores the three editable fields through the provider's `updateAccountDetails`, whose one
+   * `UPDATE` holds the account and the user in its `WHERE`, so the write is the ownership check (#39, #77); no account
+   * is read before it. Only the three fields are passed, whatever else the request holds. Null when no row matched (an
+   * unknown ID or another user's account), and then no transaction is read; otherwise the stored account's details, as
+   * `details` gives them (#57).
+   */
+  async updateDetails(
+    userId: number,
+    timeZone: string,
+    accountId: number,
+    { bankName, branchName, accountType }: AccountDetailsRequest,
+  ): Promise<AccountDetailsResponse | null> {
+    const account = await this.bankData.updateAccountDetails(userId, accountId, { bankName, branchName, accountType });
+    if (account === null) return null;
+    return this.detailsOf(userId, timeZone, account);
+  }
+
+  /**
+   * The account's five fields for Account Details: the number masked (#25), the balance from the one calculation over
+   * the account's transactions, read through `VisibleTransactions` by the user and the account in one query (#57).
+   */
+  private async detailsOf(userId: number, timeZone: string, account: BankAccount): Promise<AccountDetailsResponse> {
+    const { transactions } = await this.visibleTransactions.list(userId, timeZone, { accountId: account.id });
     return {
       accountType: account.accountType,
       bankName: account.bankName,

@@ -1,0 +1,39 @@
+Task 022 manual checks, 2026-11-02 (Validation step 6). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page 1265 wide in a 1280 window), fresh contexts at 1x in Europe/Belgrade. Backend on the fixed test
+clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to
+keep the database across a restart), the Vite dev server. The final code (after the code review fixes) for every check
+from "Dropdown in the real browser" on; the earlier ones ran before the review fixes, which changed no behaviour they
+check. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. Balances, the second card's "Details": Checking.
+2. Edit by mouse: edit mode, focus in Bank Name. "Cancelled Bank" typed, Cancel: view mode with the stored values
+   (AB Bank Ltd | Checking | $33,362.48 | Park Street Branch | **** **** **** 7310), focus on "Edit Details", no ring.
+3. Edit by keyboard (Tab from the search field to "Edit Details", Enter): "Escaped Bank" typed, Tab to the select,
+   the list by keyboard (Enter, ArrowDown, Enter: with human-paced keys Savings to Investment; a scripted ArrowDown sent
+   before Radix had focused the list changed nothing, a script race, e2e T25 passes the same keys), Escape: view mode
+   with the stored values, focus on "Edit Details" with the ring.
+4. The errors, Save by mouse, no request sent each time: empty "Bank Name is required"; three spaces "Bank Name is
+   required"; 101 letters "Bank Name must be at most 100 characters".
+5. "  Manual Bank  ", "Manual Branch", Savings by mouse, Enter in Branch Name: saved, view mode "Manual Bank | Savings |
+   $33,362.48 | Manual Branch | **** **** **** 7310" (trimmed), X-Expected-User sent, focus on "Edit Details".
+6. After the save, from the sidebar: Balances' second card "Savings / Manual Bank"; Overview's carousel "Account 2 of 5"
+   Savings; Transactions All "Jeans Savings", Revenue "Freelance payment Savings", Expenses "Jeans Savings". After a
+   reload: the same.
+7. Dropdown in the real browser (final code): a click on the "Account Type" label focuses the select, no list; a mouse
+   click opens the list, focus on an option; a click with no pointer press (element.click(), as assistive technology
+   clicks) opens the Account Type list and the unlabeled Statistics select on Overview; Escape with the list open closes
+   only the list, focus back on the select, edit mode kept.
+8. Two real tabs of the same user, both in edit mode on Checking: tab 1 saved Bank Name "Tab One Again"; tab 2 (its
+   Bank Name field still "Manual Bank") saved Branch Name "Tab Two Again": tab 2 shows "Manual Bank | Savings | ... |
+   Tab Two Again"; tab 1, on a focus event (visibilitychange), asked again and shows the same. Last write wins, as
+   chosen. (A first try dispatched the event without bubbles, which TanStack's window listener does not hear; the
+   bubbling event, as the browser sends it, refetched.)
+9. In the second tab: logout 204, sign up "Ada Lovelace" 201; back in the first tab a focus event: its session check
+   found Ada, the page remounted and opened /balances (the account is not Ada's), the sidebar shows "Ada Lovelace",
+   "Manual Check" nowhere.
+10. Resize to 1280 in edit mode with "Resized typing" in Bank Name: no sideways scroll (scrollWidth 1265 = the page),
+    manual-edit-1280.png; back at 1440 the typing kept.
+11. As Ada, Checking in edit mode with "Offline Bank" and "Offline Branch"; the backend stopped (its node process ended,
+    port 3000 free); Save: "Something went wrong." above Save, the typed values kept, focus on Save
+    (manual-backend-down-save.png). The backend started again with its database; Save: view mode "Offline Bank |
+    Checking | $33,362.48 | Offline Branch | **** **** **** 7310".

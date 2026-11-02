@@ -258,9 +258,10 @@ test('closes the popup and shows the new user’s goal when another tab signs in
   page,
   context,
 }) => {
-  await signUp(page.request);
+  const first = await signUp(page.request);
   const saved = await page.request.put('/api/savings-goals', {
-    headers: { 'X-Time-Zone': TIME_ZONE },
+    // Every write carries the signed-in user's email (task 022, #119).
+    headers: { 'X-Time-Zone': TIME_ZONE, 'X-Expected-User': first.email },
     data: { month: '2026-10', target: usd(3_000_000), present: usd(1_625_000) },
   });
   expect(saved.status()).toBe(200);

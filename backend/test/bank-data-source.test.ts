@@ -118,6 +118,23 @@ describe('one account in backend/src', () => {
     expect(offenders).toEqual([]);
   });
 
+  // Task 022 T9, AC9 and AC20: accounts change only through the provider's updateAccountDetails, in AccountsService's
+  // updateDetails, never after a getAccount or listAccounts in that method (#39, #77).
+  it('changes an account through updateAccountDetails in AccountsService only', () => {
+    const users = outside.filter((file) => /\bupdateAccountDetails\b/.test(readFileSync(join(srcDir, file), 'utf8')));
+
+    expect(users).toEqual(['accounts/accounts.service.ts']);
+  });
+
+  it('reads no account in AccountsService.updateDetails: the write is the check', () => {
+    const source = readFileSync(join(srcDir, 'accounts/accounts.service.ts'), 'utf8');
+    const method = /\n {2}async updateDetails\([\s\S]*?\n {2}\}\n/.exec(source)?.[0];
+
+    expect(method).toBeDefined();
+    expect(method).toMatch(/this\.bankData\.updateAccountDetails\(/);
+    expect(method).not.toMatch(/\b(getAccount|listAccounts|hasAccount|details|summary|accountTypes)\(/);
+  });
+
   it.each([
     'accounts.find((account) => account.id === accountId)',
     'if (accountId !== row.accountId) return null;',

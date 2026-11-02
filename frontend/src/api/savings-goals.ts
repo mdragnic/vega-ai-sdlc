@@ -2,7 +2,7 @@ import { type SavingsGoalRequest, savingsGoalsContract } from '@finebank/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './client';
-import { sessionEpoch } from './session';
+import { sendWrite, sessionEpoch } from './session';
 
 const savingsGoalsQueryKey = ['savings-goals'] as const;
 const currentSavingsGoalQueryKey = [...savingsGoalsQueryKey, 'current'] as const;
@@ -24,13 +24,14 @@ export function useCurrentSavingsGoal() {
  * `PUT /api/savings-goals`: creates or updates the month's goal (#18, #58). The amounts leave the mutation cache as
  * soon as no popup shows the save (`gcTime: 0`). On success the response goes into the current goal's query and only
  * the goal queries are asked for again: the accounts, the date and the session are not (#74). A save that ends after
- * its session did (a logout, a 401, another user in another tab) changes nothing in the caches (#39).
+ * its session did (a logout, a 401, another user in another tab) changes nothing in the caches (#39). Sent through
+ * `sendWrite` with the tab's user (#119): another user's session answers 409 and nothing is saved.
  */
 export function useSaveSavingsGoal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: saveSavingsGoalMutationKey,
-    mutationFn: (request: SavingsGoalRequest) => apiRequest(savingsGoalsContract.save, request),
+    mutationFn: (request: SavingsGoalRequest) => sendWrite(queryClient, savingsGoalsContract.save, request),
     gcTime: 0,
     onMutate: () => ({ epoch: sessionEpoch(queryClient) }),
     onSuccess: (response, _request, started) => {

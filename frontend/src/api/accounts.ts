@@ -1,12 +1,15 @@
-import { accountsContract } from '@finebank/shared';
-import { useQuery } from '@tanstack/react-query';
+import { type AccountDetailsRequest, type AccountDetailsResponse, accountsContract } from '@finebank/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError, apiRequest } from './client';
-import { retryQuery } from './session';
+import { retryQuery, sendWrite, sessionEpoch } from './session';
 
 const accountsQueryKey = ['accounts'] as const;
 
 const accountQueryKey = (accountId: number) => ['accounts', accountId] as const;
+
+/** The three Transactions tabs' lists, which show each row's Payment Method, its account's type (#57). */
+const transactionListsQueryKey = ['transactions', 'list'] as const;
 
 /**
  * The app's retry rule (3 retries, none for a 401) with one more exception for the account routes: their 404 is the
@@ -41,5 +44,42 @@ export function useAccount(accountId: number) {
     queryKey: accountQueryKey(accountId),
     queryFn: () => apiRequest(accountsContract.details, { accountId: String(accountId) }),
     retry: retryUnlessNotFound,
+  });
+}
+
+/**
+ * `PATCH /api/accounts/:accountId`, Edit Details (#26), sent through `sendWrite` with the tab's user (#119) and not
+ * retried; the typed names leave the mutation cache once nothing observes the save (`gcTime: 0`). On success exactly
+ * the queries that show a changed value change (US-12 criterion 18, #57): the account's details are set from the
+ * response (no request; a refetch of them still running is cancelled first, so it cannot bring the old values back);
+ * the accounts list (the Overview carousel, the Balances cards) is reset when the Bank Name or
+ * the type differs from the details shown before the save; the three Transactions tabs' lists (Payment Method) are reset
+ * when the type differs. Reset, not invalidated: the data is dropped, so a screen opened after the save shows its
+ * skeleton and then the stored values, never the old ones (#6). Nothing else is asked for again: the history shows no
+ * account field. A save that ends after its session did (a logout, a 401, another user) changes nothing (#39).
+ */
+export function useUpdateAccountDetails(accountId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: [...accountQueryKey(accountId), 'update'],
+    mutationFn: (request: AccountDetailsRequest) =>
+      sendWrite(queryClient, accountsContract.updateDetails, { accountId: String(accountId) }, request),
+    gcTime: 0,
+    onMutate: () => ({
+      epoch: sessionEpoch(queryClient),
+      shown: queryClient.getQueryData<AccountDetailsResponse>(accountQueryKey(accountId)),
+    }),
+    onSuccess: async (details, _request, started) => {
+      if (started.epoch !== sessionEpoch(queryClient)) return;
+      // A refetch of the details sent before the save (window focus) would bring the old values back: cancelled first.
+      await queryClient.cancelQueries({ queryKey: accountQueryKey(accountId), exact: true });
+      if (started.epoch !== sessionEpoch(queryClient)) return;
+      queryClient.setQueryData(accountQueryKey(accountId), details);
+      const typeChanged = started.shown?.accountType !== details.accountType;
+      if (typeChanged || started.shown?.bankName !== details.bankName) {
+        void queryClient.resetQueries({ queryKey: accountsQueryKey, exact: true });
+      }
+      if (typeChanged) void queryClient.resetQueries({ queryKey: transactionListsQueryKey });
+    },
   });
 }

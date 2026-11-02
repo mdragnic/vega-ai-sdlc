@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FAKE_GOOGLE_AUTHORIZE_PATH } from '../src/auth/google/fake-google-client.js';
 import { Public } from '../src/auth/public.decorator.js';
 import { cookieFor, signUp } from './helpers/auth.js';
+import { contractEntries, registeredRoutes } from './helpers/routes.js';
 import { createTestApp } from './helpers/test-app.js';
 
 // A route that fails, for the 500. Public, so it reaches the error filter behind the session guard.
@@ -22,11 +23,6 @@ class CrashController {
     throw new Error('The database is down');
   }
 }
-
-/** Every contract entry of the shared API (#74): each exported `...Contract` object's entries. */
-const contractEntries = Object.entries(shared)
-  .filter(([name]) => name.endsWith('Contract'))
-  .flatMap(([, contract]) => Object.values(contract as Record<string, shared.ContractEntry>));
 
 /**
  * The routes the app should register, as `METHOD /api/path`: every contract entry, the empty-segment form of each
@@ -44,22 +40,6 @@ const expectedRoutes = [
   `POST /api${FAKE_GOOGLE_AUTHORIZE_PATH}`,
   `POST /api${CRASH_PATH}`,
 ].toSorted();
-
-type RouteLayer = { route?: { path: string; methods: Record<string, boolean> } };
-
-/** The routes the app has registered on Express, as `METHOD /path`, read from its router. */
-function registeredRoutes(app: INestApplication): string[] {
-  const express = app.getHttpAdapter().getInstance() as { router: { stack: RouteLayer[] } };
-  return express.router.stack
-    .flatMap(({ route }) =>
-      route === undefined
-        ? []
-        : Object.keys(route.methods)
-            .filter((method) => method !== '_all')
-            .map((method) => `${method.toUpperCase()} ${route.path}`),
-    )
-    .toSorted();
-}
 
 const noStore = (response: Response) => response.headers['cache-control'];
 
@@ -85,9 +65,14 @@ describe('Cache-Control on /api', () => {
         shared.savingsGoalsContract.save,
         shared.statisticsContract.weeklyComparison,
         shared.expensesContract.breakdown,
+        // Task 022: the account write and, below, its empty-segment form.
+        shared.accountsContract.updateDetails,
       ]),
     );
     expect(registeredRoutes(app)).toEqual(expectedRoutes);
+    expect(registeredRoutes(app)).toEqual(
+      expect.arrayContaining(['PATCH /api/accounts/:accountId', 'PATCH /api/accounts/{:accountId}']),
+    );
   });
 
   it('answers no-store on every registered route, signed in, logout last', async () => {
@@ -101,7 +86,8 @@ describe('Cache-Control on /api', () => {
     for (const route of routes) {
       const [method, path] = route.split(' ') as [string, string];
       const server = request(app.getHttpServer());
-      const response = await server[method.toLowerCase() as 'get' | 'post' | 'put'](path)
+      // Writes without X-Expected-User: the write guard's 400 (task 022) carries the header too.
+      const response = await server[method.toLowerCase() as 'get' | 'post' | 'put' | 'patch'](path)
         .set('Cookie', cookieFor(session))
         .set('X-Time-Zone', 'Europe/Belgrade');
       answers[route] = `${noStore(response)}`;
@@ -126,6 +112,27 @@ describe('Cache-Control on /api', () => {
       400,
     ],
     ['401, no session', () => request(app.getHttpServer()).get('/api/accounts'), 401],
+    [
+      '400, a write without X-Expected-User (task 022, #119)',
+      () =>
+        request(app.getHttpServer())
+          .patch('/api/accounts/1')
+          .set('Cookie', cookieFor(token))
+          .set('X-Time-Zone', 'Europe/Belgrade')
+          .send({}),
+      400,
+    ],
+    [
+      '409, a write with another user’s email (task 022, #119)',
+      () =>
+        request(app.getHttpServer())
+          .put('/api/savings-goals')
+          .set('Cookie', cookieFor(token))
+          .set('X-Time-Zone', 'Europe/Belgrade')
+          .set('X-Expected-User', 'someone.else@example.com')
+          .send({}),
+      409,
+    ],
     [
       '403, a write from another site',
       () =>

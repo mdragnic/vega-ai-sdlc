@@ -82,10 +82,16 @@ describe('CSRF protection', () => {
       target: { cents: 100, currency: 'USD' },
       present: { cents: 0, currency: 'USD' },
     };
-    const putGoal = (token: string, headers: Record<string, string>) =>
+    // With the signed-in user's email in X-Expected-User, as every write sends it (task 022, #119).
+    const putGoal = ({ token, user }: { token: string; user: { email: string } }, headers: Record<string, string>) =>
       request(app.getHttpServer())
         .put(`/api${savingsGoalsContract.save.path}`)
-        .set({ ...headers, Cookie: cookieFor(token), 'X-Time-Zone': 'Europe/Belgrade' })
+        .set({
+          ...headers,
+          Cookie: cookieFor(token),
+          'X-Time-Zone': 'Europe/Belgrade',
+          'X-Expected-User': user.email,
+        })
         .send(goalBody);
 
     beforeEach(() => {
@@ -93,19 +99,19 @@ describe('CSRF protection', () => {
     });
 
     it.each(crossSite)('rejects it with %s and keeps the goal', async (_case, headers) => {
-      const { token } = await signUp(app);
+      const signedUp = await signUp(app);
       const before = await goalRows();
 
-      const response = await putGoal(token, headers);
+      const response = await putGoal(signedUp, headers);
 
       expectForbidden(response);
       expect(await goalRows()).toEqual(before);
     });
 
     it('lets a same-origin one through', async () => {
-      const { token } = await signUp(app);
+      const signedUp = await signUp(app);
 
-      const response = await putGoal(token, { 'Sec-Fetch-Site': 'same-origin' });
+      const response = await putGoal(signedUp, { 'Sec-Fetch-Site': 'same-origin' });
 
       expect(response.status).toBe(200);
       expect((await goalRows())[0]).toMatchObject({ target_cents: 100, present_cents: 0 });
