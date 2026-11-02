@@ -1,6 +1,6 @@
 # Task 020: Transactions: list, tabs and Load More
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 016
 - Size: L
@@ -186,6 +186,11 @@ The Scope follows US-13, the decisions above and Marko's notes; #117 (closed, Ma
   - the spacing as measured: 24 from the title to the tabs, 16 from the tabs to the card, 28 from the card's sides to the rows, 8 to the Items column, 24 under the card's top, 16 under the header line, rows of 72, 32 above and below "Load More";
   - the code names `TransactionsPage`, `TransactionTable` and `TransactionTableSkeleton` (Code-only) and `TransactionItem` (Figma `Transaction item`); the query key `['transactions', 'list', tab]`; the tab values `all`, `revenue`, `expenses`.
 - The security review findings and their fixes.
+- Added at the build (2026-10-30):
+  - **#118 (closed at this gate, (a) as built):** focus after "Load More" moves to the first new row only when it is still on the button or fell to the page body; focus the user moved elsewhere while the page loaded stays there. Proposed (a) as built; (b) always move it, as #117 a reads literally.
+  - The card's 704 minimum with a short list: a tab with fewer than 9 rows keeps the 107 card height with empty room under its rows (as e2e T21's Revenue with 2 rows at 2022-01-09, and the unit test with 3 rows; the Scope sets both "at least 704 in every state" and "the card ends 24 under the last row" at the end of a long list).
+  - A second failed "Load More" announced again (a new message node in the status region per failure), the message staying on screen through the retry until a Load More succeeds or the tab changes (code review, Important).
+  - Task 016's route test changed: `/api/transactions?userId=…` is now the Transactions list (it ignores the userId, T8), so the 404 list checks `/api/transactions/<user id>` in its place.
 
 ## Log
 <!-- Claude appends: date, what was done, decisions, issues, validation results, review findings -->
@@ -205,9 +210,42 @@ The Scope follows US-13, the decisions above and Marko's notes; #117 (closed, Ma
 - Updated: References (#117 closed), the Scope note, the Human checkpoint (#117 as built, choices accepted). The (#117) parts of the Scope, the acceptance criteria, the tests and the validation steps stay as written, since the answer is the proposal. INDEX: row 020 cites #117 as answered, open questions none.
 - Not started. No Figma calls.
 
+### 2026-10-30, build (`/next-task 020`)
+- Built test first (TDD), each layer's tests watched failing before the code:
+  - **Shared:** `ContractEntry` gains an optional `query` (a `QuerySchema`: string values, as a URL carries them); `TRANSACTIONS_PAGE_SIZE`, `transactionsTabSchema`, `transactionsQuerySchema` (tab, cursor 1 to 64), `transactionRowSchema` (Recent Transaction's keys and rules written once, plus `paymentMethod`), `transactionsPageSchema`, `transactionsContract.list`. T1: 51 new cases.
+  - **Backend:** `AccountsService.accountTypes` (exported by `AccountsModule`), `TransactionsService.list` (one `VisibleTransactions.list` with the tab's direction, the cursor and the fixed page size, and the account types, in parallel; a row whose account is not the user's is a 500, never a guess), `TransactionsController.list` (`@Query({ schema })`, `InvalidCursorError` to 400 "The cursor is not valid"). New `transactions-list-service.test.ts` (T2 to T6, 22 cases, another user signed up first) and `transactions-list.test.ts` (T7, T8, raw bodies); `transactions.test.ts`'s source test (T9) now also requires `AccountsService` and `AccountsModule` and keeps `listAccounts` and `DataSource` out of the service and the controller.
+  - **Frontend:** `apiRequest` parses an entry's query and sends it as search parameters; `useTransactions(tab)` (an infinite query; `keepFirstPage` drops a tab's later pages when it is left or the page closes, cancelling a Load More running or paused); `TransactionsPage`, `TransactionTable`, `TransactionItem`, `TransactionTableSkeleton`; 15 tokens (spacing, the 192 button, the 704 card minimum, the five column proportions as percentages); `components.md` (the `Transaction item` row moved to the verified table with its § note, Code-only rows); gallery sections. Tests: `transactions.test.tsx` (T10 to T16, 46 cases, all in StrictMode), `client.test.ts` (T17), gallery (T18).
+  - **e2e:** `transactions.spec.ts` (T19 to T26, 16 tests); `app-shell-slice.spec.ts` T15 finds the section on `/transactions`, T26 and T27 moved to `/bills` (and `/goals`) with the same checks.
+- Decisions in the build: the header cells Semibold (by ink density, see the visual check); the 16 least space between columns as 8 on each side of a cell (`--space-transaction-cell-padding-x`, one token: Stylelint allows no halving in `calc()`); the tabs' 24 from the title as Section's 16 plus 8 of padding (a margin collapsed into the title row's, found by e2e T25); the failed-Load-More live region always rendered (empty until a failure) so its message is announced; the skeleton with a block in "Load More"'s place, so a first page does not move the card (920 both).
+- Existing tests changed by the Scope (none weakened): shell T4 (unit) and T15 (e2e) find "Recent Transaction" on `/transactions`; e2e T26 and T27 moved to `/bills`; task 016's `transactions.test.ts` source test (T9 above) and its route test: `/api/transactions?userId=…` is now this task's list route (it answers 400 without `tab` and ignores a `userId`, tested in T8), so the 404 list has `/api/transactions/<user id>` in its place; task 016's frontend source guard (no `.slice(` in `api/transactions.ts`) kept, the hook written without it.
+- Issues while building: (1) under StrictMode the first page was asked for twice: the hook's cleanup cancelled the first fetch on the simulated unmount (found by e2e T24, 5 requests for 4; proven with a new StrictMode unit test); fixed by cancelling and trimming only when a tab has later pages or a Load More ran. (2) The tabs 8 px too high: `.content`'s margin collapsed with the section title row's; now padding. (3) Test-side: MenuTab's hidden bold copy doubles the tabs' text (read accessible names), a Range's box is the font's content area (compare the first line's centre), Playwright scrolls "Load More" into view to click it (compare page coordinates).
+- Validation (final run, after the code review fixes):
+  1. `npm run lint` exit 0 (oxlint, Stylelint, Prettier); `npm run typecheck` exit 0.
+  2. `npm test` exit 0: shared 899, backend 801, frontend 1014.
+  3. `npm run e2e` exit 0: 226 passed (7.1 min), ports 3000 and 5173 free before and after. (The first full run, before the code review fixes: 226 passed too.)
+  4. Broken on purpose (`evidence/020/mutation.txt`, every restore hash-checked, no rework): offset paging (T3, e2e T20), the tie as `<=` and as the instant alone (T2, T7, e2e T19), the provider without the today cap (30 failures, both source guards), another user's ID and the provider without its user filter (T8's three among 27 and 26), one Payment Method (T2, T6), "Load More" kept at the end (T12, T14, T16, e2e T21), focus left on the button (T12, e2e T21 and T26), every cell on one line (e2e T25 at 1440 and 1280). Also for the review's tests: the focus guard removed and window-focus refetch off each fail their new test.
+  5. Visual (`evidence/020/visual-differences.txt`): the card, the tabs, the title, the header, GTR 5's row, the dividers and "Load More" where 107 has them at 2x (card x 608 to 2815 from y 416; dividers at the same rows; the button 1520 to 1903, 96 high, the label's ink the same); differences listed there (10 rows, signs, dates, Payment Methods, the GTR 5 icon, the avatar, `#F3F3F3` against `#F4F4F4`, the 15 px gutter, 1 to 2 px text ink). Undesigned states rendered.
+  6. Manual (`evidence/020/manual-checks.txt`): all as expected, including the backend stopped and started (skeleton, error card after 7.6 s, keyboard Retry with focus on DataState's root and the ring; the failed Load More after 7.5 s, then the page added once).
+- Security review (`evidence/020/security-review.md`): no findings.
+- Code review (requesting-code-review): 0 critical, 1 important, 6 minor; all fixed or recorded:
+  - Important: a second failed "Load More" was not announced (the same text stayed in the live region). Fixed: a new message node per failure (`errorUpdateCount` as its key); test "announces a second failure again".
+  - Minor, fixed: DataState's Retry state carried to another tab (a cached Revenue showed the skeleton while All's Retry ran); `DataState` is now keyed by the tab; test "shows a loaded tab at once while a Retry on another tab is still running". A Load More paused offline was not cancelled when its tab was left; now any fetch that is not idle; test "drops a Load More paused offline". The multi-page refetch on window focus had no test; added. The focus tests did not run in StrictMode; the whole file now does.
+  - Minor, raised: focus is left where the user moved it while a page loaded, beyond #117 a's words: **#118 (open)** for this gate, with a test.
+  - Minor, recorded: the task 016 route test change (above). Recommendation recorded in the Human checkpoint: the 704 minimum with a short list.
+  - Declined by the reviewer, agreed: one request per loaded page on window focus (the Scope's choice), a last page that arrives empty (the provider never sends a cursor without more rows), row keys by position (no IDs in the contract), the unsigned cursor (accepted at detailing), a 400 cursor retried 3 times by the app default.
+- No Figma calls.
+- Status `awaiting-human`: the Human checkpoint above, with #118 open for this gate.
+
+### 2026-11-02, gate (`/approve-task`)
+- Approved by human.
+- Checked by Marko in the browser, all good: Transactions at 1440 against 107; the first 5 rows matching Overview on every tab; "Load More" to the end with Shirt and Dividend once each and focus on the first new row; a tab switch back to the first 10; the keyboard order; a failed "Load More" keeping the rows with the button retrying; 1280 with the bottom inset.
+- #118 answered: (a) as built. Focus moves to the first new row only when it is still on "Load More" or has fallen to the page body; if the user moved elsewhere while the page loaded, it stays there (the #114 never-steal-focus rule). Recorded in `docs/decisions.md` #118 (closed, Marko; the header says it was answered at this gate on 2026-11-02). It applies to task 021's "Load More" too, noted on its INDEX row.
+- Accepted: the nine visual differences as listed.
+- Status done. No Figma calls.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 1 (the #117 answer with the task file's approval)
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-10-30 14:51
+- Finished: 2026-11-02 09:31 (the gate reached 2026-10-30 16:14; the build to the gate 1h 23m)
+- Human interventions: 2 (the #117 answer with the task file's approval; the gate approval with the #118 answer)
+- Rework loops: 2 (lint: 7 findings, an effect's dependency list, two test-file names, a `toThrow` message, a helper's scope and the query values' typing; e2e, the new spec's first run: 7 failed, two real bugs, the StrictMode double request and the collapsed margin, and three test-side errors)
+- Notes on prompts that failed: unit tests without StrictMode hid the hook's double request, and jsdom hid the collapsed margin; the new page's unit tests now run in StrictMode from the start (worth stating in future task files). The code review found a repeated failure in a live region that no test covered.

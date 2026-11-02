@@ -8,12 +8,16 @@ import {
   type RecentTransactionsResponse,
   type SavingsGoalRequest,
   type SavingsGoalResponse,
+  type TransactionRow,
+  type TransactionsPage,
+  type TransactionsTab,
   type UpcomingBillsResponse,
   type WeeklyComparisonResponse,
 } from '@finebank/shared';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
+import { StrictMode } from 'react';
 import { createMemoryRouter, type RouteObject } from 'react-router';
 
 import { AppProviders } from '../../src/app/AppProviders';
@@ -385,6 +389,220 @@ export const recentTransactions = {
     http.get(recentTransactionsPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
 };
 
+/** A demo row of `GET /api/transactions` in 2026, stored at 12:00 UTC (demo-data.md): income has no category. */
+const demoRow = (
+  item: string,
+  shopName: string,
+  category: TransactionRow['category'],
+  date: string,
+  paymentMethod: TransactionRow['paymentMethod'],
+  cents: number,
+): TransactionRow => ({
+  item,
+  shopName,
+  category,
+  direction: category === null ? 'income' : 'expense',
+  occurredAt: `2026-${date}T12:00:00.000Z`,
+  paymentMethod,
+  amount: usd(cents),
+});
+
+/** Cursors as the backend makes them (the last row's instant and ID, base64url): opaque to the frontend. */
+export const demoCursors = {
+  allPage2: 'MjAyNi0xMC0xNVQxMjowMDowMC4wMDBaXzIzNDE',
+  allPage3: 'MjAyNi0xMC0wN1QxMjowMDowMC4wMDBaXzIzMzA',
+  revenuePage2: 'MjAyNi0wOS0xNVQxMjowMDowMC4wMDBaXzIyODc',
+  expensesPage2: 'MjAyNi0xMC0xNFQxMjowMDowMC4wMDBaXzIzMzk',
+} as const;
+
+/** All's first page on 22 Oct 2026 (task 020 References): Shirt last, at Dividend's instant. */
+export const demoAllPage1: TransactionsPage = {
+  transactions: [
+    demoRow('Jeans', 'Denim House', 'shopping', '10-22', 'checking', 26_600),
+    demoRow('Movie ticket', 'Inox', 'entertainment', '10-21', 'credit-card', 1_764),
+    demoRow('Pizza', 'Pizza Hit', 'food', '10-20', 'credit-card', 2_464),
+    demoRow('Taxi fare', 'Uber', 'transportation', '10-19', 'credit-card', 1_064),
+    demoRow('Restaurant bill', 'Spice Garden', 'food', '10-18', 'checking', 14_784),
+    demoRow('GTR 5', 'Gadget & Gear', 'entertainment', '10-17', 'credit-card', 18_816),
+    demoRow('Freelance payment', 'Bright Studio', null, '10-17', 'checking', 17_920),
+    demoRow('Pizza', 'Pizza Hit', 'food', '10-16', 'credit-card', 2_464),
+    demoRow('Biriyani', 'Hajir Biriyani', 'food', '10-16', 'credit-card', 1_478),
+    demoRow('Shirt', 'XL fashions', 'shopping', '10-15', 'checking', 32_200),
+  ],
+  nextCursor: demoCursors.allPage2,
+};
+
+/** All's second page: Dividend first. */
+export const demoAllPage2: TransactionsPage = {
+  transactions: [
+    demoRow('Dividend', 'AB Bank Ltd', null, '10-15', 'investment', 8_400),
+    demoRow('Parking', 'City Parking', 'housing', '10-14', 'checking', 2_016),
+    demoRow('Taxi fare', 'Uber', 'transportation', '10-13', 'credit-card', 1_064),
+    demoRow('iTunes', 'iTunes Store', 'entertainment', '10-12', 'checking', 5_880),
+    demoRow('Donation', 'City Charity Trust', 'others', '10-11', 'checking', 3_192),
+    demoRow('Loan installment', 'City Bank Ltd.', 'others', '10-10', 'loan', 10_640),
+    demoRow('Freelance payment', 'Bright Studio', null, '10-10', 'checking', 17_920),
+    demoRow('Keyboard', 'Gadget & Gear', 'shopping', '10-09', 'credit-card', 4_200),
+    demoRow('Pizza', 'Pizza Hit', 'food', '10-08', 'credit-card', 2_464),
+    demoRow('Metro Card bill', 'Metro Rail', 'transportation', '10-07', 'checking', 2_128),
+  ],
+  nextCursor: demoCursors.allPage3,
+};
+
+/** A last page after All's second: two rows and no cursor, for the end of a list. */
+export const lastAllPage: TransactionsPage = {
+  transactions: [
+    demoRow('Movie ticket', 'Inox', 'entertainment', '10-06', 'credit-card', 1_764),
+    demoRow('Biriyani', 'Hajir Biriyani', 'food', '10-05', 'credit-card', 1_478),
+  ],
+  nextCursor: null,
+};
+
+/** Revenue's first page. */
+export const demoRevenuePage1: TransactionsPage = {
+  transactions: [
+    demoRow('Freelance payment', 'Bright Studio', null, '10-17', 'checking', 17_920),
+    demoRow('Dividend', 'AB Bank Ltd', null, '10-15', 'investment', 8_400),
+    demoRow('Freelance payment', 'Bright Studio', null, '10-10', 'checking', 17_920),
+    demoRow('Freelance payment', 'Bright Studio', null, '10-03', 'checking', 17_920),
+    demoRow('Design project', 'Acme Ltd.', null, '10-01', 'checking', 78_400),
+    demoRow('Interest', 'Brac Bank Ltd.', null, '09-28', 'savings', 4_480),
+    demoRow('Card repayment', 'AB Bank Ltd', null, '09-27', 'credit-card', 50_400),
+    demoRow('Freelance payment', 'Bright Studio', null, '09-24', 'checking', 17_920),
+    demoRow('Freelance payment', 'Bright Studio', null, '09-17', 'checking', 17_920),
+    demoRow('Dividend', 'AB Bank Ltd', null, '09-15', 'investment', 8_400),
+  ],
+  nextCursor: demoCursors.revenuePage2,
+};
+
+/** Expenses' first page: All's without the Freelance payment, then Parking. */
+export const demoExpensesPage1: TransactionsPage = {
+  transactions: [
+    ...demoAllPage1.transactions.filter((row) => row.direction === 'expense'),
+    demoAllPage2.transactions[1]!,
+  ],
+  nextCursor: demoCursors.expensesPage2,
+};
+
+/** Each tab's pages in order: the first for no cursor, each later one for the cursor of the page before. */
+export type TransactionPages = Record<TransactionsTab, TransactionsPage[]>;
+
+/** The demo on 22 Oct 2026: each tab's first page, and All's second (task 020 AC2 to AC4). */
+export const demoTransactionPages: TransactionPages = {
+  all: [demoAllPage1, demoAllPage2],
+  revenue: [demoRevenuePage1],
+  expenses: [demoExpensesPage1],
+};
+
+/** The demo with a third page on All that ends the list. */
+export const endingTransactionPages: TransactionPages = {
+  ...demoTransactionPages,
+  all: [demoAllPage1, demoAllPage2, lastAllPage],
+};
+
+/** One page per tab with no cursor: All 3 rows, Revenue 1, Expenses 2. */
+export const fewTransactionPages: TransactionPages = {
+  all: [{ transactions: demoAllPage1.transactions.slice(4, 7), nextCursor: null }],
+  revenue: [{ transactions: [demoAllPage1.transactions[6]!], nextCursor: null }],
+  expenses: [{ transactions: demoAllPage1.transactions.slice(4, 6), nextCursor: null }],
+};
+
+/** All exactly 10 rows with no cursor: the whole list. */
+export const tenTransactionPages: TransactionPages = {
+  ...demoTransactionPages,
+  all: [{ ...demoAllPage1, nextCursor: null }],
+};
+
+/** No rows on any tab. */
+export const noTransactionPages: TransactionPages = {
+  all: [{ transactions: [], nextCursor: null }],
+  revenue: [{ transactions: [], nextCursor: null }],
+  expenses: [{ transactions: [], nextCursor: null }],
+};
+
+/** A 120-character item in words. */
+export const longItemInWords =
+  'Annual premium subscription renewal for the professional design and collaboration suite with extended cloud storage plan';
+/** A 120-character shop in words. */
+export const longShopInWords =
+  'The Grand Central Department Store and Shopping Arcade of the Greater Metropolitan Area and Its Surrounding District Ltd';
+/** A 120-character item with no space. */
+export const longItemNoSpace = 'Annualpremiumsubscriptionrenewal'.repeat(4).slice(0, 120);
+/** A 120-character shop with no space. */
+export const longShopNoSpace = 'GrandCentralDepartmentStoreArcade'.repeat(4).slice(0, 120);
+
+/** All's first page with long texts on its first two rows and `$1,000,000,000.00` on the third (#106, #115 b). */
+export const longTransactionPages: TransactionPages = {
+  ...demoTransactionPages,
+  all: [
+    {
+      ...demoAllPage1,
+      transactions: [
+        { ...demoAllPage1.transactions[0]!, item: longItemInWords, shopName: longShopInWords },
+        { ...demoAllPage1.transactions[1]!, item: longItemNoSpace, shopName: longShopNoSpace },
+        { ...demoAllPage1.transactions[2]!, amount: usd(100_000_000_000) },
+        ...demoAllPage1.transactions.slice(3),
+      ],
+    },
+    demoAllPage2,
+  ],
+};
+
+const transactionsPath = '*/api/transactions';
+const transactionsFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/**
+ * A backend of `pages`: the tab's first page for no cursor, the page after the cursor's for one; 400 for a tab or a
+ * cursor it does not know, as the real one.
+ */
+function answerPages(pages: TransactionPages, request: Request) {
+  const query = new URL(request.url).searchParams;
+  const tabPages = pages[query.get('tab') as TransactionsTab] ?? [];
+  const cursor = query.get('cursor');
+  const page =
+    cursor === null
+      ? tabPages[0]
+      : tabPages.find((_, index) => index > 0 && tabPages[index - 1]!.nextCursor === cursor);
+  return page ? HttpResponse.json(page) : HttpResponse.json({ message: 'The cursor is not valid' }, { status: 400 });
+}
+
+/**
+ * `GET /api/transactions` answers, keyed on the query: the demo pages (or others), pending, failing, failing on the
+ * first try and its 3 retries then answered (a Retry), and a Load More failing on its first try and 3 retries, then
+ * answered.
+ */
+export const transactions = {
+  answers: (pages: TransactionPages = demoTransactionPages) =>
+    http.get(transactionsPath, ({ request }) => answerPages(pages, request)),
+  pending: () =>
+    http.get(transactionsPath, async ({ request }) => {
+      await delay('infinite');
+      return answerPages(demoTransactionPages, request);
+    }),
+  fails: () => http.get(transactionsPath, transactionsFailure),
+  failsThenAnswers: (pages: TransactionPages = demoTransactionPages) => {
+    let tries = 0;
+    return http.get(transactionsPath, ({ request }) => {
+      tries += 1;
+      return tries <= 4 ? transactionsFailure() : answerPages(pages, request);
+    });
+  },
+  loadMoreFails: (pages: TransactionPages = demoTransactionPages) =>
+    http.get(transactionsPath, ({ request }) =>
+      new URL(request.url).searchParams.has('cursor') ? transactionsFailure() : answerPages(pages, request),
+    ),
+  loadMoreFailsThenAnswers: (pages: TransactionPages = demoTransactionPages) => {
+    let tries = 0;
+    return http.get(transactionsPath, ({ request }) => {
+      if (new URL(request.url).searchParams.has('cursor')) {
+        tries += 1;
+        if (tries <= 4) return transactionsFailure();
+      }
+      return answerPages(pages, request);
+    });
+  },
+};
+
 /** A day of `GET /api/statistics/weekly-comparison`: this week's date and both weeks' cents, `null` after today. */
 const comparisonDay = (date: string, lastWeek: number, thisWeek: number | null) => ({
   date,
@@ -518,7 +736,7 @@ export const expensesBreakdown = {
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
- * asking: the demo data of each. A test's own `server.use` comes first.
+ * asking, and one that opens Transactions has its pages: the demo data of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
@@ -527,6 +745,7 @@ export const signedInDefaults = () => [
   recentTransactions.answers(),
   weeklyComparison.answers(),
   expensesBreakdown.answers(),
+  transactions.answers(),
 ];
 
 /** DataState's root (task 017): where focus goes after Retry, with tabindex="-1" from then on; never a Tab stop. */
@@ -553,11 +772,15 @@ export const appPaths = [
   '/settings/security',
 ] as const;
 
-/** The whole app (providers and routes) in a memory router at `initialEntry`. */
-export function renderApp(initialEntry: string, appRoutes: RouteObject[] = routes) {
+/**
+ * The whole app (providers and routes) in a memory router at `initialEntry`; inside `<StrictMode>` with `strict`, as
+ * `main.tsx` renders it in development and e2e (it runs effects and ref cleanups twice on mount).
+ */
+export function renderApp(initialEntry: string, appRoutes: RouteObject[] = routes, { strict = false } = {}) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [initialEntry] });
   const user = userEvent.setup();
-  const view = render(<AppProviders router={router} />);
+  const app = <AppProviders router={router} />;
+  const view = render(strict ? <StrictMode>{app}</StrictMode> : app);
   /** The current path, query and hash. */
   const url = () => {
     const { pathname, search, hash } = router.state.location;

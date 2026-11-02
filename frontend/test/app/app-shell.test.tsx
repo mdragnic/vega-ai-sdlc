@@ -109,10 +109,14 @@ const overviewSections = [
   'Expenses Breakdown',
 ];
 
-/** The sections of the screens built so far (Overview, task 013; Balances, task 019); the others are empty. */
+/**
+ * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020); the others
+ * are empty.
+ */
 const builtSections: Partial<Record<(typeof appPaths)[number], string[]>> = {
   '/overview': overviewSections,
   '/balances': ['Balances'],
+  '/transactions': ['Recent Transaction'],
 };
 
 // T4: every app path opens in the shell with the signed-in user and today's date (AC1, AC2, AC4).
@@ -135,8 +139,8 @@ describe('the shell on each app path', () => {
     expect(currentLinks()).toEqual([activeItem[path]]);
     // The greeting on Overview only.
     expect(screen.queryByText(/Hello/)?.textContent ?? null).toBe(path === '/overview' ? 'Hello Tanzir' : null);
-    // Overview holds its six sections (task 013) and Balances its one (task 019); the other screens are empty until
-    // their tasks, Account Details (`/balances/12`) until task 021.
+    // Overview holds its six sections (task 013), Balances its one (task 019) and Transactions its one (task 020); the
+    // other screens are empty until their tasks, Account Details (`/balances/12`) until task 021.
     const main = screen.getByRole('main');
     expect(
       within(main)

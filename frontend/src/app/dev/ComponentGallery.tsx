@@ -11,6 +11,8 @@ import {
   type RecentTransactionRow,
   type RecentTransactionsResponse,
   type SavingsGoalResponse,
+  type TransactionRow,
+  type TransactionsPage,
   type UpcomingBillsResponse,
   type WeeklyComparisonResponse,
 } from '@finebank/shared';
@@ -71,6 +73,8 @@ import {
   TextDivider,
   TotalBalance,
   TotalBalanceSkeleton,
+  TransactionTable,
+  TransactionTableSkeleton,
   UpcomingBill,
   UpcomingBillLogo,
   UpcomingBillSkeleton,
@@ -932,6 +936,73 @@ function ExpensesItemExample({ item }: { item: ExpensesBreakdownCategory }) {
   );
 }
 
+/** A Transactions row as `GET /api/transactions` sends it: a Recent Transaction row with its Payment Method. */
+const sampleRow = (transaction: SampleTransaction, paymentMethod: TransactionRow['paymentMethod']): TransactionRow => ({
+  ...transaction,
+  paymentMethod,
+});
+
+/** A first page of All as the backend sends it on 22 Oct 2026: the demo's newest 5 and 5 of its income (107). */
+const sampleTransactionsPage: TransactionsPage = {
+  transactions: [
+    sampleRow(sampleExpenses[0]!, 'checking'),
+    sampleRow(sampleExpenses[1]!, 'credit-card'),
+    sampleRow(sampleExpenses[2]!, 'credit-card'),
+    sampleRow(sampleExpenses[3]!, 'credit-card'),
+    sampleRow(sampleExpenses[4]!, 'checking'),
+    sampleRow(sampleRevenue[0]!, 'checking'),
+    sampleRow(sampleRevenue[1]!, 'investment'),
+    sampleRow(sampleRevenue[2]!, 'checking'),
+    sampleRow(sampleRevenue[3]!, 'checking'),
+    sampleRow(sampleRevenue[4]!, 'checking'),
+  ],
+  nextCursor: 'MjAyNi0xMC0wMVQxMjowMDowMC4wMDBaXzEw',
+};
+
+/** The Transactions card as the page draws it (107), with a label that names the table, as the selected tab does. */
+function TransactionsCard({ children }: { children: (labelledBy: string) => ReactNode }) {
+  const labelId = useId();
+  return (
+    <div className={styles.transactionsSample}>
+      <p id={labelId} className={styles.transactionsLabel}>
+        All
+      </p>
+      <Card padding="none">{children(labelId)}</Card>
+    </div>
+  );
+}
+
+/** The table on fixed pages: "Load More" here only adds the sample page again, as a stand-in for the next page. */
+function TransactionTableExample({
+  pages,
+  loadingMore = false,
+  loadMoreFailure = null,
+}: {
+  pages: TransactionsPage[];
+  loadingMore?: boolean;
+  loadMoreFailure?: number | null;
+}) {
+  const [shown, setShown] = useState(pages);
+  return (
+    <TransactionsCard>
+      {(labelledBy) => (
+        <TransactionTable
+          pages={shown}
+          labelledBy={labelledBy}
+          loadingMore={loadingMore}
+          loadMoreFailure={loadMoreFailure}
+          onLoadMore={() => setShown([...shown, { ...sampleTransactionsPage, nextCursor: null }])}
+        />
+      )}
+    </TransactionsCard>
+  );
+}
+
+/** One Transactions row on its own, in the table as the page draws it at 1440. */
+function TransactionItemExample({ row }: { row: TransactionRow }) {
+  return <TransactionTableExample pages={[{ transactions: [row], nextCursor: null }]} />;
+}
+
 /** One row on its own, in a card as wide as Overview's at 1440. */
 function ItemCard({ transaction }: { transaction: SampleTransaction }) {
   return (
@@ -1783,6 +1854,39 @@ export function ComponentGallery() {
           <RecentCard>
             <RecentTransactionSkeleton />
           </RecentCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TransactionTable" wide>
+        <Example name="A first page (107): Load More adds a last page">
+          <TransactionTableExample pages={[sampleTransactionsPage]} />
+        </Example>
+        <Example name="Load More while the next page loads">
+          <TransactionTableExample pages={[sampleTransactionsPage]} loadingMore />
+        </Example>
+        <Example name="A failed Load More (#117 b)">
+          <TransactionTableExample pages={[sampleTransactionsPage]} loadMoreFailure={1} />
+        </Example>
+        <Example name="The end of the list: no Load More">
+          <TransactionTableExample pages={[{ ...sampleTransactionsPage, nextCursor: null }]} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TransactionItem" wide>
+        <Example name="Expense (107)">
+          <TransactionItemExample row={sampleRow(sampleExpenses[0]!, 'checking')} />
+        </Example>
+        <Example name="Income: the wallet">
+          <TransactionItemExample row={sampleRow(sampleRevenue[1]!, 'investment')} />
+        </Example>
+        <Example name="A long item, shop and amount: the texts wrap, the amount stays on one line (#115 b)">
+          <TransactionItemExample row={sampleRow(sampleLongTransaction, 'credit-card')} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TransactionTableSkeleton" wide>
+        <Example name="Loading">
+          <TransactionsCard>{() => <TransactionTableSkeleton />}</TransactionsCard>
         </Example>
       </GallerySection>
 

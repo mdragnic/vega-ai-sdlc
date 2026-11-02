@@ -1,9 +1,12 @@
-import { transactionsContract } from '@finebank/shared';
-import { useQuery } from '@tanstack/react-query';
+import { transactionsContract, type TransactionsPage, type TransactionsTab } from '@finebank/shared';
+import { type InfiniteData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { apiRequest } from './client';
 
 const recentTransactionsQueryKey = ['transactions', 'recent'] as const;
+
+const transactionsQueryKey = (tab: TransactionsTab) => ['transactions', 'list', tab] as const;
 
 /**
  * The signed-in user's latest 5 transactions for each Recent Transaction tab (All, Revenue, Expenses), newest first,
@@ -15,5 +18,49 @@ export function useRecentTransactions() {
   return useQuery({
     queryKey: recentTransactionsQueryKey,
     queryFn: () => apiRequest(transactionsContract.recent),
+  });
+}
+
+/**
+ * The Transactions pages of a tab (#27, #74): the first without a cursor, each next one ("Load More") with the
+ * `nextCursor` of the last page loaded, none after a page whose `nextCursor` is null. The backend filters, orders and
+ * pages; today is its clock's in the browser's zone (#53, #54). The app's query defaults apply: asked for again when
+ * the window gets focus back (every loaded page in turn from the first, each with its new cursor), 3 retries. Removed
+ * with every cached query when a session starts or ends (#39). The pages after the first are dropped when the tab is
+ * left and when the page closes, so a tab opens on its first 10 (#117 c).
+ */
+export function useTransactions(tab: TransactionsTab) {
+  const queryClient = useQueryClient();
+  useEffect(() => () => void keepFirstPage(queryClient, transactionsQueryKey(tab)), [queryClient, tab]);
+  return useInfiniteQuery({
+    queryKey: transactionsQueryKey(tab),
+    queryFn: ({ pageParam }) =>
+      apiRequest(transactionsContract.list, pageParam === null ? { tab } : { tab, cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+}
+
+/**
+ * Leaves only the first page of a tab's list, when it has more or a Load More ran: a request still running is
+ * cancelled first, so its pages cannot come back, and a failed Load More's error goes with the pages after the first
+ * (#117 b, c). A first page still loading carries on, also through StrictMode's second mount.
+ */
+async function keepFirstPage(
+  queryClient: ReturnType<typeof useQueryClient>,
+  queryKey: ReturnType<typeof transactionsQueryKey>,
+): Promise<void> {
+  const state = queryClient.getQueryState<InfiniteData<TransactionsPage, string | null>>(queryKey);
+  const laterPages = (state?.data?.pages.length ?? 0) > 1;
+  const loadMoreRan = state?.fetchMeta?.fetchMore !== undefined;
+  if (state?.data === undefined || (!laterPages && !loadMoreRan)) return;
+  // Running or paused offline: either would bring its pages back.
+  if (state.fetchStatus !== 'idle') await queryClient.cancelQueries({ queryKey, exact: true });
+  const data = queryClient.getQueryData<InfiniteData<TransactionsPage, string | null>>(queryKey);
+  const [firstPage] = data?.pages ?? [];
+  if (data === undefined || firstPage === undefined) return;
+  queryClient.setQueryData<InfiniteData<TransactionsPage, string | null>>(queryKey, {
+    pages: [firstPage],
+    pageParams: [null],
   });
 }

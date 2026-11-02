@@ -1,4 +1,4 @@
-import { type ContractEntry, type ErrorResponse } from '@finebank/shared';
+import { type ContractEntry, type ErrorResponse, transactionsContract } from '@finebank/shared';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -156,5 +156,82 @@ describe('formErrorFor', () => {
     ['a network failure', new TypeError('Failed to fetch'), 'Something went wrong.'],
   ])('gives %s', (_name, error, text) => {
     expect(formErrorFor(error, fields)).toBe(text);
+  });
+});
+
+// Task 020 T17, AC3, AC4, AC11: an entry with a query sends it as URL search parameters, parsed with the entry's query
+// schema first, so the frontend never sends what the backend rejects (#74).
+describe('apiRequest with a query', () => {
+  /** Every URL the probe receives, as path and search. */
+  const received: string[] = [];
+  const answerPage = () =>
+    http.get('*/api/transactions', ({ request }) => {
+      const url = new URL(request.url);
+      received.push(`${url.pathname}${url.search}`);
+      return HttpResponse.json({ transactions: [], nextCursor: null });
+    });
+
+  afterEach(() => {
+    received.length = 0;
+  });
+
+  it('sends the tab and the cursor', async () => {
+    server.use(answerPage());
+
+    const page = await apiRequest(transactionsContract.list, {
+      tab: 'all',
+      cursor: 'MjAyNi0xMC0xNVQxMjowMDowMC4wMDBaXzEw',
+    });
+
+    expect(page).toEqual({ transactions: [], nextCursor: null });
+    expect(received).toEqual(['/api/transactions?tab=all&cursor=MjAyNi0xMC0xNVQxMjowMDowMC4wMDBaXzEw']);
+  });
+
+  it('leaves out a query value that is absent', async () => {
+    server.use(answerPage());
+
+    await apiRequest(transactionsContract.list, { tab: 'revenue' });
+    await apiRequest(transactionsContract.list, { tab: 'expenses', cursor: undefined });
+
+    expect(received).toEqual(['/api/transactions?tab=revenue', '/api/transactions?tab=expenses']);
+  });
+
+  it('encodes a value as a search parameter', async () => {
+    server.use(answerPage());
+
+    await apiRequest(transactionsContract.list, { tab: 'all', cursor: 'a+b/c=d&e' });
+
+    expect(received).toEqual(['/api/transactions?tab=all&cursor=a%2Bb%2Fc%3Dd%26e']);
+  });
+
+  it('drops keys outside the query schema', async () => {
+    server.use(answerPage());
+
+    await apiRequest(transactionsContract.list, { tab: 'all', userId: 7 } as { tab: 'all' });
+
+    expect(received).toEqual(['/api/transactions?tab=all']);
+  });
+
+  it.each<[string, unknown]>([
+    ['an unknown tab', { tab: 'other' }],
+    ['no tab', {}],
+    ['an empty cursor', { tab: 'all', cursor: '' }],
+  ])('rejects %s before any request', async (_case, query) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(apiRequest(transactionsContract.list, query as { tab: 'all' })).rejects.toBeInstanceOf(z.ZodError);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('calls an entry without a query as before: no search, the body sent', async () => {
+    const urls: string[] = [];
+    server.events.on('request:start', ({ request }) => urls.push(request.url));
+
+    await apiRequest(echo, { name: 'Marko' });
+
+    expect(urls).toHaveLength(1);
+    expect(new URL(urls[0]!).search).toBe('');
+    server.events.removeAllListeners();
   });
 });

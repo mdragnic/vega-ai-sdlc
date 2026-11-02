@@ -1,0 +1,84 @@
+/* 107: the rows 28 inside the card on each side, the header 24 under its top, the card ending 24 under the last row
+   where there is no "Load More". */
+.body {
+  padding: var(--space-card-padding) var(--space-transaction-table-inset-x);
+}
+
+/* The table fills the row width at any window width (#94); its automatic layout lets a column whose text cannot wrap
+   (an amount) grow while the others give way, so nothing leaves the card. */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* 107's column proportions: the Shop Name, Date and Payment Method texts centred at 33.0%, 54.5% and 77.1% of the row,
+   the Amount right-aligned at its end (task 020 References). */
+.itemsColumn {
+  width: var(--size-transaction-column-items);
+}
+
+.shopColumn {
+  width: var(--size-transaction-column-shop);
+}
+
+.dateColumn {
+  width: var(--size-transaction-column-date);
+}
+
+.methodColumn {
+  width: var(--size-transaction-column-method);
+}
+
+.amountColumn {
+  width: var(--size-transaction-column-amount);
+}
+
+/* 107 header row: Default Black, Semibold 16/24, centred like its column's cells; the Gray/06 divider its last pixel
+   row, 16 under the line box. */
+.headerRow > th {
+  padding: 0 var(--space-transaction-cell-padding-x)
+    calc(var(--space-transaction-header-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  text-align: center;
+  vertical-align: top;
+}
+
+.headerRow > .itemsHeader {
+  text-align: left;
+}
+
+.headerRow > .amountHeader {
+  padding-right: 0;
+  text-align: right;
+}
+
+/* 107: "Load More" 32 under the last row and 32 above the card's padding, centred. */
+.loadMore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-transaction-load-more-gap) 0;
+}
+
+/* Not designed (#117 b): DataState's error text, above the button; takes no room while empty. */
+.loadMoreError {
+  margin: 0;
+  color: var(--color-secondary);
+  font: var(--font-regular-14-20);
+  text-align: center;
+}
+
+.loadMoreError:not(:empty) {
+  margin-bottom: var(--space-form-small-gap);
+}
+
+/* 107: the `Button/primary` look, 192 wide. */
+.loadMoreButton {
+  width: var(--size-transaction-load-more-width);
+}

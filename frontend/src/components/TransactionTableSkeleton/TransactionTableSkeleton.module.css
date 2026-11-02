@@ -1,0 +1,98 @@
+/* Not designed (#6): existing and task 020 tokens only, on the Transactions table's layout: the same insets, the same
+   column proportions, the header line and its divider, rows of 72 and the "Load More" place. */
+.body {
+  padding: var(--space-card-padding) var(--space-transaction-table-inset-x);
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns:
+    var(--size-transaction-column-items) var(--size-transaction-column-shop) var(--size-transaction-column-date)
+    var(--size-transaction-column-method) var(--size-transaction-column-amount);
+}
+
+/* The header as drawn: the labels in the header style, the Gray/06 divider its last pixel row. */
+.header {
+  padding-bottom: calc(var(--space-transaction-header-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+.headerCell {
+  padding: 0 var(--space-transaction-cell-padding-x);
+  text-align: center;
+}
+
+.headerCell:first-child {
+  text-align: left;
+}
+
+.headerCell:last-child {
+  padding-right: 0;
+  text-align: right;
+}
+
+.row {
+  padding: var(--space-transaction-row-padding-y) 0;
+}
+
+.divided {
+  padding-bottom: calc(var(--space-transaction-row-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* Each cell one 24 px line, its placeholder centred in it, as the cell's text. */
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: var(--line-height-24);
+  padding: 0 var(--space-transaction-cell-padding-x);
+}
+
+.itemsCell {
+  justify-content: flex-start;
+  gap: var(--space-transaction-icon-gap);
+}
+
+.amountCell {
+  justify-content: flex-end;
+  padding-right: 0;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+/* About as wide as an item in Semibold 16, as high as its letters. */
+.item {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.line {
+  width: var(--size-amount-box-width);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+/* "Load More"'s place: 32 under the last row, 192x48, 32 above the card's padding. */
+.loadMore {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-transaction-load-more-gap) 0;
+}
+
+.button {
+  width: var(--size-transaction-load-more-width);
+  height: var(--size-button-height);
+}

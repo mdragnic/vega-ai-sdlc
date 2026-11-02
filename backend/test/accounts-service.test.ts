@@ -227,3 +227,37 @@ describe('AccountsService.summary', () => {
     await expect(service.summary(USER_ID, ZONE)).rejects.toThrow(RangeError);
   });
 });
+
+// Task 020 T6, AC10: each account's type by its ID, the Payment Method of its transactions, from the provider's accounts
+// (#57, #77); read fresh on every call, so a changed type shows on the next request.
+describe('AccountsService.accountTypes', () => {
+  it('maps each of the user’s accounts to its type, reading no transaction', async () => {
+    const { service, listAccounts, list, listTransactions } = serviceWith([creditCard, checking], []);
+
+    const types = await service.accountTypes(USER_ID);
+
+    expect([...types]).toEqual([
+      [10, 'credit-card'],
+      [11, 'checking'],
+    ]);
+    expect(listAccounts).toHaveBeenCalledWith(USER_ID);
+    expect(list).not.toHaveBeenCalled();
+    expect(listTransactions).not.toHaveBeenCalled();
+  });
+
+  it('answers another user’s accounts only for that user: here none', async () => {
+    const { service } = serviceWith([creditCard, checking], []);
+
+    expect([...(await service.accountTypes(USER_ID + 1))]).toEqual([]);
+  });
+
+  it('reads the types again on every call', async () => {
+    const accounts = [creditCard, checking];
+    const { service } = serviceWith(accounts, []);
+    await service.accountTypes(USER_ID);
+
+    accounts[1] = { ...checking, accountType: 'savings' };
+
+    expect((await service.accountTypes(USER_ID)).get(11)).toBe('savings');
+  });
+});

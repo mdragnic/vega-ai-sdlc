@@ -1,0 +1,47 @@
+Task 020 manual checks, 2026-10-30. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), a fresh context in Europe/Belgrade. Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep the database
+across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview. Overview's Recent Transaction read on each tab.
+2. Transactions from the sidebar: /transactions, the requests `all` (no cursor), then on the tab clicks `revenue`,
+   `expenses`, `all` (no cursor each), all with X-Time-Zone Europe/Belgrade. The first 5 rows of each tab (item, shop,
+   amount, date) equal Overview's Recent Transaction rows of that tab, in order: All, Revenue and Expenses all true.
+3. Transactions from Overview's "View All": /transactions, Transactions active (aria-current="page"), no greeting, the
+   header date "22 Oct, 2026", All selected, 10 rows. The region reads (aria snapshot):
+     region "Recent Transaction": heading "Recent Transaction" [level=2]; tablist "Recent Transaction" (tab "All"
+     [selected], tab "Revenue", tab "Expenses"); tabpanel "All": table "All": row "Items Shop Name Date Payment Method
+     Amount" (five columnheaders); rows such as "Shopping Jeans Denim House 22 Oct, 2026 Checking -$266.00" (cell
+     "Shopping Jeans": img "Shopping", text Jeans; cell "Denim House"; cell "22 Oct, 2026": time; cell "Checking"; cell
+     "-$266.00"), "Entertainment Movie ticket Inox 21 Oct, 2026 Credit Card -$17.64", ...
+   (A first read taken in the same tick as the sidebar click still showed Overview: its hidden Statistics table matched
+   the "table" locator; read again on the Transactions table.)
+4. "Load More" by mouse, page 2 delayed 1.5 s: while loading the button is aria-busy="true", aria-disabled="true", with
+   the spinner, gray rgb(228, 231, 235) (`--color-button-secondary`), its name "Load More". Then 20 rows; focus on row
+   11 (Dividend), :focus-visible false, outline none (no ring after a click).
+5. "Load More" by keyboard (Enter on the focused button): 30 rows; focus on row 21 (Movie ticket), :focus-visible true,
+   the ring solid rgb(41, 157, 145); Tab from it reaches "Load More".
+6. Keyboard, from the search field: Tab gives the selected tab "All", the panel, "Load More", each with the teal ring
+   (:focus-visible, outline solid); the fourth Tab leaves main (the body). Shift+Tab from "Load More": the panel, the
+   tab, the search field.
+7. Resizes (the page, the card, the row heights, a horizontal scroll):
+   - 1440x1024: page 1425, card 1089, every row 72, no horizontal scroll.
+   - 1920x1080: page 1905, card 1569, every row 72, no horizontal scroll.
+   - 1280x1024, the tabs switched to Revenue, Expenses and All (manual-1280.png): page 1265, card 929, every row 72 on
+     each tab, no horizontal scroll.
+   - Back to 1440x1024: page 1425, card 1089, every row 72.
+8. Backend stopped (taskkill on the node process on port 3000), with a second tab parked on /bills beforehand (a full
+   reload with the backend down goes to Login, tasks 009 to 011):
+   - In the parked tab, Transactions from the sidebar: the skeleton at once, the card 920 high
+     (manual-backend-down-skeleton.png); "Something went wrong." over Retry 7.6 s later, after the request and its 3
+     retries, centred in the 704 card, the three tabs above it (manual-backend-down-error.png).
+   - In the first tab, on All's first page, "Load More" by keyboard: 7.5 s later "Something went wrong." above the
+     button, the 10 rows kept, focus still on the button, no longer busy (manual-load-more-failed.png).
+9. Backend started again (`npm run start -w backend`, database kept):
+   - Parked tab, keyboard: Tab from the search field gives the tab "All", the panel, then Retry; Enter: the 10 rows;
+     focus on DataState's root (a DIV with tabindex="-1" inside the panel), never the body, with the teal ring
+     (manual-keyboard-retry-ring.png); the next Tab goes to "Load More".
+   - First tab, Enter on the still-focused "Load More": the same page asked for again, 20 rows, Shirt and Dividend once
+     each, the message gone, focus on row 11 with the ring (manual-load-more-after-backend-back.png).
+10. Afterwards the extra browser contexts closed and the node processes on ports 3000 and 5173 stopped (taskkill), the
+    ports free.

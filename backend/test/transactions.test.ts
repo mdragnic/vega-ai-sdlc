@@ -227,11 +227,13 @@ describe('the recent transactions API', () => {
         [second.id],
       );
 
+      // `/api/transactions?userId=…` is the Transactions list since task 020, which ignores the userId
+      // (transactions-list.test.ts, T8).
       for (const path of [
         `${recentPath}/${second.id}`,
         `${recentPath}/${accountId}`,
         `/api/transactions/${transactionId}`,
-        `/api/transactions?userId=${second.id}`,
+        `/api/transactions/${second.id}`,
         `/api/accounts/${accountId}/transactions`,
       ]) {
         expect((await get({ token: first.token, zone: BELGRADE, path })).status, `GET ${path}`).toBe(404);
@@ -251,6 +253,7 @@ function sourceFiles(dir: string): string[] {
 }
 
 // T6, AC8, AC10: the path exists once, in the contract (#74); the module reads through VisibleTransactions (#53, #77).
+// Task 020 T9: the account types through AccountsService (#57, #77), the provider still never in the service.
 describe('transaction sources', () => {
   const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
   const declaresPath = /['"`]\/transactions\b|@(Controller|Get|Post|Put|Patch|Delete)\(\s*['"`]\/?transactions\b/;
@@ -273,13 +276,28 @@ describe('transaction sources', () => {
     expect(declaresPath.test(code)).toBe(false);
   });
 
-  it('reads transactions only through VisibleTransactions, never the provider', () => {
+  it('reads transactions only through VisibleTransactions and account types through AccountsService, never the provider', () => {
     const service = readFileSync(join(srcDir, 'transactions/transactions.service.ts'), 'utf8');
+    const controller = readFileSync(join(srcDir, 'transactions/transactions.controller.ts'), 'utf8');
     const module = readFileSync(join(srcDir, 'transactions/transactions.module.ts'), 'utf8');
 
     expect(service).toMatch(/\bVisibleTransactions\b/);
-    expect(service).not.toMatch(/\bBANK_DATA_PROVIDER\b|\bBankDataProvider\b|\bRepository\b|\bInjectRepository\b/);
+    expect(service).toMatch(/\bAccountsService\b/);
+    for (const code of [service, controller]) {
+      expect(code).not.toMatch(
+        /\bBANK_DATA_PROVIDER\b|\bBankDataProvider\b|\blistAccounts\b|\bRepository\b|\bInjectRepository\b|\bDataSource\b/,
+      );
+    }
     expect(module).toMatch(/\bBankDataModule\b/);
+    expect(module).toMatch(/\bAccountsModule\b/);
     expect(module).not.toMatch(/\bTypeOrmModule\b/);
+  });
+
+  it('takes each path and the query schema from the contract', () => {
+    const controller = readFileSync(join(srcDir, 'transactions/transactions.controller.ts'), 'utf8');
+
+    expect(controller).toMatch(/@Get\(transactionsContract\.recent\.path\)/);
+    expect(controller).toMatch(/@Get\(transactionsContract\.list\.path\)/);
+    expect(controller).toMatch(/@Query\(\{ schema: transactionsContract\.list\.query \}\)/);
   });
 });

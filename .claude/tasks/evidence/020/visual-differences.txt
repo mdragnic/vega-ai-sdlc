@@ -1,0 +1,56 @@
+Task 020 visual validation, 2026-10-30. Playwright MCP (headed Chromium on Windows), fresh contexts in Europe/Belgrade,
+1440x1024 at device scale 2, the scrollbar hidden for the 1440 render (`html { scrollbar-width: none }`, the page 1440
+wide like the PNG, as tasks 013 to 019); the 1920 and 1280 renders keep the classic scrollbar (pages 1905 and 1265
+wide). Backend on the fixed test clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`),
+Vite dev server, a user signed up through the API at that clock (the demo data). No Figma calls: compared with
+docs/figma/107. Transactions.png only.
+
+Files
+- transactions-1440-2x.png: /transactions at 1440x1024, 2x (the viewport); transactions-1440-full-2x.png: the whole
+  page (2880x2320: the card to y 1128, the page to 1160).
+- Evidence only: transactions-revenue-1440-2x.png and transactions-expenses-1440-2x.png (each tab's first 10, the
+  selected tab in the All style), transactions-load-more-full-2x.png (All after one "Load More": 20 rows, Dividend after
+  Shirt, the button 32 under row 20), transactions-1920x1080-full.png and transactions-1280x1024-full.png (classic
+  scrollbar; at 1280 the page 1265 wide, the card 929, every row 72, no horizontal scroll),
+  state-long-texts-1280-2x.png and state-long-texts-1440-2x.png (a 120-character item and shop in words on row 1 and
+  with no space on row 2, `-$1,000,000,000.00` on row 3: the texts wrap inside their columns, each cell's first line
+  on the row's first line, the amount on one line; rows 288, 264, 72 high at 1280 and 216, 216, 72 at 1440),
+  state-skeleton-2x.png (the header as drawn, 10 rows of blocks on the columns, the card 920 high: a first page's),
+  state-error-2x.png ("Something went wrong." over Retry centred in the 704 card, the tabs above),
+  state-no-transactions-2x.png ("No transactions yet" centred in the 704 card), state-load-more-failed-2x.png (the 10
+  rows kept, "Something went wrong." above "Load More", focus and the ring on the button),
+  state-ring-new-row-2x.png (after a keyboard "Load More": the 2px teal ring around row 11, Dividend; the page not
+  scrolled by the move, scrollY 136 before and after), state-end-of-list-2x.png (backend clock 2022-01-09T10:00:00Z:
+  11 rows, no button, focus with the ring on Design project, the card 24 under the last row).
+
+Measured at 2x on 107 and the build (a Node PNG reader in the session scratchpad; ink as absolute 2x pixels, x from-to,
+y from-to; GTR 5's row is 107's row 1 and the build's row 6, the same texts but the date):
+- The card: white from x 608 to 2815 and from y 416 in both. 107 ends at y 1824 with 7 rows; the build at y 2256 with
+  10 (432 = 3 x 144 lower), "Load More" ending 112 above it in both.
+- The title "Recent Transaction": 612-1005, y 223-256 | 612-1004, y 223-256.
+- The tabs: the active underline y 380-383, x 608-681 in both; All 625-663 | 625-662, Revenue 740-872 | 740-870,
+  Expenses 948-1096 | 948-1094, all from y 333.
+- The header row (ink, y 476/477 to 499/506 in both): Items 682-765 | 682-763, Shop Name 1268-1443 | 1268-1443, Date
+  1771-1840 | 1773-1840, Payment Method 2149-2410 | 2151-2408, Amount 2636-2758 | 2639-2759.
+  Semibold or Bold, decided by ink density (as task 016): the build's header ink is 0.83 to 0.86 of 107's, the same
+  ratio as the tab labels, which are Semibold in both (Revenue 0.87, Expenses 0.86), and the Regular row texts (0.85 to
+  0.88); Bold would be heavier than 107. Semibold kept.
+- GTR 5's row: item 761-851 | 761-850, shop "Gadget & Gear" 1246-1466 | 1247-1465, "Credit Card" 2194-2365 | 2195-2363,
+  amount 2633-2758 ($160.00) | 2631-2758 (-$188.16), every text from y 604 in both.
+- The dividers: y 542-543 (under the header), 686-687, 830-831, 974-975, 1118-1119, 1262-1263, 1406-1407 in both (the
+  build goes on to 1550-1551, 1694-1695, 1838-1839, none under row 10); 107 #F4F4F4, the build #F3F3F3 (Gray/06).
+- "Load More": x 1520-1903 and 96 high (y 1616-1711 in 107, 2048-2143 in the build), the label's ink 1632-1792 in
+  both; its corners white at the corner pixel in both.
+
+Differences (none of them a layout defect):
+1. The demo rows against Figma's (#12): 10 rows, not 7 (US-13 criterion 4), so the card is 920 high, "Load More" 216
+   px lower and the page scrolls (1160 high at 1440x1024).
+2. The signs on the amounts, `-$266.00` and `+$179.20` (#19); 107 has none.
+3. The 2026 dates, and the header date "22 Oct, 2026" (task 011) against "May 19, 2023".
+4. Payment Methods other than Credit Card: Checking, Investment, Loan, Savings (#57).
+5. The Entertainment icon (the clapperboard) on GTR 5, not 107's gamepad (#56); the wallet on income.
+6. The initials avatar "TR" in the sidebar, not 107's photo (task 011, #38).
+7. The divider Gray/06 #F3F3F3 against 107's #F4F4F4 (one step, as expected).
+8. With a classic scrollbar every x of the content moves 15 px left of the PNG's (#101): the card 1089 wide at 1440.
+9. Text ink 1 to 2 px narrower at 2x in Chromium than in Figma's render (the header and the rows, as on earlier
+   screens).

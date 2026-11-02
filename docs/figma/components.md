@@ -18,6 +18,7 @@ Sorted by use count, highest first.
 | Expences Item † | `ExpensesItem` | `42:777` | - | 104, 104.1 (Expenses Breakdown) | 12 |
 | Item | `RecentTransactionItem` | `407:5649` | - | 104, 104.1 (Recent Transaction) | 10 |
 | chevron-right | `ChevronRight` | `14:745` | - | 104, 104.1 (View All, Previous, Next) | 8 |
+| Transaction item § | `TransactionItem` | `411:5582` | - | 107 (table rows) | 7 |
 | Account Type ¶ | `AccountType` | `410:5353` | - | 105 | 5 |
 | Header | `Header` | `411:6067` | - | 104, 104.1, 105 | 3 |
 | Nav bar | `NavBar` | `411:6442` | - | 104, 104.1, 105 | 3 |
@@ -35,6 +36,7 @@ Sorted by use count, highest first.
 † The instances are named `Item` but are 200x74, the exact size of `Expences Item`. `Item` itself is 303x88. Matched by size, not by name. Verified in task 018 on PNG 104 (no Figma call): the tiles and right arrows place each item at 200x74, 16 at the sides and 8 above the tile, in a 3x2 grid 40 and 24 apart; built as `ExpensesItem`.
 ‡ Two components share this name. Matched by exact size: Button Big 208x48 and Popup Input 488x392. `GoalPopupInput` holds `PopupInputSmall` fields (`Popup Input (small)` `416:6338`): two in 104.1 and 110.1, one in 110.2 (task 005). `AddAccountsButtonBig` was built in task 019 from PNG 105 (no Figma call): the 208x48 teal "Add Accounts", visual only (#22), in `AddAccountsCell`.
 ¶ Verified in task 019 on PNG 105 (no Figma call): each card 352x288 (on Overview's grid, narrowing with the window, #94), the type and the Bank Name with the card network logo over a Gray/06 divider, the masked number and the balance each over its label, then "Remove" (visual only, #23) and the nested `Button` "Details >" (110x36); built as `AccountType`, with `Button` as a link to Account Details (#50).
+§ 107 is a flattened screen, so this row is matched on PNG 107, not on metadata (the use count is its 7 rows). Verified in task 020 on PNG 107 and the components export `docs/figma/components/418-6433.png` (no Figma call): each row 1048x72, the 24 px category icon 8 into the row and 16 to the item (Semibold 16/24, Default Black), the shop, the date and the account type (Regular 16/24, Gray/01) centred at 33.0%, 54.5% and 77.1% of the row, the amount (Semibold 16/24, Default Black) right-aligned at its end, the Gray/06 divider the last pixel row; built as `TransactionItem`, a table row of `TransactionTable`, with the signed amount (#19) and the Payment Method as the account's type (#57).
 
 Used in 2+ screens: Expences Item, Item, chevron-right, Header, Nav bar, Mastercard, edit, Award and octicon:goal-16 (9). Only Header and Nav bar appear in 2 distinct screens (Overview and Balances) when 104 and 104.1 count as one screen.
 
@@ -51,7 +53,6 @@ Matched by look and approximate size in the PNGs (pixel size / 2). Verify with `
 | Input | `Input` | `402:5191` | 102 (Name, Email, Password), 103 (Email) | Same field style, eye icon on password |
 | Button/primary | `ButtonPrimary` | `402:5239` | 102 "Sign up", 103 "Password Reset" | 400x48 teal button |
 | Button/secondary | `ButtonSecondary` | `402:5233` | 102 "Continue with Google" | 400x48 gray button with icon |
-| Transaction item | `TransactionItem` | `411:5582` | 107 table rows | Row is about 1048x72 |
 | Bill item | `BillItem` | `411:5746` | 108 table rows | Row is about 1046x162 |
 | Expenses Breakdown | `ExpensesBreakdown` | `50:3852` | 109 category cards | Card is about 352x238 |
 | Goal Item | `GoalItem` | `413:8749` | 110 category cards | Card is about 352x104 |
@@ -99,7 +100,6 @@ Many are likely nested inside other components (see "Limits" above) or used only
 | Search (field) | `HeaderSearch` | `404:5262` | 352x48 |
 | Settings Input | `SettingsInput` | `54:2202` | 540x88 |
 | Popup Input (small) | `PopupInputSmall` | `416:6338` | 360x88 |
-| Transaction item | `TransactionItem` | `411:5582` | 1048x72 |
 | Goal Item | `GoalItem` | `413:8749` | 352x104 |
 | Bill item | `BillItem` | `411:5746` | 1046x162 |
 | Expenses Breakdown | `ExpensesBreakdown` | `50:3852` | 352x238 |
@@ -149,7 +149,7 @@ The Components page also holds one instance, `chevron-right` `418:6456`, which i
 
 ## Code-only components
 
-Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`; task 013 added `TotalBalance`, `AccountTypeSlide`, `SliderOption` and `TotalBalanceSkeleton`; task 014 added `Goals`, `GoalsSkeleton` and `SavingsGoalPopup`; task 015 added `UpcomingBill`, `UpcomingBillLogo` and `UpcomingBillSkeleton`; task 016 added `RecentTransaction` and `RecentTransactionSkeleton` (`RecentTransactionItem` has its Figma row above); task 017 added `Statistics`; task 018 added `OverviewExpensesBreakdown` and `OverviewExpensesBreakdownSkeleton` (`ExpensesItem` has its Figma row above); task 019 added `AddAccountsCell` and `AccountTypeSkeleton` (`AccountType`, `Button` and `AddAccountsButtonBig` have their Figma rows above).
+Code components with no Figma component. They are built from tokens, and their names are code names like the ones above (#36). Added in task 002; task 003 added `Avatar`, `AppLayout`, `ChevronsRight` and `EllipsisVertical`; task 004 added `Section`, `Card`, `MenuTab`, `CategoryIcon`, `DateBox`, `AmountBox`, `Skeleton` and `DataState`; task 005 added `Popup` and `Dropdown`; task 006 added `ComparisonBarChart`, `ComparisonBarChartSkeleton`, `ChartLegend` and `TargetVsAchievementMeter`; task 013 added `TotalBalance`, `AccountTypeSlide`, `SliderOption` and `TotalBalanceSkeleton`; task 014 added `Goals`, `GoalsSkeleton` and `SavingsGoalPopup`; task 015 added `UpcomingBill`, `UpcomingBillLogo` and `UpcomingBillSkeleton`; task 016 added `RecentTransaction` and `RecentTransactionSkeleton` (`RecentTransactionItem` has its Figma row above); task 017 added `Statistics`; task 018 added `OverviewExpensesBreakdown` and `OverviewExpensesBreakdownSkeleton` (`ExpensesItem` has its Figma row above); task 019 added `AddAccountsCell` and `AccountTypeSkeleton` (`AccountType`, `Button` and `AddAccountsButtonBig` have their Figma rows above); task 020 added `TransactionTable` and `TransactionTableSkeleton` (`TransactionItem` has its Figma row above).
 
 | Code name | Purpose | Decision |
 |-----------|---------|----------|
@@ -194,6 +194,8 @@ Code components with no Figma component. They are built from tokens, and their n
 | `OverviewExpensesBreakdownSkeleton` | The loading skeleton of the Expenses Breakdown card for `DataState`: six items on the same grid and lines, each a block in the tile's place, three lines for the name, the total and the percentage, and a block in the right arrow's place. Not designed | #6, #105 a |
 | `AddAccountsCell` | The last cell of the Balances grid (Figma frame `410:5516`, no component): a white `Card`, 288 high at least, with `AddAccountsButtonBig` and "Edit Accounts" (Medium 16/24, Gray/03) 16 under it, centred both ways; it stretches with its row. Visual only: no button or link, no Tab stop, the default cursor, nothing on a click, the whole cell hidden from assistive technology | #22, #24 |
 | `AccountTypeSkeleton` | The loading skeleton of one Balances card for `DataState`, on `AccountType`'s layout at its 288: lines for the type and the Bank Name over the divider, two lines each for the number and the balance with their labels, a line for "Remove" and a block in the "Details" box. Three of them fill the grid's first row while the accounts load. Not designed | #6, #105 |
+| `TransactionTable` | The Transactions table (107; the rows Figma `Transaction item`, no table component): a `table` labelled by the selected tab, the header row Items, Shop Name, Date, Payment Method and Amount (`th scope="col"`, Semibold 16/24, the Gray/06 divider 16 under it), one `TransactionItem` per row of every page in the order sent, the columns in 107's proportions (Items 250, Shop Name 192, Date 258, Payment Method 216, Amount 132 of 1048) at any width, 28 inside the card. Under it, while the last page has a `nextCursor`, "Load More" (`ButtonPrimary` 192 wide, 32 under the last row and 32 above the card's padding) with the loading pattern while the next page loads; hidden after the last page. When the rows arrive, focus moves to the first new row (`tabindex="-1"`, the #87 ring on keyboard focus only); a failed Load More shows "Something went wrong." above the button in a polite live region. Sorts, filters and calculates nothing | #6, #19, #27, #74, #87, #88, #94, #106, #111 a, #115 b, #117 |
+| `TransactionTableSkeleton` | The loading skeleton of the Transactions card for `DataState`, on the table's layout: the header row as drawn, 10 rows on the table's columns, each a block in the icon's place and a line per cell aligned as the cells, the dividers between them, and a block in "Load More"'s place, so a first page does not move the card. Not designed | #6, #27 |
 
 ## Totals
 

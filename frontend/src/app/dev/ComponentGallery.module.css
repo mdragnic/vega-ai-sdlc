@@ -304,6 +304,25 @@
   margin: 0 auto;
 }
 
+/* The Transactions card of 107 at 1440: the content width, under a label that names the table (task 020). */
+.transactionsSample {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-small-gap);
+  width: calc(
+    var(--size-card-width) + var(--size-card-width) + var(--size-card-width) + var(--space-card-gap) +
+      var(--space-card-gap)
+  );
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.transactionsLabel {
+  margin: 0;
+  color: var(--color-gray-02);
+  font: var(--font-regular-14-20);
+}
+
 /* The Recent Transaction card of Overview: inset 24, a column the tabs and the panel share (task 016). */
 .recentCard {
   display: flex;

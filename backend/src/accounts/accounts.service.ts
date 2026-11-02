@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AccountsResponse, Money } from '@finebank/shared';
+import type { AccountsResponse, AccountType, Money } from '@finebank/shared';
 
 import { BANK_DATA_PROVIDER, type BankDataProvider } from '../bank-data/bank-data-provider.js';
 import { VisibleTransactions } from '../bank-data/visible-transactions.js';
@@ -61,5 +61,14 @@ export class AccountsService {
         balance: usd(balances.get(account.id)!),
       })),
     };
+  }
+
+  /**
+   * Each of the user's accounts' type by its ID: the Payment Method of the account's transactions, read on every call,
+   * so a changed type shows on the next request (#57, #77).
+   */
+  async accountTypes(userId: number): Promise<Map<number, AccountType>> {
+    const accounts = await this.bankData.listAccounts(userId);
+    return new Map(accounts.map((account) => [account.id, account.accountType]));
   }
 }

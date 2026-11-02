@@ -31,6 +31,9 @@ const cells = (table: HTMLElement, column: number) =>
     .slice(1)
     .map((row) => row.children[column]!.textContent);
 
+/** The body rows of a table in `element`: the header row left out. */
+const bodyRows = (element: HTMLElement) => within(within(element).getAllByRole('rowgroup')[1]!).getAllByRole('row');
+
 /** The visible lines of an Expenses Breakdown item: its paragraphs' text. */
 const itemLines = (element: HTMLElement) => [...element.querySelectorAll('p')].map((line) => line.textContent);
 
@@ -405,6 +408,43 @@ describe('component gallery', () => {
     );
     // Five rows: a tile block, two lines on the left and two on the right.
     expect(figure('RecentTransactionSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(25);
+  });
+
+  // Task 020 T18: the Transactions table, its rows and its skeleton, on sample data with no network.
+  it('shows the Transactions samples: the table, Load More loading, failed and gone, the rows and the skeleton', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    const first = figure('TransactionTable', 'A first page (107): Load More adds a last page');
+    expect(within(first).getByRole('table')).toHaveAccessibleName('All');
+    expect(bodyRows(first)).toHaveLength(10);
+    expect(bodyRows(first)[0]).toHaveTextContent('JeansDenim House22 Oct, 2026Checking-$266.00');
+    expect(bodyRows(first)[6]).toHaveTextContent('DividendAB Bank Ltd15 Oct, 2026Investment+$84.00');
+    await user.click(within(first).getByRole('button', { name: 'Load More' }));
+    expect(bodyRows(first)).toHaveLength(20);
+    expect(within(first).queryByRole('button', { name: 'Load More' })).toBeNull();
+
+    const loading = within(figure('TransactionTable', 'Load More while the next page loads')).getByRole('button', {
+      name: 'Load More',
+    });
+    expect(loading).toHaveAttribute('aria-busy', 'true');
+    expect(within(figure('TransactionTable', 'A failed Load More (#117 b)')).getByRole('status')).toHaveTextContent(
+      'Something went wrong.',
+    );
+    const end = figure('TransactionTable', 'The end of the list: no Load More');
+    expect(bodyRows(end)).toHaveLength(10);
+    expect(within(end).queryByRole('button')).toBeNull();
+
+    const itemRow = (name: string) => bodyRows(figure('TransactionItem', name))[0]!;
+    expect(itemRow('Expense (107)')).toHaveTextContent('JeansDenim House22 Oct, 2026Checking-$266.00');
+    expect(within(itemRow('Income: the wallet')).getByRole('img')).toHaveAccessibleName('Income');
+    expect(
+      itemRow('A long item, shop and amount: the texts wrap, the amount stays on one line (#115 b)'),
+    ).toHaveTextContent('-$1,000,000,000.00');
+    // The header labels, then 10 rows of an icon block and five lines, and the Load More block.
+    const skeleton = figure('TransactionTableSkeleton', 'Loading');
+    expect(within(skeleton).getByText('Payment Method')).toBeInTheDocument();
+    expect(skeleton.querySelectorAll('span')).toHaveLength(5 + 10 * 6 + 1);
   });
 
   // Task 018 T15: the Expenses Breakdown item, card and skeleton, on sample data with no network.

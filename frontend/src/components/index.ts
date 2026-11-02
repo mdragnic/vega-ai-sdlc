@@ -53,6 +53,9 @@ export { TargetVsAchievementMeter } from './TargetVsAchievementMeter/TargetVsAch
 export { TextDivider } from './TextDivider/TextDivider';
 export { TotalBalance } from './TotalBalance/TotalBalance';
 export { TotalBalanceSkeleton } from './TotalBalanceSkeleton/TotalBalanceSkeleton';
+export { TransactionItem } from './TransactionItem/TransactionItem';
+export { TransactionTable } from './TransactionTable/TransactionTable';
+export { TransactionTableSkeleton } from './TransactionTableSkeleton/TransactionTableSkeleton';
 export { UpcomingBill } from './UpcomingBill/UpcomingBill';
 export { UpcomingBillLogo } from './UpcomingBillLogo/UpcomingBillLogo';
 export { UpcomingBillSkeleton } from './UpcomingBillSkeleton/UpcomingBillSkeleton';

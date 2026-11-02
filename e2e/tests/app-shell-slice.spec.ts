@@ -20,6 +20,7 @@ const overviewSections = [
 const builtSections: Partial<Record<string, string[]>> = {
   '/overview': overviewSections,
   '/balances': ['Balances'],
+  '/transactions': ['Recent Transaction'],
 };
 
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' });
@@ -86,8 +87,9 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     await expect(activeItem(page)).toHaveText(item);
     await expect(header(page).getByText(/^Hello /)).toHaveCount(path === '/overview' ? 1 : 0);
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
-    // Overview holds its six sections (task 013) and Balances its one with the cards' logos (task 019); the other
-    // screens are empty until their tasks, Account Details (`/balances/abc`) until task 021.
+    // Overview holds its six sections (task 013), Balances its one with the cards' logos (task 019) and Transactions
+    // its one (task 020); the other screens are empty until their tasks, Account Details (`/balances/abc`) until
+    // task 021.
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(pageSections);
     if (path === '/balances') {
       await expect(page.getByRole('main').getByRole('img')).toHaveCount(2);
@@ -454,7 +456,8 @@ test('keeps Login centered from 1280 wide and scrolls sideways below it', async 
 // T26: the header and the content scroll, the sidebar stays; the gutter only on app pages (AC18, #5, #83, #100).
 test('scrolls the header and the content while the sidebar stays in place', async ({ page }) => {
   await signUp(page.request);
-  await openSignedIn(page, '/transactions');
+  // An empty page (Bills, until task 023), with tall content injected.
+  await openSignedIn(page, '/bills');
   await injectTallContent(page);
   const sidebarParts = [
     page.getByRole('img', { name: 'FINEbank.IO' }),
@@ -495,7 +498,8 @@ test('reserves the scrollbar gutter on app pages only', async ({ page }) => {
 // T27: another page opens at the top; Back and Forward restore the position (AC19, #100 d).
 test('opens another page at the top and restores the position on Back and Forward', async ({ page }) => {
   await signUp(page.request);
-  await openSignedIn(page, '/transactions');
+  // Bills and Goals are empty until tasks 023 and 025 (Transactions has its own content since task 020).
+  await openSignedIn(page, '/bills');
   // The empty screens do not scroll yet. React leaves a node it did not create in place, so this block stays in
   // the content area on every page, inside the layout, where the sidebar stays in place.
   await injectTallContent(page);
@@ -503,18 +507,18 @@ test('opens another page at the top and restores the position on Back and Forwar
 
   await page.evaluate(() => window.scrollTo(0, 800));
   await expect.poll(scrollY).toBe(800);
-  await sidebar(page).getByRole('link', { name: 'Bills' }).click();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/bills`);
+  await sidebar(page).getByRole('link', { name: 'Goals' }).click();
+  await expect(page).toHaveURL(`${FRONTEND_URL}/goals`);
   await expect.poll(scrollY).toBe(0);
 
   await page.evaluate(() => window.scrollTo(0, 300));
   await expect.poll(scrollY).toBe(300);
   await page.goBack();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/transactions`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}/bills`);
   await expect.poll(scrollY).toBe(800);
 
   await page.goForward();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/bills`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}/goals`);
   await expect.poll(scrollY).toBe(300);
 });
 

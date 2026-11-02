@@ -155,6 +155,14 @@
   --space-expenses-item-change-gap: 8px;
   --space-account-card-divider-gap: 12px;
   --space-account-card-group-gap: 16px;
+  --space-transactions-tabs-gap: 24px;
+  --space-transactions-card-gap: 16px;
+  --space-transaction-table-inset-x: 28px;
+  --space-transaction-cell-padding-x: 8px;
+  --space-transaction-icon-gap: 16px;
+  --space-transaction-header-gap: 16px;
+  --space-transaction-row-padding-y: 24px;
+  --space-transaction-load-more-gap: 32px;
   --space-account-card-label-gap: 4px;
   --space-account-card-bottom-gap: 24px;
   --space-account-card-logo-gap: 4px;
@@ -225,6 +233,13 @@
   --size-account-card-height: 288px;
   --size-button-details-height: 36px;
   --size-add-accounts-button-width: 208px;
+  --size-transaction-load-more-width: 192px;
+  --size-transactions-card-min-height: 704px;
+  --size-transaction-column-items: 23.855%;
+  --size-transaction-column-shop: 18.3206%;
+  --size-transaction-column-date: 24.6183%;
+  --size-transaction-column-method: 20.6107%;
+  --size-transaction-column-amount: 12.5954%;
 
   /* Radius */
   --radius-input: 8px;

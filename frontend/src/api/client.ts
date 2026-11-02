@@ -1,4 +1,4 @@
-import { type ContractEntry, type ErrorResponse, errorResponseSchema } from '@finebank/shared';
+import { type ContractEntry, type ErrorResponse, errorResponseSchema, type QuerySchema } from '@finebank/shared';
 import type { z } from 'zod';
 
 /**
@@ -56,12 +56,25 @@ export function browserTimeZone(): string {
 }
 
 type BodyArgs<Req> = Req extends z.ZodType ? [body: z.input<Req>] : [];
+type QueryArgs<Query> = Query extends z.ZodType ? [query: z.input<Query>] : [];
 
-/** Calls one contract entry through the same origin (`/api`, proxied to the backend in dev, #73). */
-export async function apiRequest<Req extends z.ZodType | undefined, Res extends z.ZodType>(
-  entry: ContractEntry<Req, Res>,
-  ...[body]: BodyArgs<Req>
-): Promise<z.output<Res>> {
+/**
+ * Calls one contract entry through the same origin (`/api`, proxied to the backend in dev, #73): its body, then its
+ * query, for an entry that has them. The query is parsed with the entry's schema before anything is sent, so the
+ * frontend never sends what the backend rejects (#74); absent values are left out.
+ */
+export async function apiRequest<
+  Req extends z.ZodType | undefined,
+  Res extends z.ZodType,
+  Query extends QuerySchema | undefined = undefined,
+>(entry: ContractEntry<Req, Res, Query>, ...args: [...BodyArgs<Req>, ...QueryArgs<Query>]): Promise<z.output<Res>> {
+  const [body, query] = entry.request ? args : [undefined, ...args];
+  const url = new URL(`/api${entry.path}`, window.location.origin);
+  if (entry.query) {
+    for (const [name, value] of Object.entries(entry.query.parse(query))) {
+      if (value !== undefined) url.searchParams.set(name, value);
+    }
+  }
   const headers: Record<string, string> = { Accept: 'application/json', 'X-Time-Zone': browserTimeZone() };
   const init: RequestInit = { method: entry.method, headers, credentials: 'same-origin' };
   if (entry.request) {
@@ -69,7 +82,7 @@ export async function apiRequest<Req extends z.ZodType | undefined, Res extends 
     init.body = JSON.stringify(body);
   }
 
-  const response = await fetch(new URL(`/api${entry.path}`, window.location.origin), init);
+  const response = await fetch(url, init);
   const json = await readJson(response);
 
   if (!response.ok) {

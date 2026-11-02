@@ -1,0 +1,64 @@
+/* 107: a row is 72 high, 24 above and below its tallest cell's first 24 px line; every cell's text starts on that line
+   (top-aligned where a cell wraps, #111 a). Each cell keeps 8 on both sides, so two columns' texts stay 16 apart. */
+.row > td {
+  padding: var(--space-transaction-row-padding-y) var(--space-transaction-cell-padding-x);
+  vertical-align: top;
+}
+
+/* 107: the Gray/06 divider is the last pixel row of every row but the last, so the row stays 72 high. Drawn under
+   each cell, across the row's whole width. */
+.divided > td {
+  padding-bottom: calc(var(--space-transaction-row-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* Keyboard focus (#87): the first row a "Load More" added, focused by script (#117 a); none after a click. */
+.row:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* The item, the shop, the date and the Payment Method wrap inside their columns: a long word breaks, with a hyphen
+   where the browser can hyphenate (#115 b). */
+.items,
+.text {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 107 "GTR 5": the 24 px icon 8 into the row, 16 to the item, the icon at the top where the item wraps. */
+.itemCell {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-transaction-icon-gap);
+}
+
+/* 107 "GTR 5": Default Black, Semibold 16/24. */
+.item {
+  min-width: 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+/* 107 "Gadget & Gear", "17 May, 2023", "Credit Card": Gray/01, Regular 16/24, centred in their columns. */
+.text {
+  color: var(--color-gray-01);
+  font: var(--font-regular-16-24);
+  text-align: center;
+}
+
+/* 107 "$160.00": Default Black, Semibold 16/24, for income and expenses alike (#19), right-aligned at the row's end and
+   on one line: its column grows where it must, the others give way. */
+.row > .amount {
+  padding-right: 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  text-align: right;
+  white-space: nowrap;
+}

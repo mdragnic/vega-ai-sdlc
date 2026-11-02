@@ -1,0 +1,28 @@
+/* 107: the tabs 24 under the title's line box, where the section's own gap is 16. Padding, since a margin would
+   collapse into the title row's. */
+.content {
+  display: flex;
+  flex-direction: column;
+  padding-top: calc(var(--space-transactions-tabs-gap) - var(--space-section-title-gap-lg));
+}
+
+/* 107: the white card 16 under the tabs, across the content width (#94). */
+.panel {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-transactions-card-gap);
+}
+
+/* Keyboard focus (#87, #112): none after a click in the panel. */
+.panel:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* At least 107's height in every state: the error and the empty message centred in it (#6), a short list at its top.
+   A flex column, so DataState's states take its room. */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-transactions-card-min-height);
+}

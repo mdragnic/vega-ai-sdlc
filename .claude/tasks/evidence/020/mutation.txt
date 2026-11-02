@@ -1,0 +1,48 @@
+Task 020, validation step 4: the key tests fail when the code is broken on purpose, 2026-10-30.
+
+Method (as the task 016 to 019 gates): new files intent-to-add (`git add -N`); before each mutation the SHA-256 of
+`git diff HEAD` plus `git status --short` recorded and the file backed up in the session scratchpad; one mutation (an
+exact text replacement, applied only when it matched once); the named tests run; the file restored; the hash checked.
+Every restore matched (hash a74d0634...25a0 before and after each). Unit tests with Vitest (backend on the SQLite test
+database with seeded users, frontend MSW); e2e with `npx playwright test --grep` in e2e/ (the backend rebuilt from src by
+`start:e2e`, the frontend served from src by Vite). Every mutation failed its named tests at the first run: no rework.
+
+1. Offset paging: TransactionsService.list reads page n as the first n x 10 rows and keeps the last 10, the cursor as
+   the page number.
+   backend T3: 3 failed of 3 ("continues after Shirt when a transaction is added today between the pages ...", "continues
+   with Dividend when Shirt, page 1's last row, is deleted ...", "continues with Dividend when a row is added at Shirt's
+   instant ..."): page 2 repeats Shirt or skips Dividend.
+   e2e T20 "continues "Load More" from the cursor after the backend clock moves a day on ...": failed (the rows differ:
+   Biriyani of 23 Oct on top shifts page 2, which repeats Shirt).
+2. The tie at the page boundary, in the provider's cursor condition.
+   a. `t.id < :afterId` as `<=`: 9 failed of 42 (T2 "continues All from page 1's cursor: Dividend after Shirt ...",
+      the three "pages ... to its end at 2022-03-01" cases [page lengths 10 x 8, 9 against 10 x 8, 1], the 2022-01-09
+      end, two of T3, T4's page 2, T7 "answers page 2 for page 1's cursor"). e2e T19: failed.
+   b. The instant alone (`t.occurredAt < :afterAt`): 10 failed of 42 (page 2 starts with Parking: Dividend skipped;
+      the 2022-01-09 page 2 empty; T6 found no Dividend). e2e T19: failed.
+3. The today filter: the service reads `BANK_DATA_PROVIDER.listTransactions` with the same filter and no cap.
+   30 failed of 60 in transactions-list-service, transactions-list, transactions and bank-data-source: T9 "reads
+   transactions only through VisibleTransactions and account types through AccountsService, never the provider" and
+   bank-data-source "uses listTransactions only in bank-data/, demo/ and its allowed files"; T2 (every page case), T4
+   (all three), T5 (all five clocks), T6, T7 (every 200 case, rows dated after today on top), T8.
+4. Another user's rows.
+   a. `visibleTransactions.list(userId - 1, ...)` in the service: 27 failed of 42, among them T8's three ("answers each
+      user from their own rows ...", "ignores a userId or an accountId in the query ...", "answers a cursor made from
+      another user's list with the requester's own rows ...") and T7's 200 cases.
+   b. The provider's listTransactions without its user filter (`.where('1 = 1')`): 26 failed of 42, T8's three among
+      them. (The service's own guard, a 500 for a row whose account is not the user's, adds to the failures; the page
+      tests also fail on their rows: every user's Jeans first.)
+5. One Payment Method for every row (the first account's type): 13 failed of 42: T6 "is each row's account type:
+   Checking, Credit Card, Investment and Loan" and "follows a changed account type ...", T2's page cases, T7's first.
+6. "Load More" kept at the end (`hasMore = true`): frontend 4 failed of 42: T12 "hides "Load More" when the last page
+   arrives ...", T14 "shows 3 rows with no cursor and no "Load More"" and "... exactly 10 rows ...", T16 "tabs from the
+   selected tab to the panel and out when there is no "Load More"". e2e T21: failed (the button still there).
+7. Focus left on the button when the rows arrive (#117 a; the focus call removed): frontend 3 failed of 42: T12 "moves
+   focus to the first new row ...", "moves focus the same way after a click", "hides "Load More" when the last page
+   arrives, focus on its first row ...". e2e T21 and T26: failed ("toBeFocused" on the new row).
+8. Every cell on one line (`white-space: nowrap` on every cell): e2e T25 "wraps a 120-character item and shop ..." at
+   1440 and at 1280: both failed ("row 1 part 2 inside the card", "row 1 part 1 inside the card").
+
+Also, while building (before step 4), a StrictMode test and a mutation for the hook's cleanup: the first page was asked
+for twice under StrictMode (the cleanup cancelled it); fixed, and "drops a Load More still running when the tab is left"
+was checked to fail without the cancel (1 failed of 1), the file restored.
