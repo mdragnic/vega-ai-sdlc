@@ -1,4 +1,10 @@
-import { type ContractEntry, type ErrorResponse, errorResponseSchema, type QuerySchema } from '@finebank/shared';
+import {
+  type ContractEntry,
+  type ErrorResponse,
+  errorResponseSchema,
+  type ParamsSchema,
+  type QuerySchema,
+} from '@finebank/shared';
 import type { z } from 'zod';
 
 /**
@@ -55,21 +61,47 @@ export function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
+type ParamsArgs<Params> = Params extends z.ZodType ? [params: z.input<Params>] : [];
 type BodyArgs<Req> = Req extends z.ZodType ? [body: z.input<Req>] : [];
 type QueryArgs<Query> = Query extends z.ZodType ? [query: z.input<Query>] : [];
 
 /**
- * Calls one contract entry through the same origin (`/api`, proxied to the backend in dev, #73): its body, then its
- * query, for an entry that has them. The query is parsed with the entry's schema before anything is sent, so the
- * frontend never sends what the backend rejects (#74); absent values are left out.
+ * The entry's path with each `:name` replaced by its parameter, parsed with the entry's params schema first and
+ * encoded (task 021), so a value stays inside its one segment: a slash, `?` or `#` is encoded, and `.` and `..`, which
+ * encoding leaves as they are and a URL resolves, are refused whatever the schema allows. Throws the schema's error, or
+ * that refusal, before anything is sent.
+ */
+function pathWith(entry: ContractEntry, params: unknown): string {
+  if (!entry.params) return entry.path;
+  let path: string = entry.path;
+  for (const [name, value] of Object.entries(entry.params.parse(params))) {
+    const segment = encodeURIComponent(String(value));
+    if (segment === '.' || segment === '..') throw new TypeError(`The path parameter ${name} cannot be ${segment}`);
+    path = path.replace(`:${name}`, segment);
+  }
+  return path;
+}
+
+/**
+ * Calls one contract entry through the same origin (`/api`, proxied to the backend in dev, #73): its path parameters,
+ * its body, then its query, for an entry that has them. The parameters and the query are parsed with the entry's
+ * schemas before anything is sent, so the frontend never sends what the backend rejects (#74); absent query values are
+ * left out.
  */
 export async function apiRequest<
   Req extends z.ZodType | undefined,
   Res extends z.ZodType,
   Query extends QuerySchema | undefined = undefined,
->(entry: ContractEntry<Req, Res, Query>, ...args: [...BodyArgs<Req>, ...QueryArgs<Query>]): Promise<z.output<Res>> {
-  const [body, query] = entry.request ? args : [undefined, ...args];
-  const url = new URL(`/api${entry.path}`, window.location.origin);
+  Params extends ParamsSchema | undefined = undefined,
+>(
+  entry: ContractEntry<Req, Res, Query, Params>,
+  ...args: [...ParamsArgs<Params>, ...BodyArgs<Req>, ...QueryArgs<Query>]
+): Promise<z.output<Res>> {
+  const rest: unknown[] = [...args];
+  const params = entry.params ? rest.shift() : undefined;
+  const body = entry.request ? rest.shift() : undefined;
+  const [query] = rest;
+  const url = new URL(`/api${pathWith(entry, params)}`, window.location.origin);
   if (entry.query) {
     for (const [name, value] of Object.entries(entry.query.parse(query))) {
       if (value !== undefined) url.searchParams.set(name, value);

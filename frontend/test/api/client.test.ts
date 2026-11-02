@@ -1,4 +1,4 @@
-import { type ContractEntry, type ErrorResponse, transactionsContract } from '@finebank/shared';
+import { accountsContract, type ContractEntry, type ErrorResponse, transactionsContract } from '@finebank/shared';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -232,6 +232,146 @@ describe('apiRequest with a query', () => {
 
     expect(urls).toHaveLength(1);
     expect(new URL(urls[0]!).search).toBe('');
+    server.events.removeAllListeners();
+  });
+});
+
+// Task 021 T14, AC12 and AC13: an entry with path parameters parses them with the entry's params schema before
+// anything is sent, and puts each into the path encoded, so a crafted ID cannot reach another API path (#74).
+describe('apiRequest with path parameters', () => {
+  /** Every URL a probe receives, as path and search, and the zone it carries. */
+  const received: string[] = [];
+  const zones: (string | null)[] = [];
+  const record = (request: Request) => {
+    const url = new URL(request.url);
+    received.push(`${url.pathname}${url.search}`);
+    zones.push(request.headers.get('X-Time-Zone'));
+  };
+  const answerDetails = () =>
+    http.get('*/api/accounts/:accountId', ({ request }) => {
+      record(request);
+      return HttpResponse.json({
+        accountType: 'checking',
+        bankName: 'AB Bank Ltd',
+        branchName: 'Park Street Branch',
+        maskedNumber: '**** **** **** 7310',
+        balance: { cents: 3_336_248, currency: 'USD' },
+      });
+    });
+  const answerHistory = () =>
+    http.get('*/api/accounts/:accountId/transactions', ({ request }) => {
+      record(request);
+      return HttpResponse.json({ transactions: [], nextCursor: null });
+    });
+
+  afterEach(() => {
+    received.length = 0;
+    zones.length = 0;
+  });
+
+  it('puts the account ID into the details path', async () => {
+    mockBrowserTimeZone('Europe/Belgrade');
+    server.use(answerDetails());
+
+    const details = await apiRequest(accountsContract.details, { accountId: '42' });
+
+    expect(details.bankName).toBe('AB Bank Ltd');
+    expect(received).toEqual(['/api/accounts/42']);
+    expect(zones).toEqual(['Europe/Belgrade']);
+  });
+
+  it('puts the account ID into the history path, then the cursor into the query', async () => {
+    server.use(answerHistory());
+
+    await apiRequest(transactionsContract.history, { accountId: '42' }, {});
+    await apiRequest(
+      transactionsContract.history,
+      { accountId: '42' },
+      { cursor: 'MjAyNi0xMC0wNFQxMjowMDowMC4wMDBaXzEyOTA' },
+    );
+
+    expect(received).toEqual([
+      '/api/accounts/42/transactions',
+      '/api/accounts/42/transactions?cursor=MjAyNi0xMC0wNFQxMjowMDowMC4wMDBaXzEyOTA',
+    ]);
+  });
+
+  it.each([
+    '../transactions',
+    '1/2',
+    '2?tab=all',
+    '2#x',
+    'abc',
+    '01',
+    '1e3',
+    '-1',
+    '1.0',
+    '12abc',
+    ' 7',
+    '',
+    '9007199254740992',
+  ])('rejects the account ID %j before any request', async (accountId) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(apiRequest(accountsContract.details, { accountId })).rejects.toBeInstanceOf(z.ZodError);
+    await expect(apiRequest(transactionsContract.history, { accountId }, {})).rejects.toBeInstanceOf(z.ZodError);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects missing params before any request', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(apiRequest(accountsContract.details, {} as { accountId: string })).rejects.toBeInstanceOf(z.ZodError);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('encodes each parameter into its segment', async () => {
+    const urls: string[] = [];
+    server.events.on('request:start', ({ request }) => urls.push(new URL(request.url).pathname));
+    server.use(http.get('*/api/probe/:name/items', () => HttpResponse.json({})));
+    const probe = {
+      method: 'GET',
+      path: '/probe/:name/items',
+      params: z.object({ name: z.string() }),
+      request: undefined,
+      response: z.object({}),
+    } satisfies ContractEntry;
+
+    await apiRequest(probe, { name: '../a b/c?d' });
+
+    expect(urls).toEqual(['/api/probe/..%2Fa%20b%2Fc%3Fd/items']);
+    server.events.removeAllListeners();
+  });
+
+  // Code review: encodeURIComponent leaves `.` and `..` as they are, and a URL resolves them, so a schema that allowed
+  // them would let a value move up the path; they are refused whatever the schema allows.
+  it.each(['.', '..'])(
+    'rejects a parameter that is %j before any request, whatever its schema allows',
+    async (name) => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+      const probe = {
+        method: 'GET',
+        path: '/probe/:name/items',
+        params: z.object({ name: z.string() }),
+        request: undefined,
+        response: z.object({}),
+      } satisfies ContractEntry;
+
+      await expect(apiRequest(probe, { name })).rejects.toThrow(/path parameter/);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    },
+  );
+
+  it('calls entries without params as before', async () => {
+    const urls: string[] = [];
+    server.events.on('request:start', ({ request }) => urls.push(new URL(request.url).pathname));
+
+    await apiRequest(echo, { name: 'Marko' });
+
+    expect(urls).toEqual(['/api/probe/echo']);
     server.events.removeAllListeners();
   });
 });

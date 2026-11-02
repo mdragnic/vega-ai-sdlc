@@ -255,9 +255,14 @@ describe('GET /api/accounts', () => {
     expect(accountsResponseSchema.parse(response.body).accounts.map((account) => account.id)).toEqual(ownIds);
   });
 
-  it('has no route that takes a user', async () => {
-    const other = await signUp(app);
-    const otherId = (await userIdOf(db, other.user.email))!;
+  // Task 021: a user's ID in the account path is an account ID, which answers the one 404 unless it is one of the
+  // requester's own accounts; no route takes a user.
+  it('answers the one 404 for a user’s ID in the account path, which is not one of the requester’s accounts', async () => {
+    const ownIds = (await financeRows(db, userId)).accounts.map((account) => Number(account.id));
+    let otherId: number;
+    do {
+      otherId = (await userIdOf(db, (await signUp(app)).user.email))!;
+    } while (ownIds.includes(otherId));
 
     const response = await request(app.getHttpServer())
       .get(`${accountsPath}/${otherId}`)
@@ -265,6 +270,7 @@ describe('GET /api/accounts', () => {
       .set('X-Time-Zone', BELGRADE);
 
     expect(response.status).toBe(404);
+    expect(response.text).toBe('{"message":"Account not found"}');
   });
 });
 
@@ -289,6 +295,19 @@ describe('accounts sources', () => {
 
     expect(files).toContain('accounts/accounts.controller.ts');
     expect(offenders).toEqual([]);
+  });
+
+  // Task 021 T13, AC19: the details path and its empty-segment form from the contract, the account ID parsed by
+  // `accountIdFrom`, never the validation pipe (which would answer 400 for a non-numeric ID).
+  it('takes the details path from the contract and parses the ID itself', () => {
+    const controller = readFileSync(join(srcDir, 'accounts/accounts.controller.ts'), 'utf8');
+
+    expect(controller).toMatch(
+      /@Get\(\[accountsContract\.details\.path, emptyAccountIdPath\(accountsContract\.details\.path\)\]\)/,
+    );
+    expect(controller).toMatch(/@Param\('accountId'\) rawAccountId: string \| undefined/);
+    expect(controller).toMatch(/accountIdFrom\(rawAccountId\)/);
+    expect(controller).not.toMatch(/accountParamsSchema|details\.params|ParseIntPipe/);
   });
 
   it.each(["@Get('/accounts')", "@Controller('accounts')", 'const path = `/accounts`;'])('flags %s', (code) => {

@@ -1,0 +1,23 @@
+/* The message above the button, both centred. */
+.loadMore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Not designed (#117 b): DataState's error text, above the button; takes no room while empty. */
+.error {
+  margin: 0;
+  color: var(--color-secondary);
+  font: var(--font-regular-14-20);
+  text-align: center;
+}
+
+.error:not(:empty) {
+  margin-bottom: var(--space-form-small-gap);
+}
+
+/* 107 and 106: the `Button/primary` look, 192 wide. */
+.button {
+  width: var(--size-transaction-load-more-width);
+}

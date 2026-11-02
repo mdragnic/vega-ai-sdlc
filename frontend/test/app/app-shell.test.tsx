@@ -90,7 +90,7 @@ const refocusWindow = () =>
 const activeItem: Record<(typeof appPaths)[number], string> = {
   '/overview': 'Overview',
   '/balances': 'Balances',
-  '/balances/12': 'Balances',
+  '/balances/2': 'Balances',
   '/transactions': 'Transactions',
   '/bills': 'Bills',
   '/expenses': 'Expenses',
@@ -110,12 +110,13 @@ const overviewSections = [
 ];
 
 /**
- * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020); the others
- * are empty.
+ * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020; Account
+ * Details, task 021); the others are empty.
  */
 const builtSections: Partial<Record<(typeof appPaths)[number], string[]>> = {
   '/overview': overviewSections,
   '/balances': ['Balances'],
+  '/balances/2': ['Account Details', 'Transactions History'],
   '/transactions': ['Recent Transaction'],
 };
 
@@ -139,8 +140,8 @@ describe('the shell on each app path', () => {
     expect(currentLinks()).toEqual([activeItem[path]]);
     // The greeting on Overview only.
     expect(screen.queryByText(/Hello/)?.textContent ?? null).toBe(path === '/overview' ? 'Hello Tanzir' : null);
-    // Overview holds its six sections (task 013), Balances its one (task 019) and Transactions its one (task 020); the
-    // other screens are empty until their tasks, Account Details (`/balances/12`) until task 021.
+    // Overview holds its six sections (task 013), Balances its one (task 019), Transactions its one (task 020) and
+    // Account Details its two (task 021); the other screens are empty until their tasks.
     const main = screen.getByRole('main');
     expect(
       within(main)

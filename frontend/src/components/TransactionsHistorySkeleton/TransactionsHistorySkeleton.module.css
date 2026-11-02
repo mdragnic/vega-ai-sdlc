@@ -1,0 +1,87 @@
+/* Not designed (#6): existing and task 021 tokens only, on the history table's layout (TransactionsHistoryTable): the
+   same insets, column proportions, the header line and its divider, rows of 56 and the "Load More" place: 748 high. */
+.body {
+  padding: var(--space-history-header-top) var(--space-history-inset-x) 0;
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns:
+    var(--size-history-column-date) var(--size-history-column-status) var(--size-history-column-type)
+    var(--size-history-column-receipt) var(--size-history-column-amount);
+}
+
+/* The header as drawn: the labels in the header style, the Gray/06 divider its last pixel row. */
+.header {
+  padding-bottom: calc(var(--space-transaction-header-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+.headerCell {
+  padding: 0 var(--space-transaction-cell-padding-x);
+  text-align: center;
+}
+
+.headerCell:first-child {
+  padding-left: 0;
+  text-align: left;
+}
+
+.headerCell:last-child {
+  padding-right: 0;
+  text-align: right;
+}
+
+.row {
+  padding: var(--space-history-row-padding-y) 0;
+}
+
+.divided {
+  padding-bottom: calc(var(--space-history-row-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* Each cell one 24 px line, its placeholder centred in it, aligned as the cell's text. */
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: var(--line-height-24);
+  padding: 0 var(--space-transaction-cell-padding-x);
+}
+
+.cell:first-child {
+  justify-content: flex-start;
+  padding-left: 0;
+}
+
+.cell:last-child {
+  justify-content: flex-end;
+  padding-right: 0;
+}
+
+/* About as wide as a date or a receipt in Regular 16, as high as its letters. */
+.line {
+  width: var(--size-amount-box-width);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+/* "Load More"'s place: 32 under the last row, 192x48, the card ending 40 under it. */
+.loadMore {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-transaction-load-more-gap) 0 var(--space-history-load-more-bottom);
+}
+
+.button {
+  width: var(--size-transaction-load-more-width);
+  height: var(--size-button-height);
+}

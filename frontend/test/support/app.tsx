@@ -1,4 +1,5 @@
 import {
+  type AccountDetailsResponse,
   type AccountsResponse,
   type CurrentUser,
   type ErrorResponse,
@@ -8,6 +9,8 @@ import {
   type RecentTransactionsResponse,
   type SavingsGoalRequest,
   type SavingsGoalResponse,
+  type TransactionHistoryPage,
+  type TransactionHistoryRow,
   type TransactionRow,
   type TransactionsPage,
   type TransactionsTab,
@@ -603,6 +606,305 @@ export const transactions = {
   },
 };
 
+/** The one 404 of the account routes (task 021). */
+export const accountNotFound: ErrorResponse = { message: 'Account not found' };
+const accountNotFoundResponse = () => HttpResponse.json(accountNotFound, { status: 404 });
+const accountFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/**
+ * The demo accounts' details on 22 Oct 2026 as `GET /api/accounts/:accountId` returns them, by the IDs of
+ * `demoAccounts` (demo-data.md; task 021 AC2): the same type, Bank Name, number and balance as their Balances cards.
+ */
+export const demoAccountDetails: Record<number, AccountDetailsResponse> = {
+  1: {
+    accountType: 'credit-card',
+    bankName: 'Master Card',
+    branchName: 'Main Branch',
+    maskedNumber: '**** **** **** 2598',
+    balance: usd(2_101_918),
+  },
+  2: {
+    accountType: 'checking',
+    bankName: 'AB Bank Ltd',
+    branchName: 'Park Street Branch',
+    maskedNumber: '**** **** **** 7310',
+    balance: usd(3_336_248),
+  },
+  3: {
+    accountType: 'savings',
+    bankName: 'Brac Bank Ltd.',
+    branchName: 'Gulshan Branch',
+    maskedNumber: '**** **** **** 4421',
+    balance: usd(2_735_680),
+  },
+  4: {
+    accountType: 'investment',
+    bankName: 'AB Bank Ltd',
+    branchName: 'Park Street Branch',
+    maskedNumber: '**** **** **** 6652',
+    balance: usd(2_950_300),
+  },
+  5: {
+    accountType: 'loan',
+    bankName: 'City Bank Ltd.',
+    branchName: 'Motijheel Branch',
+    maskedNumber: '**** **** **** 9083',
+    balance: usd(1_901_321),
+  },
+};
+
+/** A 100-character Branch Name in words, the longest #26 allows. */
+export const longBranchNameInWords =
+  'Park Street Riverside Commercial District Main Corporate Branch Office Number Twelve North Wing Unit'.padEnd(
+    100,
+    'x',
+  );
+/** A 100-character Branch Name with no space. */
+export const longBranchNameNoSpace = 'ParkStreetRiversideCommercialDistrict'.repeat(3).slice(0, 100);
+
+/** Checking's details with long data (task 021 AC21): `bankName` and `branchName`, the lowest balance allowed. */
+export const longAccountDetails = (bankName: string, branchName: string): AccountDetailsResponse => ({
+  ...demoAccountDetails[2]!,
+  bankName,
+  branchName,
+  balance: usd(-9_007_199_254_740_991),
+});
+
+const accountDetailsPath = '*/api/accounts/:accountId';
+
+/** The details by account ID, or the one 404, as the real backend. */
+const answerDetails = (details: Record<number, AccountDetailsResponse>, accountId: unknown) => {
+  const found = details[Number(accountId)];
+  return found ? HttpResponse.json(found) : accountNotFoundResponse();
+};
+
+/**
+ * `GET /api/accounts/:accountId` answers: the demo accounts by ID (404 for any other ID), others, pending, failing,
+ * failing on the first try and its 3 retries then the demo (a Retry), and 404 for every ID.
+ */
+export const accountDetails = {
+  answers: (details: Record<number, AccountDetailsResponse> = demoAccountDetails) =>
+    http.get(accountDetailsPath, ({ params }) => answerDetails(details, params.accountId)),
+  pending: () =>
+    http.get(accountDetailsPath, async ({ params }) => {
+      await delay('infinite');
+      return answerDetails(demoAccountDetails, params.accountId);
+    }),
+  fails: () => http.get(accountDetailsPath, accountFailure),
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(accountDetailsPath, ({ params }) => {
+      tries += 1;
+      return tries <= 4 ? accountFailure() : answerDetails(demoAccountDetails, params.accountId);
+    });
+  },
+  notFound: () => http.get(accountDetailsPath, accountNotFoundResponse),
+};
+
+/** A history row as `GET /api/accounts/:accountId/transactions` sends it: the demo's are stored at 12:00 UTC. */
+const historyRow = (
+  date: string,
+  status: TransactionHistoryRow['status'],
+  direction: TransactionHistoryRow['direction'],
+  receipt: string,
+  cents: number,
+): TransactionHistoryRow => ({
+  occurredAt: `2026-${date}T12:00:00.000Z`,
+  status,
+  direction,
+  receipt,
+  amount: usd(cents),
+});
+
+/** Cursors as the backend makes them: opaque to the frontend. */
+export const demoHistoryCursors = {
+  checkingPage2: 'MjAyNi0xMC0wNFQxMjowMDowMC4wMDBaXzEyOTA',
+  checkingPage3: 'MjAyNi0wOS0xNVQxMjowMDowMC4wMDBaXzEyNjI',
+} as const;
+
+/** Checking's first page on 22 Oct 2026 (task 021 References, the seed): Jeans first, Grocery last. */
+export const demoCheckingHistoryPage1: TransactionHistoryPage = {
+  transactions: [
+    historyRow('10-22', 'complete', 'expense', 'z7YBsODpLNW', 26_600),
+    historyRow('10-18', 'complete', 'expense', 'nPcvc24YHB7', 14_784),
+    historyRow('10-17', 'complete', 'income', 'SVqWhlvmJqw', 17_920),
+    historyRow('10-15', 'complete', 'expense', '5vSKgU8NCTh', 32_200),
+    historyRow('10-14', 'complete', 'expense', '93i3nSBYFAa', 2_016),
+    historyRow('10-12', 'complete', 'expense', 'UYdw2FRyetE', 5_880),
+    historyRow('10-11', 'complete', 'expense', 'UK5fQ9kfUyy', 3_192),
+    historyRow('10-10', 'complete', 'income', 'IhN8Byqe5aj', 17_920),
+    historyRow('10-07', 'complete', 'expense', 'nPAdhi6fo6A', 2_128),
+    historyRow('10-04', 'complete', 'expense', 'CrSNatgkImu', 28_336),
+  ],
+  nextCursor: demoHistoryCursors.checkingPage2,
+};
+
+/** Checking's second page: the Freelance payment of 3 Oct first, then House Rent. */
+export const demoCheckingHistoryPage2: TransactionHistoryPage = {
+  transactions: [
+    historyRow('10-03', 'complete', 'income', 'gceoLfSMg8H', 17_920),
+    historyRow('10-01', 'complete', 'expense', 'dR9mGBqImes', 23_184),
+    historyRow('10-01', 'complete', 'income', 'tCVmvauhOp2', 78_400),
+    historyRow('09-27', 'complete', 'expense', 'WQNNoDFvLkW', 2_240),
+    historyRow('09-24', 'complete', 'expense', 'IIi2wjhROnv', 2_688),
+    historyRow('09-24', 'complete', 'income', 'RlP3QuUPF9n', 17_920),
+    historyRow('09-22', 'complete', 'expense', 'kuti5FrFrA5', 22_344),
+    historyRow('09-18', 'complete', 'expense', 'WRVovyTJFmc', 12_768),
+    historyRow('09-17', 'complete', 'income', 'ryXZj7Rr9EP', 17_920),
+    historyRow('09-15', 'complete', 'expense', 'R8TepGymZJI', 27_048),
+  ],
+  nextCursor: demoHistoryCursors.checkingPage3,
+};
+
+/** A last page after Checking's second: two rows and no cursor, for the end of the list. */
+export const lastCheckingHistoryPage: TransactionHistoryPage = {
+  transactions: [
+    historyRow('09-12', 'complete', 'expense', 'LastRow0001', 5_880),
+    historyRow('09-10', 'pending', 'expense', 'LastRow0002', 3_192),
+  ],
+  nextCursor: null,
+};
+
+/** The Credit Card's first page: its fifth row the Failed Pizza. */
+export const demoCreditCardHistoryPage1: TransactionHistoryPage = {
+  transactions: [
+    historyRow('10-21', 'complete', 'expense', 'N5wzoyzWlSv', 1_764),
+    historyRow('10-20', 'complete', 'expense', 'kDku2tvFqPj', 2_464),
+    historyRow('10-19', 'complete', 'expense', 'KhM9w4NZiNd', 1_064),
+    historyRow('10-17', 'complete', 'expense', 'blvr2yPddNK', 18_816),
+    historyRow('10-16', 'failed', 'expense', 'CFP5E9VV2Fn', 2_464),
+    historyRow('10-16', 'complete', 'expense', 'xXRRh2tEox5', 1_478),
+    historyRow('10-13', 'complete', 'expense', 'vAcNSlFZkAM', 1_064),
+    historyRow('10-09', 'complete', 'expense', 'jc0NB9AcLby', 4_200),
+    historyRow('10-08', 'complete', 'expense', 'Flz15bt0nCv', 2_464),
+    historyRow('10-06', 'complete', 'expense', 'Cpu5e850TNM', 1_764),
+  ],
+  nextCursor: 'MjAyNi0xMC0wNlQxMjowMDowMC4wMDBaXzEyODU',
+};
+
+/** Each account's pages by its ID, in order: the first for no cursor, each later one for the cursor of the one before. */
+export type HistoryPages = Record<number, TransactionHistoryPage[]>;
+
+/** One page of `rows` with no cursor. */
+const onlyPage = (...rows: TransactionHistoryRow[]): TransactionHistoryPage[] => [
+  { transactions: rows, nextCursor: null },
+];
+
+/**
+ * The demo on 22 Oct 2026: Checking's first two pages and the Credit Card's first; Savings, Investment and Loan their
+ * newest row only (the frontend test needs no more of them).
+ */
+export const demoHistoryPages: HistoryPages = {
+  1: [demoCreditCardHistoryPage1],
+  2: [demoCheckingHistoryPage1, demoCheckingHistoryPage2],
+  3: onlyPage(historyRow('09-28', 'complete', 'income', 'coYqvpXaD5B', 4_480)),
+  4: onlyPage(historyRow('10-15', 'complete', 'income', 'A9TZ9fXoycD', 8_400)),
+  5: onlyPage(historyRow('10-10', 'complete', 'expense', 'nCeBYCGopZb', 10_640)),
+};
+
+/** The demo with a third page on Checking that ends the list. */
+export const endingHistoryPages: HistoryPages = {
+  ...demoHistoryPages,
+  2: [demoCheckingHistoryPage1, demoCheckingHistoryPage2, lastCheckingHistoryPage],
+};
+
+/** Checking with 3 rows, no cursor. */
+export const fewHistoryPages: HistoryPages = {
+  ...demoHistoryPages,
+  2: onlyPage(...demoCheckingHistoryPage1.transactions.slice(0, 3)),
+};
+
+/** Checking with exactly 10 rows, no cursor: the whole list. */
+export const tenHistoryPages: HistoryPages = {
+  ...demoHistoryPages,
+  2: [{ ...demoCheckingHistoryPage1, nextCursor: null }],
+};
+
+/** Checking with no rows. */
+export const noHistoryPages: HistoryPages = { ...demoHistoryPages, 2: onlyPage() };
+
+/** A 120-character receipt in words. */
+export const longReceiptInWords =
+  'Receipt for the annual premium subscription renewal of the family plan with every add-on included this year'.padEnd(
+    120,
+    'x',
+  );
+/** A 120-character receipt with no space. */
+export const longReceiptNoSpace = 'Zq7XyWv3Ut9Sr5Qp1On8Ml4Kj2Ih6Gf0Ed'.repeat(4).slice(0, 120);
+
+/** Checking's first page with the long receipts on its first two rows and `$1,000,000,000.00` on the third. */
+export const longHistoryPages: HistoryPages = {
+  ...demoHistoryPages,
+  2: [
+    {
+      ...demoCheckingHistoryPage1,
+      transactions: demoCheckingHistoryPage1.transactions.map((row, index) => {
+        if (index === 0) return { ...row, receipt: longReceiptInWords };
+        if (index === 1) return { ...row, receipt: longReceiptNoSpace };
+        if (index === 2) return { ...row, amount: usd(100_000_000_000) };
+        return row;
+      }),
+    },
+  ],
+};
+
+const accountHistoryPath = '*/api/accounts/:accountId/transactions';
+
+/**
+ * A backend of `pages`: the account's first page for no cursor, the page after the cursor's for one; the one 404 for
+ * an account it does not know and 400 for a cursor it does not know, as the real one.
+ */
+function answerHistory(pages: HistoryPages, accountId: unknown, request: Request) {
+  const accountPages = pages[Number(accountId)];
+  if (accountPages === undefined) return accountNotFoundResponse();
+  const cursor = new URL(request.url).searchParams.get('cursor');
+  const page =
+    cursor === null
+      ? accountPages[0]
+      : accountPages.find((_, index) => index > 0 && accountPages[index - 1]!.nextCursor === cursor);
+  return page ? HttpResponse.json(page) : HttpResponse.json({ message: 'The cursor is not valid' }, { status: 400 });
+}
+
+/**
+ * `GET /api/accounts/:accountId/transactions` answers, keyed on the account and the cursor: the demo pages (or
+ * others), pending, failing, failing on the first try and its 3 retries then answered (a Retry), a Load More failing
+ * on every try, or on its first try and 3 retries then answered, and 404 for every account.
+ */
+export const accountHistory = {
+  answers: (pages: HistoryPages = demoHistoryPages) =>
+    http.get(accountHistoryPath, ({ params, request }) => answerHistory(pages, params.accountId, request)),
+  pending: () =>
+    http.get(accountHistoryPath, async ({ params, request }) => {
+      await delay('infinite');
+      return answerHistory(demoHistoryPages, params.accountId, request);
+    }),
+  fails: () => http.get(accountHistoryPath, accountFailure),
+  failsThenAnswers: (pages: HistoryPages = demoHistoryPages) => {
+    let tries = 0;
+    return http.get(accountHistoryPath, ({ params, request }) => {
+      tries += 1;
+      return tries <= 4 ? accountFailure() : answerHistory(pages, params.accountId, request);
+    });
+  },
+  loadMoreFails: (pages: HistoryPages = demoHistoryPages) =>
+    http.get(accountHistoryPath, ({ params, request }) =>
+      new URL(request.url).searchParams.has('cursor')
+        ? accountFailure()
+        : answerHistory(pages, params.accountId, request),
+    ),
+  loadMoreFailsThenAnswers: (pages: HistoryPages = demoHistoryPages) => {
+    let tries = 0;
+    return http.get(accountHistoryPath, ({ params, request }) => {
+      if (new URL(request.url).searchParams.has('cursor')) {
+        tries += 1;
+        if (tries <= 4) return accountFailure();
+      }
+      return answerHistory(pages, params.accountId, request);
+    });
+  },
+  notFound: () => http.get(accountHistoryPath, accountNotFoundResponse),
+};
+
 /** A day of `GET /api/statistics/weekly-comparison`: this week's date and both weeks' cents, `null` after today. */
 const comparisonDay = (date: string, lastWeek: number, thisWeek: number | null) => ({
   date,
@@ -736,7 +1038,8 @@ export const expensesBreakdown = {
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
- * asking, and one that opens Transactions has its pages: the demo data of each. A test's own `server.use` comes first.
+ * asking, one that opens Transactions has its pages, and one that opens a demo account's Account Details has its
+ * details and history: the demo data of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
@@ -746,6 +1049,8 @@ export const signedInDefaults = () => [
   weeklyComparison.answers(),
   expensesBreakdown.answers(),
   transactions.answers(),
+  accountDetails.answers(),
+  accountHistory.answers(),
 ];
 
 /** DataState's root (task 017): where focus goes after Retry, with tabindex="-1" from then on; never a Tab stop. */
@@ -759,11 +1064,14 @@ export function dataStateRootIn(container: Element): HTMLElement {
   return roots[0] as HTMLElement;
 }
 
-/** Every app path in `paths`, with an Account Details path for `/balances/:accountId`. */
+/**
+ * Every app path in `paths`, with an Account Details path for `/balances/:accountId`: Checking's ID, a demo account
+ * the MSW answers (task 021; an unknown ID opens Balances).
+ */
 export const appPaths = [
   '/overview',
   '/balances',
-  '/balances/12',
+  '/balances/2',
   '/transactions',
   '/bills',
   '/expenses',

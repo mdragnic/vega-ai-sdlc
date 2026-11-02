@@ -1,6 +1,6 @@
 # Task 021: Account Details: details and transaction history
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 019, 020
 - Size: L
@@ -230,9 +230,43 @@ The Scope follows US-12 criteria 1 to 3 and 10 to 17, the decisions above and Ma
 - The new criterion is AC14; the criteria after it moved up by one (15 to 23) and the test table's references with them.
 - Not started. No Figma calls.
 
+### 2026-11-02, build (`/next-task 021`)
+- Built test-first, per the Scope:
+  - Shared: `ContractEntry.params`, `accountIdSchema` (strict), `accountParamsSchema`, `branchNameSchema`, `accountDetailsSchema`, `accountsContract.details`; `transactionHistoryRowSchema` (picked from the listed rows' fields, written once), `transactionHistoryQuerySchema` (task 020's cursor, picked), `transactionHistoryPageSchema`, `transactionsContract.history`; `transactionStatusLabel`, `transactionTypeLabel`.
+  - Backend: `accounts/account-not-found.ts` (the one 404, `accountIdFrom`, `emptyAccountIdPath`); `AccountsService.details` and `hasAccount`, the balance in one shared function (`balancesOf`) for `summary` and `details`; `TransactionsService.history`; both controllers' routes. No table, column, migration or provider change.
+  - Frontend: `apiRequest` params (parsed, encoded); `useAccount`, `useAccountTransactions` (404 not retried, later pages dropped on leave, `keepFirstPage` made generic); `AccountDetailsPage`; `AccountDetailsCard`, `AccountDetailsCardSkeleton`, `TransactionsHistoryTable`, `TransactionsHistoryItem`, `TransactionsHistorySkeleton` and `LoadMore` (with `useLoadMore`) extracted from task 020's `TransactionTable`, which uses it with its tests unchanged; tokens (`tokens.md`, `tokens.css`), Code-only rows in `components.md`, gallery sections.
+  - Tests: the T1 to T30 scenarios; the existing tests the Scope lists updated (task 011's shell paths, the return target, task 019's "Details", task 013's account-path route test, the route lists' comments, the source tests, `cache-control.test.ts`'s route list with the empty-segment forms).
+- Choices and findings made while building (none changes behaviour the task file settles):
+  - The empty segment: Express "loosens" a route's path (strips its trailing slashes), so the planned `/accounts//` route can never match. Built instead as path-to-regexp 8's optional group, `/accounts/{:accountId}` and `/accounts/{:accountId}/transactions`, derived from the contract's path and registered beside it: they answer `/api/accounts//` and `/api/accounts//transactions` with the one 404; `/api/accounts/` stays the list (its route comes first). Checked with node and by T6.
+  - Both cards wait on their skeletons until both first answers are in (a response, or a failed try, which is no 404), so nothing of an account that turns out not to be the user's shows at any moment (AC13; the MSW case with the details 200 and the history 404). Latched once reached (see the code review).
+  - The history table is named by `aria-label` "Transactions History", the section's title: `Section` (out of scope) does not expose its heading's id.
+  - "Edit Details" and "Remove": spans in an `inert`, `aria-hidden` row, as task 019's visual-only parts.
+  - Reused tokens where the role is task 020's: the cell padding (8 each side, so 16 between columns; also kept free at a details column's end), the header gap, the Load More gap and width; `--space-card-row-gap` for the 32 between the sections. New: the details inset, row gap 40 and buttons gap 36 (the 38s on the grid, #65), bottom 40, remove gap 40, the three 30.4808% columns, the 292 and 412 minimums, the 160 width, the history inset 32, header top 28, row padding 16, Load More bottom 40, the five column proportions.
+  - Weights by ink density on 106 (a coverage measure on identical texts, calibrated on texts whose weight both renders share, 0.85 to 0.87): the values Bold 18 (106/build 1.02), the header Semibold, the cells Regular, "Remove" Medium 14/20 (build/106 0.755 Regular, 0.872 Medium, 1.000 Semibold; changed from Regular at the visual check).
+  - A foreign or malformed ID with a cursor over 64 characters answers 400 (the query pipe runs before the handler), alike for every ID; AC12 is about valid cursors.
+- Validation (final run, after the review fixes):
+  1. `npm run lint`: exit 0 (oxlint, Stylelint, Prettier). `npm run typecheck`: exit 0.
+  2. `npm test`: shared 1002, backend 869, frontend 1088 passed, 0 failed.
+  3. `npm run e2e`: 239 passed (8.3 min), exit 0; task 020's `transactions.spec.ts` unchanged and passing (T30).
+  4. Broken on purpose (`evidence/021/breaks.mjs`, `breaks-log.txt`; each run backs up the files, hashes `git diff HEAD` and `git status --short`, mutates, runs the named tests, restores and checks the hash came back): all 20 mutations caught, the tree restored each time. 1 getAccount without the user: T6 (both routes), T7, the provider's scoping test and e2e T26 fail. 2a history without `hasAccount`: only T6's history 404 cases fail; T6's double case and T7 pass (the user filter in the same query). 2b then the provider's user condition removed: T6's double case, T7 and 9 provider tests fail. 3a the account filter only on the first page: T8, T9, T10, T12 and e2e T23 fail. 3b the provider's account condition removed: 19 history tests (T8 to T12) fail. 4a a full number: T2, T3, T4, T5 and the `accountNumber` source guard fail. 4b an extra `accountNumber` key: T2, T3, T4 and the guard fail. 5 a second balance path: T2 and T5 fail. 6 a validating pipe (non-numeric 400): T6 and T3 fail. 7a a loose parse: T1 (13 cases), T6, T14 (5) and T17 (4) fail. 7b the empty-segment routes removed: T6's three empty-segment cases fail. 7c the frontend sending the raw param: T17 (9 routes, the source test) and e2e T26 fail. 8 fetch-then-compare: T2 and the source guard fail. 9 no redirect: T17 (4) and e2e T26 fail. 10a "Load More" kept at the end: T18, T19 (2) and e2e T24 fail. 10b focus left on the button: T18 (2), task 020's T12 (3) and e2e T24 fail. 11 `nowrap` on every cell and value: e2e T29 at 1280 fails. 12 the skeleton gate unlatched and 13 the gate without its failed-try branch (added after the code review): the two held-Retry tests, and the backoff test with the details' keyboard Retry, fail.
+     The run was killed once by Claude Code for low memory during mutation 7a, with that file still mutated: restored by hand to the original text, shared rebuilt, the tree hash checked back to the run's "before" value; resumed one mutation at a time on Marko's go. Under 2a, T6's double case first failed only on a redundant `expect(hasAccount).toHaveBeenCalled()` (the 200 already shows the check was bypassed): removed, 2a and 2b re-run with the outcomes above.
+  5. Visual (`evidence/021/visual-differences.txt`, the screenshots): matches 106 within the listed differences: the demo values (#12), 10 rows (the card 748, "Load More" 336 lower, the page scrolls), the 2026 rows and signs (#19), row 2 of the details 2 px low (#65), the values about 1 px high, "Remove" 1.5 px left (40 on the grid), the header date and avatar, Gray/06 `#F3F3F3` against `#F4F4F4`, Chromium's text 1 to 3 px narrower at 2x, the 15 px classic-scrollbar shift (#101).
+  6. Manual checks (`evidence/021/manual-checks.txt`): all as expected, including the backend stopped and started (skeletons, error cards after 7.5 s, keyboard Retry, the failed Load More, then added once).
+- Security review (`evidence/021/security-review.md`): no findings.
+- Code review (`evidence/021/code-review.md`), With fixes, no Critical: 1 Important (the unlatched skeleton gate: a working card fell back to its skeleton and lost focus while the other retried), fixed test-first; 5 Minor (the duplicated retry rule, `.`/`..` path parameters, an untested gate branch, a broad source guard, a comment), all fixed.
+- Rework loops: 3 (lint on the first run: a React refs rule in `LoadMore` and test helper scopes; the redundant spy assertion in step 4; lint after the review: a shadowed name in the e2e spec and an unused helper in the evidence script). Human interventions: 1 (resuming the break runs after the memory kill).
+- No Figma calls.
+
+### 2026-11-02, gate: approved by human
+- Approved by human (Marko, `/approve-task`). Checked by Marko in the browser: Account Details at 1440 against 106 with details matching the Balances card, the account's history with Load More to the end and focus on the first new row, /balances/abc, /balances/1e3, /balances/999 and another user's account ID all opening Balances with nothing shown and Back not returning, Tab skipping Edit Details and Remove, Transactions Load More unchanged, 1280 with the bottom inset: all good.
+- Accepted: the visual differences as listed (row 2 2px low by the 4px grid, the values about 1px high, Remove 1.5px left and Medium weight, the rest decided).
+- Metrics: from this task on, build time (from build start to the gate report) is recorded separately from wall-clock time in `docs/metrics.md`; added to the rows of tasks 013 to 020 from their Logs where it can be read (task 020 only; tasks 013 to 019 record no gate time, so unknown).
+- Status done, finished 12:24; INDEX updated; metrics row copied to `docs/metrics.md`.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-11-02 10:17 (09:17Z)
+- Gate report: 2026-11-02 12:20 (11:20Z); build time 2h 03m
+- Finished: 2026-11-02 12:24 (11:24Z); wall clock 2h 07m
+- Human interventions: 2 (resuming the break runs after the memory kill; the gate approval)
+- Rework loops: 3
+- Notes on prompts that failed: the break-on-purpose runner, run as one background job, was killed by Claude Code for low memory mid-mutation (a file left mutated); run one mutation per foreground call instead.

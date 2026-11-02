@@ -42,7 +42,52 @@ export const accountsResponseSchema = z.object({
 
 export type AccountsResponse = z.infer<typeof accountsResponseSchema>;
 
-/** The signed-in user's accounts (#39), in the user's time zone from `X-Time-Zone` (#53, #54). */
+/**
+ * An account ID in a URL path, parsed strictly (task 021, Marko's addition 2): only digits with no leading zero
+ * (`^[1-9][0-9]*$`) whose number is a safe integer, parsed to that number. `01`, `1e3`, `-1`, `1.0`, ` 7`, `0x10`, the
+ * empty string and a number past the safe range all fail, so the backend and the frontend route accept exactly the
+ * same IDs and every other text is the one not-found case (#39).
+ */
+export const accountIdSchema = z
+  .string()
+  .regex(/^[1-9][0-9]*$/)
+  .transform(Number)
+  .refine(Number.isSafeInteger);
+
+/** The parameters of an account's paths, `/accounts/:accountId` and below it. */
+export const accountParamsSchema = z.object({ accountId: accountIdSchema });
+
+export type AccountParams = z.input<typeof accountParamsSchema>;
+
+/** The Branch Name: required, at most 100 characters (#26), as the Bank Name. Shown on Account Details. */
+export const branchNameSchema = z.string().min(1).max(100);
+
+/**
+ * One account on Account Details (106, US-12 criterion 2): exactly its Bank Name, Account Type, Balance, Branch Name and
+ * masked Account Number. Never the full number, the opening balance, the card network or an ID (#25). The balance is
+ * calculated in the backend (#11, #57). Unknown keys are dropped.
+ */
+export const accountDetailsSchema = z.object({
+  accountType: accountTypeSchema,
+  bankName: bankNameSchema,
+  branchName: branchNameSchema,
+  maskedNumber: maskedAccountNumberSchema,
+  balance: moneySchema,
+});
+
+export type AccountDetailsResponse = z.infer<typeof accountDetailsSchema>;
+
+/**
+ * The signed-in user's accounts (#39), in the user's time zone from `X-Time-Zone` (#53, #54): `list` all of them with
+ * the Total Balance, `details` one of them by the ID in its path, not found (404) unless it is the user's (#39).
+ */
 export const accountsContract = {
   list: { method: 'GET', path: '/accounts', request: undefined, response: accountsResponseSchema },
+  details: {
+    method: 'GET',
+    path: '/accounts/:accountId',
+    params: accountParamsSchema,
+    request: undefined,
+    response: accountDetailsSchema,
+  },
 } as const satisfies Record<string, ContractEntry>;

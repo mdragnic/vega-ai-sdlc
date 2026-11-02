@@ -261,3 +261,136 @@ describe('AccountsService.accountTypes', () => {
     expect((await service.accountTypes(USER_ID)).get(11)).toBe('savings');
   });
 });
+
+/**
+ * The service on a fake provider whose `getAccount` finds an account only for its user and ID, as the provider's one
+ * query does, and a fake VisibleTransactions that filters by the account as the provider does.
+ */
+function detailsServiceWith(accounts: BankAccount[], transactions: BankTransaction[]) {
+  const listTransactions = vi.fn<BankDataProvider['listTransactions']>(() => {
+    throw new Error('Transactions are read through VisibleTransactions only');
+  });
+  const listAccounts = vi.fn<BankDataProvider['listAccounts']>((userId) =>
+    Promise.resolve(userId === USER_ID ? accounts : []),
+  );
+  const getAccount = vi.fn<BankDataProvider['getAccount']>((userId, accountId) =>
+    Promise.resolve(userId === USER_ID ? (accounts.find((account) => account.id === accountId) ?? null) : null),
+  );
+  const provider: BankDataProvider = {
+    listAccounts,
+    getAccount,
+    updateAccountDetails: vi.fn<BankDataProvider['updateAccountDetails']>(),
+    listTransactions,
+  };
+  const list = vi.fn<VisibleTransactions['list']>((userId, _zone, filter = {}) =>
+    Promise.resolve({
+      transactions:
+        userId === USER_ID
+          ? transactions.filter((row) => filter.accountId === undefined || row.accountId === filter.accountId)
+          : [],
+      nextCursor: null,
+    }),
+  );
+  const visible = { list } as unknown as VisibleTransactions;
+  return { service: new AccountsService(provider, visible), listAccounts, getAccount, list, listTransactions };
+}
+
+/** Task 013 T2's two accounts with Complete, Pending and Failed rows on each. */
+const mixedRows = () => [
+  transaction({ accountId: 10, direction: 'income', status: 'complete', amountCents: 20_000 }),
+  transaction({ accountId: 10, direction: 'expense', status: 'complete', amountCents: 5_000 }),
+  transaction({ accountId: 10, direction: 'expense', status: 'pending', amountCents: 7_000 }),
+  transaction({ accountId: 10, direction: 'income', status: 'failed', amountCents: 9_000 }),
+  transaction({ accountId: 11, direction: 'expense', status: 'complete', amountCents: 1_234 }),
+  transaction({ accountId: 11, direction: 'income', status: 'pending', amountCents: 3_000 }),
+  transaction({ accountId: 11, direction: 'expense', status: 'failed', amountCents: 4_000 }),
+];
+
+// Task 021 T2, AC9, AC10, AC12 and AC19: one account's five fields, the balance from the one calculation (#57), the
+// account read only through getAccount, the user and the account in one query (#39).
+describe('AccountsService.details', () => {
+  it('answers exactly the five fields, the number masked, the balance the Complete rows only', async () => {
+    const { service } = detailsServiceWith([creditCard, checking], mixedRows());
+
+    const details = await service.details(USER_ID, ZONE, 10);
+
+    expect(details).toEqual({
+      accountType: 'credit-card',
+      bankName: 'Master Card',
+      branchName: 'Main Branch',
+      maskedNumber: '**** **** **** 2598',
+      balance: usd(115_000),
+    });
+    expect(Object.keys(details!).toSorted()).toEqual([
+      'accountType',
+      'balance',
+      'bankName',
+      'branchName',
+      'maskedNumber',
+    ]);
+    expect(JSON.stringify(details)).not.toMatch(/3388|4556|8860|openingBalance|cardNetwork|mastercard|"id"/);
+  });
+
+  it('gives each account the balance summary gives it', async () => {
+    const { service } = detailsServiceWith([creditCard, checking], mixedRows());
+
+    const summary = await service.summary(USER_ID, ZONE);
+
+    for (const account of summary.accounts) {
+      expect((await service.details(USER_ID, ZONE, account.id))!.balance).toEqual(account.balance);
+    }
+    expect(summary.accounts.map((account) => account.balance.cents)).toEqual([115_000, 48_766]);
+  });
+
+  it('reads the account once through getAccount with the user and the account, never listAccounts', async () => {
+    const { service, getAccount, listAccounts, list, listTransactions } = detailsServiceWith(
+      [creditCard, checking],
+      mixedRows(),
+    );
+
+    await service.details(USER_ID, ZONE, 11);
+
+    expect(getAccount).toHaveBeenCalledTimes(1);
+    expect(getAccount).toHaveBeenCalledWith(USER_ID, 11);
+    expect(listAccounts).not.toHaveBeenCalled();
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenCalledWith(USER_ID, ZONE, { accountId: 11 });
+    expect(listTransactions).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['an ID no account has', USER_ID, 99],
+    ['another user’s request for this user’s account', USER_ID + 1, 10],
+  ])('answers null for %s, reading no transaction', async (_case, userId, accountId) => {
+    const { service, list, listTransactions } = detailsServiceWith([creditCard, checking], mixedRows());
+
+    expect(await service.details(userId, ZONE, accountId)).toBeNull();
+    expect(list).not.toHaveBeenCalled();
+    expect(listTransactions).not.toHaveBeenCalled();
+  });
+
+  it('throws on a balance past the safe integers, as summary does (#11)', async () => {
+    const { service } = detailsServiceWith(
+      [{ ...creditCard, openingBalanceCents: Number.MAX_SAFE_INTEGER }],
+      [transaction({ accountId: 10, direction: 'income', status: 'complete', amountCents: 1 })],
+    );
+
+    await expect(service.details(USER_ID, ZONE, 10)).rejects.toThrow(RangeError);
+  });
+});
+
+// Task 021: whether the account is the user's, for the history's 404; one getAccount, no transaction read.
+describe('AccountsService.hasAccount', () => {
+  it.each([
+    ['the user’s own account', USER_ID, 11, true],
+    ['an ID no account has', USER_ID, 99, false],
+    ['another user’s request for this user’s account', USER_ID + 1, 11, false],
+  ])('answers %s: %s', async (_case, userId, accountId, expected) => {
+    const { service, getAccount, listAccounts, list } = detailsServiceWith([creditCard, checking], mixedRows());
+
+    expect(await service.hasAccount(userId, accountId)).toBe(expected);
+    expect(getAccount).toHaveBeenCalledExactlyOnceWith(userId, accountId);
+    expect(listAccounts).not.toHaveBeenCalled();
+    expect(list).not.toHaveBeenCalled();
+  });
+});

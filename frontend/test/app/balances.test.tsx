@@ -204,14 +204,15 @@ describe('the Balances page', () => {
 
 // T8: AC4, "Details" opens that account's Account Details, Balances active (#47, #50).
 describe('the Details links', () => {
-  it('opens /balances/<id> of the clicked card, with Balances active and an empty content area', async () => {
+  it('opens /balances/<id> of the clicked card, with Balances active, on its Account Details (task 021)', async () => {
     const { user, url } = await openBalances();
 
     await user.click(await detailsOf('Checking'));
 
     expect(url()).toBe('/balances/2');
     expect(currentLinks()).toEqual(['Balances']);
-    expect(screen.getByRole('main').childNodes).toHaveLength(0);
+    expect(await screen.findByRole('region', { name: 'Account Details' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Transactions History' })).toBeInTheDocument();
   });
 
   it('opens /balances/<id> on Enter', async () => {

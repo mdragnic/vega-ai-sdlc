@@ -1,0 +1,88 @@
+/* 106: the values 32 inside the card's top and sides, the card ending 40 under the buttons. */
+.content {
+  padding: var(--space-account-details-inset) var(--space-account-details-inset) var(--space-account-details-bottom);
+}
+
+/* 106: three columns at 30.48% of the content each, their texts 317 apart at 1440 (the last 8.56% empty), at any
+   width (#94); the second row 40 under the first. A row is as high as its tallest value. */
+.values {
+  display: grid;
+  grid-template-columns: repeat(3, var(--size-account-details-column));
+  row-gap: var(--space-account-details-row-gap);
+  margin: 0;
+}
+
+/* Each label above its value, read first. Not measured: 16 kept free at the column's end, as the history's 16 between
+   two columns' texts, so a long name never touches the next column's text. */
+.value {
+  min-width: 0;
+  padding-right: calc(var(--space-transaction-cell-padding-x) + var(--space-transaction-cell-padding-x));
+}
+
+/* 106 "Bank Name": Gray/03, Regular 16/24. */
+.label {
+  color: var(--color-gray-03);
+  font: var(--font-regular-16-24);
+}
+
+/* 106 "AB Bank Ltd.": Secondary, Bold 18/24 (by the ink widths, task 021 References), directly under its label. */
+.text,
+.oneLine {
+  margin: 0;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+}
+
+/* The names wrap inside their column: hyphenated where the browser can, broken anywhere as the fallback; data has no
+   soft hyphens (#106, #115 b). */
+.text {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* The balance and the masked number: every one the contract allows fits on one line from a 1280 window. */
+.oneLine {
+  white-space: nowrap;
+}
+
+/* 106: the buttons 36 under the second row; "Remove" about 40 after "Edit Details", centred on it. */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-account-details-remove-gap);
+  margin-top: var(--space-account-details-buttons-gap);
+}
+
+/* 106 "Edit Details": the `Button/primary` look, 160x48, white Bold 16/24 centred on Primary. Visual only: the default
+   cursor. */
+.editDetails {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-edit-details-width);
+  height: var(--size-button-height);
+  border-radius: var(--radius-button);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* 106 "Remove": Gray/01, Medium 14/20 (by ink density: the build's ink is 0.87 of 106's at Medium, the ratio of the texts
+   whose weight both share, 0.75 at Regular and 1.00 at Semibold; task 021 Log). Visual only (#23): the default cursor. */
+.remove {
+  color: var(--color-gray-01);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-20);
+  cursor: default;
+}

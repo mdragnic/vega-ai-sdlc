@@ -190,7 +190,9 @@ test('opens /balances/<id> from each "Details" with no page load, Balances activ
     await details(page).nth(index).click();
     await expect(page).toHaveURL(`${FRONTEND_URL}/balances/${id}`);
     await expect(activeItem(page)).toHaveText('Balances');
-    await expect(page.getByRole('main')).toBeEmpty();
+    // Task 021: the account's Account Details.
+    await expect(page.getByRole('main').getByRole('region', { name: 'Account Details' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('region', { name: 'Transactions History' })).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(`${FRONTEND_URL}/balances`);
     await waitForCards(page);

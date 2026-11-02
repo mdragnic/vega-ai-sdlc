@@ -1,0 +1,58 @@
+/* Not designed (#6): existing and task 021 tokens only, on the details card's layout (AccountDetailsCard): the same
+   insets, columns, row gap and buttons row, so the card is 292 high and nothing moves when the account arrives. */
+.content {
+  padding: var(--space-account-details-inset) var(--space-account-details-inset) var(--space-account-details-bottom);
+}
+
+.values {
+  display: grid;
+  grid-template-columns: repeat(3, var(--size-account-details-column));
+  row-gap: var(--space-account-details-row-gap);
+}
+
+.value {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-right: calc(var(--space-transaction-cell-padding-x) + var(--space-transaction-cell-padding-x));
+}
+
+/* A label's or a value's 24 px line, its placeholder centred in it as the text. */
+.line {
+  display: flex;
+  align-items: center;
+  height: var(--line-height-24);
+}
+
+/* About as wide as a label in Regular 16, as high as its letters. */
+.label {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+/* About as wide as a value in Bold 18, as high as its letters. */
+.text {
+  width: var(--size-edit-details-width);
+  max-width: 100%;
+  height: var(--font-size-18);
+}
+
+/* "Edit Details"' 160x48 and "Remove"'s line, as the card places them. */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-account-details-remove-gap);
+  margin-top: var(--space-account-details-buttons-gap);
+}
+
+.editDetails {
+  flex-shrink: 0;
+  width: var(--size-edit-details-width);
+  height: var(--size-button-height);
+}
+
+.remove {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-14);
+}

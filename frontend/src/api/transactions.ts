@@ -1,12 +1,15 @@
-import { transactionsContract, type TransactionsPage, type TransactionsTab } from '@finebank/shared';
-import { type InfiniteData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { transactionsContract, type TransactionsTab } from '@finebank/shared';
+import { type InfiniteData, type QueryKey, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
+import { retryUnlessNotFound } from './accounts';
 import { apiRequest } from './client';
 
 const recentTransactionsQueryKey = ['transactions', 'recent'] as const;
 
 const transactionsQueryKey = (tab: TransactionsTab) => ['transactions', 'list', tab] as const;
+
+const accountTransactionsQueryKey = (accountId: number) => ['transactions', 'history', accountId] as const;
 
 /**
  * The signed-in user's latest 5 transactions for each Recent Transaction tab (All, Revenue, Expenses), newest first,
@@ -42,24 +45,48 @@ export function useTransactions(tab: TransactionsTab) {
 }
 
 /**
- * Leaves only the first page of a tab's list, when it has more or a Load More ran: a request still running is
- * cancelled first, so its pages cannot come back, and a failed Load More's error goes with the pages after the first
- * (#117 b, c). A first page still loading carries on, also through StrictMode's second mount.
+ * The Transactions History pages of one of the user's accounts (106; #27, #74), as `useTransactions` pages a tab: the
+ * first without a cursor, each next one with the last page's `nextCursor`, none after `null`. The app's query defaults
+ * apply (asked for again when the window gets focus back, 3 retries), except that the backend's 404, an account that is
+ * not the user's (#39), is not retried. Removed with every cached query when a session starts or ends (#39). The pages
+ * after the first are dropped when the page closes, so the history opens on its first 10 (#117 c).
  */
-async function keepFirstPage(
-  queryClient: ReturnType<typeof useQueryClient>,
-  queryKey: ReturnType<typeof transactionsQueryKey>,
-): Promise<void> {
-  const state = queryClient.getQueryState<InfiniteData<TransactionsPage, string | null>>(queryKey);
+export function useAccountTransactions(accountId: number) {
+  const queryClient = useQueryClient();
+  useEffect(
+    () => () => void keepFirstPage(queryClient, accountTransactionsQueryKey(accountId)),
+    [queryClient, accountId],
+  );
+  return useInfiniteQuery({
+    queryKey: accountTransactionsQueryKey(accountId),
+    queryFn: ({ pageParam }) =>
+      apiRequest(
+        transactionsContract.history,
+        { accountId: String(accountId) },
+        pageParam === null ? {} : { cursor: pageParam },
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    retry: retryUnlessNotFound,
+  });
+}
+
+/**
+ * Leaves only the first page of a paged list (a tab's, or an account's history), when it has more or a Load More ran:
+ * a request still running is cancelled first, so its pages cannot come back, and a failed Load More's error goes with
+ * the pages after the first (#117 b, c). A first page still loading carries on, also through StrictMode's second mount.
+ */
+async function keepFirstPage(queryClient: ReturnType<typeof useQueryClient>, queryKey: QueryKey): Promise<void> {
+  const state = queryClient.getQueryState<InfiniteData<unknown, string | null>>(queryKey);
   const laterPages = (state?.data?.pages.length ?? 0) > 1;
   const loadMoreRan = state?.fetchMeta?.fetchMore !== undefined;
   if (state?.data === undefined || (!laterPages && !loadMoreRan)) return;
   // Running or paused offline: either would bring its pages back.
   if (state.fetchStatus !== 'idle') await queryClient.cancelQueries({ queryKey, exact: true });
-  const data = queryClient.getQueryData<InfiniteData<TransactionsPage, string | null>>(queryKey);
+  const data = queryClient.getQueryData<InfiniteData<unknown, string | null>>(queryKey);
   const [firstPage] = data?.pages ?? [];
   if (data === undefined || firstPage === undefined) return;
-  queryClient.setQueryData<InfiniteData<TransactionsPage, string | null>>(queryKey, {
+  queryClient.setQueryData<InfiniteData<unknown, string | null>>(queryKey, {
     pages: [firstPage],
     pageParams: [null],
   });

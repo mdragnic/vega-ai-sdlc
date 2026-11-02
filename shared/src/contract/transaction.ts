@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { accountTypeSchema } from './account.js';
+import { accountParamsSchema, accountTypeSchema } from './account.js';
 import { expenseCategorySchema } from './category.js';
 import type { ContractEntry } from './entry.js';
 import { moneySchema } from './money.js';
@@ -106,8 +106,38 @@ export const transactionsPageSchema = z.object({
 export type TransactionsPage = z.infer<typeof transactionsPageSchema>;
 
 /**
+ * One row of an account's Transactions History (106): the time in UTC and the amount in integer cents with USD under
+ * the listed rows' rules (#11, #19, #96), the status (every one is listed, #57), the direction (Credit or Debit, #27)
+ * and the receipt as plain text (#27). No item, shop, category, Payment Method, ID or account: the table shows none of
+ * them and no route takes a transaction. Unknown keys are dropped.
+ */
+export const transactionHistoryRowSchema = listedTransactionFields
+  .pick({ occurredAt: true, direction: true, amount: true })
+  .extend({ status: transactionStatusSchema, receipt: z.string() });
+
+export type TransactionHistoryRow = z.infer<typeof transactionHistoryRowSchema>;
+
+/**
+ * An account's Transactions History query (#74): the `nextCursor` of the page before for every page but the first,
+ * with the Transactions page's cursor rule. The account is in the path; nothing names a user, a tab or a page size.
+ * Unknown keys are dropped.
+ */
+export const transactionHistoryQuerySchema = transactionsQuerySchema.pick({ cursor: true });
+
+export type TransactionHistoryQuery = z.infer<typeof transactionHistoryQuerySchema>;
+
+/** One history page: at most 10 rows, newest first, and the next page's cursor, or null on the last (#27, #74). */
+export const transactionHistoryPageSchema = z.object({
+  transactions: z.array(transactionHistoryRowSchema).max(TRANSACTIONS_PAGE_SIZE),
+  nextCursor: cursorSchema.nullable(),
+});
+
+export type TransactionHistoryPage = z.infer<typeof transactionHistoryPageSchema>;
+
+/**
  * The signed-in user's transactions, today in the zone sent as `X-Time-Zone` (#39, #54, #80): `recent` for every
- * Recent Transaction tab, `list` one Transactions page of a tab.
+ * Recent Transaction tab, `list` one Transactions page of a tab, `history` one page of an account's Transactions
+ * History, not found (404) unless the account is the user's (#39).
  */
 export const transactionsContract = {
   recent: {
@@ -122,5 +152,13 @@ export const transactionsContract = {
     query: transactionsQuerySchema,
     request: undefined,
     response: transactionsPageSchema,
+  },
+  history: {
+    method: 'GET',
+    path: '/accounts/:accountId/transactions',
+    params: accountParamsSchema,
+    query: transactionHistoryQuerySchema,
+    request: undefined,
+    response: transactionHistoryPageSchema,
   },
 } as const satisfies Record<string, ContractEntry>;

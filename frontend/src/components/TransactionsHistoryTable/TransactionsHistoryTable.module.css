@@ -1,0 +1,70 @@
+/* 106: the table 32 inside the card on each side, the header 28 under its top. */
+.body {
+  padding: var(--space-history-header-top) var(--space-history-inset-x) 0;
+}
+
+/* At the end of the list, with no "Load More": the card ends 28 under the last row (not designed, the header's 28
+   mirrored). */
+.end {
+  padding-bottom: var(--space-history-header-top);
+}
+
+/* The table fills the card's width at any window width (#94); its automatic layout lets a column whose text cannot
+   wrap (an amount) grow while the others give way, so nothing leaves the card. */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* 106's column proportions: the Status, Transaction Type and Receipt texts centred at 32.5%, 54.1% and 76.9% of the
+   table, the Date at its start, the Amount right-aligned at its end (task 021 References). */
+.dateColumn {
+  width: var(--size-history-column-date);
+}
+
+.statusColumn {
+  width: var(--size-history-column-status);
+}
+
+.typeColumn {
+  width: var(--size-history-column-type);
+}
+
+.receiptColumn {
+  width: var(--size-history-column-receipt);
+}
+
+.amountColumn {
+  width: var(--size-history-column-amount);
+}
+
+/* 106 header row: Default Black, Semibold 16/24, centred like its column's cells; the Gray/06 divider its last pixel
+   row, 16 under the line box. */
+.headerRow > th {
+  padding: 0 var(--space-transaction-cell-padding-x)
+    calc(var(--space-transaction-header-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  text-align: center;
+  vertical-align: top;
+}
+
+.headerRow > .dateHeader {
+  padding-left: 0;
+  text-align: left;
+}
+
+.headerRow > .amountHeader {
+  padding-right: 0;
+  text-align: right;
+}
+
+/* 106: "Load More" 32 under the last row, the card ending 40 under it. */
+.loadMore {
+  padding: var(--space-transaction-load-more-gap) 0 var(--space-history-load-more-bottom);
+}

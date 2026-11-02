@@ -22,14 +22,17 @@ async function logIn(page: Page, email: string, password: string) {
 // T17: a signed-out visitor returns to the page asked for, with its query and hash (AC6, AC13, #3).
 test('returns to the page asked for after login, and Back does not show Login', async ({ page, request }) => {
   const user = await signUp(request);
+  // The user's own Checking (task 021: an ID that is not the user's opens Balances once signed in).
+  const accounts = await request.get('/api/accounts', { headers: { 'X-Time-Zone': 'Europe/Belgrade' } });
+  const checking = ((await accounts.json()) as { accounts: { id: number }[] }).accounts[1]!.id;
   await page.goto('/');
-  await page.goto('/balances/12?view=1#top');
+  await page.goto(`/balances/${checking}?view=1#top`);
 
-  await expect(page).toHaveURL(`${FRONTEND_URL}/login?returnTo=%2Fbalances%2F12%3Fview%3D1%23top`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}/login?returnTo=%2Fbalances%2F${checking}%3Fview%3D1%23top`);
   await logIn(page, `  ${user.email.toUpperCase()} `, user.password);
 
-  await expect(page).toHaveURL(`${FRONTEND_URL}/balances/12?view=1#top`);
-  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page).toHaveURL(`${FRONTEND_URL}/balances/${checking}?view=1#top`);
+  await expect(page.getByRole('main').getByRole('region', { name: 'Account Details' })).toBeVisible();
   await page.goBack();
   // The page before: `/`, which opens Overview for a signed-in user (task 011, #39).
   await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);

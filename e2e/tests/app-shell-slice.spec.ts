@@ -16,12 +16,23 @@ const overviewSections = [
   'Expenses Breakdown',
 ];
 
-/** The sections of the screens built so far (Overview, task 013; Balances, task 019); the others are empty. */
+/**
+ * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020; Account
+ * Details, task 021, on the user's own Checking: `CHECKING` in a path); the others are empty.
+ */
 const builtSections: Partial<Record<string, string[]>> = {
   '/overview': overviewSections,
   '/balances': ['Balances'],
+  '/balances/CHECKING': ['Account Details', 'Transactions History'],
   '/transactions': ['Recent Transaction'],
 };
+
+/** The signed-in user's Checking ID, read from `GET /api/accounts` (the second demo account). */
+async function checkingId(page: Page): Promise<number> {
+  const response = await page.request.get('/api/accounts', { headers: { 'X-Time-Zone': 'Europe/Belgrade' } });
+  expect(response.ok()).toBe(true);
+  return ((await response.json()) as { accounts: { id: number }[] }).accounts[1]!.id;
+}
 
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main' });
 const navBar = (page: Page) => sidebar(page).locator('..');
@@ -61,7 +72,7 @@ const injectTallContent = (page: Page) =>
 const app = [
   ['/overview', 'Overview'],
   ['/balances', 'Balances'],
-  ['/balances/abc', 'Balances'],
+  ['/balances/CHECKING', 'Balances'],
   ['/transactions', 'Transactions'],
   ['/bills', 'Bills'],
   ['/expenses', 'Expenses'],
@@ -73,13 +84,15 @@ const app = [
 // T15: every app path in the shell with the signed-in user, the Active item and the date (AC1, AC2, AC4).
 test('opens every app path in the shell for the signed-in user', async ({ page }) => {
   await signUp(page.request);
+  const checking = await checkingId(page);
 
-  for (const [path, item] of app) {
+  for (const [route, item] of app) {
+    const path = route.replace('CHECKING', String(checking));
     await openSignedIn(page, path);
     await expect(page).toHaveURL(`${FRONTEND_URL}${path}`);
     await expect(navBar(page).getByText('Tanzir Rahman', { exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Tanzir Rahman' })).toHaveText('TR');
-    const pageSections = builtSections[path] ?? [];
+    const pageSections = builtSections[route] ?? [];
     // The initials avatar is no photo. Overview's Total Balance card shows a card network logo (task 013), and the
     // Balances cards theirs (task 019).
     await expect((pageSections.length > 0 ? navBar(page) : page).locator('img')).toHaveCount(0);
@@ -87,9 +100,8 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     await expect(activeItem(page)).toHaveText(item);
     await expect(header(page).getByText(/^Hello /)).toHaveCount(path === '/overview' ? 1 : 0);
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
-    // Overview holds its six sections (task 013), Balances its one with the cards' logos (task 019) and Transactions
-    // its one (task 020); the other screens are empty until their tasks, Account Details (`/balances/abc`) until
-    // task 021.
+    // Overview holds its six sections (task 013), Balances its one with the cards' logos (task 019), Transactions its
+    // one (task 020) and Account Details its two (task 021); the other screens are empty until their tasks.
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(pageSections);
     if (path === '/balances') {
       await expect(page.getByRole('main').getByRole('img')).toHaveCount(2);
@@ -351,8 +363,9 @@ test('opens Login in a second tab when it gets focus back after a logout in the 
 });
 
 // T23: signed out, every app URL, `/settings`, `/` and unknown URLs open Login with their target (AC13 to AC15).
-for (const [path, returnTo, item] of [
-  ['/balances/abc', '/balances/abc', 'Balances'],
+// Task 021: `/balances/abc` is no account ID, so after login the app goes on to Balances (#39).
+for (const [path, returnTo, item, opened = returnTo] of [
+  ['/balances/abc', '/balances/abc', 'Balances', '/balances'],
   ['/settings/security', '/settings/security', 'Settings'],
   ['/settings', '/settings/account', 'Settings'],
   ['/', '/overview', 'Overview'],
@@ -366,7 +379,7 @@ for (const [path, returnTo, item] of [
     await expect(page).toHaveURL(`${FRONTEND_URL}/login?returnTo=${encodeURIComponent(returnTo)}`);
     await expect(sidebar(page)).toHaveCount(0);
     await logIn(page, user);
-    await expect(page).toHaveURL(`${FRONTEND_URL}${returnTo}`);
+    await expect(page).toHaveURL(`${FRONTEND_URL}${opened}`);
     await expect(headerDate(page)).toHaveText('22 Oct, 2026');
     await expect(activeItem(page)).toHaveText(item);
   });

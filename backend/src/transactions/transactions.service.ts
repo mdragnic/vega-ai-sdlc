@@ -4,6 +4,8 @@ import {
   RECENT_TRANSACTIONS_PER_TAB,
   type RecentTransactionsResponse,
   type TransactionDirection,
+  type TransactionHistoryPage,
+  type TransactionHistoryQuery,
   TRANSACTIONS_PAGE_SIZE,
   type TransactionsPage,
   type TransactionsQuery,
@@ -82,7 +84,39 @@ export class TransactionsService {
       nextCursor: page.nextCursor,
     };
   }
+
+  /**
+   * One page of an account's Transactions History (106): the account's next 10 after the cursor's row, in the
+   * provider's order (newest first, the same instant with the later stored first), every status (#57), with the cursor
+   * rules of `list` (#27, #74). Null, reading no transaction, when the account is not the user's (`hasAccount`, the
+   * provider's one query, #39). Every page's read also filters by the session user and the account in the provider's
+   * one query, never by the account ID alone, so another user's account gives no rows even without that check. Throws
+   * the provider's `InvalidCursorError` for a cursor it did not make.
+   */
+  async history(
+    userId: number,
+    timeZone: string,
+    accountId: number,
+    { cursor }: TransactionHistoryQuery,
+  ): Promise<TransactionHistoryPage | null> {
+    if (!(await this.accounts.hasAccount(userId, accountId))) return null;
+    const page = await this.visibleTransactions.list(userId, timeZone, {
+      accountId,
+      ...(cursor !== undefined && { cursor }),
+      limit: TRANSACTIONS_PAGE_SIZE,
+    });
+    return { transactions: page.transactions.map(toHistoryRow), nextCursor: page.nextCursor };
+  }
 }
+
+/** A provider row as a history row: only the contract's keys, the amount in integer cents with USD (#11, #96). */
+const toHistoryRow = ({ occurredAt, status, direction, receipt, amountCents }: BankTransaction) => ({
+  occurredAt: occurredAt.toISOString(),
+  status,
+  direction,
+  receipt,
+  amount: { cents: amountCents, currency: 'USD' as const },
+});
 
 /** The type of the transaction's account, which is always one of the user's (#57); anything else is an error. */
 function paymentMethodOf({ accountId }: BankTransaction, accountTypes: Map<number, AccountType>): AccountType {

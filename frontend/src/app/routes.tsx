@@ -5,6 +5,7 @@ import { GuestOnly } from '../routes/GuestOnly';
 import { paths } from '../routes/paths';
 import { RequireAuth } from '../routes/RequireAuth';
 import { AppShell, type ShellHandle } from './AppShell';
+import { AccountDetailsPage } from './pages/AccountDetailsPage';
 import { BalancesPage } from './pages/BalancesPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
@@ -38,7 +39,7 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
 const appPages: { path: string; handle: ShellHandle; element?: ReactNode }[] = [
   { path: paths.overview, handle: { section: 'overview', greeting: true }, element: <OverviewPage /> },
   { path: paths.balances, handle: { section: 'balances' }, element: <BalancesPage /> },
-  { path: paths.accountDetails, handle: { section: 'balances' } },
+  { path: paths.accountDetails, handle: { section: 'balances' }, element: <AccountDetailsPage /> },
   { path: paths.transactions, handle: { section: 'transactions' }, element: <TransactionsPage /> },
   { path: paths.bills, handle: { section: 'bills' } },
   { path: paths.expenses, handle: { section: 'expenses' } },

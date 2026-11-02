@@ -58,27 +58,7 @@
   text-align: right;
 }
 
-/* 107: "Load More" 32 under the last row and 32 above the card's padding, centred. */
+/* 107: "Load More" 32 under the last row and 32 above the card's padding. */
 .loadMore {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: var(--space-transaction-load-more-gap) 0;
-}
-
-/* Not designed (#117 b): DataState's error text, above the button; takes no room while empty. */
-.loadMoreError {
-  margin: 0;
-  color: var(--color-secondary);
-  font: var(--font-regular-14-20);
-  text-align: center;
-}
-
-.loadMoreError:not(:empty) {
-  margin-bottom: var(--space-form-small-gap);
-}
-
-/* 107: the `Button/primary` look, 192 wide. */
-.loadMoreButton {
-  width: var(--size-transaction-load-more-width);
 }

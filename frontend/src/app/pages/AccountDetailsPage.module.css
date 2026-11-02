@@ -1,0 +1,21 @@
+/* 106: the second title 32 under the details card. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-card-row-gap);
+}
+
+/* At least 106's 292 in every state: the error message centred in it (#6). A flex column, so DataState's states take
+   its room. */
+.detailsCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-account-details-card-min-height);
+}
+
+/* At least 106's 412 in every state: the error and the empty message centred in it (#6), a short list at its top. */
+.historyCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-history-card-min-height);
+}

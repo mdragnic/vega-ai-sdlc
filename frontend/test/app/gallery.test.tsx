@@ -447,6 +447,74 @@ describe('component gallery', () => {
     expect(skeleton.querySelectorAll('span')).toHaveLength(5 + 10 * 6 + 1);
   });
 
+  // Task 021 T21: the Account Details card, the history table, its rows, LoadMore and the skeletons, on sample data
+  // with no network.
+  it('shows the Account Details samples: the card, the history in every Load More state, the rows and the skeletons', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    const card = figure('AccountDetailsCard', 'Checking (106)');
+    expect(
+      within(card)
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Bank Name', 'Account Type', 'Balance', 'Branch Name', 'Account Number']);
+    expect(
+      within(card)
+        .getAllByRole('definition')
+        .map((value) => value.textContent),
+    ).toEqual(['AB Bank Ltd', 'Checking', '$33,362.48', 'Park Street Branch', '**** **** **** 7310']);
+    expect(within(card).queryByRole('button')).toBeNull();
+    expect(within(card).getByText('Edit Details').closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(
+      within(figure('AccountDetailsCard', 'The lowest balance the contract allows, on one line')).getByText(
+        '-$90,071,992,547,409.91',
+      ),
+    ).toBeInTheDocument();
+
+    const first = figure('TransactionsHistoryTable', 'A first page (106): Load More adds a last page');
+    expect(within(first).getByRole('table')).toHaveAccessibleName('Transactions History');
+    expect(bodyRows(first)).toHaveLength(10);
+    expect(bodyRows(first)[0]).toHaveTextContent('22 Oct, 2026CompleteDebitz7YBsODpLNW-$266.00');
+    await user.click(within(first).getByRole('button', { name: 'Load More' }));
+    expect(bodyRows(first)).toHaveLength(20);
+    expect(within(first).queryByRole('button', { name: 'Load More' })).toBeNull();
+    expect(
+      within(figure('TransactionsHistoryTable', 'Load More while the next page loads')).getByRole('button', {
+        name: 'Load More',
+      }),
+    ).toHaveAttribute('aria-busy', 'true');
+    expect(
+      within(figure('TransactionsHistoryTable', 'A failed Load More (#117 b)')).getByRole('status'),
+    ).toHaveTextContent('Something went wrong.');
+    expect(
+      within(figure('TransactionsHistoryTable', 'The end of the list: no Load More')).queryByRole('button'),
+    ).toBeNull();
+
+    expect(bodyRows(figure('TransactionsHistoryItem', 'A Failed Debit'))[0]).toHaveTextContent(
+      '16 Oct, 2026FailedDebitCFP5E9VV2Fn-$24.64',
+    );
+    expect(
+      bodyRows(figure('TransactionsHistoryItem', 'A long receipt wraps, the amount stays on one line (#115 b)'))[0],
+    ).toHaveTextContent('-$1,000,000,000.00');
+
+    const loadMore = within(
+      figure('LoadMore', 'Under a paged table (107, 106): a click shows the loading pattern'),
+    ).getByRole('button', { name: 'Load More' });
+    await user.click(loadMore);
+    expect(loadMore).toHaveAttribute('aria-busy', 'true');
+    expect(within(figure('LoadMore', 'A failed Load More (#117 b)')).getByRole('status')).toHaveTextContent(
+      'Something went wrong.',
+    );
+
+    // The header labels, then 10 rows of five lines, and the Load More block.
+    const history = figure('TransactionsHistorySkeleton', 'Loading');
+    expect(within(history).getByText('Transaction Type')).toBeInTheDocument();
+    expect(history.querySelectorAll('span')).toHaveLength(5 + 10 * 5 + 1);
+    // Five label lines and five value lines in their line boxes, then the two button places.
+    expect(figure('AccountDetailsCardSkeleton', 'Loading').querySelectorAll('[class*="skeleton"]')).toHaveLength(12);
+  });
+
   // Task 018 T15: the Expenses Breakdown item, card and skeleton, on sample data with no network.
   it('shows the Expenses Breakdown samples: the item’s changes, the card in every state and the skeleton', async () => {
     await renderGallery();

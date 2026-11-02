@@ -1,5 +1,7 @@
 // Shared components, exported by their code name from docs/figma/components.md: the Code name column,
 // or the Code-only table for components with no Figma component (#36). test/components/names.test.ts checks it.
+export { AccountDetailsCard } from './AccountDetailsCard/AccountDetailsCard';
+export { AccountDetailsCardSkeleton } from './AccountDetailsCardSkeleton/AccountDetailsCardSkeleton';
 export { AccountType } from './AccountType/AccountType';
 export { AccountTypeSkeleton } from './AccountTypeSkeleton/AccountTypeSkeleton';
 export { AccountTypeSlide } from './AccountTypeSlide/AccountTypeSlide';
@@ -30,6 +32,7 @@ export { GoalsSkeleton } from './GoalsSkeleton/GoalsSkeleton';
 export { Header } from './Header/Header';
 export { HeaderSearch } from './HeaderSearch/HeaderSearch';
 export { Input } from './Input/Input';
+export { LoadMore } from './LoadMore/LoadMore';
 export { Logout } from './Logout/Logout';
 export { MenuTab } from './MenuTab/MenuTab';
 export { NavBar } from './NavBar/NavBar';
@@ -56,6 +59,9 @@ export { TotalBalanceSkeleton } from './TotalBalanceSkeleton/TotalBalanceSkeleto
 export { TransactionItem } from './TransactionItem/TransactionItem';
 export { TransactionTable } from './TransactionTable/TransactionTable';
 export { TransactionTableSkeleton } from './TransactionTableSkeleton/TransactionTableSkeleton';
+export { TransactionsHistoryItem } from './TransactionsHistoryItem/TransactionsHistoryItem';
+export { TransactionsHistorySkeleton } from './TransactionsHistorySkeleton/TransactionsHistorySkeleton';
+export { TransactionsHistoryTable } from './TransactionsHistoryTable/TransactionsHistoryTable';
 export { UpcomingBill } from './UpcomingBill/UpcomingBill';
 export { UpcomingBillLogo } from './UpcomingBillLogo/UpcomingBillLogo';
 export { UpcomingBillSkeleton } from './UpcomingBillSkeleton/UpcomingBillSkeleton';

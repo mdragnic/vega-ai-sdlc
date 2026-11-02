@@ -29,11 +29,15 @@ const contractEntries = Object.entries(shared)
   .flatMap(([, contract]) => Object.values(contract as Record<string, shared.ContractEntry>));
 
 /**
- * The routes the app should register, as `METHOD /api/path`: every contract entry, the Google sign-in start and
- * callback (task 012), the fake Google page (NODE_ENV=test) and this test's crash route.
+ * The routes the app should register, as `METHOD /api/path`: every contract entry, the empty-segment form of each
+ * account path (task 021: the account ID in an optional group, so `/api/accounts//` gets the one 404), the Google
+ * sign-in start and callback (task 012), the fake Google page (NODE_ENV=test) and this test's crash route.
  */
 const expectedRoutes = [
   ...contractEntries.map((entry) => `${entry.method} /api${entry.path}`),
+  ...contractEntries
+    .filter((entry) => entry.path.includes(':accountId'))
+    .map((entry) => `${entry.method} /api${entry.path.replace(':accountId', '{:accountId}')}`),
   `GET /api${shared.googleSignIn.start}`,
   `GET /api${shared.googleSignIn.callback}`,
   `GET /api${FAKE_GOOGLE_AUTHORIZE_PATH}`,

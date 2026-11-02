@@ -176,6 +176,9 @@ export function useSessionStartInProgress(): boolean {
   return statuses.some((status) => status === 'pending' || status === 'success');
 }
 
+/** The app's retry rule for queries: 3 retries, none for a 401 (the session ended). */
+export const retryQuery = (failureCount: number, error: unknown): boolean => !isUnauthorized(error) && failureCount < 3;
+
 /**
  * The app's query client. A 401 from any query or mutation means the session ended (expired, or deleted by a
  * logout elsewhere): the session becomes signed out, which opens Login, and every cached query is removed, so
@@ -196,7 +199,7 @@ export function createQueryClient(): QueryClient {
       },
     }),
     defaultOptions: {
-      queries: { retry: (failureCount, error) => !isUnauthorized(error) && failureCount < 3 },
+      queries: { retry: retryQuery },
     },
   });
   return queryClient;

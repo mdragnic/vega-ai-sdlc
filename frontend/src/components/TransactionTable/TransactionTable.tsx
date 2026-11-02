@@ -1,7 +1,6 @@
 import type { TransactionsPage } from '@finebank/shared';
-import { useLayoutEffect, useRef, useState } from 'react';
 
-import { ButtonPrimary } from '../ButtonPrimary/ButtonPrimary';
+import { LoadMore, useLoadMore } from '../LoadMore/LoadMore';
 import { TransactionItem } from '../TransactionItem/TransactionItem';
 import styles from './TransactionTable.module.css';
 
@@ -24,11 +23,10 @@ type TransactionTableProps = {
 /**
  * The Transactions table (107): the header row Items, Shop Name, Date, Payment Method and Amount, then one
  * `TransactionItem` per row of every page, as sent (the frontend sorts, filters and calculates nothing; #11, #19, #27),
- * the columns in 107's proportions at any width (#94). Under it, while the last page has a `nextCursor`, "Load More";
- * hidden after the last page (#27). While the next page loads the button shows the loading pattern and keeps focus;
- * when the rows arrive, focus moves to the first new row, also when the last page hides the button, so it never falls
- * to the page body (#117 a). A failed "Load More" keeps the rows and shows "Something went wrong." above the button,
- * which asks for the same page again (#88, #117 b).
+ * the columns in 107's proportions at any width (#94). Under it, while the last page has a `nextCursor`, the shared
+ * `LoadMore` (task 021): the loading pattern, focus on the first new row when it arrives (#117 a, #118 a), and a failed
+ * "Load More" keeping the rows with "Something went wrong." above the button (#88, #117 b); hidden after the last page
+ * (#27).
  */
 export function TransactionTable({
   pages,
@@ -39,28 +37,7 @@ export function TransactionTable({
 }: TransactionTableProps) {
   const rows = pages.flatMap((page) => page.transactions);
   const hasMore = (pages.at(-1)?.nextCursor ?? null) !== null;
-  // The index of the first row the last "Load More" asked for, and whether it still has to take focus.
-  const [firstNewRow, setFirstNewRow] = useState<number | null>(null);
-  const focusPending = useRef(false);
-  const newRow = useRef<HTMLTableRowElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
-
-  // After every render: the first new row is there once its page has arrived.
-  useLayoutEffect(() => {
-    const row = newRow.current;
-    if (!focusPending.current || row === null) return;
-    focusPending.current = false;
-    // Only from the button (or from the body, where it fell when the last page removed the button): focus the user
-    // moved elsewhere while the page loaded stays there.
-    const active = document.activeElement;
-    if (active === null || active === document.body || active === button.current) row.focus({ preventScroll: true });
-  });
-
-  function loadMore() {
-    setFirstNewRow(rows.length);
-    focusPending.current = true;
-    onLoadMore();
-  }
+  const { firstNewRow, newRowRef, buttonRef, loadMore } = useLoadMore(rows.length, onLoadMore);
 
   return (
     <div className={styles.body}>
@@ -90,7 +67,7 @@ export function TransactionTable({
             // No ID in the contract (no route takes a transaction): the row's position is its key.
             <TransactionItem
               key={index}
-              ref={index === firstNewRow ? newRow : undefined}
+              ref={index === firstNewRow ? newRowRef : undefined}
               transaction={transaction}
               divided={index !== rows.length - 1}
               focusTarget={index === firstNewRow}
@@ -99,18 +76,13 @@ export function TransactionTable({
         </tbody>
       </table>
       {hasMore && (
-        <div className={styles.loadMore}>
-          {/* A polite live region, there before its message, so the failure is announced (#117 b); a new message node
-              for each failure, so a repeated failure is announced again. */}
-          <p role="status" className={styles.loadMoreError}>
-            {loadMoreFailure !== null && <span key={loadMoreFailure}>Something went wrong.</span>}
-          </p>
-          <div className={styles.loadMoreButton}>
-            <ButtonPrimary ref={button} loading={loadingMore} onClick={loadMore}>
-              Load More
-            </ButtonPrimary>
-          </div>
-        </div>
+        <LoadMore
+          buttonRef={buttonRef}
+          onClick={loadMore}
+          loading={loadingMore}
+          failure={loadMoreFailure}
+          className={styles.loadMore}
+        />
       )}
     </div>
   );

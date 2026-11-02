@@ -1,0 +1,67 @@
+Task 021 visual validation, 2026-11-02. Playwright MCP (headed Chromium on Windows), fresh contexts in Europe/Belgrade,
+1440x1024 at device scale 2, the scrollbar hidden for the 1440 renders (`html { scrollbar-width: none }`, the page 1440
+wide like the PNG, as tasks 013 to 020); the 1920 and 1280 renders keep the classic scrollbar (pages 1905 and 1265
+wide). Backend on the fixed test clock (NODE_ENV=test, TEST_NOW=2026-10-22T10:00:00Z, `npm run start:e2e -w backend`),
+Vite dev server, users signed up through the API at that clock (the demo data). No Figma calls: compared with
+docs/figma/106. Account Details.png only (2880x2048, the name checked: 106 is Account Details).
+
+Files
+- account-details-1440-2x.png: Checking at /balances/<id>, 1440x1024 at 2x (the viewport); account-details-1440-full-2x.png:
+  the whole page (2880x2608: the history card to y 1272, the page to 1304, 32 under it).
+- Evidence only: credit-card-1440-full-2x.png (the Failed Pizza fifth), load-more-full-2x.png (Checking after one
+  "Load More": 20 rows, 3 Oct first on page 2), account-details-1920x1080-full.png and account-details-1280x1024-full.png
+  (classic scrollbar; at 1280 the page 1265 wide, the cards 929, every row 56, no horizontal scroll),
+  state-long-data-1440-full-2x.png and state-long-data-1280-full-2x.png (a 100-character Bank Name in words and a
+  100-character Branch Name with no space, the balance -$90,071,992,547,409.91; a 120-character receipt in words on row 1
+  and with no space on row 2, +$1,000,000,000.00 on row 3: the names and receipts wrap inside their columns, the details
+  card 436 high at 1440 and 460 at 1280, rows 176, 200, 56 at 1440 and 224, 224, 56 at 1280, the balance and the amount
+  on one line, page scrollWidth = page width), state-skeletons-full-2x.png (both skeletons, aria-busy, 292 and 748),
+  state-error-cards-full-2x.png ("Something went wrong." over Retry centred in each card, 292 and 412),
+  state-keyboard-retry-focus-2x.png (after a keyboard Retry on the details: focus in the card, the ring),
+  state-load-more-failed-2x.png (the rows kept, the message above "Load More", the ring on the button),
+  state-ring-new-row-2x.png (after a keyboard "Load More": the ring around row 11, scrollY 280 before and after),
+  state-end-of-list-full-2x.png (backend clock 2022-01-17T10:00:00Z: 11 rows, no button, focus with the ring on Design
+  project's row, the card 28 under the last row), state-no-transactions-full-2x.png (Savings at 2022-01-17: "No
+  transactions yet" centred in the 412 card), state-balances-after-abc-2x.png (/balances/abc opened Balances, URL
+  /balances).
+
+Measured at 2x on 106 and the build (a Node PNG reader in the session scratchpad; absolute 2x pixels):
+- The details card: white x 608-2815, y 304-887 in both (292 high at 1x).
+- The title "Account Details": ink 609-932, y 223-256 in both. "Transactions History": 610-1034, y 967-1008 in both.
+- Labels (Regular 16, Gray/03): "Bank Name" 675-842 | 675-843, y 381-403 in both; "Account Type" 1307-1512 | 1307-1513;
+  row 2 "Branch Name" and "Account Number" y 553-575 | 557-579.
+- Values (Bold 18, Secondary): "Checking" and "Park Street Branch" ink mass 106/build 1.026 and 1.024 (Bold confirmed);
+  "Park Street Branch" x 674-998 | 674-997, y 599-626 | 601-628; "Balance" 1941-2146 | 1941-2147 ($25,056.00 against
+  $33,362.48), y 424-460 | 422-458.
+- "Edit Details": teal x 672-991 at y 760 in both (160 wide at 1x), the label's ink the same.
+- "Remove" (Gray/01): ink x 1077-1182 | 1074-1177, y 749-769 in both. Weight by ink density: the build's ink mass is 0.755
+  of 106's at Regular, 0.872 at Medium, 1.000 at Semibold; texts whose weight both share land at 0.85 to 0.87 here
+  ("Complete" Regular 0.873, the headers Semibold 0.85; task 020 found 0.83 to 0.88 on 107), so Medium was chosen
+  (changed from Regular during this check; AccountDetailsCard.module.css and components.md).
+- History card from y 1048 in both; the header (Semibold 16, Default Black) ink y 1116-1140 | 1117-1140, "Date" at x 674
+  in both, "Amount" ending at 2750 | 2751; header ink mass 106/build 1.16 to 1.18 (Semibold, as 107).
+- Dividers: y 1182-1183 (under the header) and 1294-1295 (under row 1) in both.
+- Row 1: the date at x 674 in both, "Complete" 1276-1420 | 1277-1418, the amount ending at 2750 in both; text y 1228-1258
+  in both.
+
+Differences, each expected unless marked:
+1. The demo values against Figma's (#12): "AB Bank Ltd" without the dot (demo-data.md), $33,362.48 against $25,056.00
+   (#57), "**** **** **** 7310" against "133 456  886 8****" (#25, demo-data.md).
+2. 10 history rows, not 4 (US-12 criterion 13): the history card is 748 high (y 524-1272), "Load More" 336 lower
+   (y 1184 against 848), and the page scrolls (1304 high).
+3. The 2026 dates, the Debit and Credit mix, the receipts and the signs on the amounts (#19), against 106's four
+   "17 Apr, 2023 Complete Credit 8C52d5DKDJ5 $160.00".
+4. Row 2 of the details 2 px low at 1x (labels y 557 against 553 at 2x): the measured 38 between the rows and above the
+   buttons is off the 4 px grid, built as 40 and 36 (#65), the buttons and the card's height where 106 has them.
+5. The details' values about 1 px higher at 1x (ink y 426 against 428 at 2x on row 1); row 2's values 1 px lower (the
+   2 px of item 4 less this 1).
+6. "Remove" 1.5 px further left at 1x (ink from 1074 against 1077 at 2x): the gap is 40 on the 4 px grid against about
+   41 measured (#65).
+7. The header date "22 Oct, 2026" and the initials avatar (task 011, #38), against "May 19, 2023" and the photo.
+8. The divider Gray/06 #F3F3F3 against 106's #F4F4F4; the page background #F3F3F3 against #F4F5F7 (as earlier tasks).
+9. Text ink 1 to 3 px narrower at 2x in Chromium than in Figma's render on some texts (the header "Date" 70 | 68, the
+   status "Complete" 145 | 142), and Figma's render about 15% heavier at the same weight (as task 020 on 107).
+10. The 15 px gutter shift with classic scrollbars (#101): every x from the page's right edge moves 15 left in the
+    1920 and 1280 renders and in the manual checks (the page 1425 wide in a 1440 window).
+Nothing else differs: the titles, the cards' positions and sizes, the label and column positions, the button, the
+header row, the dividers and the row positions match to the pixel or within the items above.

@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   BANK_DATA_PROVIDER,
@@ -9,6 +9,7 @@ import {
   InvalidCursorError,
   type TransactionFilter,
 } from '../src/bank-data/bank-data-provider.js';
+import { VisibleTransactions } from '../src/bank-data/visible-transactions.js';
 import { signUp } from './helpers/auth.js';
 import { userIdOf } from './helpers/finance.js';
 import { createTestApp } from './helpers/test-app.js';
@@ -37,6 +38,9 @@ const transactionKeys = [
 
 const day = (transaction: BankTransaction): string => transaction.occurredAt.toISOString().slice(0, 10);
 
+/** The WHERE clause of a SELECT, up to its ORDER BY or LIMIT. */
+const whereOf = (sql: string) => /\bWHERE\b(.*?)(\bORDER BY\b|\bLIMIT\b|$)/is.exec(sql)?.[1] ?? '';
+
 describe('TypeOrmBankDataProvider', () => {
   let app: INestApplication;
   let provider: BankDataProvider;
@@ -58,6 +62,21 @@ describe('TypeOrmBankDataProvider', () => {
   afterAll(async () => {
     await app.close();
   });
+
+  /** The SQL the data source runs while `run` runs (this driver writes the numbers into the text). */
+  async function recordSql(run: () => Promise<unknown>) {
+    const db = app.get(DataSource);
+    const statements: string[] = [];
+    const logQuery = vi.spyOn(db.logger, 'logQuery').mockImplementation((sql) => {
+      statements.push(sql);
+    });
+    try {
+      await run();
+    } finally {
+      logQuery.mockRestore();
+    }
+    return statements;
+  }
 
   /** Every page of a filter with `limit`, following nextCursor to the end. */
   async function allPages(userId: number, filter: TransactionFilter, limit: number) {
@@ -247,6 +266,56 @@ describe('TypeOrmBankDataProvider', () => {
       expect(await provider.getAccount(userB, accountsB[1]!)).toEqual(before);
       expect(before).toMatchObject({ bankName: 'AB Bank Ltd', accountType: 'checking' });
     });
+
+    // Task 021 T7, AC12: the account check is one query whose WHERE holds the account and the user (#39).
+    it('reads one account in one SELECT whose WHERE holds the account ID and the user ID', async () => {
+      for (const [userId, accountId, found] of [
+        [userA, accountsB[1]!, false],
+        [userA, accountsA[1]!, true],
+      ] as const) {
+        let account: unknown;
+        const statements = await recordSql(async () => {
+          account = await provider.getAccount(userId, accountId);
+        });
+
+        expect(account === null).toBe(!found);
+        expect(statements).toHaveLength(1);
+        const [sql] = statements as [string];
+        expect(sql).toMatch(/^SELECT\b/);
+        expect(/"id" = (\d+)/.exec(whereOf(sql))?.[1]).toBe(String(accountId));
+        expect(/"user_id" = (\d+)/.exec(whereOf(sql))?.[1]).toBe(String(userId));
+      }
+    });
+
+    // Task 021 T7, AC14 (Marko's addition 1): the history's read filters by the user and the account in one query, so
+    // another user's account gives no rows even without the account check.
+    it.each([
+      ['without a cursor', false],
+      ['with a cursor', true],
+    ])(
+      'lists no rows of another user’s account through VisibleTransactions %s, in one SELECT on the user and the account',
+      async (_case, withCursor) => {
+        const visible = app.get(VisibleTransactions);
+        const cursor = withCursor
+          ? (await visible.list(userA, 'Europe/Belgrade', { accountId: accountsA[1], limit: 10 })).nextCursor!
+          : undefined;
+        let page: unknown;
+        const statements = await recordSql(async () => {
+          page = await visible.list(userA, 'Europe/Belgrade', {
+            accountId: accountsB[1],
+            limit: 10,
+            ...(cursor !== undefined && { cursor }),
+          });
+        });
+
+        expect(page).toEqual({ transactions: [], nextCursor: null });
+        expect(statements).toHaveLength(1);
+        const [sql] = statements as [string];
+        expect(sql).toMatch(/^SELECT\b/);
+        expect(/"a"\."user_id" = (\d+)/.exec(whereOf(sql))?.[1]).toBe(String(userA));
+        expect(/"t"\."account_id" = (\d+)/.exec(whereOf(sql))?.[1]).toBe(String(accountsB[1]));
+      },
+    );
 
     it('lists no transactions of another user’s account', async () => {
       expect(await provider.listTransactions(userA, { accountId: accountsB[1] })).toEqual({

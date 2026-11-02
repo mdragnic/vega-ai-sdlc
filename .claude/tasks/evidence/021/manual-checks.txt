@@ -1,0 +1,50 @@
+Task 021 manual checks, 2026-11-02. Playwright MCP, headed Chromium on Windows with classic scrollbars (the page is 1425
+wide in a 1440 window, #101), fresh contexts in Europe/Belgrade at 1x. Backend on the fixed test clock (NODE_ENV=test,
+TEST_NOW=2026-10-22T10:00:00Z; `npm run start:e2e -w backend`, later `npm run start -w backend` to keep the database
+across a restart), Vite dev server. No Figma calls.
+
+1. Sign up through the form ("Manual Check"): lands on /overview.
+2. Balances from the sidebar, then each card's "Details" in turn (Back between them): /balances/46 to /balances/50,
+   Balances active each time, no page load (0 load events), every account request with X-Time-Zone Europe/Belgrade.
+   Each account's details against its Balances card (type, Bank Name, number, balance the same):
+     Master Card / Credit Card / $21,019.18 / Main Branch / **** **** **** 2598 (card: Credit Card, Master Card, 2598, $21,019.18)
+     AB Bank Ltd / Checking / $33,362.48 / Park Street Branch / **** **** **** 7310 (card: Checking, AB Bank Ltd, 7310, $33,362.48)
+     Brac Bank Ltd. / Savings / $27,356.80 / Gulshan Branch / **** **** **** 4421 (card: Savings, Brac Bank Ltd., 4421, $27,356.80)
+     AB Bank Ltd / Investment / $29,503.00 / Park Street Branch / **** **** **** 6652 (card: Investment, AB Bank Ltd, 6652, $29,503.00)
+     City Bank Ltd. / Loan / $19,013.21 / Motijheel Branch / **** **** **** 9083 (card: Loan, City Bank Ltd., 9083, $19,013.21)
+   First rows: Credit Card "21 Oct, 2026 | Complete | Debit | N5wzoyzWlSv | -$17.64"; Checking "22 Oct, 2026 | Complete |
+   Debit | z7YBsODpLNW | -$266.00"; Savings "28 Sep, 2026 | Complete | Credit | coYqvpXaD5B | +$44.80"; Investment
+   "15 Oct, 2026 | Complete | Credit | A9TZ9fXoycD | +$84.00"; Loan "10 Oct, 2026 | Complete | Debit | nCeBYCGopZb |
+   -$106.40".
+3. Transactions All, three pages, filtered by eye (in code) on Payment Method Checking: its first 10 (date, amount) equal
+   Checking's history's 10 rows, in order: true.
+4. "Load More" by mouse, page 2 held 1.5 s: aria-busy="true", aria-disabled="true", the spinner, gray rgb(228, 231, 235)
+   (`--color-button-secondary`), its name "Load More". Then 20 rows; focus on row 11, :focus-visible false, outline none
+   (no ring after a click).
+5. "Load More" by keyboard (Enter on the focused button): 30 rows; focus on row 21 ("14 Sep, 2026 Complete Debit
+   DaZ0J6gZPps -$22.40"), :focus-visible true, the ring solid rgb(41, 157, 145); Tab from it reaches "Load More".
+6. Keyboard, from the search field: Tab gives "Load More" (the ring, solid teal), the next Tab leaves main (the body);
+   Shift+Tab from "Load More" gives the search field.
+7. Clicks on "Edit Details" and "Remove": cursor default, inside an inert container, URL unchanged, no dialog, no request.
+8. /balances/abc and an unknown ID (/balances/100050), each opened after /goals: Balances (/balances) each time; Back
+   goes to /goals, not the bad URL.
+9. A second user ("Other User") opening the first user's Checking (/balances/47): GET /api/accounts/47 and
+   /api/accounts/47/transactions both 404 {"message":"Account not found"}; Balances shown; Back goes to /overview (the
+   page before), not the bad URL.
+10. Resizes on Checking (the page, the cards, the row heights, a horizontal scroll):
+    - 1920x1080: page 1905, cards 1569, every row 56, the details card 292, no horizontal scroll.
+    - 1280x1024 (manual-1280.png): page 1265, cards 929, every row 56, the details card 292, no horizontal scroll.
+    - Back to 1440x1024: page 1425, cards 1089, every row 56, the details card 292.
+11. Backend stopped (TaskStop, then taskkill on the node process still on port 3000), with a second tab parked on /bills
+    beforehand (a full reload with the backend down goes to Login, tasks 009 to 011):
+    - In the parked tab, an in-app move to the Credit Card's Account Details (/balances/46): both skeletons at once, 292 and
+      748 (manual-backend-down-skeletons.png); "Something went wrong." over Retry in each card 7.5 s later, after the
+      request and its 3 retries, 292 and 412 (manual-backend-down-errors.png). No redirect: the failure is not a 404.
+12. Backend started again (`npm run start -w backend`, database kept): Retry on the details by keyboard: the five values,
+    focus in the card with the ring (manual-keyboard-retry-ring.png); Retry on the history by keyboard: 10 rows, the
+    fifth the Failed Pizza, focus in the history card.
+13. Backend stopped again; "Load More" by keyboard: 7.5 s later "Something went wrong." above the button, the 10 rows kept,
+    focus still on the button, no longer busy (manual-load-more-failed.png).
+14. Backend started again; Enter on "Load More": 20 rows, the message gone, focus on row 11 ("5 Oct, 2026 Complete Debit
+    zhDb98IWtmr -$14.78") with the ring (manual-load-more-after-backend-back.png).
+Servers stopped at the end; ports 3000 and 5173 freed.

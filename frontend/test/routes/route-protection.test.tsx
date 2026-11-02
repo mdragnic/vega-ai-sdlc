@@ -38,9 +38,10 @@ describe('signed out', () => {
 
   it('keeps the query and hash of the page asked for', async () => {
     server.use(me.signedOut());
-    const { url } = renderApp('/balances/12?view=1#top');
+    // An existing account (task 021: an unknown ID opens Balances once signed in).
+    const { url } = renderApp('/balances/2?view=1#top');
 
-    await waitFor(() => expect(url()).toBe('/login?returnTo=%2Fbalances%2F12%3Fview%3D1%23top'));
+    await waitFor(() => expect(url()).toBe('/login?returnTo=%2Fbalances%2F2%3Fview%3D1%23top'));
   });
 
   it('shows the Login form at /login', async () => {

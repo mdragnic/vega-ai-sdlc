@@ -1,0 +1,306 @@
+
+=== 1-getAccount-no-user: the provider's getAccount without its user condition (findOneBy({ id: accountId }))
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-provider.test.ts
+    exit 1; Test Files  2 failed (2) | Tests  4 failed | 47 passed (51)
+    FAIL × answers the details route 404 with one status, headers and body for every case 7ms
+    FAIL × answers the history route 404 with the same, with and without a cursor 3ms
+    FAIL × gives null for another user’s account on get and update, and leaves it unchanged 3ms
+    FAIL × reads one account in one SELECT whose WHERE holds the account ID and the user ID 2ms
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "malformed ID" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:295:1 › opens Balances for another user’s, an unknown and a malformed ID, showing nothing of an account
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 2a-history-no-hasAccount: the getAccount check removed from the history (no hasAccount)
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-provider.test.ts
+    exit 1; Test Files  1 failed | 1 passed (2) | Tests  3 failed | 48 passed (51)
+    FAIL × answers the history route 404 with the same, with and without a cursor 7ms
+    FAIL × parses the largest safe integer as an ID: no account has it, so 404 6ms
+    FAIL × answers the other user’s account no rows even when hasAccount always says yes 3ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 2b-and-provider-no-user: then also the user condition removed from the provider's transaction query
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-provider.test.ts
+    exit 1; Test Files  2 failed (2) | Tests  13 failed | 38 passed (51)
+    FAIL × answers the history route 404 with the same, with and without a cursor 7ms
+    FAIL × parses the largest safe integer as an ID: no account has it, so 404 6ms
+    FAIL × answers the other user’s account no rows even when hasAccount always says yes 3ms
+    FAIL × lists every transaction of the user, newest first, with only the raw fields 27ms
+    FAIL × breaks ties within a day by ID, the newest insert first 2ms
+    FAIL × filters by income 4ms
+    FAIL × filters by expenses 15ms
+    FAIL × filters by 1 to 22 Oct 2026 1ms
+    FAIL × combines the filters, occurredFrom inclusive and occurredBefore exclusive 1ms
+    FAIL × returns only the user’s own rows 20ms
+    FAIL × lists no rows of another user’s account through VisibleTransactions without a cursor, in one SELECT on the user and the account 2ms
+    FAIL × lists no rows of another user’s account through VisibleTransactions with a cursor, in one SELECT on the user and the account 2ms
+    FAIL × lists no transactions of another user’s account 36ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 3a-filter-only-first-page: the account filter dropped in the paging path (accountId only when there is no cursor)
+  [backend] npx vitest run test/transaction-history.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  6 failed | 21 passed (27)
+    FAIL × answers Checking’s page 2 from page 1’s cursor: 3 Oct first, then House Rent 78ms
+    FAIL × pages credit-card to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 84ms
+    FAIL × pages checking to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 79ms
+    FAIL × keeps page 2 from 3 Oct with a row added today, Grocery removed and a row added at Grocery’s instant 81ms
+    FAIL × gives every account the All rows of its type at 2026-10-22T10:00:00.000Z 227ms
+    FAIL × answers 200 with exactly the contract’s keys, UTC timestamps, plain cents with USD, 10 rows and a cursor 80ms
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "adds page 2 with" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:173:1 › shows Checking’s 10 rows, adds page 2 with "Load More" from page 1’s cursor, and the Credit Card’s Failed row
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 3b-provider-no-account-filter: the provider's accountId condition removed
+  [backend] npx vitest run test/transaction-history.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  19 failed | 8 passed (27)
+    FAIL × answers Checking’s first 10 at the fixed clock, with their receipts, and a cursor 91ms
+    FAIL × answers the Credit Card’s first 10, the Failed Pizza fifth, listed like a Complete row 83ms
+    FAIL × answers Checking’s page 2 from page 1’s cursor: 3 Oct first, then House Rent 77ms
+    FAIL × pages credit-card to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 78ms
+    FAIL × pages checking to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 80ms
+    FAIL × pages savings to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 73ms
+    FAIL × pages investment to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 80ms
+    FAIL × pages loan to its end at 2022-03-01: the pages together are the account’s whole visible list, each row once 75ms
+    FAIL × keeps page 2 from 3 Oct with a row added today, Grocery removed and a row added at Grocery’s instant 78ms
+    FAIL × answers only the Credit Card’s rows after the position of a cursor made on Checking’s list 160ms
+    FAIL × answers only this account’s rows for a cursor made on another user’s list 218ms
+    FAIL × gives every account the All rows of its type at 2026-10-22T10:00:00.000Z 225ms
+    FAIL × gives every account the All rows of its type at 2022-01-17T10:00:00Z 87ms
+    FAIL × starts Checking with Gift and Freelance payment of 24 Oct in Belgrade, with Jeans in New York 75ms
+    FAIL × continues page 2 from the cursor after midnight passes: 3 Oct first, no 24 Oct row 72ms
+    FAIL × answers 200 with exactly the contract’s keys, UTC timestamps, plain cents with USD, 10 rows and a cursor 82ms
+    FAIL × answers Checking’s 10 rows and a null cursor at 2022-01-15, the end of the list 77ms
+    FAIL × answers 10 and then the tie row at 2022-01-17: House Rent ends page 1, Design project is page 2 77ms
+    FAIL × answers Savings no rows and a null cursor at 2022-01-17 74ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 4a-full-number: a full number in the response (maskedNumber: account.accountNumber in details)
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-source.test.ts test/accounts-service.test.ts
+    exit 1; Test Files  3 failed (3) | Tests  9 failed | 56 passed (65)
+    FAIL × uses accountNumber only in bank-data/, demo/ and its allowed files 7ms
+    FAIL × answers exactly the five fields, the number masked, the balance the Complete rows only 4ms
+    FAIL × answers 200 with exactly the five fields of each account, in integer cents with USD 22ms
+    FAIL × never sends a full number, a 12-digit prefix, an opening balance, a card network, an ID or a receipt 10ms
+    FAIL × at 2026-10-22T10:00:00.000Z in Europe/Belgrade equals the accounts list’s for every account 18ms
+    FAIL × at 2026-10-23T22:30:00Z in Europe/Belgrade equals the accounts list’s for every account 21ms
+    FAIL × at 2026-10-23T22:30:00Z in America/New_York equals the accounts list’s for every account 13ms
+    FAIL × at 2022-01-17T10:00:00Z in Europe/Belgrade equals the accounts list’s for every account 5ms
+    FAIL × moves with a Complete expense on the Credit Card in both, never with a Pending or a Failed one 27ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 4b-extra-accountNumber: an extra accountNumber key in the details
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-source.test.ts test/accounts-service.test.ts
+    exit 1; Test Files  3 failed (3) | Tests  4 failed | 61 passed (65)
+    FAIL × uses accountNumber only in bank-data/, demo/ and its allowed files 8ms
+    FAIL × answers exactly the five fields, the number masked, the balance the Complete rows only 4ms
+    FAIL × answers 200 with exactly the five fields of each account, in integer cents with USD 23ms
+    FAIL × never sends a full number, a 12-digit prefix, an opening balance, a card network, an ID or a receipt 10ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 5-second-balance-path: a second balance path: details sums the account's transactions of every status in its own loop
+  [backend] npx vitest run test/account-details.test.ts test/accounts-service.test.ts
+    exit 1; Test Files  2 failed (2) | Tests  9 failed | 35 passed (44)
+    FAIL × answers exactly the five fields, the number masked, the balance the Complete rows only 4ms
+    FAIL × gives each account the balance summary gives it 1ms
+    FAIL × throws on a balance past the safe integers, as summary does (#11) 1ms
+    FAIL × answers 200 with exactly the five fields of each account, in integer cents with USD 23ms
+    FAIL × at 2026-10-22T10:00:00.000Z in Europe/Belgrade equals the accounts list’s for every account 16ms
+    FAIL × at 2026-10-23T22:30:00Z in Europe/Belgrade equals the accounts list’s for every account 14ms
+    FAIL × at 2026-10-23T22:30:00Z in America/New_York equals the accounts list’s for every account 29ms
+    FAIL × at 2022-01-17T10:00:00Z in Europe/Belgrade equals the accounts list’s for every account 5ms
+    FAIL × moves with a Complete expense on the Credit Card in both, never with a Pending or a Failed one 12ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 6-non-numeric-400: a non-numeric ID answered 400 (a validating pipe on the path parameter)
+  [backend] npx vitest run test/account-details.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  9 failed | 11 passed (20)
+    FAIL × answers 200 with exactly the five fields of each account, in integer cents with USD 14ms
+    FAIL × at 2026-10-22T10:00:00.000Z in Europe/Belgrade equals the accounts list’s for every account 16ms
+    FAIL × at 2026-10-23T22:30:00Z in Europe/Belgrade equals the accounts list’s for every account 12ms
+    FAIL × at 2026-10-23T22:30:00Z in America/New_York equals the accounts list’s for every account 26ms
+    FAIL × at 2022-01-17T10:00:00Z in Europe/Belgrade equals the accounts list’s for every account 5ms
+    FAIL × moves with a Complete expense on the Credit Card in both, never with a Pending or a Failed one 10ms
+    FAIL × answers the details route 404 with one status, headers and body for every case 16ms
+    FAIL × answers the empty segment /api/accounts// (the details path) with the same 404, never the default one with the path 2ms
+    FAIL × answers the other user its own accounts, so the 404 is the requester’s 2ms
+  state before 1aefaf6ce2cd3013 after 1aefaf6ce2cd3013: restored
+
+=== 7a-loose-parse: a loose parse (Number(raw) with Number.isInteger and > 0) in the shared accountIdSchema
+  [shared] npx vitest run test/account-details-contract.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  13 failed | 43 passed (56)
+    FAIL × rejects a leading zero ("01") 3ms
+    FAIL × rejects two leading zeros ("007") 0ms
+    FAIL × rejects an exponent ("1e3") 0ms
+    FAIL × rejects a plus ("+1") 0ms
+    FAIL × rejects a decimal point with a zero ("1.0") 0ms
+    FAIL × rejects a leading space (" 7") 0ms
+    FAIL × rejects a trailing space ("7 ") 0ms
+    FAIL × rejects a trailing line break ("7\n") 0ms
+    FAIL × rejects hexadecimal ("0x10") 0ms
+    FAIL × rejects one past the safe range ("9007199254740992") 0ms
+    FAIL × rejects two past the safe range, which Number rounds to one past it ("9007199254740993") 0ms
+    FAIL × rejects 30 digits ("111111111111111111111111111111") 0ms
+    FAIL × parses the params of a path: { accountId }, unknown keys dropped 1ms
+  [backend] npx vitest run test/account-details.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+    FAIL × answers the details route 404 with one status, headers and body for every case 26ms
+    FAIL × answers the history route 404 with the same, with and without a cursor 40ms
+--- resumed after the memory kill ---
+
+=== 7a-loose-parse: a loose parse (Number(raw) with Number.isInteger and > 0) in the shared accountIdSchema
+  [shared] npx vitest run test/account-details-contract.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  13 failed | 43 passed (56)
+    FAIL × rejects a leading zero ("01") 4ms
+    FAIL × rejects two leading zeros ("007") 0ms
+    FAIL × rejects an exponent ("1e3") 0ms
+    FAIL × rejects a plus ("+1") 0ms
+    FAIL × rejects a decimal point with a zero ("1.0") 0ms
+    FAIL × rejects a leading space (" 7") 0ms
+    FAIL × rejects a trailing space ("7 ") 0ms
+    FAIL × rejects a trailing line break ("7\n") 0ms
+    FAIL × rejects hexadecimal ("0x10") 0ms
+    FAIL × rejects one past the safe range ("9007199254740992") 0ms
+    FAIL × rejects two past the safe range, which Number rounds to one past it ("9007199254740993") 0ms
+    FAIL × rejects 30 digits ("111111111111111111111111111111") 0ms
+    FAIL × parses the params of a path: { accountId }, unknown keys dropped 2ms
+  [backend] npx vitest run test/account-details.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  2 failed | 18 passed (20)
+    FAIL × answers the details route 404 with one status, headers and body for every case 37ms
+    FAIL × answers the history route 404 with the same, with and without a cursor 51ms
+  [frontend] npx vitest run test/api/client.test.ts test/app/account-details.test.tsx
+    exit 1; Test Files  2 failed (2) | Tests  9 failed | 96 passed (105)
+    FAIL × rejects the account ID "01" before any request 4ms
+    FAIL × rejects the account ID "1e3" before any request 6ms
+    FAIL × rejects the account ID "1.0" before any request 1ms
+    FAIL × rejects the account ID " 7" before any request 1ms
+    FAIL × rejects the account ID "9007199254740992" before any request 1ms
+    FAIL × opens Balances for /balances/01, replacing it in the history, with no account request 1006ms
+    FAIL × opens Balances for /balances/1e3, replacing it in the history, with no account request 86ms
+    FAIL × opens Balances for /balances/1.0, replacing it in the history, with no account request 1013ms
+    FAIL × opens Balances for /balances/9007199254740992, replacing it in the history, with no account request 97ms
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 7b-no-empty-segment-routes: the empty-segment routes removed
+  [backend] npx vitest run test/account-details.test.ts
+    exit 1; Test Files  1 failed (1) | Tests  3 failed | 17 passed (20)
+    FAIL × answers the empty segment /api/accounts// (the details path) with the same 404, never the default one with the path 7ms
+    FAIL × answers the empty segment /api/accounts//transactions (the history path) with the same 404, never the default one with the path 4ms
+    FAIL × answers the empty segment /api/accounts//transactions?cursor=abc (the history path with a cursor) with the same 404, never the default one with the path 6ms
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 8-fetch-then-compare: fetch-then-compare: details reads listAccounts(userId) and picks the ID
+  [backend] npx vitest run test/accounts-service.test.ts test/bank-data-source.test.ts
+    exit 1; Test Files  2 failed (2) | Tests  2 failed | 43 passed (45)
+    FAIL × never compares an account ID in app code outside bank-data/ and demo/ 7ms
+    FAIL × reads the account once through getAccount with the user and the account, never listAccounts 2ms
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 7c-frontend-raw-param: the frontend sending the raw param without the shared parse (the page and apiRequest)
+  [frontend] npx vitest run test/app/account-details.test.tsx
+    exit 1; Test Files  1 failed (1) | Tests  10 failed | 40 passed (50)
+    FAIL × opens Balances for /balances/abc, replacing it in the history, with no account request 73ms
+    FAIL × opens Balances for /balances/0, replacing it in the history, with no account request 79ms
+    FAIL × opens Balances for /balances/01, replacing it in the history, with no account request 1006ms
+    FAIL × opens Balances for /balances/1e3, replacing it in the history, with no account request 84ms
+    FAIL × opens Balances for /balances/-1, replacing it in the history, with no account request 77ms
+    FAIL × opens Balances for /balances/1.0, replacing it in the history, with no account request 1011ms
+    FAIL × opens Balances for /balances/12abc, replacing it in the history, with no account request 55ms
+    FAIL × opens Balances for /balances/%20, replacing it in the history, with no account request 73ms
+    FAIL × opens Balances for /balances/9007199254740992, replacing it in the history, with no account request 91ms
+    FAIL × parses the route’s account ID with the shared schema before any request 1ms
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "malformed ID" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:295:1 › opens Balances for another user’s, an unknown and a malformed ID, showing nothing of an account
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 9-no-redirect: the redirect: the page shows DataState's error state on a 404 instead of opening Balances
+  [frontend] npx vitest run test/app/account-details.test.tsx
+    exit 1; Test Files  1 failed (1) | Tests  4 failed | 46 passed (50)
+    FAIL × opens Balances for an unknown ID after its 404, never showing a value, asking once (no retry) 1542ms
+    FAIL × opens Balances for the largest safe integer after its 404, never showing a value, asking once (no retry) 1517ms
+    FAIL × opens Balances for a demo account whose history answers 404 after its 404, never showing a value, asking once (no retry) 1523ms
+    FAIL × opens Balances for a demo account whose details answer 404 after its 404, never showing a value, asking once (no retry) 1547ms
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "malformed ID" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:295:1 › opens Balances for another user’s, an unknown and a malformed ID, showing nothing of an account
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 10a-load-more-kept: "Load More" kept at the end of the list
+  [frontend] npx vitest run test/app/account-details.test.tsx
+    exit 1; Test Files  1 failed (1) | Tests  3 failed | 47 passed (50)
+    FAIL × hides "Load More" when the last page arrives, focus on its first row, never the page body 211ms
+    FAIL × shows 3 rows with no cursor and no "Load More" 63ms
+    FAIL × shows exactly 10 rows with no cursor and no "Load More" 64ms
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "2022-01-15" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:221:1 › shows 10 rows and no button at 2022-01-15; at 2022-01-17 Load More adds Design project once, focus on it
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 10b-focus-left-on-button: focus left on the button after the rows arrive (the shared LoadMore)
+  [frontend] npx vitest run test/app/account-details.test.tsx test/app/transactions.test.tsx
+    exit 1; Test Files  2 failed (2) | Tests  5 failed | 91 passed (96)
+    FAIL × moves focus to the first new row, focusable by script only, and Tab from it reaches "Load More" 1107ms
+    FAIL × hides "Load More" when the last page arrives, focus on its first row, never the page body 252ms
+    FAIL × moves focus to the first new row, focusable by script only, and Tab from it reaches "Load More" (#117 a) 1133ms
+    FAIL × moves focus the same way after a click 1168ms
+    FAIL × hides "Load More" when the last page arrives, focus on its first row, never the page body 338ms
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "2022-01-15" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:221:1 › shows 10 rows and no button at 2022-01-15; at 2022-01-17 Load More adds Design project once, focus on it
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+
+=== 11-nowrap: the rows and the values kept on one line (white-space: nowrap on every cell and value)
+  [e2e] npx playwright test tests/account-details.spec.ts --grep "wraps 100-character names in words .* at 1280" --reporter=line
+    exit 1; 1 failed
+    FAIL [chromium] › tests\account-details.spec.ts:720:5 › wraps 100-character names in words and 120-character receipts, keeps the balance and the amount on one line at 1280
+  state before 36f9ec0952c9150f after 36f9ec0952c9150f: restored
+--- 2a and 2b again, after removing the redundant toHaveBeenCalled from T6's double case ---
+
+=== 2a-history-no-hasAccount: the getAccount check removed from the history (no hasAccount)
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-provider.test.ts
+    exit 1; Test Files  1 failed | 1 passed (2) | Tests  2 failed | 49 passed (51)
+    FAIL × answers the history route 404 with the same, with and without a cursor 8ms
+    FAIL × parses the largest safe integer as an ID: no account has it, so 404 5ms
+  state before eda0b7797ab29c19 after eda0b7797ab29c19: restored
+
+=== 2b-and-provider-no-user: then also the user condition removed from the provider's transaction query
+  [backend] npx vitest run test/account-details.test.ts test/bank-data-provider.test.ts
+    exit 1; Test Files  2 failed (2) | Tests  13 failed | 38 passed (51)
+    FAIL × answers the history route 404 with the same, with and without a cursor 8ms
+    FAIL × parses the largest safe integer as an ID: no account has it, so 404 6ms
+    FAIL × answers the other user’s account no rows even when hasAccount always says yes 4ms
+    FAIL × lists every transaction of the user, newest first, with only the raw fields 25ms
+    FAIL × breaks ties within a day by ID, the newest insert first 2ms
+    FAIL × filters by income 4ms
+    FAIL × filters by expenses 14ms
+    FAIL × filters by 1 to 22 Oct 2026 1ms
+    FAIL × combines the filters, occurredFrom inclusive and occurredBefore exclusive 1ms
+    FAIL × returns only the user’s own rows 20ms
+    FAIL × lists no rows of another user’s account through VisibleTransactions without a cursor, in one SELECT on the user and the account 2ms
+    FAIL × lists no rows of another user’s account through VisibleTransactions with a cursor, in one SELECT on the user and the account 2ms
+    FAIL × lists no transactions of another user’s account 43ms
+  state before eda0b7797ab29c19 after eda0b7797ab29c19: restored
+--- after the code review: the latched gate ---
+
+=== 12-unlatched-gate: the skeleton gate not latched (code review): recalculated on every render
+  [frontend] npx vitest run test/app/account-details.test.tsx
+    exit 1; Test Files  1 failed (1) | Tests  2 failed | 51 passed (53)
+    FAIL × keeps the history and focus on "Load More" while a Retry of the failed details is still running 277ms
+    FAIL × keeps the history and focus when the window gets focus back while the details are in their error state 1661ms
+  state before 650ebb2b26ceb3f5 after 650ebb2b26ceb3f5: restored
+
+=== 13-no-failure-branch: the gate without its first-try-failed branch (a card waits for the other's retries to end)
+  [frontend] npx vitest run test/app/account-details.test.tsx
+    exit 1; Test Files  1 failed (1) | Tests  2 failed | 51 passed (53)
+    FAIL × shows the history while the details are still between their retries 1037ms
+    FAIL × keeps focus in the details card on a keyboard Retry, never the page body (#114) 121ms
+  state before 650ebb2b26ceb3f5 after 650ebb2b26ceb3f5: restored
+--- 8 again, after narrowing the ID-comparison guard to accounts/ and transactions/ (code review) ---
+
+=== 8-fetch-then-compare: fetch-then-compare: details reads listAccounts(userId) and picks the ID
+  [backend] npx vitest run test/accounts-service.test.ts test/bank-data-source.test.ts
+    exit 1; Test Files  2 failed (2) | Tests  2 failed | 43 passed (45)
+    FAIL × never compares an account ID in the accounts and transactions modules 4ms
+    FAIL × reads the account once through getAccount with the user and the account, never listAccounts 2ms
+  state before 79f3214c088d7b99 after 79f3214c088d7b99: restored

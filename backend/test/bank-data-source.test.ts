@@ -92,3 +92,44 @@ describe('bank data in backend/src', () => {
     expect(guards[name].test(code)).toBe(false);
   });
 });
+
+// Task 021 T13, AC12 and AC19: one account is read only through the provider's getAccount, whose one query holds the
+// user and the account (#39), and only by AccountsService; the accounts and transactions modules never pick an account
+// by comparing IDs, so no account is fetched and then compared with the user.
+describe('one account in backend/src', () => {
+  const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+  const outside = files.filter((file) => !allowedFolders.some((folder) => file.startsWith(folder)));
+  const getAccount = /\bgetAccount\b/;
+  const comparesAnId = /(===|!==|==|!=)\s*(\w+\.)?(accountId|id)\b|\b(accountId|\w+\.id)\s*(===|!==|==|!=)/;
+
+  it('reads one account through getAccount in AccountsService only', () => {
+    const users = outside.filter((file) => getAccount.test(readFileSync(join(srcDir, file), 'utf8')));
+
+    expect(users).toEqual(['accounts/accounts.service.ts']);
+  });
+
+  it('never compares an account ID in the accounts and transactions modules', () => {
+    const modules = files.filter((file) => file.startsWith('accounts/') || file.startsWith('transactions/'));
+    const offenders = modules.filter((file) => comparesAnId.test(readFileSync(join(srcDir, file), 'utf8')));
+
+    expect(modules).toEqual(
+      expect.arrayContaining(['accounts/accounts.service.ts', 'transactions/transactions.service.ts']),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it.each([
+    'accounts.find((account) => account.id === accountId)',
+    'if (accountId !== row.accountId) return null;',
+    'accounts.filter((a) => a.id == id)',
+  ])('flags the comparison %s', (code) => {
+    expect(comparesAnId.test(code)).toBe(true);
+  });
+
+  it.each(['balances.get(account.id)', 'this.bankData.getAccount(userId, accountId)', 'accountTypes.get(accountId)'])(
+    'allows %s',
+    (code) => {
+      expect(comparesAnId.test(code)).toBe(false);
+    },
+  );
+});

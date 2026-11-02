@@ -228,7 +228,8 @@ describe('the recent transactions API', () => {
       );
 
       // `/api/transactions?userId=…` is the Transactions list since task 020, which ignores the userId
-      // (transactions-list.test.ts, T8).
+      // (transactions-list.test.ts, T8). `/api/accounts/<id>/transactions` is an account's history since task 021: the
+      // other user's account answers its one 404 (account-details.test.ts, T6).
       for (const path of [
         `${recentPath}/${second.id}`,
         `${recentPath}/${accountId}`,
@@ -299,5 +300,13 @@ describe('transaction sources', () => {
     expect(controller).toMatch(/@Get\(transactionsContract\.recent\.path\)/);
     expect(controller).toMatch(/@Get\(transactionsContract\.list\.path\)/);
     expect(controller).toMatch(/@Query\(\{ schema: transactionsContract\.list\.query \}\)/);
+    // Task 021: the account's history, its path and its empty-segment form from the contract, the account ID parsed
+    // by `accountIdFrom`, never the validation pipe.
+    expect(controller).toMatch(
+      /@Get\(\[transactionsContract\.history\.path, emptyAccountIdPath\(transactionsContract\.history\.path\)\]\)/,
+    );
+    expect(controller).toMatch(/@Query\(\{ schema: transactionsContract\.history\.query \}\)/);
+    expect(controller).toMatch(/@Param\('accountId'\) rawAccountId: string \| undefined/);
+    expect(controller).not.toMatch(/accountParamsSchema|history\.params/);
   });
 });

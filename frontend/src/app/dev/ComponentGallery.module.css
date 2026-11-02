@@ -317,6 +317,31 @@
   margin: 0 auto;
 }
 
+/* The Account Details cards of 106 at 1440 (task 021): as the page, at least 292 and 412 high. */
+.detailsSampleCard,
+.historySampleCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailsSampleCard {
+  min-height: var(--size-account-details-card-min-height);
+}
+
+.historySampleCard {
+  min-height: var(--size-history-card-min-height);
+}
+
+/* "Load More" on its own, centred in the content width (task 021). */
+.loadMoreSample {
+  width: calc(
+    var(--size-card-width) + var(--size-card-width) + var(--size-card-width) + var(--space-card-gap) +
+      var(--space-card-gap)
+  );
+  max-width: 100%;
+  margin: 0 auto;
+}
+
 .transactionsLabel {
   margin: 0;
   color: var(--color-gray-02);

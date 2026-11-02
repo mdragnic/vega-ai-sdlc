@@ -1,4 +1,5 @@
 import {
+  type AccountDetailsResponse,
   type AccountsResponse,
   expenseCategorySchema,
   formatAmountInput,
@@ -11,6 +12,8 @@ import {
   type RecentTransactionRow,
   type RecentTransactionsResponse,
   type SavingsGoalResponse,
+  type TransactionHistoryPage,
+  type TransactionHistoryRow,
   type TransactionRow,
   type TransactionsPage,
   type UpcomingBillsResponse,
@@ -22,6 +25,8 @@ import { Link } from 'react-router';
 
 import { googleUrl } from '../../assets/brand';
 import {
+  AccountDetailsCard,
+  AccountDetailsCardSkeleton,
   AccountType,
   AccountTypeSkeleton,
   AccountTypeSlide,
@@ -52,6 +57,7 @@ import {
   Header,
   HeaderSearch,
   Input,
+  LoadMore,
   Logout,
   MenuTab,
   NavBar,
@@ -75,10 +81,13 @@ import {
   TotalBalanceSkeleton,
   TransactionTable,
   TransactionTableSkeleton,
+  TransactionsHistorySkeleton,
+  TransactionsHistoryTable,
   UpcomingBill,
   UpcomingBillLogo,
   UpcomingBillSkeleton,
 } from '../../components';
+import { useLoadMore } from '../../components/LoadMore/LoadMore';
 import { menuTabId } from '../../components/MenuTab/MenuTab';
 import { navSections } from '../../components/NavMenu/NavMenu';
 import { paths } from '../../routes/paths';
@@ -1003,6 +1012,101 @@ function TransactionItemExample({ row }: { row: TransactionRow }) {
   return <TransactionTableExample pages={[{ transactions: [row], nextCursor: null }]} />;
 }
 
+/** Checking's details as `GET /api/accounts/:accountId` sends them on 22 Oct 2026 (106, task 021). */
+const sampleAccountDetails: AccountDetailsResponse = {
+  accountType: 'checking',
+  bankName: 'AB Bank Ltd',
+  branchName: 'Park Street Branch',
+  maskedNumber: '**** **** **** 7310',
+  balance: usd(3_336_248),
+};
+
+/** A history row of Oct 2026 as the backend sends it, stored at 12:00 UTC. */
+const sampleHistoryRow = (
+  day: number,
+  status: TransactionHistoryRow['status'],
+  direction: TransactionHistoryRow['direction'],
+  receipt: string,
+  cents: number,
+): TransactionHistoryRow => ({
+  occurredAt: `2026-10-${String(day).padStart(2, '0')}T12:00:00.000Z`,
+  status,
+  direction,
+  receipt,
+  amount: usd(cents),
+});
+
+/** Checking's first page on 22 Oct 2026 (106, task 021 References). */
+const sampleHistoryPage: TransactionHistoryPage = {
+  transactions: [
+    sampleHistoryRow(22, 'complete', 'expense', 'z7YBsODpLNW', 26_600),
+    sampleHistoryRow(18, 'complete', 'expense', 'nPcvc24YHB7', 14_784),
+    sampleHistoryRow(17, 'complete', 'income', 'SVqWhlvmJqw', 17_920),
+    sampleHistoryRow(15, 'complete', 'expense', '5vSKgU8NCTh', 32_200),
+    sampleHistoryRow(14, 'complete', 'expense', '93i3nSBYFAa', 2_016),
+    sampleHistoryRow(12, 'complete', 'expense', 'UYdw2FRyetE', 5_880),
+    sampleHistoryRow(11, 'complete', 'expense', 'UK5fQ9kfUyy', 3_192),
+    sampleHistoryRow(10, 'complete', 'income', 'IhN8Byqe5aj', 17_920),
+    sampleHistoryRow(7, 'complete', 'expense', 'nPAdhi6fo6A', 2_128),
+    sampleHistoryRow(4, 'complete', 'expense', 'CrSNatgkImu', 28_336),
+  ],
+  nextCursor: 'MjAyNi0xMC0wNFQxMjowMDowMC4wMDBaXzEyOTA',
+};
+
+/** A 120-character receipt with no space, for the wrap rule. */
+const longReceipt = 'Zq7XyWv3Ut9Sr5Qp1On8Ml4Kj2Ih6Gf0Ed'.repeat(4).slice(0, 120);
+
+/** A white card as wide as Account Details' cards at 1440 (106), at least as high as the page draws it. */
+function AccountDetailsSampleCard({ history = false, children }: { history?: boolean; children: ReactNode }) {
+  return (
+    <div className={styles.transactionsSample}>
+      <Card padding="none" className={history ? styles.historySampleCard : styles.detailsSampleCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+/** The history table on fixed pages: "Load More" here only adds the sample page again, as a stand-in for the next. */
+function TransactionsHistoryTableExample({
+  pages,
+  loadingMore = false,
+  loadMoreFailure = null,
+}: {
+  pages: TransactionHistoryPage[];
+  loadingMore?: boolean;
+  loadMoreFailure?: number | null;
+}) {
+  const [shown, setShown] = useState(pages);
+  return (
+    <AccountDetailsSampleCard history>
+      <TransactionsHistoryTable
+        pages={shown}
+        label="Transactions History"
+        loadingMore={loadingMore}
+        loadMoreFailure={loadMoreFailure}
+        onLoadMore={() => setShown([...shown, { ...sampleHistoryPage, nextCursor: null }])}
+      />
+    </AccountDetailsSampleCard>
+  );
+}
+
+/** One history row on its own, in the table as the page draws it at 1440. */
+function TransactionsHistoryItemExample({ row }: { row: TransactionHistoryRow }) {
+  return <TransactionsHistoryTableExample pages={[{ transactions: [row], nextCursor: null }]} />;
+}
+
+/** "Load More" on its own: a click shows the loading pattern. */
+function LoadMoreExample({ loading = false, failure = null }: { loading?: boolean; failure?: number | null }) {
+  const [clicked, setClicked] = useState(false);
+  const { buttonRef, loadMore } = useLoadMore(0, () => setClicked(true));
+  return (
+    <div className={styles.loadMoreSample}>
+      <LoadMore buttonRef={buttonRef} onClick={loadMore} loading={loading || clicked} failure={failure} />
+    </div>
+  );
+}
+
 /** One row on its own, in a card as wide as Overview's at 1440. */
 function ItemCard({ transaction }: { transaction: SampleTransaction }) {
   return (
@@ -1887,6 +1991,83 @@ export function ComponentGallery() {
       <GallerySection name="TransactionTableSkeleton" wide>
         <Example name="Loading">
           <TransactionsCard>{() => <TransactionTableSkeleton />}</TransactionsCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="LoadMore" wide>
+        <Example name="Under a paged table (107, 106): a click shows the loading pattern">
+          <LoadMoreExample />
+        </Example>
+        <Example name="While the next page loads">
+          <LoadMoreExample loading />
+        </Example>
+        <Example name="A failed Load More (#117 b)">
+          <LoadMoreExample failure={1} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AccountDetailsCard" wide>
+        <Example name="Checking (106)">
+          <AccountDetailsSampleCard>
+            <AccountDetailsCard account={sampleAccountDetails} />
+          </AccountDetailsSampleCard>
+        </Example>
+        <Example name="100-character names wrap inside their columns (#115 b)">
+          <AccountDetailsSampleCard>
+            <AccountDetailsCard
+              account={{ ...sampleAccountDetails, bankName: longBankName, branchName: longBankName.toUpperCase() }}
+            />
+          </AccountDetailsSampleCard>
+        </Example>
+        <Example name="The lowest balance the contract allows, on one line">
+          <AccountDetailsSampleCard>
+            <AccountDetailsCard account={{ ...sampleAccountDetails, balance: usd(-9_007_199_254_740_991) }} />
+          </AccountDetailsSampleCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AccountDetailsCardSkeleton" wide>
+        <Example name="Loading">
+          <AccountDetailsSampleCard>
+            <AccountDetailsCardSkeleton />
+          </AccountDetailsSampleCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TransactionsHistoryTable" wide>
+        <Example name="A first page (106): Load More adds a last page">
+          <TransactionsHistoryTableExample pages={[sampleHistoryPage]} />
+        </Example>
+        <Example name="Load More while the next page loads">
+          <TransactionsHistoryTableExample pages={[sampleHistoryPage]} loadingMore />
+        </Example>
+        <Example name="A failed Load More (#117 b)">
+          <TransactionsHistoryTableExample pages={[sampleHistoryPage]} loadMoreFailure={1} />
+        </Example>
+        <Example name="The end of the list: no Load More">
+          <TransactionsHistoryTableExample pages={[{ ...sampleHistoryPage, nextCursor: null }]} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TransactionsHistoryItem" wide>
+        <Example name="A Complete Credit (106)">
+          <TransactionsHistoryItemExample row={sampleHistoryRow(17, 'complete', 'income', 'SVqWhlvmJqw', 17_920)} />
+        </Example>
+        <Example name="A Failed Debit">
+          <TransactionsHistoryItemExample row={sampleHistoryRow(16, 'failed', 'expense', 'CFP5E9VV2Fn', 2_464)} />
+        </Example>
+        <Example name="A long receipt wraps, the amount stays on one line (#115 b)">
+          <TransactionsHistoryItemExample
+            row={sampleHistoryRow(15, 'pending', 'expense', longReceipt, 100_000_000_000)}
+          />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="TransactionsHistorySkeleton" wide>
+        <Example name="Loading">
+          <AccountDetailsSampleCard history>
+            <TransactionsHistorySkeleton />
+          </AccountDetailsSampleCard>
         </Example>
       </GallerySection>
 

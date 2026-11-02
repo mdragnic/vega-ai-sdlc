@@ -189,6 +189,15 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-button-details-padding-x` | `20px` | measured: PNG 105, `Button` "Details" in the first card (x 1044 to 1263): its left edge to the text, and the chevron's 16 px box to its right edge, 40 px, halved. Added in task 019 |
 | `--space-button-details-icon-gap` | `8px` | measured: PNG 105, `Button` "Details": the text's end to the chevron's 16 px box, 16 px, halved. Added in task 019 |
 | `--space-add-accounts-gap` | `16px` | measured: PNG 105, the Add Accounts button's bottom (y 1240) to the "Edit Accounts" 16/24 line box (y 1272), 32 px, halved. Added in task 019 |
+| `--space-account-details-inset` | `32px` | measured: PNG 106, the details card's left edge (x 608) to the labels and "Edit Details" (x 672), and its top (y 304) to the "Bank Name" line box (y 368), 64 px, halved; the right side the same (the content x 672 to 2752). Added in task 021 |
+| `--space-account-details-row-gap` | `40px` | measured: PNG 106, the first row's value line box bottom (y 464) to the second row's label line box (y 540; the label cap tops at y 380 and 552, 172 apart), 76 px, halved 38, off the 4 px grid (#65): 40 here and 36 above the buttons (`--space-account-details-buttons-gap`) keep the buttons and the card's height where 106 has them, the second row 2 px low. Added in task 021 |
+| `--space-account-details-buttons-gap` | `36px` | measured: PNG 106, the second row's value line box bottom (y 636) to "Edit Details" (y 712), 76 px, halved 38, rounded with `--space-account-details-row-gap` (#65). Added in task 021 |
+| `--space-account-details-bottom` | `40px` | measured: PNG 106, "Edit Details"' bottom (y 808) to the details card's bottom (y 888), 80 px, halved. Added in task 021 |
+| `--space-account-details-remove-gap` | `40px` | measured: PNG 106, "Edit Details"' right edge (x 992) to "Remove"'s ink (x 1077), 85 px, halved 42.5, less the "R" side bearing (about 1.3 at 14 px), about 41; 40 on the 4 px grid (#65). Added in task 021 |
+| `--space-history-inset-x` | `32px` | measured: PNG 106, the history card's left edge (x 608) to the table, its texts and dividers (x 672), and their right end (x 2752) to the card's right edge (x 2816), 64 px, halved: the table 1040 wide in the 1104 card. Added in task 021 |
+| `--space-history-header-top` | `28px` | measured: PNG 106, the history card's top (y 1048) to the header row's line box (y 1104), 56 px, halved. Also the space under the last row at the end of the list, where "Load More" is not drawn (not designed, the header's 28 mirrored). Added in task 021 |
+| `--space-history-row-padding-y` | `16px` | measured: PNG 106, one row every 112 px from y 1184 (the divider the row's last 2 px at y 1294, 1406, 1518, none under the last), the texts' 48 px line boxes 32 under each row's top and 32 above its end, halved: a row is 56 high. Added in task 021 |
+| `--space-history-load-more-bottom` | `40px` | measured: PNG 106, "Load More"'s bottom (y 1792) to the history card's bottom (y 1872), 80 px, halved (107: 56). Added in task 021 |
 
 ## Size
 
@@ -262,6 +271,15 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-transaction-column-date` | `24.6183%` | measured: PNG 107, as `--size-transaction-column-items`: Date 258 of 1048. Added in task 020 |
 | `--size-transaction-column-method` | `20.6107%` | measured: PNG 107, as `--size-transaction-column-items`: Payment Method 216 of 1048. Added in task 020 |
 | `--size-transaction-column-amount` | `12.5954%` | measured: PNG 107, as `--size-transaction-column-items`: Amount 132 of 1048. Added in task 020 |
+| `--size-account-details-column` | `30.4808%` | measured: PNG 106, the label and value texts of the three columns at x 672, 1306 and 1940, 634 px apart, halved 317: 30.48% of the 1040 px content each, the last 8.56% empty (task 021 References). Added in task 021 |
+| `--size-account-details-card-min-height` | `292px` | measured: PNG 106, the details card y 304 to 887, 584 px, halved (32 + 48 + 40 + 48 + 36 + 48 + 40). The least height of the details card in every state (the skeleton, the error message). Added in task 021 |
+| `--size-edit-details-width` | `160px` | measured: PNG 106, "Edit Details" (the `Button/primary` look) x 672 to 991, 320 px, halved; its height is `--size-button-height`. Added in task 021 |
+| `--size-history-card-min-height` | `412px` | measured: PNG 106, the history card y 1048 to 1871 with its 4 rows, 824 px, halved. The least height of the history card in every state (the error and the empty message, a short list). Added in task 021 |
+| `--size-history-column-date` | `23.2692%` | measured: PNG 106, the centres of the Status, Transaction Type and Receipt texts at 32.5%, 54.1% and 76.9% of the 1040 px table, the Date at its start and the Amount right-aligned at its end: columns of 242, 192, 258, 216 and 132 px put them there, 107's widths with the first 8 narrower (task 021 References). Date 242 of 1040. Added in task 021 |
+| `--size-history-column-status` | `18.4615%` | measured: PNG 106, as `--size-history-column-date`: Status 192 of 1040. Added in task 021 |
+| `--size-history-column-type` | `24.8077%` | measured: PNG 106, as `--size-history-column-date`: Transaction Type 258 of 1040. Added in task 021 |
+| `--size-history-column-receipt` | `20.7692%` | measured: PNG 106, as `--size-history-column-date`: Receipt 216 of 1040. Added in task 021 |
+| `--size-history-column-amount` | `12.6923%` | measured: PNG 106, as `--size-history-column-date`: Amount 132 of 1040. Added in task 021 |
 
 ## Radius
 
