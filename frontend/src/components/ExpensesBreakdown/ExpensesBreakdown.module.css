@@ -1,0 +1,136 @@
+/* A grid cell of the cards; its card fills it, so the cards of a row stretch to the tallest (#113 a). */
+.cell {
+  display: flex;
+}
+
+/* 109: `Card`'s radius and shadow, 238 high at least in every state; a taller row's extra height stays empty under
+   the body (#113 a). */
+.card {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: var(--size-expenses-card-min-height);
+}
+
+/* 109: the Gray/05 header across the card, 78 high, its content centred (the 48 tile 15 under its top); 24 at the
+   sides; the tile, then the text 16 after it. It grows where the right block moves under the left (#106). */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-expenses-card-tile-gap);
+  min-height: var(--size-expenses-card-header-height);
+  padding: var(--space-expenses-card-header-padding-y) var(--space-card-padding);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background-color: var(--color-gray-05);
+}
+
+/* The left block (the name over the total) and the right block (the percentage over "Compare to last month") side by
+   side, the right block's bottom level with the left's (109 draws it 8 lower). The left block is as wide as its name
+   or its total with the 8 after it, so the right block stays beside it only while the total keeps 8 from "Compare to
+   last month" and the right block clears the name; otherwise it moves under the left block, 8 below, right-aligned
+   (#106, #108 b, #111 a, #115 b). Wider cards widen the space between them (#94). */
+.text {
+  display: flex;
+  flex-grow: 1;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  row-gap: var(--space-expenses-card-blocks-gap);
+  min-width: 0;
+}
+
+/* A name or total wider than the text area wraps inside it: the name at its soft hyphens, with `hyphens: auto` for
+   browsers with a dictionary, `overflow-wrap: anywhere` the fallback (#115 b). */
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-expenses-card-text-gap);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 109 "Housing": Regular 16, Gray/01, in a 20 line. */
+.name {
+  margin: 0;
+  color: var(--color-gray-01);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-20);
+}
+
+/* 109 "$250.00": Extrabold 18, Default Black; the 8 after it is the least space to the right block. */
+.total {
+  margin: 0 var(--space-expenses-card-blocks-gap) 0 0;
+  color: var(--color-default-black);
+  font: var(--font-exbold-18-24);
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  text-align: right;
+}
+
+/* 109 "15%": Regular 16, Gray/01, with no `*` (US-15 criterion 4), then the 16 px arrow 8 after it, its box ending at
+   the content's edge. The line keeps its height when there is no change (#21). */
+.change {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-expenses-card-change-gap);
+  min-height: var(--line-height-24);
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-16-24);
+}
+
+.up,
+.down {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+/* #21: red up for an increase, green down for a decrease. */
+.up {
+  color: var(--color-special-red);
+}
+
+.down {
+  color: var(--color-special-green);
+}
+
+/* 109 "Compare to last month": Regular 12, Gray/01, shown in every card (US-15 criterion 4). */
+.compare {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-12-16);
+}
+
+/* 109: the white body, 24 at the sides, 160 high at least (the card's 238 less the header's 78) in every state, 8
+   under its last item. */
+.body {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(var(--size-expenses-card-min-height) - var(--size-expenses-card-header-height));
+  padding: 0 var(--space-card-padding) var(--space-expenses-card-body-bottom);
+}
+
+.items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Not designed (#61, US-15 criterion 10): "No expenses this month" centred in the body, in the `DataState` empty-message
+   style (Gray/01, Regular 14/20). */
+.empty {
+  margin: auto 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+  text-align: center;
+}

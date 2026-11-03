@@ -18,7 +18,8 @@ const overviewSections = [
 
 /**
  * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020; Account
- * Details, task 021, on the user's own Checking: `CHECKING` in a path; Bills, task 023); the others are empty.
+ * Details, task 021, on the user's own Checking: `CHECKING` in a path; Bills, task 023; Expenses, task 024); the others
+ * (Goals, Settings) are empty.
  */
 const builtSections: Partial<Record<string, string[]>> = {
   '/overview': overviewSections,
@@ -26,6 +27,7 @@ const builtSections: Partial<Record<string, string[]>> = {
   '/balances/CHECKING': ['Account Details', 'Transactions History'],
   '/transactions': ['Recent Transaction'],
   '/bills': ['Upcoming Bills'],
+  '/expenses': ['Expenses Comparison', 'Expenses Breakdown'],
 };
 
 /** The signed-in user's Checking ID, read from `GET /api/accounts` (the second demo account). */
@@ -103,8 +105,8 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     await expect(header(page).getByText(/^Hello /)).toHaveCount(path === '/overview' ? 1 : 0);
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
     // Overview holds its six sections (task 013), Balances its one with the cards' logos (task 019), Transactions its
-    // one (task 020), Account Details its two (task 021) and Bills its one with the billers' logos (task 023); the
-    // other screens are empty until their tasks.
+    // one (task 020), Account Details its two (task 021), Bills its one with the billers' logos (task 023) and Expenses
+    // its two (task 024); the other screens are empty until their tasks.
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(pageSections);
     if (path === '/balances') {
       await expect(page.getByRole('main').getByRole('img')).toHaveCount(2);

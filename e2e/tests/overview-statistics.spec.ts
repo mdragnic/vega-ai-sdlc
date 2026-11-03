@@ -43,13 +43,13 @@ const header: Row = ['', 'Last week', 'This week'];
 
 /** A first login's week on Thu 22 Oct 2026 in Belgrade (demo-data.md, "What a first login shows"; AC1). */
 const firstLogin: Row[] = [
-  ['19 Mon', '$58.80', '$10.64'],
-  ['20 Tue', '$10.64', '$24.64'],
-  ['21 Wed', '$20.16', '$17.64'],
-  ['22 Thu', '$322.00', '$266.00'],
-  ['23 Fri', '$14.78', ''],
-  ['24 Sat', '$188.16', ''],
-  ['25 Sun', '$147.84', ''],
+  ['Mon', '$58.80', '$10.64'],
+  ['Tue', '$10.64', '$24.64'],
+  ['Wed', '$20.16', '$17.64'],
+  ['Thu', '$322.00', '$266.00'],
+  ['Fri', '$14.78', ''],
+  ['Sat', '$188.16', ''],
+  ['Sun', '$147.84', ''],
 ];
 /** Mon 19 to Sun 25 Oct with every day drawn (AC4). */
 const oct19to25Values = ['$10.64', '$24.64', '$17.64', '$266.00', '$14.78', '$21.28', '$10.64'];
@@ -183,7 +183,7 @@ test('draws Friday’s $14.78 at 2026-10-22T22:00:00Z in Belgrade, and no Friday
   expect(await tableRows(page)).toEqual([
     header,
     ...firstLogin.slice(0, 4),
-    ['23 Fri', '$14.78', '$14.78'],
+    ['Fri', '$14.78', '$14.78'],
     ...firstLogin.slice(5),
   ]);
 
@@ -204,7 +204,7 @@ test('draws 19 to 25 Oct at 2026-10-25T22:59:59Z in Belgrade, then 26 Oct to 1 N
 
   await moveBackendClock(page, '2026-10-25T23:00:00Z');
   await openOverview(page);
-  const labels = ['26 Mon', '27 Tue', '28 Wed', '29 Thu', '30 Fri', '31 Sat', '01 Sun'];
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   expect(await tableRows(page)).toEqual([
     header,
     ...labels.map((label, index): Row => [label, oct19to25Values[index]!, index === 0 ? '$28.00' : '']),

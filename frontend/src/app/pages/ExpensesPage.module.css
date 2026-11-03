@@ -1,0 +1,6 @@
+/* 109: the two sections, the second's title 32 under the chart card (as 104 and 105's rows). */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-card-row-gap);
+}

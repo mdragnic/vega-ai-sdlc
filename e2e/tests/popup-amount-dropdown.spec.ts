@@ -15,6 +15,12 @@ async function openDemo(page: Page) {
 async function openGallery(page: Page) {
   await page.goto('/dev/components');
   await expect(page.getByRole('heading', { level: 1, name: 'Component gallery' })).toBeVisible();
+  // Every "Error" example fails its query 800 ms after the gallery mounts, and its error state replaces its skeleton,
+  // which moves the sections below it (the DataState one sits above PopupInputSmall: 112 px). Boxes are measured once
+  // each has its error state, so two boxes read a moment apart are on the same layout (task 024: the longer gallery
+  // made the reads straddle the change).
+  const errorExamples = page.getByRole('figure', { name: 'Error', exact: true });
+  await expect(errorExamples.getByRole('alert')).toHaveCount(await errorExamples.count());
 }
 
 /** Opens a demo popup and returns the dialog. */

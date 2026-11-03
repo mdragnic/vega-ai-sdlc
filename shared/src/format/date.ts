@@ -2,6 +2,8 @@ import { tz } from '@date-fns/tz';
 import { format, isValid, parseISO } from 'date-fns';
 import { z } from 'zod';
 
+import { goalMonthSchema } from '../contract/savings-goal.js';
+
 /** The JSON date shapes (#74): plain dates `YYYY-MM-DD`, timestamps ISO in UTC. */
 const plainDateSchema = z.iso.date();
 const utcTimestampSchema = z.iso.datetime();
@@ -41,14 +43,27 @@ export function formatDateBox(value: string): { month: string; day: string } {
 }
 
 /**
- * The Statistics chart's x labels: the two-digit day and the 3-letter weekday, `19 Mon`, `01 Sun` (#84). Plain dates
- * only, like the days the backend sends; display only, no zone and no arithmetic.
+ * The Statistics chart's x labels: the 3-letter weekday only, `Mon` to `Sun`, true of both bars, since the gray one is
+ * last week's same weekday (#84, #122 a). Plain dates only, like the days the backend sends; display only, no zone and
+ * no arithmetic.
  */
 export function formatDayLabel(value: string): string {
   if (!plainDateSchema.safeParse(value).success) {
     throw new RangeError(`Not a plain date: ${value}`);
   }
-  return format(parseISO(value), 'dd EEE');
+  return format(parseISO(value), 'EEE');
+}
+
+/**
+ * The Expenses chart's x labels: the 3-letter month of a `YYYY-MM` month, `Jan` to `Dec`, `Jul` never "July" (#55),
+ * true of both bars, since the gray one is last year's same month. Display only, no zone and no arithmetic.
+ */
+export function formatMonthAxisLabel(month: string): string {
+  // The `YYYY-MM` rule of a calendar month, written once (task 014's goal month, #74).
+  if (!goalMonthSchema.safeParse(month).success) {
+    throw new RangeError(`Not a YYYY-MM month: ${month}`);
+  }
+  return format(parseISO(`${month}-01`), 'MMM');
 }
 
 /** Month labels: `May, 2023` (#11). `month` runs from 1 (January) to 12. */

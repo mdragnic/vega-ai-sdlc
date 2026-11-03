@@ -39,6 +39,7 @@ Scripts are in the root `package.json`. Not obvious from it:
 - One task per session, via `/next-task`. Approval only via `/approve-task`. Never touch a task's "Out of scope".
 - Every acceptance criterion maps to at least one test.
 - Visual checks compare against the PNGs in `docs/figma/` at 1440x1024. Demo numbers may differ from Figma (#12). Never claim "pixel perfect".
+- Evidence holds results only: screenshots, the security review, visual differences, manual checks and one break summary. Working files (mutation specs, backups, scripts, raw per-run output) go in a folder outside the repo and are deleted when the step ends.
 
 ## Never
 - Never call Figma MCP without asking me first. Use files in docs/figma/ (PNG exports, inventory.md, components.md) instead. Report every Figma call made.

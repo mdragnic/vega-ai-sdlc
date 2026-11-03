@@ -5,8 +5,8 @@ import { ExpensesController } from './expenses.controller.js';
 import { ExpensesService } from './expenses.service.js';
 
 /**
- * The expenses per category (#21): the Overview Expenses Breakdown for now; the Expenses page later (task 024). Read
- * only through `VisibleTransactions` (#53, #77); no table of its own.
+ * The expenses (#21, #29): the breakdown per category, read by Overview and the Expenses page, and the Expenses
+ * chart. Read only through `VisibleTransactions` (#53, #77); no table of its own.
  */
 @Module({
   imports: [BankDataModule],

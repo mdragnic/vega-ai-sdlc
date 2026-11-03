@@ -3,19 +3,11 @@ import { axisTicks, type Money, type WeeklyComparisonResponse } from '@finebank/
 
 import { VisibleTransactions } from '../bank-data/visible-transactions.js';
 import { CLOCK, type Clock } from '../common/clock/clock.js';
+import { addDays, mondayOf } from '../common/time-zone/plain-date.js';
 import { startOfDay } from '../common/time-zone/start-of-day.js';
 import { todayIn } from '../common/time-zone/today-in.js';
 
-const DAY_MS = 86_400_000;
 const DAYS_PER_WEEK = 7;
-
-/** A plain date `days` days after `date` (before, when negative). Plain dates have no zone, so this is exact. */
-const addDays = (date: string, days: number): string =>
-  new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
-
-/** The Monday on or before a plain date (#20: weeks run Monday to Sunday). */
-const mondayOf = (date: string): string =>
-  addDays(date, -((new Date(Date.parse(`${date}T00:00:00Z`)).getUTCDay() + 6) % DAYS_PER_WEEK));
 
 const usd = (cents: number): Money => ({ cents, currency: 'USD' });
 

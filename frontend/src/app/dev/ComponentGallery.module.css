@@ -392,6 +392,24 @@
   padding: var(--space-overview-card-padding-y) var(--space-card-padding);
 }
 
+/* Task 024: one Expenses card in the first of the page's three columns, as wide as at 1440 (352). */
+.expensesCardList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-card-gap);
+  padding: 0;
+  list-style: none;
+}
+
+/* One line item on a white card body as wide as at 1440 (352, 24 at the sides). */
+.expensesLineItemSample {
+  width: var(--size-card-width);
+  margin: 0 auto;
+  padding: 0 var(--space-card-padding);
+  border-radius: var(--radius-card);
+  background-color: var(--color-white);
+}
+
 /* One item in the first of three columns, as wide as on Overview at 1440. */
 .expensesItemList {
   display: grid;

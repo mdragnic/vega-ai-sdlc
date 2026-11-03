@@ -1,0 +1,47 @@
+Task 024 manual checks, 2026-11-03 (Validation step 6). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page is 1425 wide in a 1440 window, #101). `npm run dev` (the development backend on the real clock,
+today 3 Nov 2026, Europe/Belgrade), later the backend and Vite run separately (`npm run dev -w backend`, `npm run dev -w
+frontend`) so the backend alone could be stopped: `npm run dev` runs them under `concurrently --kill-others-on-fail`.
+No Figma calls.
+
+1. Sign up through the form: lands on /overview, the header date "3 Nov, 2026". Overview's Expenses Breakdown: Housing
+   $270.48 1%*, Food $0.00 100%*, Transportation $12.32 83%*, Entertainment $0.00 100%*, Shopping $20.16 97%*, Others
+   $0.00 100%* (1 to 3 Nov against all of October); no item name, amount or date on the card. The Statistics x labels:
+   Mon, Tue, Wed, Thu, Fri, Sat, Sun (#122 a).
+2. Housing's right arrow: /expenses, Expenses active. The six card headers equal Overview's (the `*` aside): Housing
+   $270.48 1% (House Rent $270.48 1 Nov, 2026), Food $0.00 100% ("No expenses this month"), Transportation $12.32 83%
+   (Taxi fare $12.32 3 Nov, 2026), Entertainment $0.00 100% (none), Shopping $20.16 97% (Polo shirt $20.16 2 Nov, 2026),
+   Others $0.00 100% (none); each with "Compare to last month". The chart's table: 2025 against 2026, October $2,056.36,
+   November $302.96 (to today, the sum of the six totals), December empty; the axis $0 to $4k. Every header's blocks side
+   by side with the 15 px gutter (the right block 8 under the left's top in all six); the page 1425 wide with no
+   horizontal scroll and 1024 high with no vertical scroll (manual-1440.png).
+   (A first read taken right after the click still saw Overview's six items: `waitForURL` resolves on the client-side
+   URL change before the new page renders; read again once the Expenses Comparison region was there.)
+3. "Monthly Comparison": a click opens the list with one option, "Monthly Comparison", aria-selected; choosing it closes
+   the list, the control unchanged, no outline after the mouse; Enter opens it, Escape closes it. No request sent.
+4. Keyboard from the header's search field: Tab gives the control (:focus-visible, the solid teal ring rgb(41, 157,
+   145)), the next Tab leaves the content; Shift+Tab comes back to the control (#29, #87).
+5. Hover and click on a bar, a card and an item: the cursor `auto` on the card and the item, the content unchanged
+   (its HTML the same), no tooltip, the URL still /expenses, no request sent.
+6. Resizes: 1920x1080: the page 1905, the cards 507 wide, every header side by side, no scroll (manual-1920.png);
+   1280x1024: the page 1265, every card's right block under its left (56 = the 48 left block + 8), no horizontal scroll
+   (scroll width 1265), the page 1108 high (manual-1280.png); back to 1440x1024: the cards 347, side by side, 1024 high.
+7. Backend stopped (taskkill on the process on port 3000, Vite kept), a new user signed up in two tabs, the second parked
+   on /transactions beforehand (nothing of Expenses cached in it), the first on Overview (the breakdown cached):
+   - Parked tab, Expenses from the sidebar: both skeletons at once (2 busy widgets, manual-backend-down-skeletons.png);
+     then "Something went wrong." over Retry in both widgets, after the request and its 3 retries (the console: 4 failed
+     requests per query, at +0, +1, +3 and +7 s); the cards' error in one white card across the grid, 1089 x 238
+     (manual-backend-down-errors.png).
+   - First tab, Expenses from the sidebar: the six cards at once from Overview's cached answer; the chart's error state
+     after its retries; the cards kept with no message and not busy while their refetch failed (#89,
+     manual-backend-down-cards-kept.png).
+8. Backend started again, in the parked tab: Tab from the search field gives the control, then the chart's Retry, then
+   the cards' Retry (the only stops in the content). The chart's Retry with Enter: the chart; focus on its DataState root
+   (a DIV, tabindex="-1", :focus-visible, the teal ring), never the body. Tab: the cards' Retry; Enter: the six cards;
+   focus on their DataState root with the ring (solid 2px rgb(41, 157, 145), manual-keyboard-retry-ring.png); the next
+   Tab leaves the content (#114).
+   (A first keyboard pass took the first Tab stop for the chart's Retry and opened the control instead; Radix's open list
+   hides the page from role queries, as noted before. Closed with Escape and done again in the order above.)
+9. Afterwards the extra tab closed, the cookies cleared, and the node processes on ports 3000 and 5173 stopped, the ports
+   free. The console showed only the expected 401s of signed-out session checks, a 502 on /api/auth/me while Vite and
+   the backend restarted, and the 502s while the backend was down.

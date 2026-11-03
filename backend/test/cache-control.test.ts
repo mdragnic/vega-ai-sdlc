@@ -65,6 +65,8 @@ describe('Cache-Control on /api', () => {
         shared.savingsGoalsContract.save,
         shared.statisticsContract.weeklyComparison,
         shared.expensesContract.breakdown,
+        // Task 024: the Expenses chart.
+        shared.expensesContract.monthlyComparison,
         // Task 022: the account write and, below, its empty-segment form.
         shared.accountsContract.updateDetails,
       ]),

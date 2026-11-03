@@ -1,0 +1,58 @@
+/* 109: one item every 76, its 44 column (the amount's 24 line, 4, the date's 16 line) 16 under its top; the name
+   centred on it. The divider (#F4F4F4 measured, Gray/06) is the item's last pixel row, across the body's content box
+   (24 insets), under every item but the last, so an item with its divider is 76 as drawn. The name takes the room the
+   amount and the date leave, at least 16 from them (#106, #111 a). */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-expenses-line-item-gap);
+  padding: var(--space-expenses-line-item-padding-y) 0;
+}
+
+.item:not(:last-child) {
+  padding-bottom: calc(var(--space-expenses-line-item-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* 109 "House Rent": Semibold 16, Secondary. A long name wraps in its column: hyphens where the browser has a
+   dictionary, anywhere where a word has no break point (#115 b); the item grows. */
+.name {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* The amount over the date, right-aligned at the body's content edge; on one line where they fit. */
+.right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-expenses-line-item-date-gap);
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* 109 "$230.00": Semibold 16, Secondary. */
+.amount {
+  margin: 0;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+}
+
+/* 109 "17 May 2023": Regular 12, Gray/03. */
+.date {
+  margin: 0;
+  color: var(--color-gray-03);
+  font: var(--font-regular-12-16);
+}

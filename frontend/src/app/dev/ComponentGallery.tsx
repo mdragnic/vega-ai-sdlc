@@ -6,9 +6,11 @@ import {
   formatMonthLabel,
   parseAmountInput,
   type ExpenseCategory,
+  type ExpenseLineItem,
   type ExpensesBreakdownCategory,
   type ExpensesBreakdownResponse,
   type Money,
+  type MonthlyComparisonResponse,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
   type SavingsGoalResponse,
@@ -52,7 +54,12 @@ import {
   DateBox,
   Dropdown,
   type DropdownOption,
+  ExpensesBreakdown,
+  ExpensesBreakdownList,
+  ExpensesBreakdownSkeleton,
+  ExpensesComparison,
   ExpensesItem,
+  ExpensesLineItem,
   FieldError,
   FormError,
   Goals,
@@ -471,7 +478,7 @@ const amounts = (values: (number | null)[]) => values.map((cents) => (cents === 
 // A week like the demo first login: last week's highest $322.00 on Thursday, no teal bar from Friday (#91).
 const statisticsSample: ChartSample = {
   title: 'Expenses per day, this week and last week',
-  labels: ['19 Mon', '20 Tue', '21 Wed', '22 Thu', '23 Fri', '24 Sat', '25 Sun'],
+  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   previous: { name: 'Last week', values: amounts([18000, 9550, 24000, 32200, 15000, 21025, 6000]) },
   current: { name: 'This week', values: amounts([12000, 26600, 7536, 28992, null, null, null]) },
   ticks: [0, 10000, 20000, 30000, 40000].map(usd),
@@ -917,12 +924,16 @@ function StatisticsExample({ name, answer }: { name: string; answer: WeeklyCompa
   );
 }
 
-/** One category as `GET /api/expenses/breakdown` sends it: this month's total so far and its change, null without. */
+/**
+ * One category as `GET /api/expenses/breakdown` sends it: this month's total so far, its change (null without) and its
+ * most recent items (task 024; Overview's card never shows them).
+ */
 const breakdownItem = (
   category: ExpenseCategory,
   cents: number,
   change: ExpensesBreakdownCategory['change'],
-): ExpensesBreakdownCategory => ({ category, total: usd(cents), change });
+  recent: ExpenseLineItem[] = [],
+): ExpensesBreakdownCategory => ({ category, total: usd(cents), change, recent });
 
 const changeUp = (percent: number) => ({ percent, direction: 'up' }) as const;
 const changeDown = (percent: number) => ({ percent, direction: 'down' }) as const;
@@ -1001,6 +1012,134 @@ function ExpensesItemExample({ item }: { item: ExpensesBreakdownCategory }) {
         <ExpensesItem item={item} />
       </ul>
     </ExpensesBreakdownCard>
+  );
+}
+
+/** A line item of an Expenses card as the backend sends it: every demo row at 12:00 UTC (task 024). */
+const lineItem = (item: string, cents: number, date: string): ExpenseLineItem => ({
+  item,
+  amount: usd(cents),
+  occurredAt: `${date}T12:00:00.000Z`,
+});
+
+const sampleHousingItems = [lineItem('Parking', 2_016, '2026-10-14'), lineItem('House Rent', 23_184, '2026-10-01')];
+const sampleFoodItems = [lineItem('Pizza', 2_464, '2026-10-20'), lineItem('Restaurant bill', 14_784, '2026-10-18')];
+
+/** A 120-character item name in words, and one with no space (task 024 AC23). */
+const sampleLongItemInWords = 'Annual premium subscription renewal for the whole family '.repeat(3).slice(0, 120);
+const sampleLongItemNoSpace = 'Annualpremiumsubscriptionrenewalforthewholefamily'.repeat(3).slice(0, 120);
+
+// Task 024: the Expenses page's samples as the backend sends them, the ticks and the items included, so the gallery
+// computes nothing (#11).
+const sampleExpensesCards: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownItem('housing', 25_200, changeDown(17), sampleHousingItems),
+    breakdownItem('food', 51_004, changeUp(7), sampleFoodItems),
+    breakdownItem('transportation', 5_320, changeDown(32), [
+      lineItem('Taxi fare', 1_064, '2026-10-19'),
+      lineItem('Taxi fare', 1_064, '2026-10-13'),
+    ]),
+    breakdownItem('entertainment', 28_224, changeUp(16), [
+      lineItem('Movie ticket', 1_764, '2026-10-21'),
+      lineItem('GTR 5', 18_816, '2026-10-17'),
+    ]),
+    breakdownItem('shopping', 65_800, changeUp(14), [
+      lineItem('Jeans', 26_600, '2026-10-22'),
+      lineItem('Shirt', 32_200, '2026-10-15'),
+    ]),
+    breakdownItem('others', 13_832, changeDown(31), [
+      lineItem('Donation', 3_192, '2026-10-11'),
+      lineItem('Loan installment', 10_640, '2026-10-10'),
+    ]),
+  ],
+};
+
+/** A month of the Expenses chart: this year's `YYYY-MM`, last year's value, this year's (null after the current one). */
+const sampleMonth = (month: string, lastYear: number, thisYear: number | null) => ({
+  month,
+  lastYear: usd(lastYear),
+  thisYear: thisYear === null ? null : usd(thisYear),
+});
+
+/** The demo first login's chart (task 024 References): 2025 against 2026 to October, the ticks $0 to $4k. */
+const sampleYear: MonthlyComparisonResponse = {
+  months: [
+    sampleMonth('2026-01', 199_240, 206_616),
+    sampleMonth('2026-02', 165_261, 171_383),
+    sampleMonth('2026-03', 179_972, 186_636),
+    sampleMonth('2026-04', 174_445, 180_909),
+    sampleMonth('2026-05', 197_844, 204_616),
+    sampleMonth('2026-06', 247_912, 255_026),
+    sampleMonth('2026-07', 193_421, 200_588),
+    sampleMonth('2026-08', 191_231, 198_312),
+    sampleMonth('2026-09', 180_894, 187_595),
+    sampleMonth('2026-10', 198_295, 189_380),
+    sampleMonth('2026-11', 183_411, null),
+    sampleMonth('2026-12', 234_036, null),
+  ],
+  ticks: [0, 100_000, 200_000, 300_000, 400_000].map(usd),
+};
+
+/** Every value of both years 0 (31 Dec 2021): no ticks, the empty message (#55, #91 c). */
+const sampleZeroYear: MonthlyComparisonResponse = {
+  months: sampleYear.months.map(({ month }) => sampleMonth(month.replace('2026', '2021'), 0, 0)),
+  ticks: null,
+};
+
+/** A local query that answers `answer`, never resolves (`pending`) or fails after a short wait. */
+function useSampleQuery<TData>(key: string[], answer: TData | 'pending' | 'fails') {
+  return useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', ...key],
+    queryFn: () =>
+      answer === 'pending'
+        ? new Promise<TData>(() => undefined)
+        : answer === 'fails'
+          ? waitThenFail<TData>()
+          : Promise.resolve(answer),
+  });
+}
+
+/** The Expenses chart card as the page draws it at 1440 (the content's 1104, 260 high). */
+function ExpensesComparisonExample({
+  name,
+  answer,
+}: {
+  name: string;
+  answer: MonthlyComparisonResponse | 'pending' | 'fails';
+}) {
+  const query = useSampleQuery(['expenses-comparison', name], answer);
+  return (
+    <div className={styles.chartThreeCards}>
+      <Card>
+        <ExpensesComparison query={query} />
+      </Card>
+    </div>
+  );
+}
+
+/** One Expenses card in the first of three columns, as wide as on the page at 1440 (352). */
+function ExpensesCardExample({ item }: { item: ExpensesBreakdownCategory }) {
+  return (
+    <ul className={`${styles.chartThreeCards} ${styles.expensesCardList}`}>
+      <ExpensesBreakdown item={item} />
+    </ul>
+  );
+}
+
+/** The Expenses cards' grid at 1440 on a local query. */
+function ExpensesListExample({
+  name,
+  answer,
+}: {
+  name: string;
+  answer: ExpensesBreakdownResponse | 'pending' | 'fails';
+}) {
+  const query = useSampleQuery(['expenses-cards', name], answer);
+  return (
+    <div className={styles.chartThreeCards}>
+      <ExpensesBreakdownList query={query} />
+    </div>
   );
 }
 
@@ -2287,6 +2426,86 @@ export function ComponentGallery() {
           <ExpensesBreakdownCard>
             <OverviewExpensesBreakdownSkeleton />
           </ExpensesBreakdownCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ExpensesComparison" wide>
+        <Example name="The demo year (109)">
+          <ExpensesComparisonExample name="demo" answer={sampleYear} />
+        </Example>
+        <Example name="Every value 0">
+          <ExpensesComparisonExample name="zero" answer={sampleZeroYear} />
+        </Example>
+        <Example name="Loading">
+          <ExpensesComparisonExample name="loading" answer="pending" />
+        </Example>
+        <Example name="Error">
+          <ExpensesComparisonExample name="error" answer="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ExpensesBreakdown" wide>
+        <Example name="Up (109)">
+          <ExpensesCardExample item={sampleExpensesCards.categories[1]!} />
+        </Example>
+        <Example name="Down">
+          <ExpensesCardExample item={sampleExpensesCards.categories[0]!} />
+        </Example>
+        <Example name="0%: no arrow">
+          <ExpensesCardExample
+            item={breakdownItem('housing', 20_000, { percent: 0, direction: null }, [
+              lineItem('House Rent', 20_000, '2026-10-01'),
+            ])}
+          />
+        </Example>
+        <Example name="No change: last month $0.00">
+          <ExpensesCardExample
+            item={breakdownItem('transportation', 5_320, null, [lineItem('Taxi fare', 1_064, '2026-10-19')])}
+          />
+        </Example>
+        <Example name="One item">
+          <ExpensesCardExample
+            item={breakdownItem('housing', 27_048, changeDown(1), [lineItem('House Rent', 27_048, '2026-11-01')])}
+          />
+        </Example>
+        <Example name="No expenses this month">
+          <ExpensesCardExample item={breakdownItem('food', 0, changeDown(100))} />
+        </Example>
+        <Example name="Long data: the right block moves under (#106)">
+          <ExpensesCardExample
+            item={breakdownItem('entertainment', 100_000_000_000, changeUp(250), [
+              lineItem(sampleLongItemInWords, 100_000_000_000, '2026-10-21'),
+              lineItem(sampleLongItemNoSpace, 2_464, '2026-10-20'),
+            ])}
+          />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ExpensesLineItem" wide>
+        <Example name="An item (109)">
+          <ul className={`${styles.itemList} ${styles.expensesLineItemSample}`}>
+            <ExpensesLineItem item={sampleHousingItems[1]!} />
+          </ul>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ExpensesBreakdownList" wide>
+        <Example name="The demo month (109)">
+          <ExpensesListExample name="demo" answer={sampleExpensesCards} />
+        </Example>
+        <Example name="Loading">
+          <ExpensesListExample name="loading" answer="pending" />
+        </Example>
+        <Example name="Error">
+          <ExpensesListExample name="error" answer="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ExpensesBreakdownSkeleton" wide>
+        <Example name="Loading">
+          <div className={styles.chartThreeCards}>
+            <ExpensesBreakdownSkeleton />
+          </div>
         </Example>
       </GallerySection>
 

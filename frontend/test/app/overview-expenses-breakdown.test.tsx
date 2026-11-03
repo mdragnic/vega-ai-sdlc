@@ -3,11 +3,21 @@ import { join, resolve } from 'node:path';
 
 import { focusManager } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
+import { formatDate, formatMoney } from '@finebank/shared';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { browserTimeZone } from '../../src/api/client';
 import itemStyles from '../../src/components/ExpensesItem/ExpensesItem.module.css';
-import { dataStateRootIn, expensesBreakdown, me, renderApp, signedInDefaults, today } from '../support/app';
+import {
+  dataStateRootIn,
+  demoExpensesBreakdown,
+  expensesBreakdown,
+  me,
+  renderApp,
+  signedInDefaults,
+  today,
+} from '../support/app';
 
 const server = setupServer(...signedInDefaults());
 
@@ -101,6 +111,22 @@ const firstLoginShown = [
 
 // T9: AC1, AC11, the first login's card (#21, #56, #61, #87, #115 b; demo-data.md).
 describe('the Expenses Breakdown card', () => {
+  // Task 024 T29, AC26: the response carries each category's items for the Expenses page; Overview never shows them.
+  it('never shows a name, amount or date of the items its response carries (task 024)', async () => {
+    await openOverview();
+    const listed = await items();
+
+    for (const item of demoExpensesBreakdown.categories.flatMap(({ recent }) => recent)) {
+      expect(breakdown()).not.toHaveTextContent(item.item);
+      expect(breakdown()).not.toHaveTextContent(formatMoney(item.amount));
+      expect(breakdown()).not.toHaveTextContent(formatDate(item.occurredAt, browserTimeZone()));
+    }
+    expect(demoExpensesBreakdown.categories.flatMap(({ recent }) => recent)).toHaveLength(12);
+    expect(breakdown().querySelectorAll('time')).toHaveLength(0);
+    expect(listed).toHaveLength(6);
+    expect(listed.map(readOut)).toEqual(firstLoginReadOut);
+  });
+
   it('lists the six categories in the order sent, each read as its name, total, change and right arrow', async () => {
     await openOverview();
 

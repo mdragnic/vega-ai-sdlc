@@ -120,15 +120,7 @@ test.describe('ComparisonBarChart layout', () => {
     // Groups: the first gray bar 86 in (104: x 790), 84 apart; each x label centered under its group.
     near(gray[0]!.x - chart.svg.x, 86);
     gray.slice(1).forEach((bar, index) => near(bar.x - gray[index]!.x, 84));
-    expect(chart.xLabels.map((label) => label.text)).toEqual([
-      '19 Mon',
-      '20 Tue',
-      '21 Wed',
-      '22 Thu',
-      '23 Fri',
-      '24 Sat',
-      '25 Sun',
-    ]);
+    expect(chart.xLabels.map((label) => label.text)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     for (const [index, label] of chart.xLabels.entries()) {
       near(label.x + label.width / 2, gray[index]!.x + 20);
       expect(label.fill).toBe(gray03);

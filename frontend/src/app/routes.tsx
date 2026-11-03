@@ -8,6 +8,7 @@ import { AppShell, type ShellHandle } from './AppShell';
 import { AccountDetailsPage } from './pages/AccountDetailsPage';
 import { BalancesPage } from './pages/BalancesPage';
 import { BillsPage } from './pages/BillsPage';
+import { ExpensesPage } from './pages/ExpensesPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { OverviewPage } from './pages/OverviewPage';
@@ -69,7 +70,7 @@ const appPages: { path: string; handle: ShellHandle; element?: ReactNode }[] = [
   { path: paths.accountDetails, handle: { section: 'balances' }, element: <AccountDetailsPage /> },
   { path: paths.transactions, handle: { section: 'transactions' }, element: <TransactionsPage /> },
   { path: paths.bills, handle: { section: 'bills' }, element: <BillsPage /> },
-  { path: paths.expenses, handle: { section: 'expenses' } },
+  { path: paths.expenses, handle: { section: 'expenses' }, element: <ExpensesPage /> },
   { path: paths.goals, handle: { section: 'goals' } },
   { path: paths.settingsAccount, handle: { section: 'settings' } },
   { path: paths.settingsSecurity, handle: { section: 'settings' } },

@@ -280,7 +280,7 @@ describe('component gallery', () => {
       within(weekTable)
         .getAllByRole('rowheader')
         .map((cell) => cell.textContent),
-    ).toEqual(['19 Mon', '20 Tue', '21 Wed', '22 Thu', '23 Fri', '24 Sat', '25 Sun']);
+    ).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     expect(within(weekTable).getByRole('cell', { name: '$322.00' })).toBeInTheDocument();
     // The ticks are written in the gallery: the backend's axisTicks gives $0 to $400 for $322.00 (#91).
     for (const tick of axisTicks({ cents: 32_200, currency: 'USD' })) {
@@ -369,7 +369,7 @@ describe('component gallery', () => {
     const chartTable = (name: string) =>
       within(figure('Statistics', name)).findByRole('table', { name: 'Expenses per day, this week and last week' });
     const demo = await chartTable('The demo week (104)');
-    expect(cells(demo, 0)).toEqual(['19 Mon', '20 Tue', '21 Wed', '22 Thu', '23 Fri', '24 Sat', '25 Sun']);
+    expect(cells(demo, 0)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     expect(cells(demo, 2)).toEqual(['$10.64', '$24.64', '$17.64', '$266.00', '', '', '']);
     expect(
       within(figure('Statistics', 'The demo week (104)')).getByRole('combobox', { name: 'Statistics' }),
@@ -602,6 +602,73 @@ describe('component gallery', () => {
     );
     // Six items: a tile block, three lines and an arrow block each.
     expect(figure('OverviewExpensesBreakdownSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(30);
+  });
+
+  // Task 024 T20: the Expenses parts on sample data, with no request.
+  it('shows the Expenses samples: the chart in every state, the cards’ changes and items, the list and the skeleton', async () => {
+    await renderGallery();
+
+    const monthTable = (name: string) =>
+      within(figure('ExpensesComparison', name)).findByRole('table', {
+        name: 'Expenses per month, this year and last year',
+      });
+    const demo = await monthTable('The demo year (109)');
+    expect(cells(demo, 0)).toEqual([
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ]);
+    expect(cells(demo, 2).slice(9)).toEqual(['$1,893.80', '', '']);
+    expect(
+      within(figure('ExpensesComparison', 'The demo year (109)')).getByRole('combobox', {
+        name: 'Expenses Comparison',
+      }),
+    ).toHaveTextContent('Monthly Comparison');
+    expect(
+      await within(figure('ExpensesComparison', 'Every value 0')).findByText('No expenses this year or last year'),
+    ).toBeVisible();
+    expect(figure('ExpensesComparison', 'Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(figure('ExpensesComparison', 'Error')).findByRole('alert')).toHaveTextContent(
+      'Something went wrong.',
+    );
+
+    const card = (name: string) => within(figure('ExpensesBreakdown', name)).getAllByRole('listitem')[0]!;
+    const header = (name: string) => itemLines(card(name).firstElementChild!.firstElementChild as HTMLElement);
+    expect(header('Up (109)')).toEqual(['Food', '$510.04', '7%', 'Compare to last month']);
+    expect(header('Down')).toEqual(['Hous­ing', '$252.00', '17%', 'Compare to last month']);
+    expect(header('0%: no arrow')).toEqual(['Hous­ing', '$200.00', '0%', 'Compare to last month']);
+    expect(header('No change: last month $0.00')).toEqual(['Trans­por­ta­tion', '$53.20', '', 'Compare to last month']);
+    expect(within(card('One item')).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(card('No expenses this month')).getByText('No expenses this month')).toBeInTheDocument();
+    expect(header('Long data: the right block moves under (#106)')[1]).toBe('$1,000,000,000.00');
+    expect(itemLines(within(card('Up (109)')).getAllByRole('listitem')[0]!)).toEqual([
+      'Pizza',
+      '$24.64',
+      '20 Oct, 2026',
+    ]);
+    expect(itemLines(within(figure('ExpensesLineItem', 'An item (109)')).getByRole('listitem'))).toEqual([
+      'House Rent',
+      '$231.84',
+      '1 Oct, 2026',
+    ]);
+
+    const [list] = await within(figure('ExpensesBreakdownList', 'The demo month (109)')).findAllByRole('list');
+    expect(list!.children).toHaveLength(6);
+    expect(figure('ExpensesBreakdownList', 'Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(figure('ExpensesBreakdownList', 'Error')).findByRole('alert')).toHaveTextContent(
+      'Something went wrong.',
+    );
+    // Six cards: a tile block, four header lines and two items of three lines each.
+    expect(figure('ExpensesBreakdownSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(66);
   });
 
   // Task 019 T15: the Balances parts on sample data, with no request.

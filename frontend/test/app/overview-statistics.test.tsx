@@ -75,13 +75,13 @@ const source = (path: string) => readFileSync(join(srcDir, path), 'utf8');
 /** A first login's table on 22 Oct 2026 (demo-data.md, "What a first login shows"; AC1). */
 const firstLoginRows = [
   ['', 'Last week', 'This week'],
-  ['19 Mon', '$58.80', '$10.64'],
-  ['20 Tue', '$10.64', '$24.64'],
-  ['21 Wed', '$20.16', '$17.64'],
-  ['22 Thu', '$322.00', '$266.00'],
-  ['23 Fri', '$14.78', ''],
-  ['24 Sat', '$188.16', ''],
-  ['25 Sun', '$147.84', ''],
+  ['Mon', '$58.80', '$10.64'],
+  ['Tue', '$10.64', '$24.64'],
+  ['Wed', '$20.16', '$17.64'],
+  ['Thu', '$322.00', '$266.00'],
+  ['Fri', '$14.78', ''],
+  ['Sat', '$188.16', ''],
+  ['Sun', '$147.84', ''],
 ];
 
 // T11: AC1, AC15, the first login's card (#20, #55, #91, #113 b; demo-data.md).
@@ -113,13 +113,13 @@ describe('the Statistics card', () => {
     expect(yLabels()).toEqual(['$0', '$100', '$200', '$300', '$400']);
     expect(statistics().querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect([...statistics().querySelectorAll(`text.${chartStyles.xLabel}`)].map((label) => label.textContent)).toEqual([
-      '19 Mon',
-      '20 Tue',
-      '21 Wed',
-      '22 Thu',
-      '23 Fri',
-      '24 Sat',
-      '25 Sun',
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
     ]);
   });
 

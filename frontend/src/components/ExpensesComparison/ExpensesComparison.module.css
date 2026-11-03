@@ -1,0 +1,22 @@
+/* As `Statistics` (104): the header row and the chart's box inside `Card`'s padding, so the card is 260 in every
+   state (24 + 24 + 188 + 24, #93 a). */
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* #93 a: one 24px row, 8 lower than in Figma: the control at the left, the legend at the right; a wider card widens
+   the space between them (#94). */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* The chart's box right under the header row (#92): the chart, its skeleton, the empty message and the error state
+   all fill it. */
+.chartBox {
+  display: flex;
+  flex-direction: column;
+  height: var(--size-chart-height);
+}

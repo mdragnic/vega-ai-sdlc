@@ -1,0 +1,70 @@
+Task 024 visual check, 2026-11-03 (Validation step 5). Playwright MCP, fresh contexts at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the same instant
+(NODE_ENV=test, `npm run start:e2e -w backend`, the clock through /api/test/clock), the Vite dev server, a new user on the
+demo data for every screenshot. Compared with docs/figma/109. Expenses.png at 2x pixels by a Node PNG reader (built-ins
+only, session scratchpad: png.cjs, measure109.cjs): the same regions measured on 109 and on the screenshot, halved.
+No Figma calls.
+
+expenses-109-1440-2x.png (the fixed clock, the demo data) against 109
+- Same, measured: the first title's ink (x 305.5 to 533.5 / 535.5, y 111.5 to 132.5); the chart card's top (y 152) and
+  x (304 to 1408); the plot: the 5 grid lines at y 215, 251, 287, 323, 359 (Gray/06), the bars' x (the first group gray
+  414 to 430, teal 438 to 454, the next 80 on), the x labels' ink row (y 374.5 to 388, x 422.5 to 1326.5); the control's
+  text and chevron x (329 to 489, 507 to 521); the cards' columns exactly (x 304 to 656, 680 to 1032, 1056 to 1408); the
+  tile's x (328 to 368); the name's and total's x (385, 384.5); the percentage, the arrow and "Compare to last month" at
+  the content's edge (arrow ink 618.5 to 629.5, the text's end 631 / 631.5); the items' x (name 329, amount and date
+  ending at 631.5) and their 76 pitch (amount ink tops 590.5 and 666.5 against 588.5 and 664.5); the weights by ink
+  width ("House Rent" 88 / 88 Semibold, "Parking" 57 / 57, "Housing" 60.5 / 61 Regular, "Shopping" 70.5 / 71.5, the
+  totals' Extrabold "$252.00" 76 against "$250.00" 76.5). The page ends at 1024 with no scroll (scroll height 1024).
+- Differences:
+  1. The chart's header row 8 lower (the control's text ink y 181.5 against 173.5, the chevron 184 against 176, the
+     legend 183 against 175) and the card 260 against 258 (#93 a): everything below is 2 lower: the second title (ink y
+     452 against 450), the cards from y 492 (against 490), the header to 570, the first divider at y 645 (against 643),
+     the first row's end at 730 (against 728), row 2's header from 754.
+  2. The legend "This year" / "Last year" against "This Week" / "Last Week" (#29); its right end at the content's 24
+     inset (x 1384) against 109's ink end at 1379.5, as task 017's Statistics legend.
+  3. The y labels `$0`, `$1k`, `$2k`, `$3k`, `$4k` against `$0`, `$2k`, `$10k`, `$50k`, `$250k`, so the labels' left
+     edge (x 351 against 333.5) and every bar's height differ (#55, #91); `Jul` against "July" (#55); the demo values,
+     no teal bar for Nov and Dec, their labels and gray bars kept (#12, #55).
+  4. The cards' values and items (#12, #56: Transactions wins): Housing's first item Parking `$20.16` against House Rent
+     `$230.00`, and so on; `7%` against "08%" (#61); Food's red up arrow against 109's green down (the data); no `*`
+     (US-15 criterion 4); the dates `14 Oct, 2026` against "17 May 2023" (#11).
+  5. The tile 48 high against 46 (task 004's `header` tile): y 507 to 555 against 506 to 552, centred in the 78 header,
+     15 above and below against 16 and 16.
+  6. Row 2's headers 78 high with no strip under them (109: 76 with a 2 px page-coloured strip, a Figma artifact).
+  7. "Compare to last month" 1 px wider in Chromium (128 against 126.5) and, with the arrow, 1 px higher than the 2 px
+     offset gives (ink y 542 against 541, arrow 520.5 against 519.5): Chromium's glyph placement in the 16 and 24 lines.
+  8. The dividers Gray/06 #F3F3F3 against 109's #F4F4F4 (as tasks 020 to 023); the card shadow over the app's page
+     background #F3F3F3 (109's page is #F4F5F7, so its shadow reads bluer: #E5E8EA under a card against #E3E6E5); the
+     header date `22 Oct, 2026` against "May 19, 2023" and the initials avatar against the photo (task 011).
+
+overview-statistics-labels-1440-2x.png against docs/figma/104. Overview.png (#122 a)
+- The x labels `Mon` to `Sun` (read from the SVG: Mon, Tue, Wed, Thu, Fri, Sat, Sun) against 104's "17 Sun" to "23 Sat",
+  centred under their groups as before; the rest of Overview as tasks 013 to 018 built it.
+
+Evidence only (not designed; tokens only, checked by eye and by the e2e geometry tests):
+- expenses-1920x1080.png: the chart and the cards wider (three columns sharing the width, #94), the heights and gaps
+  the same, no scroll (scroll height 1080). Every header side by side.
+- expenses-1280x1024.png (full page): every card's right block under its left block, right-aligned, 8 below; the
+  headers and so the rows grow, the page scrolls (scroll height 1108), no horizontal scroll (scroll width 1280); the tile
+  stays centred in the grown header. The sidebar ends at 1024 in the full-page capture: it is the shell's fixed sidebar
+  (task 011), a capture artifact.
+- state-long-data-1440-2x.png and state-long-data-1280-2x.png (full page): Housing with a $1,000,000,000.00 total and
+  item amount and a 120-character name in words, Food a 120-character name with no space: at 1440 only Housing's right
+  block moves under; the names wrap inside their column (in words at spaces; the no-space name anywhere: this Chromium
+  has no hyphenation dictionary, the `overflow-wrap: anywhere` fallback, #115 b); the amounts and the total on one line;
+  the first row stretched to the tallest card, the extra height empty under Transportation's body (#113 a); nothing
+  overlaps or leaves its card.
+- state-skeletons-2x.png: both skeletons (both requests held): the chart's 12 groups in its 188 box under the header
+  row (the card 260), six skeleton cards at 238, the header's shapes on the tile's Special/BG so they show on Gray/05.
+- state-errors-2x.png: both error states (every try answered 500): "Something went wrong." above Retry in the chart's
+  box (the header row kept, the card 260) and in one white card across the grid (238).
+- state-keyboard-retry-ring-2x.png: after Tab to the cards' Retry and Enter: the cards back, focus on DataState's root
+  (tabindex -1) with the #87 teal ring around the grid (top at y 488, the root's 492 less 2 offset and 2 width).
+- state-empty-chart-2x.png (2021-12-31T10:00:00Z): "No expenses this year or last year" centred in the chart's box,
+  the header row kept; six `$0.00` cards with an empty percentage line and "No expenses this month".
+- state-one-item-and-none-2x.png (2026-10-31T23:00:00Z, Belgrade): Housing's one item, House Rent `$270.48` `1 Nov,
+  2026`, at the body's top with no divider; the other five `$0.00`, `100%` down, "No expenses this month" centred in the
+  body; November's teal bar ($270.48).
+- state-open-list-2x.png: the open "Monthly Comparison" list (one option, selected; the shared list look, #60, #90 a).
+- state-no-last-month-2x.png (2022-01-15T10:00:00Z): every header with its total, an empty percentage line (its 24
+  height kept) and "Compare to last month"; no gray bar, January's teal bar.

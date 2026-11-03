@@ -23,9 +23,10 @@ export const RECENT_TRANSACTIONS_PER_TAB = 5;
 
 /**
  * The keys of a listed transaction (#19): the time in UTC (#11), shown in the browser's zone (#54); the amount in
- * integer cents, never negative, since the direction gives the sign (#11, #19, #96).
+ * integer cents, never negative, since the direction gives the sign (#11, #19, #96). Every listed row picks from these,
+ * the Expenses cards' line items too (`expenseLineItemSchema`), so no rule is redeclared (#74).
  */
-const listedTransactionFields = z.object({
+export const listedTransactionFields = z.object({
   item: z.string(),
   shopName: z.string(),
   category: expenseCategorySchema.nullable(),

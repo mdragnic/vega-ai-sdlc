@@ -27,7 +27,12 @@ export { ComparisonBarChartSkeleton } from './ComparisonBarChartSkeleton/Compari
 export { DataState, type DataStateQuery } from './DataState/DataState';
 export { DateBox } from './DateBox/DateBox';
 export { Dropdown, type DropdownOption } from './Dropdown/Dropdown';
+export { ExpensesBreakdown } from './ExpensesBreakdown/ExpensesBreakdown';
+export { ExpensesBreakdownList } from './ExpensesBreakdownList/ExpensesBreakdownList';
+export { ExpensesBreakdownSkeleton } from './ExpensesBreakdownSkeleton/ExpensesBreakdownSkeleton';
+export { ExpensesComparison } from './ExpensesComparison/ExpensesComparison';
 export { ExpensesItem } from './ExpensesItem/ExpensesItem';
+export { ExpensesLineItem } from './ExpensesLineItem/ExpensesLineItem';
 export { FieldError } from './FieldError/FieldError';
 export { FormError } from './FormError/FormError';
 export { GoalPopupInput } from './GoalPopupInput/GoalPopupInput';

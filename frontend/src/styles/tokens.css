@@ -184,6 +184,15 @@
   --space-bill-row-padding-y: 32px;
   --space-bill-text-gap: 8px;
   --space-bill-column-gap: 16px;
+  --space-expenses-card-header-padding-y: 12px;
+  --space-expenses-card-tile-gap: 16px;
+  --space-expenses-card-text-gap: 4px;
+  --space-expenses-card-change-gap: 8px;
+  --space-expenses-card-blocks-gap: 8px;
+  --space-expenses-line-item-padding-y: 16px;
+  --space-expenses-line-item-date-gap: 4px;
+  --space-expenses-line-item-gap: 16px;
+  --space-expenses-card-body-bottom: 8px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -271,6 +280,8 @@
   --size-bill-logo-width: 120px;
   --size-bill-logo-height: 40px;
   --size-test-scroll-fixture-height: 3000px;
+  --size-expenses-card-min-height: 238px;
+  --size-expenses-card-header-height: 78px;
 
   /* Radius */
   --radius-input: 8px;

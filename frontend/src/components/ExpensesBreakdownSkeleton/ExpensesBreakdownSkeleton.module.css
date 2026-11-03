@@ -1,0 +1,99 @@
+/* Not designed (#6): existing tokens only, on the cards' own grid, header and body (ExpensesBreakdown.module.css), so
+   each skeleton card is 238 high with its 78 header, as the cards. */
+.card {
+  min-height: var(--size-expenses-card-min-height);
+}
+
+/* On the Gray/05 header the shapes take the tile's Special/BG, as Gray/05 would not show there. */
+.card .onHeader {
+  background-color: var(--color-special-bg);
+}
+
+.tile {
+  flex-shrink: 0;
+  width: var(--size-category-tile);
+  height: var(--size-category-tile-medium);
+}
+
+/* The two lines at the left level with the tile, the two at the right level with its bottom, as the cards'. */
+.headerText {
+  display: flex;
+  flex-grow: 1;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-expenses-card-blocks-gap);
+  min-width: 0;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-expenses-card-text-gap);
+  min-width: 0;
+}
+
+.rightLines {
+  align-items: flex-end;
+}
+
+/* Each about as wide as its text, as high as its letters. */
+.name {
+  width: var(--size-amount-box-width);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.total {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-18);
+}
+
+.change {
+  width: var(--size-card-network-logo-width);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.compare {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-12);
+}
+
+/* Two items with the line items' insets and the divider between them. */
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-expenses-line-item-gap);
+  padding: var(--space-expenses-line-item-padding-y) 0;
+}
+
+.item:not(:last-child) {
+  padding-bottom: calc(var(--space-expenses-line-item-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.itemName {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-expenses-line-item-date-gap);
+}
+
+.amount {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-16);
+}
+
+.date {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-12);
+}

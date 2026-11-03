@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { chartTicksSchema, checkChartTicks } from './chart-ticks.js';
 import type { ContractEntry } from './entry.js';
 import { moneySchema } from './money.js';
 
@@ -22,7 +23,6 @@ export const weeklyComparisonDaySchema = z.object({
 export type WeeklyComparisonDay = z.infer<typeof weeklyComparisonDaySchema>;
 
 const DAYS_PER_WEEK = 7;
-const TICK_COUNT = 5;
 
 /** The UTC day number of a plain date: whole days, so it is exact (#11). */
 const dayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / 86_400_000;
@@ -31,12 +31,13 @@ const dayNumber = (date: string) => Date.parse(`${date}T00:00:00Z`) / 86_400_000
  * The Statistics chart (#20, #55, #91): Monday to Sunday of this week in the user's zone, each with last week's same
  * weekday; days after today have no `thisWeek` (today always has one). `ticks` are the y-axis from $0 in 4 equal
  * steps, the top at or above every value, as `axisTicks` gives them; null exactly when every value is 0, the empty
- * state. Everything is calculated in the backend; the frontend draws it as sent (#11, #74).
+ * state (the rule shared with the Expenses chart). Everything is calculated in the backend; the frontend draws it as
+ * sent (#11, #74).
  */
 export const weeklyComparisonResponseSchema = z
   .object({
     days: z.array(weeklyComparisonDaySchema).length(DAYS_PER_WEEK),
-    ticks: z.array(moneySchema).length(TICK_COUNT).nullable(),
+    ticks: chartTicksSchema,
   })
   .superRefine(({ days, ticks }, context) => {
     const first = days[0];
@@ -63,30 +64,14 @@ export const weeklyComparisonResponseSchema = z
     }
 
     const values = days.flatMap(({ lastWeek, thisWeek }) => (thisWeek === null ? [lastWeek] : [lastWeek, thisWeek]));
-    const highest = Math.max(0, ...values.map((value) => value.cents));
-    if (ticks === null) {
-      if (highest > 0) context.addIssue({ code: 'custom', message: 'A value above $0 needs an axis', path: ['ticks'] });
-      return;
-    }
-    const step = ticks[1]?.cents ?? 0;
-    if (highest === 0 || step <= 0 || ticks.some((tick, index) => tick.cents !== index * step)) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Ticks run from $0 in equal steps, null when all is 0',
-        path: ['ticks'],
-      });
-      return;
-    }
-    if (ticks.at(-1)!.cents < highest) {
-      context.addIssue({ code: 'custom', message: 'The top tick is at or above every value', path: ['ticks'] });
-    }
+    checkChartTicks(values, ticks, context);
   });
 
 export type WeeklyComparisonResponse = z.infer<typeof weeklyComparisonResponseSchema>;
 
 /**
  * The signed-in user's expenses per day, this week and last week, today and the week from the backend's clock in the
- * zone sent as `X-Time-Zone` (#20, #39, #54, #80). Task 024 adds the Expenses page's monthly comparison.
+ * zone sent as `X-Time-Zone` (#20, #39, #54, #80). The Expenses page's monthly comparison is in `expensesContract`.
  */
 export const statisticsContract = {
   weeklyComparison: {

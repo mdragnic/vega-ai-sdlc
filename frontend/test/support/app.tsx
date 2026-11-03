@@ -7,6 +7,7 @@ import {
   type ErrorResponse,
   EXPECTED_USER_HEADER,
   type ExpensesBreakdownResponse,
+  type MonthlyComparisonResponse,
   goalProgress,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
@@ -1138,73 +1139,161 @@ export const weeklyComparison = {
 };
 
 type BreakdownCategory = ExpensesBreakdownResponse['categories'][number];
+type LineItem = BreakdownCategory['recent'][number];
 
-/** One category of `GET /api/expenses/breakdown`: this month's total so far and its change, null without one. */
+/** A line item of an Expenses card as the backend sends it: the name, the amount and the time in UTC. */
+const lineItem = (item: string, cents: number, occurredAt: string): LineItem => ({
+  item,
+  amount: usd(cents),
+  occurredAt,
+});
+/** A demo row: every one is stored at 12:00 UTC (demo-data.md). */
+const demoLineItem = (item: string, cents: number, date: string) => lineItem(item, cents, `${date}T12:00:00.000Z`);
+
+/**
+ * One category of `GET /api/expenses/breakdown`: this month's total so far, its change (null without one) and its 2 most
+ * recent Complete expenses of this month, newest first (task 024).
+ */
 const breakdownCategory = (
   category: BreakdownCategory['category'],
   total: number,
   change: BreakdownCategory['change'],
-): BreakdownCategory => ({ category, total: usd(total), change });
+  recent: LineItem[] = [],
+): BreakdownCategory => ({ category, total: usd(total), change, recent });
 
 const up = (percent: number) => ({ percent, direction: 'up' }) as const;
 const down = (percent: number) => ({ percent, direction: 'down' }) as const;
 
+/** The 2 most recent Complete expenses of 1 to 22 Oct 2026 per category (task 024 References, AC12). */
+export const demoLineItems = {
+  housing: [demoLineItem('Parking', 2_016, '2026-10-14'), demoLineItem('House Rent', 23_184, '2026-10-01')],
+  food: [demoLineItem('Pizza', 2_464, '2026-10-20'), demoLineItem('Restaurant bill', 14_784, '2026-10-18')],
+  transportation: [demoLineItem('Taxi fare', 1_064, '2026-10-19'), demoLineItem('Taxi fare', 1_064, '2026-10-13')],
+  entertainment: [demoLineItem('Movie ticket', 1_764, '2026-10-21'), demoLineItem('GTR 5', 18_816, '2026-10-17')],
+  shopping: [demoLineItem('Jeans', 26_600, '2026-10-22'), demoLineItem('Shirt', 32_200, '2026-10-15')],
+  others: [demoLineItem('Donation', 3_192, '2026-10-11'), demoLineItem('Loan installment', 10_640, '2026-10-10')],
+} satisfies Record<BreakdownCategory['category'], LineItem[]>;
+
 /**
  * The answer a first login gets on Thu 22 Oct 2026 in Belgrade: 1 to 22 Oct against all of Sep (demo-data.md, "What a
- * first login shows"; task 018 AC1).
+ * first login shows"; task 018 AC1), with each category's items (task 024 AC12). Overview's card never shows the items.
  */
 export const demoExpensesBreakdown: ExpensesBreakdownResponse = {
   categories: [
-    breakdownCategory('housing', 25_200, down(17)),
-    breakdownCategory('food', 51_004, up(7)),
-    breakdownCategory('transportation', 5_320, down(32)),
-    breakdownCategory('entertainment', 28_224, up(16)),
-    breakdownCategory('shopping', 65_800, up(14)),
-    breakdownCategory('others', 13_832, down(31)),
+    breakdownCategory('housing', 25_200, down(17), demoLineItems.housing),
+    breakdownCategory('food', 51_004, up(7), demoLineItems.food),
+    breakdownCategory('transportation', 5_320, down(32), demoLineItems.transportation),
+    breakdownCategory('entertainment', 28_224, up(16), demoLineItems.entertainment),
+    breakdownCategory('shopping', 65_800, up(14), demoLineItems.shopping),
+    breakdownCategory('others', 13_832, down(31), demoLineItems.others),
   ],
 };
 
-/** Last month $0.00 for every category: the totals with no change (task 018 AC5, at 2022-01-15). */
+/** Last month $0.00 for every category: the totals with no change and their items (task 018 AC5, at 2022-01-15). */
 export const noLastMonthBreakdown: ExpensesBreakdownResponse = {
   categories: [
-    breakdownCategory('housing', 23_750, null),
-    breakdownCategory('food', 27_379, null),
-    breakdownCategory('transportation', 3_611, null),
-    breakdownCategory('entertainment', 7_410, null),
-    breakdownCategory('shopping', 30_591, null),
-    breakdownCategory('others', 11_115, null),
+    breakdownCategory('housing', 23_750, null, [
+      demoLineItem('Parking', 1_900, '2022-01-14'),
+      demoLineItem('House Rent', 21_850, '2022-01-01'),
+    ]),
+    breakdownCategory('food', 27_379, null, [
+      demoLineItem('Pizza', 2_090, '2022-01-08'),
+      demoLineItem('Biriyani', 1_254, '2022-01-05'),
+    ]),
+    breakdownCategory('transportation', 3_611, null, [
+      demoLineItem('Taxi fare', 903, '2022-01-13'),
+      demoLineItem('Metro Card bill', 1_805, '2022-01-07'),
+    ]),
+    breakdownCategory('entertainment', 7_410, null, [
+      demoLineItem('iTunes', 5_700, '2022-01-12'),
+      demoLineItem('Movie ticket', 1_710, '2022-01-06'),
+    ]),
+    breakdownCategory('shopping', 30_591, null, [
+      demoLineItem('Shirt', 25_128, '2022-01-15'),
+      demoLineItem('Keyboard', 3_278, '2022-01-09'),
+    ]),
+    breakdownCategory('others', 11_115, null, [
+      demoLineItem('Donation', 2_565, '2022-01-11'),
+      demoLineItem('Loan installment', 8_550, '2022-01-10'),
+    ]),
   ],
 };
 
-/** Nothing in either month: six $0.00 with no change (task 018 AC5, at 2021-12-31). */
+/** Nothing in either month: six $0.00 with no change and no item (task 018 AC5, at 2021-12-31). */
 export const allZeroBreakdown: ExpensesBreakdownResponse = {
   categories: demoExpensesBreakdown.categories.map(({ category }) => breakdownCategory(category, 0, null)),
 };
 
 /**
  * A mix (task 018 AC3, AC14): Housing `0%` with no arrow, Food `$0.00` with `100%` down, Transportation with no change,
- * Entertainment `$1,000,000,000.00`, Shopping and Others as the demo.
+ * Entertainment `$1,000,000,000.00`, Shopping and Others as the demo; the items to match.
  */
 export const mixedBreakdown: ExpensesBreakdownResponse = {
   categories: [
-    breakdownCategory('housing', 20_000, { percent: 0, direction: null }),
+    breakdownCategory('housing', 20_000, { percent: 0, direction: null }, [
+      demoLineItem('House Rent', 20_000, '2026-10-01'),
+    ]),
     breakdownCategory('food', 0, down(100)),
-    breakdownCategory('transportation', 5_320, null),
-    breakdownCategory('entertainment', 100_000_000_000, up(250)),
-    breakdownCategory('shopping', 65_800, up(14)),
-    breakdownCategory('others', 13_832, down(31)),
+    breakdownCategory('transportation', 5_320, null, demoLineItems.transportation),
+    breakdownCategory('entertainment', 100_000_000_000, up(250), [
+      demoLineItem('Watch', 100_000_000_000, '2026-10-20'),
+    ]),
+    breakdownCategory('shopping', 65_800, up(14), demoLineItems.shopping),
+    breakdownCategory('others', 13_832, down(31), demoLineItems.others),
+  ],
+};
+
+/**
+ * 1 Nov 2026 in Belgrade (task 024 AC14, at 2026-10-31T23:00:00Z): Housing's one item, the House Rent of 1 Nov; the
+ * other five `$0.00`, 100% down, with no item.
+ */
+export const oneItemBreakdown: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownCategory('housing', 27_048, down(1), [demoLineItem('House Rent', 27_048, '2026-11-01')]),
+    breakdownCategory('food', 0, down(100)),
+    breakdownCategory('transportation', 0, down(100)),
+    breakdownCategory('entertainment', 0, down(100)),
+    breakdownCategory('shopping', 0, down(100)),
+    breakdownCategory('others', 0, down(100)),
+  ],
+};
+
+/** A 120-character item name in words, and one with no space (task 024 AC23). */
+export const longLineItemInWords = 'Annual premium subscription renewal for the whole family '.repeat(3).slice(0, 120);
+export const longLineItemNoSpace = 'Annualpremiumsubscriptionrenewalforthewholefamily'.repeat(3).slice(0, 120);
+
+/**
+ * The long data (task 024 AC23): Housing a $1,000,000,000.00 total with an item of that amount and a long name in
+ * words, Food a long name with no space; the other four as the demo.
+ */
+export const longBreakdown: ExpensesBreakdownResponse = {
+  categories: [
+    breakdownCategory('housing', 100_000_000_000, up(250), [
+      demoLineItem(longLineItemInWords, 100_000_000_000, '2026-10-21'),
+      demoLineItem('House Rent', 23_184, '2026-10-01'),
+    ]),
+    breakdownCategory('food', 51_004, up(7), [
+      demoLineItem(longLineItemNoSpace, 2_464, '2026-10-20'),
+      demoLineItem('Restaurant bill', 14_784, '2026-10-18'),
+    ]),
+    ...demoExpensesBreakdown.categories.slice(2),
   ],
 };
 
 const expensesBreakdownPath = '*/api/expenses/breakdown';
 
-/** `GET /api/expenses/breakdown` answers: the demo, last month $0.00, all $0.00, the mix, pending and failing. */
+/**
+ * `GET /api/expenses/breakdown` answers: the demo, last month $0.00, all $0.00, the mix, one item, the long data,
+ * pending, failing, and failing 4 times (the request and its 3 retries) then the demo.
+ */
 export const expensesBreakdown = {
   answers: (body: ExpensesBreakdownResponse = demoExpensesBreakdown) =>
     http.get(expensesBreakdownPath, () => HttpResponse.json(body)),
   noLastMonth: () => http.get(expensesBreakdownPath, () => HttpResponse.json(noLastMonthBreakdown)),
   allZero: () => http.get(expensesBreakdownPath, () => HttpResponse.json(allZeroBreakdown)),
   mixed: () => http.get(expensesBreakdownPath, () => HttpResponse.json(mixedBreakdown)),
+  oneItem: () => http.get(expensesBreakdownPath, () => HttpResponse.json(oneItemBreakdown)),
+  long: () => http.get(expensesBreakdownPath, () => HttpResponse.json(longBreakdown)),
   pending: () =>
     http.get(expensesBreakdownPath, async () => {
       await delay('infinite');
@@ -1212,13 +1301,103 @@ export const expensesBreakdown = {
     }),
   fails: () =>
     http.get(expensesBreakdownPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(expensesBreakdownPath, () => {
+      tries += 1;
+      return tries <= 4
+        ? HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
+        : HttpResponse.json(demoExpensesBreakdown);
+    });
+  },
+};
+
+const monthsOf = (year: number) =>
+  Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`);
+
+/** A chart answer: the 12 months of `year`, last year's values and this year's (shorter: null after it), the ticks. */
+const monthlyAnswer = (
+  year: number,
+  lastYear: number[],
+  thisYear: number[],
+  ticks: number[] | null,
+): MonthlyComparisonResponse => ({
+  months: monthsOf(year).map((month, index) => ({
+    month,
+    lastYear: usd(lastYear[index]!),
+    thisYear: thisYear[index] === undefined ? null : usd(thisYear[index]),
+  })),
+  ticks: ticks && ticks.map(usd),
+});
+
+const year2025 = [
+  199_240, 165_261, 179_972, 174_445, 197_844, 247_912, 193_421, 191_231, 180_894, 198_295, 183_411, 234_036,
+];
+const year2026ToToday = [206_616, 171_383, 186_636, 180_909, 204_616, 255_026, 200_588, 198_312, 187_595, 189_380];
+const demoChartTicks = [0, 100_000, 200_000, 300_000, 400_000];
+const zeros = Array.from({ length: 12 }, () => 0);
+
+/**
+ * The answer a first login gets on Thu 22 Oct 2026 in Belgrade (task 024 References, AC3): 2025 against 2026 to
+ * October, Nov and Dec null, the ticks $0 to $4k.
+ */
+export const demoMonthlyComparison = monthlyAnswer(2026, year2025, year2026ToToday, demoChartTicks);
+
+/** Every value of both years 0 (31 Dec 2021, AC7): no ticks, the empty state. */
+export const allZeroMonthlyComparison = monthlyAnswer(2021, zeros, zeros, null);
+
+/** Last year all 0 (15 Jan 2022, AC7): January's teal bar $1,038.56, the ticks $0 to $2k. */
+export const lastYearZeroMonthlyComparison = monthlyAnswer(
+  2022,
+  zeros,
+  [103_856],
+  [0, 50_000, 100_000, 150_000, 200_000],
+);
+
+/** The year change in Belgrade (2026-12-31T23:00:00Z, AC5): 2027's January $266.80 against all of 2026. */
+export const newYearMonthlyComparison = monthlyAnswer(
+  2027,
+  [...year2026ToToday.slice(0, 9), 205_636, 190_204, 242_704],
+  [26_680],
+  demoChartTicks,
+);
+
+const monthlyComparisonPath = '*/api/expenses/monthly-comparison';
+
+/**
+ * `GET /api/expenses/monthly-comparison` answers: the demo, all 0, last year all 0, the year change, pending, failing,
+ * and failing 4 times (the request and its 3 retries) then the demo.
+ */
+export const monthlyComparison = {
+  answers: (body: MonthlyComparisonResponse = demoMonthlyComparison) =>
+    http.get(monthlyComparisonPath, () => HttpResponse.json(body)),
+  allZero: () => http.get(monthlyComparisonPath, () => HttpResponse.json(allZeroMonthlyComparison)),
+  lastYearZero: () => http.get(monthlyComparisonPath, () => HttpResponse.json(lastYearZeroMonthlyComparison)),
+  newYear: () => http.get(monthlyComparisonPath, () => HttpResponse.json(newYearMonthlyComparison)),
+  pending: () =>
+    http.get(monthlyComparisonPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoMonthlyComparison);
+    }),
+  fails: () =>
+    http.get(monthlyComparisonPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(monthlyComparisonPath, () => {
+      tries += 1;
+      return tries <= 4
+        ? HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
+        : HttpResponse.json(demoMonthlyComparison);
+    });
+  },
 };
 
 /**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
- * asking, one that opens Transactions has its pages, and one that opens a demo account's Account Details has its
- * details and history: the demo data of each. A test's own `server.use` comes first.
+ * asking, one that opens Transactions has its pages, one that opens a demo account's Account Details has its details
+ * and history, and one that opens Expenses has its monthly comparison and the same expenses breakdown: the demo data of
+ * each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
@@ -1227,6 +1406,7 @@ export const signedInDefaults = () => [
   recentTransactions.answers(),
   weeklyComparison.answers(),
   expensesBreakdown.answers(),
+  monthlyComparison.answers(),
   transactions.answers(),
   accountDetails.answers(),
   accountHistory.answers(),

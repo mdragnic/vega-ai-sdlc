@@ -1,6 +1,6 @@
 import type { Browser, Locator, Page, Route } from '@playwright/test';
 
-import { FRONTEND_URL } from '../constants';
+import { FRONTEND_URL, TIME_ZONE } from '../constants';
 import { expect, test } from '../fixtures';
 import {
   box,
@@ -113,6 +113,51 @@ async function inZone(browser: Browser, page: Page, timezoneId: string) {
   await expect(items(zonePage)).toHaveCount(6);
   return { zonePage, close: () => context.close() };
 }
+
+// Task 024 T29, AC26: the breakdown response carries each category's 2 most recent items for the Expenses page;
+// Overview's card shows the six totals and changes as task 018 built it, and never an item's name, amount or date.
+test('never shows a name, amount or date of the items the breakdown response carries (task 024)', async ({ page }) => {
+  await openOverview(page);
+  const response = await page.request.get('/api/expenses/breakdown', { headers: { 'X-Time-Zone': TIME_ZONE } });
+  const body = (await response.json()) as { categories: { recent: { item: string; occurredAt: string }[] }[] };
+  const recent = body.categories.flatMap((category) => category.recent);
+  expect(recent.map(({ item }) => item)).toEqual([
+    'Parking',
+    'House Rent',
+    'Pizza',
+    'Restaurant bill',
+    'Taxi fare',
+    'Taxi fare',
+    'Movie ticket',
+    'GTR 5',
+    'Jeans',
+    'Shirt',
+    'Donation',
+    'Loan installment',
+  ]);
+
+  const text = (await breakdown(page).textContent()) ?? '';
+  for (const shownText of [
+    ...recent.map(({ item }) => item),
+    '$20.16',
+    '$231.84',
+    '$24.64',
+    '$147.84',
+    '$10.64',
+    '$17.64',
+    '$188.16',
+    '$266.00',
+    '$322.00',
+    '$31.92',
+    '$106.40',
+    '14 Oct, 2026',
+    '1 Oct, 2026',
+  ]) {
+    expect(text, `Overview shows ${shownText}`).not.toContain(shownText);
+  }
+  await expect(breakdown(page).locator('time')).toHaveCount(0);
+  expect(await shown(page)).toEqual(firstLogin);
+});
 
 // T16, T20: AC1, AC11, the first login's card and what a screen reader reads (#21, #56, #61, #115 b; demo-data.md).
 test('shows the six categories of a first login, read with their clean names and their changes in words', async ({

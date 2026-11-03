@@ -1,6 +1,5 @@
 import {
   categoryLabel,
-  type ExpenseChange,
   type ExpensesBreakdownCategory,
   formatMoney,
   formatPercent,
@@ -12,11 +11,8 @@ import { Link } from 'react-router';
 import { ArrowRight24, DownArrow16, UpArrow } from '../../assets/icons';
 import { paths } from '../../routes/paths';
 import { CategoryIcon } from '../CategoryIcon/CategoryIcon';
+import { expenseChangeText } from './expenseChangeText';
 import styles from './ExpensesItem.module.css';
-
-/** What a screen reader says for the change: "up 7% compared to last month", or "0% compared to last month". */
-const changeText = ({ percent, direction }: ExpenseChange) =>
-  `${direction === null ? '' : `${direction} `}${formatPercent(percent)} compared to last month`;
 
 type ExpensesItemProps = {
   /** One category as the backend sent it: this month's total so far and the change against last month (#21). */
@@ -54,7 +50,7 @@ export function ExpensesItem({ item }: ExpensesItemProps) {
               </>
             )}
           </p>
-          {change !== null && <VisuallyHidden.Root>{changeText(change)}</VisuallyHidden.Root>}
+          {change !== null && <VisuallyHidden.Root>{expenseChangeText(change)}</VisuallyHidden.Root>}
         </div>
         <Link to={paths.expenses} className={styles.arrow} aria-label={`${label} expenses`}>
           <ArrowRight24 className={styles.arrowIcon} aria-hidden="true" />
