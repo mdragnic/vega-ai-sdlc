@@ -15,9 +15,14 @@ const NEW_YORK = 'America/New_York';
 
 const usd = (cents: number) => ({ cents, currency: 'USD' as const });
 
+/** The description of every demo bill (demo-data.md, Bills). */
+const description =
+  'For advanced security and more flexible controls, the Professional plan helps you scale design processes company-wide.';
+
 /** The demo bills due in a year, as the contract sends them (demo-data.md, Bills). */
 const figma = (year: number) => ({
   title: 'Figma - Yearly Plan',
+  description,
   logo: 'figma',
   dueDate: `${year}-05-15`,
   lastChargeDate: `${year - 1}-05-14`,
@@ -25,6 +30,7 @@ const figma = (year: number) => ({
 });
 const adobe = (year: number) => ({
   title: 'Adobe Inc - Yearly Plan',
+  description,
   logo: 'adobe',
   dueDate: `${year}-06-16`,
   lastChargeDate: `${year - 1}-06-17`,
@@ -84,8 +90,25 @@ describe('BillsService', () => {
 
     expect(answer).toEqual({ bills: [figma(2027), adobe(2027), figma(2028), adobe(2028)] });
     for (const bill of answer.bills) {
-      expect(Object.keys(bill).toSorted()).toEqual(['amount', 'dueDate', 'lastChargeDate', 'logo', 'title']);
+      expect(Object.keys(bill).toSorted()).toEqual([
+        'amount',
+        'description',
+        'dueDate',
+        'lastChargeDate',
+        'logo',
+        'title',
+      ]);
     }
+  });
+
+  // Task 023 T2, AC3: the Bills table shows each bill's own description, as stored.
+  it('answers each bill with its own stored description', async () => {
+    await db.query("UPDATE bills SET description = 'Adobe’s own text' WHERE user_id = ? AND logo = 'adobe'", [userId]);
+    await db.query("UPDATE bills SET description = '' WHERE user_id = ? AND due_date = '2028-05-15'", [userId]);
+
+    const descriptions = (await service.upcoming(userId, BELGRADE)).bills.map((bill) => bill.description);
+
+    expect(descriptions).toEqual([description, 'Adobe’s own text', '', 'Adobe’s own text']);
   });
 
   it('includes a bill due today in the zone and drops one due yesterday', async () => {

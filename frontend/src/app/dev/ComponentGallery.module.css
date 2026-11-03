@@ -317,6 +317,22 @@
   margin: 0 auto;
 }
 
+/* The Bills card of 108 at 1440 (task 023): the content width, at least 420 high as the page draws it. */
+.billTableSample {
+  width: calc(
+    var(--size-card-width) + var(--size-card-width) + var(--size-card-width) + var(--space-card-gap) +
+      var(--space-card-gap)
+  );
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.billTableCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-bill-card-min-height);
+}
+
 /* The Account Details cards of 106 at 1440 (task 021): as the page, at least 292 and 412 high. */
 .detailsSampleCard,
 .historySampleCard {

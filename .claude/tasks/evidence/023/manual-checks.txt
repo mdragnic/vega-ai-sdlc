@@ -1,0 +1,38 @@
+Task 023 manual checks, 2026-11-03 (Validation step 5). Playwright MCP, headed Chromium on Windows with classic scrollbars
+(the page is 1425 wide in a 1440 window, #101), fresh contexts. `npm run dev` (the development backend on the real
+clock, today 3 Nov 2026; the test clock route answers 404 there), later the backend and Vite run separately (`npm run dev
+-w backend`, `npm run dev -w frontend`) so the backend alone could be stopped: `npm run dev` runs them under
+`concurrently --kill-others-on-fail`. No Figma calls.
+
+1. Sign up through the form: lands on /overview, the header date "3 Nov, 2026". Overview's Upcoming Bill rows:
+   "May 15 Figma - Yearly Plan, Last Charge - 14 May, 2026, $150.00" and "Jun 16 Adobe Inc - Yearly Plan, Last Charge -
+   17 Jun, 2026, $559.00"; the card shows no description.
+2. "View All": /bills, Bills active (aria-current="page"), the table "Upcoming Bills" with 4 rows (the demo data is fixed,
+   #53): 15 May / Figma / the title and the description / 14 May, 2026 / $150.00; 16 Jun / Adobe / ... / 17 Jun, 2026 /
+   $559.00; 15 May / ... / 14 May, 2027 / $150.00; 16 Jun / ... / 17 Jun, 2027 / $559.00. The first two equal Overview's
+   (due dates, titles, last charges, amounts). Screenshot manual-1440.png.
+   (A first read taken in the same tick as the click still showed Overview: its hidden Statistics table matched a bare
+   `tbody > tr` locator, as task 020 noted; read again on the Bills table.)
+3. Keyboard from the header's search field: Tab goes to the end of the document, then the sidebar: no stop in the
+   content (#28).
+4. Hover and click on each of the 4 rows: the cursor `auto` on the row and everything in it, the page unchanged, the URL
+   still /bills, no request sent.
+5. Resizes (the page, the card, the columns, the row heights, a horizontal scroll):
+   - 1920x1080: page 1905, card 1569, columns 168.4 / 278.1 / 416.5 / 547.3 / 110.8, rows 162 each, no horizontal scroll.
+   - 1280x1024: page 1265, card 929, columns 92.0 / 151.9 / 227.5 / 298.9 / 110.8, rows 184 each (the description on
+     four lines), no horizontal scroll (manual-1280.png).
+   - Back to 1440x1024: page 1425, card 1089, columns 111.1 / 183.5 / 274.7 / 361.0 / 110.8 (112 : 185 : 277 : 364, the
+     Amount column the `$559.00` box), rows 162 each.
+6. Backend stopped (taskkill on the process on port 3000, Vite kept), a second tab of the same user parked on
+   /transactions beforehand (no bills cached in it):
+   - In the parked tab, Bills from the sidebar: the skeleton at once, the card 1089x420 (manual-backend-down-
+     skeleton.png); "Something went wrong." over Retry 7.1 s later, after the request and its 3 retries, centred in the
+     420 card, the title kept (manual-backend-down-error.png).
+   - In the first tab (the bills cached from Overview), "View All": the 4 rows at once, and 9 s later, with the refetch
+     failing, still the 4 rows, no message, not busy (#89).
+7. Backend started again: in the parked tab, Tab from the search field gives Retry (the only stop in the content); Enter:
+   the 4 rows; focus on DataState's root (a DIV with tabindex="-1" in the card), never the body, :focus-visible with the
+   teal ring (solid 2px rgb(41, 157, 145), manual-keyboard-retry-ring.png); the next Tab leaves the content (#114).
+8. Afterwards the extra browser contexts closed and the node processes on ports 3000 and 5173 stopped, the ports free.
+   (An earlier pair of tabs was sent to Login when Vite restarted while the backend was still down; they were closed
+   and a new user signed up for steps 6 and 7.)

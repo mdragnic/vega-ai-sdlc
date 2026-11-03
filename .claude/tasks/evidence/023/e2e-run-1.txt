@@ -1,0 +1,40 @@
+    -   Array [
+    -     "Branch Name",
+    -     "Park Street Branch",
+    -   ],
+    -   Array [
+    -     "Account Number",
+    -     "**** **** **** 7310",
+    -   ],
+    - ]
+    + Array []
+
+      491 |
+      492 |   await expect(detailsRegion(page).getByRole('alert')).toHaveCount(0);
+    > 493 |   expect(await detailsShown(page)).toEqual(readOut(demoDetails[1]!));
+          |                                    ^
+      494 |   const focusedIn = await detailsRegion(page).evaluate((region) => region.contains(document.activeElement));
+      495 |   expect(focusedIn).toBe(true);
+      496 |   await expectRing(page, page.locator(':focus'));
+        at D:\Projects\VegaAI\finebank-v1\e2e\tests\account-details.spec.ts:493:36
+
+    Error Context: test-results\account-details-shows-the--0a82f-try-keeps-focus-in-the-card-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\account-details-shows-the--0a82f-try-keeps-focus-in-the-card-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\account-details-shows-the--0a82f-try-keeps-focus-in-the-card-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests\account-details.spec.ts:469:1 › shows the skeletons, then the error state in each card, a keyboard Retry keeps focus in the card 
+  263 passed (9.4m)
+npm error Lifecycle script `e2e` failed with error:
+npm error code 1
+npm error path D:\Projects\VegaAI\finebank-v1\e2e
+npm error workspace @finebank/e2e@0.0.0
+npm error location D:\Projects\VegaAI\finebank-v1\e2e
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c playwright test

@@ -305,7 +305,11 @@ test('works by keyboard: the Tab order, the select, Enter to save, Escape; the r
   await accountType(page).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('listbox')).toBeVisible();
+  // Radix moves focus to the selected option once the list is placed: each key after that, as a person would press it
+  // (task 023: an arrow sent before it was lost at HEAD).
+  await expect(page.getByRole('option', { name: 'Checking' })).toBeFocused();
   await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('option', { name: 'Savings' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('listbox')).toHaveCount(0);
   await expect(accountType(page)).toHaveText('Savings');

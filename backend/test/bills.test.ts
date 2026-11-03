@@ -10,6 +10,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock } from '../src/common/clock/fixed-clock.js';
 import { cookieFor, signUp } from './helpers/auth.js';
 import { userIdOf } from './helpers/finance.js';
+import { registeredRoutes } from './helpers/routes.js';
 import { createTestApp } from './helpers/test-app.js';
 
 // The path comes from the contract, so a route declared anywhere else would not answer it.
@@ -21,9 +22,14 @@ const NEW_YORK = 'America/New_York';
 
 const usd = (cents: number) => ({ cents, currency: 'USD' });
 
+/** The description of every demo bill (demo-data.md, Bills). */
+const description =
+  'For advanced security and more flexible controls, the Professional plan helps you scale design processes company-wide.';
+
 /** The demo bills due in a year, as the contract sends them (demo-data.md, Bills). */
 const figma = (year: number) => ({
   title: 'Figma - Yearly Plan',
+  description,
   logo: 'figma',
   dueDate: `${year}-05-15`,
   lastChargeDate: `${year - 1}-05-14`,
@@ -31,6 +37,7 @@ const figma = (year: number) => ({
 });
 const adobe = (year: number) => ({
   title: 'Adobe Inc - Yearly Plan',
+  description,
   logo: 'adobe',
   dueDate: `${year}-06-16`,
   lastChargeDate: `${year - 1}-06-17`,
@@ -81,13 +88,22 @@ describe('the upcoming bills API', () => {
       const response = await get({ token, zone: BELGRADE });
 
       expect(response.status).toBe(200);
+      // The body as sent, then through the contract: the parse would drop a key the contract does not have.
+      expect(response.body).toEqual({ bills: [figma(2027), adobe(2027), figma(2028), adobe(2028)] });
       expect(upcomingBillsResponseSchema.parse(response.body)).toEqual({
         bills: [figma(2027), adobe(2027), figma(2028), adobe(2028)],
       });
       const body = response.body as { bills: Record<string, unknown>[] };
       expect(Object.keys(body)).toEqual(['bills']);
       for (const bill of body.bills) {
-        expect(Object.keys(bill).toSorted()).toEqual(['amount', 'dueDate', 'lastChargeDate', 'logo', 'title']);
+        expect(Object.keys(bill).toSorted()).toEqual([
+          'amount',
+          'description',
+          'dueDate',
+          'lastChargeDate',
+          'logo',
+          'title',
+        ]);
         expect(Object.keys(bill.amount as object).toSorted()).toEqual(['cents', 'currency']);
       }
     });
@@ -158,6 +174,13 @@ describe('the upcoming bills API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ bills: [] });
+    });
+
+    // Task 023 T3, AC9: Overview and Bills read the one route; no second bills endpoint (#28, #41).
+    it('has one bills route, GET /api/bills/upcoming, in the app’s route table', () => {
+      const billRoutes = registeredRoutes(app).filter((route) => /\/bills\b/.test(route));
+
+      expect(billRoutes).toEqual([`GET ${upcomingPath}`]);
     });
 
     it('has no route that takes a user or a bill ID', async () => {

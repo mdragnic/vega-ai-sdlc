@@ -1,0 +1,11 @@
+/* Test fixture only (task 023). The link stays in view at any scroll position, as the sidebar's links do, so a click
+   on it never scrolls the page first (T27 reads the position the page had). */
+.link {
+  position: sticky;
+  top: 0;
+}
+
+/* The height task 011's injected block had, so the page scrolls inside the shell. */
+.block {
+  height: var(--size-test-scroll-fixture-height);
+}

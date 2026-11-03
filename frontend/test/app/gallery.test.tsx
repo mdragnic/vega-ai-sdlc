@@ -2,11 +2,18 @@ import { axisTicks, formatCompactMoney } from '@finebank/shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { AppProviders } from '../../src/app/AppProviders';
 import { routes } from '../../src/app/routes';
 import * as components from '../../src/components';
+
+// The gallery is a lazy route: its first render imports the whole gallery module (every component and sample), which
+// on a busy machine took longer than the heading's 1 s wait, the page still the router's empty fallback (task 023).
+// The module is loaded here first, so each render waits only for React; the route still loads it through `lazy`.
+beforeAll(async () => {
+  await import('../../src/app/dev/ComponentGallery');
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -33,6 +40,10 @@ const cells = (table: HTMLElement, column: number) =>
 
 /** The body rows of a table in `element`: the header row left out. */
 const bodyRows = (element: HTMLElement) => within(within(element).getAllByRole('rowgroup')[1]!).getAllByRole('row');
+
+/** The description of every demo bill (demo-data.md, Bills). */
+const billDescription =
+  'For advanced security and more flexible controls, the Professional plan helps you scale design processes company-wide.';
 
 /** The visible lines of an Expenses Breakdown item: its paragraphs' text. */
 const itemLines = (element: HTMLElement) => [...element.querySelectorAll('p')].map((line) => line.textContent);
@@ -408,6 +419,37 @@ describe('component gallery', () => {
     );
     // Five rows: a tile block, two lines on the left and two on the right.
     expect(figure('RecentTransactionSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(25);
+  });
+
+  // Task 023 T12: the Bills table, its rows and its skeleton, on sample data with no network.
+  it('shows the Bills samples: the demo rows, one, four and the long data, the rows and the skeleton', async () => {
+    await renderGallery();
+
+    const demo = figure('BillTable', 'The demo bills (108)');
+    expect(within(demo).getByRole('table')).toHaveAccessibleName('Upcoming Bills');
+    expect(
+      within(demo)
+        .getAllByRole('columnheader')
+        .map((header) => header.textContent),
+    ).toEqual(['Due Date', 'Logo', 'Item Description', 'Last Charge', 'Amount']);
+    expect(bodyRows(demo).map((row) => row.textContent)).toEqual([
+      `May15Figma - Yearly Plan${billDescription}14 May, 2026$150.00`,
+      `Jun16Adobe Inc - Yearly Plan${billDescription}17 Jun, 2026$559.00`,
+    ]);
+    expect(bodyRows(figure('BillTable', 'One bill'))).toHaveLength(1);
+    expect(bodyRows(figure('BillTable', 'Four bills, not paginated'))).toHaveLength(4);
+    const long = bodyRows(figure('BillTable', 'Long titles, descriptions and amounts: the texts wrap (#115 b)'));
+    expect(long.map((row) => row.lastElementChild!.textContent)).toEqual(['$1,000,000,000.00', '$1,000,000,000.00']);
+
+    const itemRow = (name: string) => bodyRows(figure('BillItem', name))[0]!;
+    expect(within(itemRow('Figma (108)')).getByRole('img')).toHaveAccessibleName('Figma');
+    expect(within(itemRow('Adobe (108)')).getByRole('img')).toHaveAccessibleName('Adobe');
+    expect(itemRow('A long title, description and amount (#115 b)')).toHaveTextContent('$1,000,000,000.00');
+    // The header labels, then 2 rows of a date box block, a logo block, a title line, three description lines, a last
+    // charge line and an amount box block.
+    const skeleton = figure('BillTableSkeleton', 'Loading');
+    expect(within(skeleton).getByText('Item Description')).toBeInTheDocument();
+    expect(skeleton.querySelectorAll('span')).toHaveLength(5 + 2 * 8);
   });
 
   // Task 020 T18: the Transactions table, its rows and its skeleton, on sample data with no network.

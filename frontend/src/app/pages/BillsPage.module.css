@@ -1,0 +1,7 @@
+/* At least 108's 420 in every state: the error and the empty message centred in it (#6), one bill at its top. A flex
+   column, so DataState's states take its room. */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-bill-card-min-height);
+}

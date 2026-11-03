@@ -1,0 +1,28 @@
+Task 023 final unit runs, 2026-11-03 (Validation step 2 re-run for step 9, after the code review's changes).
+
+1. npm test right after npm run lint and npm run typecheck: shared 1096/1096, backend 954/954, frontend 1 failed | 1232 passed (1233).
+   The failing test's name was not captured: the output filter of that command kept only the counts. Not reproduced since.
+2. frontend alone (npx vitest run), twice: 1233 passed (the first summary only, the second 1233 passed).
+3. frontend alone, four more times: 1233 passed each.
+4. npm test, twice, the whole output kept:
+   > @finebank/shared@0.0.0 test
+    Test Files  28 passed (28)
+         Tests  1096 passed (1096)
+   > @finebank/backend@0.0.0 test
+    Test Files  55 passed (55)
+         Tests  954 passed (954)
+   > @finebank/frontend@0.0.0 test
+    Test Files  56 passed (56)
+         Tests  1233 passed (1233)
+   --
+   > @finebank/shared@0.0.0 test
+    Test Files  28 passed (28)
+         Tests  1096 passed (1096)
+   > @finebank/backend@0.0.0 test
+    Test Files  55 passed (55)
+         Tests  954 passed (954)
+   > @finebank/frontend@0.0.0 test
+    Test Files  56 passed (56)
+         Tests  1233 passed (1233)
+   --
+So: 1 failure in 9 frontend runs, unnamed, intermittent; 8 clean runs after it.

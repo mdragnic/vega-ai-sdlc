@@ -1,0 +1,23 @@
+Task 023, part C (2026-11-03, after the dropped sweep): the frontend unit suite run up to 10 times, stopping at the first failure,
+a Vitest JSON report per run (in /tmp, outside the repo).
+run 1:  Tests 1233 passed (1233)
+run 2:  Tests 1233 passed (1233)
+run 3:  Tests 1233 passed (1233)
+run 4:  Tests 1233 passed (1233)
+run 5:  Tests 1233 passed (1233)
+run 6:  Tests 1233 passed (1233)
+run 7:  Tests 1233 passed (1233)
+run 8:  Tests 1233 passed (1233)
+run 9:  Tests 1233 passed (1233)
+run 10:  Tests 1233 passed (1233)
+No test failed in 10 runs: no flaky test named by this part, no test changed.
+
+Then (Marko chose "Apply the fix", 2026-11-03), the test the dropped sweep had reproduced under load, failing the same way at
+HEAD: frontend/test/app/gallery.test.tsx > component gallery > has a section for every exported component,
+"Unable to find role=heading and name 'Component gallery'", the page still <div /> (the router's empty fallback).
+Cause: the gallery is a lazy route; its first render imports the whole gallery module inside the heading's 1 s wait
+(Testing Library's default); on a busy machine the import takes longer.
+Fix (that test file only): `beforeAll(async () => { await import('../../src/app/dev/ComponentGallery'); })`, so each
+render waits only for React; the route still loads the module through `lazy`. No retry, no longer timeout, nothing removed.
+That test alone, 30 runs: 30 passed (on an idle machine it passed before the fix too: stability, not proof).
+The frontend suite once after the fix: 1233 passed.

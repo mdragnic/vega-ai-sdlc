@@ -1,0 +1,256 @@
+=== 01-today-as-date: mutated backend/src/bills/bills.service.ts
+--- cd backend && npx vitest run test/bills-service.test.ts test/bills.test.ts
+ ❯ test/bills-service.test.ts (12 tests | 5 failed) 1198ms
+     × includes a bill due today in the zone and drops one due yesterday 85ms
+     × at 2027-05-15T22:30:00Z in America/New_York answers today from the Clock in that zone 75ms
+     × at 2027-05-14T22:00:00Z (00:00 on the due day) includes the bill: true 75ms
+     × at 2027-05-15T21:59:59Z (the due day’s last second) includes the bill: true 73ms
+     × keeps the bill due today, which a Date parameter for today would drop 76ms
+ ❯ test/bills.test.ts (18 tests | 1 failed) 1245ms
+       × at 2027-05-15T22:30:00Z in America/New_York answers the bills from today in that zone 85ms
+ Test Files  2 failed (2)
+      Tests  6 failed | 24 passed (30)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/bills-service.test.ts > BillsService > includes a bill due today in the zone and drops one due yesterday
+AssertionError: expected [ '2027-05-15', '2027-06-16', …(2) ] to deeply equal [ '2026-10-22', '2027-05-15', …(3) ]
+- Expected
++ Received
+ FAIL  test/bills-service.test.ts > BillsService > at 2027-05-15T22:30:00Z in America/New_York answers today from the Clock in that zone
+AssertionError: expected [ '2027-06-16', '2028-05-15', …(1) ] to deeply equal [ '2027-05-15', '2027-06-16', …(2) ]
+- Expected
++ Received
+    148|     expect(await dueDates(zone)).toEqual(expected);
+ FAIL  test/bills-service.test.ts > BillsService > at 2027-05-14T22:00:00Z (00:00 on the due day) includes the bill: true
+ FAIL  test/bills-service.test.ts > BillsService > at 2027-05-15T21:59:59Z (the due day’s last second) includes the bill: true
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ FAIL  test/bills-service.test.ts > BillsService > keeps the bill due today, which a Date parameter for today would drop
+AssertionError: expected '2027-06-16' to be '2027-05-15' // Object.is equality
+Expected: "2027-05-15"
+Received: "2027-06-16"
+ FAIL  test/bills.test.ts > the upcoming bills API > GET /api/bills/upcoming > at 2027-05-15T22:30:00Z in America/New_York answers the bills from today in that zone
+AssertionError: expected { bills: [ { …(6) }, { …(6) }, …(1) ] } to deeply equal { bills: [ { …(6) }, { …(6) }, …(2) ] }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd e2e && npx playwright test tests/bills.spec.ts --reporter=line --grep "lists the bill due today first"
+    Error: expect(locator).toHaveCount(expected) failed
+    Expected: 4
+    Received: 3
+        14 × locator resolved to 3 elements
+           - unexpected value "3"
+      95 | async function expectRows(page: Page, expected: Row[]) {
+    > 96 |   await expect(bodyRows(page)).toHaveCount(expected.length);
+      97 |   expect(await rowsShown(page)).toEqual(expected);
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 2/2
+=== 02-user-key-dropped: mutated backend/src/bills/bills.service.ts
+--- cd backend && npx vitest run test/bills.test.ts -t "user scoping"
+ ❯ test/bills.test.ts (18 tests | 2 failed | 14 skipped) 666ms
+       × answers each user from their own rows: one user’s change leaves the other’s answer as before 226ms
+       × ignores a userId in the query: the session decides 164ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed | 14 skipped (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/bills.test.ts > the upcoming bills API > user scoping > answers each user from their own rows: one user’s change leaves the other’s answer as before
+AssertionError: expected { bills: [ { …(6) }, { …(6) }, …(2) ] } to deeply equal { bills: [ { …(6) }, { …(6) }, …(6) ] }
+- Expected
++ Received
+ FAIL  test/bills.test.ts > the upcoming bills API > user scoping > ignores a userId in the query: the session decides
+AssertionError: expected { bills: [ { …(6) }, { …(6) }, …(6) ] } to deeply equal { bills: [] }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- cd backend && npx vitest run test/bills-service.test.ts -t "own bills"
+ ❯ test/bills-service.test.ts (12 tests | 1 failed | 11 skipped) 310ms
+     × answers only the user’s own bills 196ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/bills-service.test.ts > BillsService > answers only the user’s own bills
+AssertionError: expected { bills: [ { …(6) }, { …(6) }, …(2) ] } to deeply equal { bills: [] }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 2/2
+=== 03-overview-shows-description: mutated frontend/src/components/UpcomingBill/UpcomingBill.tsx
+--- cd frontend && npx vitest run test/app/overview-upcoming-bill.test.tsx -t "description"
+ ❯ test/app/overview-upcoming-bill.test.tsx (20 tests | 1 failed | 19 skipped) 268ms
+     × never shows a bill’s description 264ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 skipped (20)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/overview-upcoming-bill.test.tsx > the Upcoming Bill card > never shows a bill’s description
+Error: [2mexpect([22m[31melement[39m[2m).not.toHaveTextContent()[22m
+Expected element not to have text content:
+Received:
+RESULT: FAILED (the mutation was caught)
+--- cd frontend && npx vitest run test/app/bills.test.tsx -t "Overview and Bills"
+ ❯ test/app/bills.test.tsx (32 tests | 1 failed | 31 skipped) 273ms
+     × shows Overview’s two rows as Bills’ first two, from the one cached answer 269ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 31 skipped (32)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/bills.test.tsx > Overview and Bills > shows Overview’s two rows as Bills’ first two, from the one cached answer
+Error: [2mexpect([22m[31melement[39m[2m).not.toHaveTextContent()[22m
+Expected element not to have text content:
+Received:
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 2/2
+=== 04-description-dropped: mutated backend/src/bills/bills.service.ts
+--- cd backend && npx vitest run test/bills-service.test.ts test/bills.test.ts
+ ❯ test/bills-service.test.ts (12 tests | 2 failed) 1268ms
+     × answers the 4 upcoming demo bills, soonest first, in integer cents with USD and no other keys 126ms
+     × answers each bill with its own stored description 91ms
+ ❯ test/bills.test.ts (18 tests | 4 failed) 1312ms
+       × answers 200 with every upcoming bill soonest first, in integer cents with USD, and only the contract’s keys 138ms
+       × at 2027-05-15T22:30:00Z in Europe/Belgrade answers the bills from today in that zone 100ms
+       × at 2027-05-15T22:30:00Z in America/New_York answers the bills from today in that zone 88ms
+       × at 2028-06-01T10:00:00Z answers the bills still upcoming 89ms
+ Test Files  2 failed (2)
+      Tests  6 failed | 24 passed (30)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/bills-service.test.ts > BillsService > answers the 4 upcoming demo bills, soonest first, in integer cents with USD and no other keys
+AssertionError: expected { bills: [ { …(5) }, { …(5) }, …(2) ] } to deeply equal { bills: [ { …(6) }, { …(6) }, …(2) ] }
+- Expected
++ Received
+ FAIL  test/bills-service.test.ts > BillsService > answers each bill with its own stored description
+AssertionError: expected [ undefined, undefined, …(2) ] to deeply equal [ …(4) ]
+- Expected
++ Received
+ FAIL  test/bills.test.ts > the upcoming bills API > GET /api/bills/upcoming > answers 200 with every upcoming bill soonest first, in integer cents with USD, and only the contract’s keys
+AssertionError: expected { bills: [ { …(5) }, { …(5) }, …(2) ] } to deeply equal { bills: [ { …(6) }, { …(6) }, …(2) ] }
+- Expected
++ Received
+ FAIL  test/bills.test.ts > the upcoming bills API > GET /api/bills/upcoming > at 2027-05-15T22:30:00Z in Europe/Belgrade answers the bills from today in that zone
+AssertionError: expected { bills: [ { …(5) }, { …(5) }, …(1) ] } to deeply equal { bills: [ { …(6) }, { …(6) }, …(1) ] }
+- Expected
++ Received
+ FAIL  test/bills.test.ts > the upcoming bills API > GET /api/bills/upcoming > at 2027-05-15T22:30:00Z in America/New_York answers the bills from today in that zone
+AssertionError: expected { bills: [ { …(5) }, { …(5) }, …(2) ] } to deeply equal { bills: [ { …(6) }, { …(6) }, …(2) ] }
+- Expected
++ Received
+ FAIL  test/bills.test.ts > the upcoming bills API > GET /api/bills/upcoming > at 2028-06-01T10:00:00Z answers the bills still upcoming
+AssertionError: expected { bills: [ { …(5) } ] } to deeply equal { bills: [ { …(6) } ] }
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd e2e && npx playwright test tests/bills.spec.ts --reporter=line --grep "opens from the sidebar"
+Error: Process from config.webServer was not able to start. Exit code: 1
+[WebServer]     The expected type comes from property 'bills' which is declared here on type '{ bills: { title: string; description: string; logo: "figma" | "adobe"; dueDate: string; lastChargeDate: string; amount: { cents: number; currency: "USD"; }; }[]; }'
+[WebServer] npm error Lifecycle script `start:e2e` failed with error:
+[WebServer] npm error command failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 2/2
+=== 05-table-slices-two: mutated frontend/src/components/BillTable/BillTable.tsx
+--- cd frontend && npx vitest run test/app/bills.test.tsx
+ ❯ test/app/bills.test.tsx (32 tests | 11 failed) 2355ms
+     × lists the 4 demo bills in the order sent, the title over its description, not paginated 68ms
+     × names each logo by its biller, as the exported component’s image 70ms
+     × gives the due date and the last charge as time elements with their plain dates 44ms
+     × draws a divider under every row but the last 60ms
+     × opens from the sidebar 105ms
+     × shows 3 bills in the order sent 57ms
+     × shows the long titles, descriptions and amounts as sent 50ms
+     × shows the error state in the card after the request and its 3 retries fail, and Retry loads the bills 252ms
+     × keeps the bills, with no message, when a later refetch fails 189ms
+     × shows Overview’s two rows as Bills’ first two, from the one cached answer 239ms
+     × components/BillTable/BillTable.tsx sorts, filters, slices and calculates nothing 0ms
+ Test Files  1 failed (1)
+      Tests  11 failed | 21 passed (32)
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/bills.test.tsx > the Bills page > lists the 4 demo bills in the order sent, the title over its description, not paginated
+AssertionError: expected [ [ 'May15', '', …(3) ], …(1) ] to deeply equal [ [ 'May15', '', …(3) ], …(3) ]
+- Expected
++ Received
+ FAIL  test/app/bills.test.tsx > the Bills page > names each logo by its biller, as the exported component’s image
+AssertionError: expected [ 'Figma', 'Adobe' ] to deeply equal [ 'Figma', 'Adobe', 'Figma', 'Adobe' ]
+- Expected
++ Received
+ FAIL  test/app/bills.test.tsx > the Bills page > gives the due date and the last charge as time elements with their plain dates
+AssertionError: expected [ Array(2) ] to deeply equal [ Array(4) ]
+- Expected
++ Received
+ FAIL  test/app/bills.test.tsx > the Bills page > draws a divider under every row but the last
+AssertionError: expected [ true, true ] to deeply equal [ true, true, true, false ]
+- Expected
++ Received
+ FAIL  test/app/bills.test.tsx > the Bills page > opens from the sidebar
+AssertionError: expected [ [ 'May15', '', …(3) ], …(1) ] to deeply equal [ [ 'May15', '', …(3) ], …(3) ]
+- Expected
++ Received
+ FAIL  test/app/bills.test.tsx > the number of bills > shows 3 bills in the order sent
+AssertionError: expected [ '2026-11-01', '2026-12-01' ] to deeply equal [ '2026-11-01', '2026-12-01', …(1) ]
+- Expected
++ Received
+ FAIL  test/app/bills.test.tsx > the number of bills > shows the long titles, descriptions and amounts as sent
+RESULT: FAILED (the mutation was caught)
+--- npm run build -w shared && cd e2e && npx playwright test tests/bills.spec.ts --reporter=line --grep "opens from the sidebar"
+    Error: expect(locator).toHaveCount(expected) failed
+    Expected: 4
+    Received: 2
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+      95 | async function expectRows(page: Page, expected: Row[]) {
+    > 96 |   await expect(bodyRows(page)).toHaveCount(expected.length);
+      97 |   expect(await rowsShown(page)).toEqual(expected);
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 2/2
+=== 04b-description-dropped-typed: mutated backend/src/bills/bills.service.ts
+--- npm run build -w shared && cd e2e && npx playwright test tests/bills.spec.ts --reporter=line --grep "opens from the sidebar"
+    Error: expect(locator).toHaveCount(expected) failed
+    Expected: 0
+    Received: 1
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 1/1
+=== 06-fixture-in-production: mutated frontend/src/app/routes.tsx
+--- cd frontend && npx vitest run test/app/gallery-build.test.ts
+ ❯ test/app/gallery-build.test.ts (2 tests | 1 failed) 1109ms
+     × contains no gallery code and no scroll fixture 707ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/gallery-build.test.ts > production build > contains no gallery code and no scroll fixture
+AssertionError: expected [ 'Scroll fixture page', …(2) ] to deeply equal []
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: 0772a4c207a7 / 575ac7944596
+commands caught it: 1/1
+=== 07-table-semantics-dropped: mutated frontend/src/components/BillTable/BillTable.tsx
+--- npm run build -w shared && cd e2e && npx playwright test tests/bills.spec.ts --reporter=line --grep "accessibility tree"
+  1 passed (10.1s)
+RESULT: PASSED (the mutation was NOT caught by this command)
+restored: diff same, status same
+hashes: d03aa39f94c4 / e6749e017e15
+commands caught it: 0/1
+=== 07b-row-semantics-dropped: mutated frontend/src/components/BillItem/BillItem.tsx
+--- npm run build -w shared && cd e2e && npx playwright test tests/bills.spec.ts --reporter=line --grep "accessibility tree"
+    Error: expect(received).toHaveLength(expected)
+    Expected length: 5
+    Received length: 1
+    Received array:  [""]
+  1 failed
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: d03aa39f94c4 / e6749e017e15
+commands caught it: 1/1

@@ -43,6 +43,7 @@
   --font-size-24: 24px;
   --line-height-16: 16px;
   --line-height-20: 20px;
+  --line-height-22: 22px;
   --line-height-24: 24px;
   --line-height-28: 28px;
   --line-height-32: 32px;
@@ -179,6 +180,10 @@
   --space-history-header-top: 28px;
   --space-history-row-padding-y: 16px;
   --space-history-load-more-bottom: 40px;
+  --space-bill-table-header-gap: 24px;
+  --space-bill-row-padding-y: 32px;
+  --space-bill-text-gap: 8px;
+  --space-bill-column-gap: 16px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -258,6 +263,14 @@
   --size-history-column-type: 24.8077%;
   --size-history-column-receipt: 20.7692%;
   --size-history-column-amount: 12.6923%;
+  --size-bill-card-min-height: 420px;
+  --size-bill-column-due-date: 112fr;
+  --size-bill-column-logo: 185fr;
+  --size-bill-column-description: 277fr;
+  --size-bill-column-last-charge: 364fr;
+  --size-bill-logo-width: 120px;
+  --size-bill-logo-height: 40px;
+  --size-test-scroll-fixture-height: 3000px;
 
   /* Radius */
   --radius-input: 8px;

@@ -1,0 +1,26 @@
+Task 023, part E (2026-11-03): AC20, the guard that keeps the scroll fixture out of a production build removed, the leak test run, the guard restored.
+routes.tsx before:  sha256 0b1a1ed70c5d3df13b215b26690d21250709c52fedcf3f6c34172cb6597d46ec
+the guard (line 44): import.meta.env.DEV && import.meta.env.VITE_E2E_FIXTURES === 'true'
+mutation: 'import.meta.env.DEV && import.meta.env.VITE_E2E_FIXTURES === 'true'' -> 'import.meta.env.VITE_E2E_FIXTURES === 'true''
+
+=== 06-fixture-in-production: mutated frontend/src/app/routes.tsx
+--- cd frontend && npx vitest run test/app/gallery-build.test.ts
+ ❯ test/app/gallery-build.test.ts (2 tests | 1 failed) 1084ms
+     × contains no gallery code and no scroll fixture 647ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/app/gallery-build.test.ts > production build > contains no gallery code and no scroll fixture
+AssertionError: expected [ 'Scroll fixture page', …(2) ] to deeply equal []
+- Expected
++ Received
+RESULT: FAILED (the mutation was caught)
+restored: diff same, status same
+hashes: f8d942697b37 / e6749e017e15
+commands caught it: 1/1
+
+routes.tsx after:   sha256 0b1a1ed70c5d3df13b215b26690d21250709c52fedcf3f6c34172cb6597d46ec
+the guard (line 44): import.meta.env.DEV && import.meta.env.VITE_E2E_FIXTURES === 'true'
+
+control, the leak test on the restored guard:
+      Tests  2 passed (2)

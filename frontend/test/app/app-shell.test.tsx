@@ -111,13 +111,14 @@ const overviewSections = [
 
 /**
  * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020; Account
- * Details, task 021); the others are empty.
+ * Details, task 021; Bills, task 023); the others are empty.
  */
 const builtSections: Partial<Record<(typeof appPaths)[number], string[]>> = {
   '/overview': overviewSections,
   '/balances': ['Balances'],
   '/balances/2': ['Account Details', 'Transactions History'],
   '/transactions': ['Recent Transaction'],
+  '/bills': ['Upcoming Bills'],
 };
 
 // T4: every app path opens in the shell with the signed-in user and today's date (AC1, AC2, AC4).
@@ -140,8 +141,8 @@ describe('the shell on each app path', () => {
     expect(currentLinks()).toEqual([activeItem[path]]);
     // The greeting on Overview only.
     expect(screen.queryByText(/Hello/)?.textContent ?? null).toBe(path === '/overview' ? 'Hello Tanzir' : null);
-    // Overview holds its six sections (task 013), Balances its one (task 019), Transactions its one (task 020) and
-    // Account Details its two (task 021); the other screens are empty until their tasks.
+    // Overview holds its six sections (task 013), Balances its one (task 019), Transactions its one (task 020), Account
+    // Details its two (task 021) and Bills its one (task 023); the other screens are empty until their tasks.
     const main = screen.getByRole('main');
     expect(
       within(main)
@@ -159,6 +160,15 @@ describe('the shell on each app path', () => {
 
     const logos = await within(await screen.findByRole('main')).findAllByRole('img');
     expect(logos.map((logo) => logo.getAttribute('alt'))).toEqual(['Mastercard', 'VISA']);
+  });
+
+  // Task 023: Bills fills its content; its rows show the billers' logos.
+  it('shows the Upcoming Bills section with its billers’ logos on /bills', async () => {
+    server.use(me.signedIn(), today.answers());
+    renderApp('/bills');
+
+    const logos = await within(await screen.findByRole('main')).findAllByRole('img');
+    expect(logos.map((logo) => logo.getAttribute('alt'))).toEqual(['Figma', 'Adobe', 'Figma', 'Adobe']);
   });
 
   it('greets with the first word of the Full Name', async () => {

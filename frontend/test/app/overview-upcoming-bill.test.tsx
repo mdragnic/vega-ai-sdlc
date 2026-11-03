@@ -7,7 +7,16 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import styles from '../../src/components/UpcomingBill/UpcomingBill.module.css';
-import { demoBills, demoFigmaBill, me, renderApp, signedInDefaults, today, upcomingBills } from '../support/app';
+import {
+  demoBillDescription,
+  demoBills,
+  demoFigmaBill,
+  me,
+  renderApp,
+  signedInDefaults,
+  today,
+  upcomingBills,
+} from '../support/app';
 
 const server = setupServer(...signedInDefaults());
 
@@ -76,6 +85,23 @@ describe('the Upcoming Bill card', () => {
     ]);
     expect(within(bills()).getByRole('heading', { level: 2 })).toHaveTextContent('Upcoming Bill');
     expect(within(bills()).getByRole('link', { name: 'View All' })).toHaveAttribute('href', '/bills');
+  });
+
+  // Task 023 T10, AC19: the response carries each bill's description for the Bills table; the card leaves it off.
+  it('never shows a bill’s description', async () => {
+    await openOverview(
+      upcomingBills.answers({
+        bills: demoBills.bills.map((bill, index) => ({ ...bill, description: `Text ${index}` })),
+      }),
+    );
+    await billList();
+
+    expect(bills()).not.toHaveTextContent(demoBillDescription);
+    expect(bills()).not.toHaveTextContent(/Text \d/);
+    expect(rows().map((row) => row.textContent)).toEqual([
+      'May15Figma - Yearly PlanLast Charge - 14 May, 2026$150.00',
+      'Jun16Adobe Inc - Yearly PlanLast Charge - 17 Jun, 2026$559.00',
+    ]);
   });
 
   it('names each logo by its biller', async () => {

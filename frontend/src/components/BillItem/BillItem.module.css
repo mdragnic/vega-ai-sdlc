@@ -1,0 +1,77 @@
+/* 108 Bill item: one row on the table's five columns (a subgrid of BillTable's), 32 above and below its tallest cell
+   (the title over its description: 162 high with the demo data), every cell centred on the row's middle. */
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: var(--space-bill-row-padding-y) 0;
+}
+
+/* 108: the Gray/06 divider is the last pixel row of every row but the last, so the row keeps its height. */
+.divided {
+  padding-bottom: calc(var(--space-bill-row-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.row > td {
+  padding: 0;
+}
+
+/* The date box and the logo from their columns' left edges, at their own sizes, the least space to the next column's
+   text kept at their end. Flex cells, so no text line box adds space under them. */
+.row > .dueDate,
+.row > .logo {
+  display: flex;
+  align-items: center;
+  padding-right: var(--space-bill-column-gap);
+}
+
+/* Figma's colored icon with its black wordmark (120x40), Adobe in its red (120x32): never shrunk or recolored. */
+.logoImage {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* The title over its description, from the column's left edge. A long word breaks inside the column, with a hyphen
+   where the browser can hyphenate (#115 b). */
+.description {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 108 "Figma - Yearly Plan": Default Black, Bold 18/24 (its ink widths match Bold, task 023 Log). */
+.title {
+  margin: 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+}
+
+/* 108 "For advanced security …": Gray/03, Regular 14 on a 22 px line, 8 under the title. */
+.text {
+  margin: var(--space-bill-text-gap) 0 0;
+  color: var(--color-gray-03);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-22);
+}
+
+/* 108 "14 May, 2022": Gray/03, Regular 16/24, centred in its column, the least space to both neighbours kept. */
+.row > .lastCharge {
+  padding: 0 var(--space-bill-column-gap);
+  color: var(--color-gray-03);
+  font: var(--font-regular-16-24);
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 108: the amount box at the row's right end, on one line: its column is as wide as the widest box. */
+.row > .amount {
+  display: flex;
+  justify-content: flex-end;
+}

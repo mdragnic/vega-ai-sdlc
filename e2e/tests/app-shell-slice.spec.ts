@@ -18,13 +18,14 @@ const overviewSections = [
 
 /**
  * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020; Account
- * Details, task 021, on the user's own Checking: `CHECKING` in a path); the others are empty.
+ * Details, task 021, on the user's own Checking: `CHECKING` in a path; Bills, task 023); the others are empty.
  */
 const builtSections: Partial<Record<string, string[]>> = {
   '/overview': overviewSections,
   '/balances': ['Balances'],
   '/balances/CHECKING': ['Account Details', 'Transactions History'],
   '/transactions': ['Recent Transaction'],
+  '/bills': ['Upcoming Bills'],
 };
 
 /** The signed-in user's Checking ID, read from `GET /api/accounts` (the second demo account). */
@@ -61,13 +62,14 @@ const refocus = (page: Page) =>
 const moveBackendClock = async (page: Page, now: string) =>
   expect((await page.request.put('/api/test/clock', { data: { now } })).ok()).toBe(true);
 
-/** A block taller than the window at the end of the content area, so the page scrolls. */
-const injectTallContent = (page: Page) =>
-  page.getByRole('main').evaluate((main) => {
-    const block = document.createElement('div');
-    block.style.height = '3000px';
-    main.append(block);
-  });
+/**
+ * The e2e-only scroll fixture (task 023): two pages inside the shell, each a link to the other over a block 3000 high,
+ * so the scroll tests never depend on a real page being empty.
+ */
+const scrollFixtureA = '/test/scroll/a';
+const scrollFixtureB = '/test/scroll/b';
+const fixtureLink = (page: Page) =>
+  page.getByRole('main').getByRole('link', { name: 'Scroll fixture page: open the other' });
 
 const app = [
   ['/overview', 'Overview'],
@@ -101,12 +103,19 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     await expect(header(page).getByText(/^Hello /)).toHaveCount(path === '/overview' ? 1 : 0);
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
     // Overview holds its six sections (task 013), Balances its one with the cards' logos (task 019), Transactions its
-    // one (task 020) and Account Details its two (task 021); the other screens are empty until their tasks.
+    // one (task 020), Account Details its two (task 021) and Bills its one with the billers' logos (task 023); the
+    // other screens are empty until their tasks.
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(pageSections);
     if (path === '/balances') {
       await expect(page.getByRole('main').getByRole('img')).toHaveCount(2);
       await expect(page.getByRole('main').getByRole('img', { name: 'Mastercard' })).toBeVisible();
       await expect(page.getByRole('main').getByRole('img', { name: 'VISA' })).toBeVisible();
+    }
+    if (path === '/bills') {
+      await expect(page.getByRole('main').getByRole('img')).toHaveCount(4);
+      for (const name of ['Figma', 'Adobe']) {
+        await expect(page.getByRole('main').getByRole('img', { name })).toHaveCount(2);
+      }
     }
     if (pageSections.length === 0) await expect(page.getByRole('main')).toBeEmpty();
   }
@@ -469,9 +478,9 @@ test('keeps Login centered from 1280 wide and scrolls sideways below it', async 
 // T26: the header and the content scroll, the sidebar stays; the gutter only on app pages (AC18, #5, #83, #100).
 test('scrolls the header and the content while the sidebar stays in place', async ({ page }) => {
   await signUp(page.request);
-  // An empty page (Bills, until task 023), with tall content injected.
-  await openSignedIn(page, '/bills');
-  await injectTallContent(page);
+  // A fixture page taller than the window inside the shell (task 023).
+  await openSignedIn(page, scrollFixtureA);
+  await expect(fixtureLink(page)).toBeVisible();
   const sidebarParts = [
     page.getByRole('img', { name: 'FINEbank.IO' }),
     sidebar(page),
@@ -511,27 +520,25 @@ test('reserves the scrollbar gutter on app pages only', async ({ page }) => {
 // T27: another page opens at the top; Back and Forward restore the position (AC19, #100 d).
 test('opens another page at the top and restores the position on Back and Forward', async ({ page }) => {
   await signUp(page.request);
-  // Bills and Goals are empty until tasks 023 and 025 (Transactions has its own content since task 020).
-  await openSignedIn(page, '/bills');
-  // The empty screens do not scroll yet. React leaves a node it did not create in place, so this block stays in
-  // the content area on every page, inside the layout, where the sidebar stays in place.
-  await injectTallContent(page);
+  // Both fixture pages are taller than the window (task 023); the fixture's link is a router link, as the sidebar's.
+  await openSignedIn(page, scrollFixtureA);
+  await expect(fixtureLink(page)).toBeVisible();
   const scrollY = () => page.evaluate(() => window.scrollY);
 
   await page.evaluate(() => window.scrollTo(0, 800));
   await expect.poll(scrollY).toBe(800);
-  await sidebar(page).getByRole('link', { name: 'Goals' }).click();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/goals`);
+  await fixtureLink(page).click();
+  await expect(page).toHaveURL(`${FRONTEND_URL}${scrollFixtureB}`);
   await expect.poll(scrollY).toBe(0);
 
   await page.evaluate(() => window.scrollTo(0, 300));
   await expect.poll(scrollY).toBe(300);
   await page.goBack();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/bills`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}${scrollFixtureA}`);
   await expect.poll(scrollY).toBe(800);
 
   await page.goForward();
-  await expect(page).toHaveURL(`${FRONTEND_URL}/goals`);
+  await expect(page).toHaveURL(`${FRONTEND_URL}${scrollFixtureB}`);
   await expect.poll(scrollY).toBe(300);
 });
 

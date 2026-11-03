@@ -1,0 +1,40 @@
+    Expected: "Savings"
+    Received: "Checking"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('main').getByRole('region', { name: 'Account Details' }).locator(':scope > div').last().locator('button[role="combobox"]') with timeout 5000ms
+      - waiting for getByRole('main').getByRole('region', { name: 'Account Details' }).locator(':scope > div').last().locator('button[role="combobox"]')
+        14 × locator resolved to <button dir="ltr" id="_r_2_" type="button" role="combobox" data-state="closed" aria-expanded="false" aria-autocomplete="none" class="_trigger_k4tkv_1 _input_k4tkv_74">…</button>
+           - unexpected value "Checking"
+
+
+      309 |   await page.keyboard.press('Enter');
+      310 |   await expect(page.getByRole('listbox')).toHaveCount(0);
+    > 311 |   await expect(accountType(page)).toHaveText('Savings');
+          |                                   ^
+      312 |
+      313 |   // Enter in Branch Name saves; focus on "Edit Details" with the ring.
+      314 |   await branchName(page).focus();
+        at D:\Projects\VegaAI\finebank-v1\e2e\tests\account-details-edit.spec.ts:311:35
+
+    Error Context: test-results\account-details-edit-works-2be5f-ring-only-from-the-keyboard-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\account-details-edit-works-2be5f-ring-only-from-the-keyboard-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\account-details-edit-works-2be5f-ring-only-from-the-keyboard-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests\account-details-edit.spec.ts:272:1 › works by keyboard: the Tab order, the select, Enter to save, Escape; the ring only from the keyboard 
+  263 passed (9.2m)
+npm error Lifecycle script `e2e` failed with error:
+npm error code 1
+npm error path D:\Projects\VegaAI\finebank-v1\e2e
+npm error workspace @finebank/e2e@0.0.0
+npm error location D:\Projects\VegaAI\finebank-v1\e2e
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c playwright test

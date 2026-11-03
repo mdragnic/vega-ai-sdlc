@@ -1,0 +1,129 @@
+/* Not designed (#6): existing and task 023 tokens only, on the Bills table's layout: the same insets, the same columns
+   (the Amount column as wide as its box, the four others in 108's proportions), the header line and its divider, and
+   rows of 162. */
+.body {
+  padding: var(--space-card-padding);
+}
+
+.table {
+  display: grid;
+  grid-template-columns:
+    minmax(min-content, var(--size-bill-column-due-date)) minmax(min-content, var(--size-bill-column-logo))
+    minmax(min-content, var(--size-bill-column-description))
+    minmax(min-content, var(--size-bill-column-last-charge)) max-content;
+}
+
+.header,
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+/* The header as drawn: the labels in the header style, the Gray/06 divider its last pixel row. */
+.header {
+  padding-bottom: calc(var(--space-bill-table-header-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+}
+
+.headerCell:nth-child(-n + 2) {
+  padding-right: var(--space-bill-column-gap);
+}
+
+.headerCell:nth-child(4) {
+  padding: 0 var(--space-bill-column-gap);
+  text-align: center;
+}
+
+.headerCell:last-child {
+  text-align: center;
+}
+
+/* Every part centred on the row, 32 above and below the text block. */
+.row {
+  align-items: center;
+  padding: var(--space-bill-row-padding-y) 0;
+}
+
+.divided {
+  padding-bottom: calc(var(--space-bill-row-padding-y) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.dueDate,
+.logo {
+  padding-right: var(--space-bill-column-gap);
+}
+
+/* The large date box's place, 72x80. */
+.dateBox {
+  width: var(--size-date-box-width-lg);
+  height: var(--size-date-box-height-lg);
+}
+
+/* The logo's place, 120x40. */
+.logoBlock {
+  width: var(--size-bill-logo-width);
+  height: var(--size-bill-logo-height);
+}
+
+/* The title's 24 px line, 8 above the description's three 22 px lines: 98, as the demo text block. Each placeholder
+   centred in its line, as high as its letters. */
+.titleLine,
+.textLine,
+.textLineBox {
+  display: flex;
+  align-items: center;
+}
+
+.titleLine {
+  height: var(--line-height-24);
+}
+
+.textLines {
+  padding-top: var(--space-bill-text-gap);
+}
+
+.textLine {
+  height: var(--line-height-22);
+}
+
+.title {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-18);
+}
+
+.text {
+  width: 100%;
+  height: var(--font-size-14);
+}
+
+/* The last charge's place: a 24 px line centred in its column, with the least space to both neighbours. */
+.lastCharge {
+  justify-content: center;
+  height: var(--line-height-24);
+  padding: 0 var(--space-bill-column-gap);
+}
+
+.line {
+  width: var(--size-amount-box-width-lg);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+/* The large amount box's place, 108x48, at the row's end. */
+.amount {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.amountBox {
+  width: var(--size-amount-box-width-lg);
+  height: var(--size-amount-box-height-lg);
+}

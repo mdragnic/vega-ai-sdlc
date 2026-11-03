@@ -4,9 +4,14 @@ import { billsContract, upcomingBillSchema, upcomingBillsResponseSchema } from '
 
 const usd = (cents: number) => ({ cents, currency: 'USD' });
 
+/** The description of every demo bill (demo-data.md, Bills). */
+const description =
+  'For advanced security and more flexible controls, the Professional plan helps you scale design processes company-wide.';
+
 /** The first upcoming demo bill on 22 Oct 2026 (demo-data.md, "What a first login shows"). */
 const figma = {
   title: 'Figma - Yearly Plan',
+  description,
   logo: 'figma',
   dueDate: '2027-05-15',
   lastChargeDate: '2026-05-14',
@@ -15,6 +20,7 @@ const figma = {
 
 const adobe = {
   title: 'Adobe Inc - Yearly Plan',
+  description,
   logo: 'adobe',
   dueDate: '2027-06-16',
   lastChargeDate: '2026-06-17',
@@ -23,12 +29,14 @@ const adobe = {
 
 const without = (key: keyof typeof figma) => Object.fromEntries(Object.entries(figma).filter(([name]) => name !== key));
 
-// T1, AC7: one upcoming bill as the backend sends it: plain dates, integer cents with USD, no ID (#11, #28, #96).
+// T1 (task 015 AC7, task 023 AC9): one upcoming bill as the backend sends it: the title and its description, plain
+// dates, integer cents with USD, no ID (#11, #28, #96).
 describe('upcomingBillSchema', () => {
   it.each([
     ['the Figma bill', figma],
     ['the Adobe bill', adobe],
     ['an amount of 0 cents', { ...figma, amount: usd(0) }],
+    ['an empty description', { ...figma, description: '' }],
   ])('accepts %s', (_case, bill) => {
     expect(upcomingBillSchema.parse(bill)).toEqual(bill);
   });
@@ -45,16 +53,25 @@ describe('upcomingBillSchema', () => {
     ['an amount in dollars as text', { ...figma, amount: '$150.00' }],
     ['another currency', { ...figma, amount: { cents: 15_000, currency: 'EUR' } }],
     ['a number for the title', { ...figma, title: 150 }],
+    ['a number for the description', { ...figma, description: 150 }],
+    ['null for the description', { ...figma, description: null }],
     ...(Object.keys(figma) as (keyof typeof figma)[]).map((key): [string, unknown] => [`no ${key}`, without(key)]),
   ])('rejects %s', (_case, bill) => {
     expect(upcomingBillSchema.safeParse(bill).success).toBe(false);
   });
 
-  it('drops keys outside the contract: no row ID, user ID or description', () => {
-    const parsed = upcomingBillSchema.parse({ ...figma, id: 11, userId: 7, description: 'For advanced security' });
+  it('drops keys outside the contract: no row ID or user ID', () => {
+    const parsed = upcomingBillSchema.parse({ ...figma, id: 11, userId: 7 });
 
     expect(parsed).toEqual(figma);
-    expect(Object.keys(parsed).toSorted()).toEqual(['amount', 'dueDate', 'lastChargeDate', 'logo', 'title']);
+    expect(Object.keys(parsed).toSorted()).toEqual([
+      'amount',
+      'description',
+      'dueDate',
+      'lastChargeDate',
+      'logo',
+      'title',
+    ]);
   });
 });
 

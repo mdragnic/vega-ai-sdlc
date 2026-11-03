@@ -1,0 +1,44 @@
+Task 023, Validation step 3, first full e2e run (e2e-run-1.txt): 263 passed, 1 failed.
+
+Failed: e2e/tests/account-details.spec.ts:469 (task 021) "shows the skeletons, then the error state in each card, a
+keyboard Retry keeps focus in the card", at line 493:
+  expect(await detailsShown(page)).toEqual(readOut(demoDetails[1]!))  ->  Received: Array []
+
+Cause (a race in the test): after the keyboard Retry the test waits for the alert to disappear, but DataState drops the
+alert as soon as the retry starts and shows the skeleton; the details are then read once, with no retry, often before
+the refetch answers, so no <dt> is on screen yet.
+
+Evidence that it is not caused by task 023 (Account Details code untouched by this task):
+- With task 023's changes, the test alone, --repeat-each 15: 6 failed, 9 passed.
+- At HEAD 9d0d4a5 (a detached git worktree of HEAD inside the repo folder, linked to the same node_modules, its own
+  shared build and test database), the same command: 7 failed, 8 passed.
+- At HEAD with the one-line fix below, the same command: 15 passed.
+The worktree was removed afterwards (junctions taken down first; root node_modules checked: 548 entries, @finebank
+links intact; git worktree list shows only main).
+
+Fix (Marko chose "Apply the fix" when asked, 2026-11-03): line 493 reads the details with a retrying assertion, the same
+expected values:
+  await expect.poll(() => detailsShown(page)).toEqual(readOut(demoDetails[1]!));
+Nothing is weakened: the test still requires the same five details, now once they are on screen.
+
+Task 023, Validation step 3, second full e2e run (e2e-run-2.txt, the first fix in): 263 passed, 1 failed.
+
+Failed: e2e/tests/account-details-edit.spec.ts:272 (task 022) "works by keyboard: the Tab order, the select, Enter to
+save, Escape; the ring only from the keyboard": expect(accountType).toHaveText('Savings') -> Received "Checking".
+
+Cause (a race in the test): it opens the Account Type select with Enter and presses ArrowDown at once; Radix Select
+moves focus to the selected option only once the list is placed, so an arrow sent before that is lost and Enter keeps
+Checking.
+
+Evidence that it is not caused by task 023 (the Dropdown and the form untouched):
+- With task 023's changes, the test alone, --repeat-each 15: 3 failed, 12 passed.
+- At HEAD 9d0d4a5 (the same worktree procedure): 1 failed of 15; then --repeat-each 30: at least 5 failed (the
+  summary line was cut by the output filter; five failures printed).
+- At HEAD with the fix below, --repeat-each 30: 30 passed.
+The worktree was removed afterwards (junctions first; root node_modules 548 entries, @finebank links intact).
+
+Fix (Marko chose "Apply the fix" when asked, 2026-11-03): wait for the focused option before each key, nothing removed:
+  await expect(page.getByRole('option', { name: 'Checking' })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('option', { name: 'Savings' })).toBeFocused();
+  await page.keyboard.press('Enter');

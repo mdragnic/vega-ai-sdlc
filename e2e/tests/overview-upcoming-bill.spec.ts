@@ -361,6 +361,8 @@ test('wraps a 120-character title and $1,000,000,000.00 at 1440x1024 with nothin
         bills: [
           {
             title,
+            // The Bills table's text (task 023); the card leaves it off.
+            description: 'For advanced security and more flexible controls.',
             logo: 'figma',
             dueDate: '2027-05-15',
             lastChargeDate: '2026-05-14',
@@ -368,6 +370,7 @@ test('wraps a 120-character title and $1,000,000,000.00 at 1440x1024 with nothin
           },
           {
             title: 'Adobe Inc - Yearly Plan',
+            description: 'For advanced security and more flexible controls.',
             logo: 'adobe',
             dueDate: '2027-06-16',
             lastChargeDate: '2026-06-17',

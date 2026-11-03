@@ -37,6 +37,8 @@ import {
   AppLayout,
   AuthLayout,
   Avatar,
+  BillTable,
+  BillTableSkeleton,
   Button,
   ButtonPrimary,
   ButtonSecondary,
@@ -705,9 +707,14 @@ const sampleGoal = (target: number, present: number, progress: number): SavingsG
 /** An upcoming bill as `GET /api/bills/upcoming` sends it. */
 type SampleBill = UpcomingBillsResponse['bills'][number];
 
+/** The description of every demo bill (demo-data.md, Bills). */
+const sampleBillDescription =
+  'For advanced security and more flexible controls, the Professional plan helps you scale design processes company-wide.';
+
 /** The demo bills of a first login (demo-data.md): Figma due 15 May 2027, Adobe due 16 Jun 2027. */
 const sampleFigmaBill: SampleBill = {
   title: 'Figma - Yearly Plan',
+  description: sampleBillDescription,
   logo: 'figma',
   dueDate: '2027-05-15',
   lastChargeDate: '2026-05-14',
@@ -715,6 +722,7 @@ const sampleFigmaBill: SampleBill = {
 };
 const sampleAdobeBill: SampleBill = {
   title: 'Adobe Inc - Yearly Plan',
+  description: sampleBillDescription,
   logo: 'adobe',
   dueDate: '2027-06-16',
   lastChargeDate: '2026-06-17',
@@ -727,6 +735,42 @@ const sampleLongBill: SampleBill = {
   title: `Figma - ${'Organization Plan with every seat '.repeat(4)}`.slice(0, 120),
   amount: usd(100000000000),
 };
+
+/** A 120-character title and description with no space and the largest amount, for the Bills table (#115 b). */
+const sampleNoSpaceBill: SampleBill = {
+  ...sampleAdobeBill,
+  title: 'AdobeIncCreativeCloudAllAppsPlan'.repeat(4).slice(0, 120),
+  description: 'AdobeIncCreativeCloudAllAppsPlan'.repeat(4).slice(0, 120),
+  amount: usd(100000000000),
+};
+
+/** The Bills table's bills of a first login on 22 Oct 2026: the demo's 4 (task 023 References). */
+const sampleFourBills: SampleBill[] = [
+  sampleFigmaBill,
+  sampleAdobeBill,
+  { ...sampleFigmaBill, dueDate: '2028-05-15', lastChargeDate: '2027-05-14' },
+  { ...sampleAdobeBill, dueDate: '2028-06-16', lastChargeDate: '2027-06-17' },
+];
+
+/** The Bills card as the page draws it at 1440 (108): the content width, at least 420 high. */
+function BillTableCard({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.billTableSample}>
+      <Card padding="none" className={styles.billTableCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+/** The Bills table with these bills, named as the page names it. */
+function BillTableExample({ bills }: { bills: SampleBill[] }) {
+  return (
+    <BillTableCard>
+      <BillTable bills={bills} label="Upcoming Bills" />
+    </BillTableCard>
+  );
+}
 
 /** The Upcoming Bill card as Overview draws it: 352 wide, inset 32, 24 and 28, at least 232 high. */
 function BillsCard({ children }: { children: ReactNode }) {
@@ -1962,6 +2006,41 @@ export function ComponentGallery() {
           <BillsCard>
             <UpcomingBillSkeleton />
           </BillsCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="BillTable" wide>
+        <Example name="The demo bills (108)">
+          <BillTableExample bills={[sampleFigmaBill, sampleAdobeBill]} />
+        </Example>
+        <Example name="One bill">
+          <BillTableExample bills={[sampleAdobeBill]} />
+        </Example>
+        <Example name="Four bills, not paginated">
+          <BillTableExample bills={sampleFourBills} />
+        </Example>
+        <Example name="Long titles, descriptions and amounts: the texts wrap (#115 b)">
+          <BillTableExample bills={[{ ...sampleLongBill, description: sampleLongBill.title }, sampleNoSpaceBill]} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="BillItem" wide>
+        <Example name="Figma (108)">
+          <BillTableExample bills={[sampleFigmaBill]} />
+        </Example>
+        <Example name="Adobe (108)">
+          <BillTableExample bills={[sampleAdobeBill]} />
+        </Example>
+        <Example name="A long title, description and amount (#115 b)">
+          <BillTableExample bills={[{ ...sampleLongBill, description: sampleLongBill.title }]} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="BillTableSkeleton" wide>
+        <Example name="Loading">
+          <BillTableCard>
+            <BillTableSkeleton />
+          </BillTableCard>
         </Example>
       </GallerySection>
 

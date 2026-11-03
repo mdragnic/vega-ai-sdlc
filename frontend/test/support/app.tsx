@@ -252,9 +252,14 @@ export function goalBackend(initial: SavingsGoalResponse = demoGoal) {
 /** A bill as `GET /api/bills/upcoming` sends it. */
 type UpcomingBillBody = UpcomingBillsResponse['bills'][number];
 
+/** The description of every demo bill (demo-data.md, Bills). */
+export const demoBillDescription =
+  'For advanced security and more flexible controls, the Professional plan helps you scale design processes company-wide.';
+
 /** The demo bills due in a year (demo-data.md, Bills). */
 export const demoFigmaBill = (year: number): UpcomingBillBody => ({
   title: 'Figma - Yearly Plan',
+  description: demoBillDescription,
   logo: 'figma',
   dueDate: `${year}-05-15`,
   lastChargeDate: `${year - 1}-05-14`,
@@ -262,6 +267,7 @@ export const demoFigmaBill = (year: number): UpcomingBillBody => ({
 });
 export const demoAdobeBill = (year: number): UpcomingBillBody => ({
   title: 'Adobe Inc - Yearly Plan',
+  description: demoBillDescription,
   logo: 'adobe',
   dueDate: `${year}-06-16`,
   lastChargeDate: `${year - 1}-06-17`,
@@ -273,9 +279,39 @@ export const demoBills: UpcomingBillsResponse = {
   bills: [demoFigmaBill(2027), demoAdobeBill(2027), demoFigmaBill(2028), demoAdobeBill(2028)],
 };
 
-const upcomingBillsPath = '*/api/bills/upcoming';
+/** Three bills of another list, in the order sent (task 023 T7): more than Overview's two, fewer than the demo's 4. */
+export const threeBills: UpcomingBillsResponse = {
+  bills: [
+    { ...demoAdobeBill(2027), title: 'First bill', dueDate: '2026-11-01', lastChargeDate: '2025-11-02' },
+    { ...demoFigmaBill(2027), title: 'Second bill', dueDate: '2026-12-01', lastChargeDate: '2025-12-02' },
+    { ...demoAdobeBill(2027), title: 'Third bill', dueDate: '2027-01-01', lastChargeDate: '2026-01-02' },
+  ],
+};
 
-/** `GET /api/bills/upcoming` answers: the demo, none, one (Adobe due 16 Jun 2028), pending and failing. */
+/** A 120-character text in words, with no hyphen (task 023 AC17). */
+export const longBillWords = `Figma - ${'Organization Plan with every seat '.repeat(4)}`.slice(0, 120);
+/** A 120-character text with no space. */
+export const longBillNoSpace = 'FigmaOrganizationPlanWithEverySeat'.repeat(4).slice(0, 120);
+
+/**
+ * The long data of task 023 AC17: a 120-character title and description in words with `$1,000,000,000.00`, the same
+ * with no space, then a demo bill.
+ */
+export const longBills: UpcomingBillsResponse = {
+  bills: [
+    { ...demoFigmaBill(2027), title: longBillWords, description: longBillWords, amount: usd(100_000_000_000) },
+    { ...demoAdobeBill(2027), title: longBillNoSpace, description: longBillNoSpace, amount: usd(100_000_000_000) },
+    demoFigmaBill(2028),
+  ],
+};
+
+const upcomingBillsPath = '*/api/bills/upcoming';
+const billsFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/**
+ * `GET /api/bills/upcoming` answers: the demo, none, one (Adobe due 16 Jun 2028), pending, failing, and failing on the
+ * first request and its 3 retries, then the demo (a Retry).
+ */
 export const upcomingBills = {
   answers: (body: UpcomingBillsResponse = demoBills) => http.get(upcomingBillsPath, () => HttpResponse.json(body)),
   none: () => http.get(upcomingBillsPath, () => HttpResponse.json({ bills: [] })),
@@ -285,8 +321,14 @@ export const upcomingBills = {
       await delay('infinite');
       return HttpResponse.json(demoBills);
     }),
-  fails: () =>
-    http.get(upcomingBillsPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+  fails: () => http.get(upcomingBillsPath, billsFailure),
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(upcomingBillsPath, () => {
+      tries += 1;
+      return tries <= 4 ? billsFailure() : HttpResponse.json(demoBills);
+    });
+  },
 };
 
 /** A row as `GET /api/transactions/recent` sends it. */

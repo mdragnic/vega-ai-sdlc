@@ -1,0 +1,66 @@
+/* 108: the rows 24 inside the card on each side, the header's line box 24 under its top, the card ending 24 under the
+   last row. */
+.body {
+  padding: var(--space-card-padding);
+}
+
+/* 108's five columns (task 023 References): the Amount column as wide as its widest box, the other four sharing what
+   it leaves in 108's proportions (112 : 185 : 277 : 364), so at 1440 every part is where 108 draws it and the columns
+   follow the row at any width (#94). A grid whose rows take its columns (subgrid): the proportions hold exactly, which
+   a table's automatic layout does not give. Chromium keeps the table's semantics: the table, its rows, the column
+   headers and the cells (checked in task 023). A column never gets narrower than its content's least width, so the
+   boxes and the logo never overlap; the texts wrap (#106, #115 b). */
+.table {
+  display: grid;
+  grid-template-columns:
+    minmax(min-content, var(--size-bill-column-due-date)) minmax(min-content, var(--size-bill-column-logo))
+    minmax(min-content, var(--size-bill-column-description))
+    minmax(min-content, var(--size-bill-column-last-charge)) max-content;
+  width: 100%;
+}
+
+.group {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+/* 108 header row: Default Black, Bold 16/24 (its ink widths match Bold, task 023 Log); the Gray/06 divider
+   its last pixel row, 24 under the line box. A label that wraps starts on the row's first line. */
+.headerRow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: start;
+  padding-bottom: calc(var(--space-bill-table-header-gap) - var(--border-width-divider));
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+.headerRow > th {
+  padding: 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  text-align: left;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* As the cells under them: Due Date and Logo from their columns' left edges, the least space to the next column's
+   text kept at their end; Last Charge centred, with that space on both sides; Amount centred on its column, the widest
+   box. */
+.headerRow > .dueDateHeader,
+.headerRow > .logoHeader {
+  padding-right: var(--space-bill-column-gap);
+}
+
+.headerRow > .lastChargeHeader {
+  padding: 0 var(--space-bill-column-gap);
+  text-align: center;
+}
+
+.headerRow > .amountHeader {
+  text-align: center;
+}

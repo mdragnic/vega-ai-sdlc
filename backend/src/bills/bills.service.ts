@@ -20,8 +20,9 @@ export class BillsService {
 
   /**
    * Every bill due today or later in the user's zone, soonest first, the same day in the order stored (#28, #41,
-   * #53). Today is bound as its `YYYY-MM-DD` string: a `Date` binds as `YYYY-MM-DD HH:MM:SS.SSS`, which sorts after
-   * the stored plain date and would drop the bill due today (task 008 review).
+   * #53), with its description for the Bills table (task 023). Today is bound as its `YYYY-MM-DD` string: a `Date`
+   * binds as `YYYY-MM-DD HH:MM:SS.SSS`, which sorts after the stored plain date and would drop the bill due today
+   * (task 008 review).
    */
   async upcoming(userId: number, timeZone: string): Promise<UpcomingBillsResponse> {
     const today = todayIn(this.clock.now(), timeZone);
@@ -30,8 +31,9 @@ export class BillsService {
       order: { dueDate: 'ASC', id: 'ASC' },
     });
     return {
-      bills: rows.map(({ title, logo, dueDate, lastChargeDate, amountCents }) => ({
+      bills: rows.map(({ title, description, logo, dueDate, lastChargeDate, amountCents }) => ({
         title,
+        description,
         logo,
         dueDate,
         lastChargeDate,

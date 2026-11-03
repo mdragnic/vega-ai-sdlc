@@ -490,7 +490,8 @@ test('shows the skeletons, then the error state in each card, a keyboard Retry k
   await page.keyboard.press('Enter');
 
   await expect(detailsRegion(page).getByRole('alert')).toHaveCount(0);
-  expect(await detailsShown(page)).toEqual(readOut(demoDetails[1]!));
+  // The alert also goes while the skeleton shows: wait for the details themselves (task 023, a race found at HEAD).
+  await expect.poll(() => detailsShown(page)).toEqual(readOut(demoDetails[1]!));
   const focusedIn = await detailsRegion(page).evaluate((region) => region.contains(document.activeElement));
   expect(focusedIn).toBe(true);
   await expectRing(page, page.locator(':focus'));

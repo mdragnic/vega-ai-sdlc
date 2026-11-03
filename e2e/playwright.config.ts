@@ -35,7 +35,8 @@ export default defineConfig({
       command: 'npm run dev -w frontend',
       cwd: '..',
       port: FRONTEND_PORT,
-      env: { NODE_ENV: 'test' },
+      // The e2e-only fixture routes (task 023: the scroll fixture pages); never set elsewhere.
+      env: { NODE_ENV: 'test', VITE_E2E_FIXTURES: 'true' },
       reuseExistingServer: false,
       timeout: 120_000,
     },

@@ -59,6 +59,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--font-size-24` | `24px` | Figma text style `Bold 24-28` |
 | `--line-height-16` | `16px` | Figma text style `Regular 12-16` |
 | `--line-height-20` | `20px` | Figma text style `Regular 14-20` |
+| `--line-height-22` | `22px` | PNG 108 Bills, kept off the 4px grid as the task 023 file sets (Marko, 2026-11-03): the description under each title (Regular 14, Gray/03) is one line every 44 px (its ink rows from y 587, 631 and 675), halved, so a row is 162 high as drawn (32 + 24 + 8 + 3 x 22 + 32). No Figma text style has 14/22 (the call returned `Regular 14-20`), and #65 puts spacing, radii and shadows on the 4px grid, not type. Added in task 023 |
 | `--line-height-24` | `24px` | Figma text styles `Regular 16-24`, `Exbold 18-24` |
 | `--line-height-28` | `28px` | Figma text styles `Semibold 20-28`, `Bold 24-28` |
 | `--line-height-32` | `32px` | Figma text style `Exbold 22-32` |
@@ -198,6 +199,10 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-history-header-top` | `28px` | measured: PNG 106, the history card's top (y 1048) to the header row's line box (y 1104), 56 px, halved. Also the space under the last row at the end of the list, where "Load More" is not drawn (not designed, the header's 28 mirrored). Added in task 021 |
 | `--space-history-row-padding-y` | `16px` | measured: PNG 106, one row every 112 px from y 1184 (the divider the row's last 2 px at y 1294, 1406, 1518, none under the last), the texts' 48 px line boxes 32 under each row's top and 32 above its end, halved: a row is 56 high. Added in task 021 |
 | `--space-history-load-more-bottom` | `40px` | measured: PNG 106, "Load More"'s bottom (y 1792) to the history card's bottom (y 1872), 80 px, halved (107: 56). Added in task 021 |
+| `--space-bill-table-header-gap` | `24px` | measured: PNG 108, the header row's 24 px line box (y 352 to 400; its ink y 363 to 394) to the bottom edge of the Gray/06 divider under it (y 446 to 447, edge y 448), 48 px, halved; the divider is the header row's last pixel row. The header's line box is 24 under the card's top (`--space-card-padding`, y 304 to 352). Added in task 023 |
+| `--space-bill-row-padding-y` | `32px` | measured: PNG 108, one row every 324 px from y 448 (the second y 772 to 1095), the text block (the title's 48 px line box, 16, three 44 px description lines: 196 px) 64 under each row's top (y 512; the title ink from y 522) and 64 above its end, halved; the divider the row's last 2 px (y 770 to 771), none under the last; every other cell centred on the row (the date box y 528 to 691 and the amount box y 562 to 657 both centre on y 610). Added in task 023 |
+| `--space-bill-text-gap` | `8px` | measured: PNG 108, the title's 48 px line box bottom (y 560) to the description's first 44 px line box (y 576), 16 px, halved. Added in task 023 |
+| `--space-bill-column-gap` | `16px` | not measured, as task 020's `--space-transaction-cell-padding-x` (#106, #111 a): the least space between two columns' texts. The Due Date and Logo columns keep it at their end and the centred Last Charge on both sides, so every part stays where 108 draws it (the date box, the logo and the Item Description texts from their columns' left edges). Added in task 023 |
 
 ## Size
 
@@ -280,6 +285,14 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-history-column-type` | `24.8077%` | measured: PNG 106, as `--size-history-column-date`: Transaction Type 258 of 1040. Added in task 021 |
 | `--size-history-column-receipt` | `20.7692%` | measured: PNG 106, as `--size-history-column-date`: Receipt 216 of 1040. Added in task 021 |
 | `--size-history-column-amount` | `12.6923%` | measured: PNG 106, as `--size-history-column-date`: Amount 132 of 1040. Added in task 021 |
+| `--size-bill-card-min-height` | `420px` | measured: PNG 108, the white card y 304 to 1143 with its 2 rows, 840 px, halved (24 + 48 + 2 x 162 + 24). The least height of the Bills card in every state (the skeleton, the error and the empty message, one bill). Added in task 023 |
+| `--size-bill-column-due-date` | `112fr` | measured: PNG 108, from the row's left end (x 656): the Logo column's logo and header ink from 224 px (x 880 and 882), the Item Description texts from 594 px (x 1250), the Last Charge texts centred on 1512 px (x 2068 to 2266 and 2075 to 2261), the amount box from 1876 px to the row's end at 2092 px (x 2532 to 2747): halved, contiguous columns of 112, 185, 277 and 364, then the Amount column, as wide as its widest box (108 here). The four columns share what the Amount column leaves in these proportions, so the parts keep their places at any width (#94; task 023 References). Added in task 023 |
+| `--size-bill-column-logo` | `185fr` | measured: PNG 108, as `--size-bill-column-due-date`: Logo 185 of the 938 left of the Amount column. Added in task 023 |
+| `--size-bill-column-description` | `277fr` | measured: PNG 108, as `--size-bill-column-due-date`: Item Description 277 of 938. Added in task 023 |
+| `--size-bill-column-last-charge` | `364fr` | measured: PNG 108, as `--size-bill-column-due-date`: Last Charge 364 of 938. Added in task 023 |
+| `--size-bill-logo-width` | `120px` | Figma `Figma` 411:5839 (120x40) and `Adobe` 411:6038 (120x31), exported as `Figma.svg` (120x40) and `Adobe.svg` (120x32) in `frontend/src/assets/brand/`; the logos show at their own size. The width of the logo's place in the Bills skeleton. Added in task 023 |
+| `--size-bill-logo-height` | `40px` | Figma `Figma` 411:5839, 120x40, the taller logo. The height of the logo's place in the Bills skeleton. Added in task 023 |
+| `--size-test-scroll-fixture-height` | `3000px` | test fixture only, task 023: the height task 011's `injectTallContent` added (e2e `app-shell-slice.spec.ts` T26 and T27), now the block of the e2e-only `ScrollFixture` pages; no screen uses it. Added in task 023 |
 
 ## Radius
 
