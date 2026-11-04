@@ -3,7 +3,7 @@ import { join, relative, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { addDays, addMonths, mondayOf, startOfMonth } from '../src/common/time-zone/plain-date.js';
+import { addDays, addMonths, daysInMonth, mondayOf, startOfMonth } from '../src/common/time-zone/plain-date.js';
 
 // Task 024 T4, AC5, AC18: the backend's plain-date helpers in one module (task 017 review), used by the Statistics
 // and the Expenses services. Plain dates and months have no zone, so their arithmetic is exact; only a month's first
@@ -58,6 +58,23 @@ describe('addMonths', () => {
   });
 });
 
+// Task 026 T4, AC1 and AC4: the days of a month, for the Saving Summary's x-axis and the month before's (#124 a).
+describe('daysInMonth', () => {
+  it.each([
+    ['2024-02', 29],
+    ['2026-02', 28],
+    ['2100-02', 28],
+    ['2000-02', 29],
+    ['2026-03', 31],
+    ['2026-09', 30],
+    ['2026-10', 31],
+    ['2026-12', 31],
+    ['2022-06', 30],
+  ])('gives %s %i days', (month, days) => {
+    expect(daysInMonth(month)).toBe(days);
+  });
+});
+
 describe('startOfMonth', () => {
   it.each([
     // Belgrade is on summer time on 1 Oct (UTC+2) and leaves it on 25 Oct: 1 Nov starts at 00:00 CET (UTC+1).
@@ -97,18 +114,21 @@ describe('the plain-date helpers’ sources', () => {
   const declares = /\b(const|let|function)\s+(addDays|mondayOf|addMonths|startOfMonth)\b/;
   const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
 
-  it('declares addDays, mondayOf, addMonths and startOfMonth only in common/time-zone/plain-date.ts', () => {
+  it('declares addDays, mondayOf, addMonths, startOfMonth and daysInMonth only in common/time-zone/plain-date.ts', () => {
     const declaring = files.filter((file) => declares.test(readFileSync(join(srcDir, file), 'utf8')));
 
     expect(declaring).toEqual(['common/time-zone/plain-date.ts']);
   });
 
-  it.each(['statistics/statistics.service.ts', 'expenses/expenses.service.ts', 'goals/savings-goals.service.ts'])(
-    '%s imports them',
-    (file) => {
-      expect(readFileSync(join(srcDir, file), 'utf8')).toMatch(/from '\.\.\/common\/time-zone\/plain-date\.js'/);
-    },
-  );
+  it.each([
+    'statistics/statistics.service.ts',
+    'expenses/expenses.service.ts',
+    'goals/savings-goals.service.ts',
+    'goals/goal-months.ts',
+    'goals/saving-summary.service.ts',
+  ])('%s imports them', (file) => {
+    expect(readFileSync(join(srcDir, file), 'utf8')).toMatch(/from '\.\.\/common\/time-zone\/plain-date\.js'/);
+  });
 
   // Task 025 T12, AC18: the month of an instant only through `monthIn` (task 014 review, task 024).
   const monthOfToday = /todayIn\([^;]*\)\s*\.slice\(\s*0\s*,\s*7\s*\)/;

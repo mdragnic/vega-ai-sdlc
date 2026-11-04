@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { CHART_HEIGHT } from '../../src/components/ComparisonBarChart/geometry';
+import {
+  AXIS_WIDTH as SAVING_SUMMARY_AXIS_WIDTH,
+  CHART_HEIGHT as SAVING_SUMMARY_CHART_HEIGHT,
+} from '../../src/components/SavingSummaryChart/geometry';
 import { GAUGE_HEIGHT, GAUGE_WIDTH } from '../../src/components/TargetVsAchievementMeter/geometry';
 
 const componentsDir = resolve(import.meta.dirname, '../../src/components');
@@ -12,6 +16,7 @@ const tokensCss = readFileSync(resolve(import.meta.dirname, '../../src/styles/to
 const svgComponents = [
   'ComparisonBarChart/ComparisonBarChart.tsx',
   'TargetVsAchievementMeter/TargetVsAchievementMeter.tsx',
+  'SavingSummaryChart/SavingSummaryChart.tsx',
 ];
 
 const geometryAttributes =
@@ -71,6 +76,9 @@ describe('chart SVG geometry', () => {
     ['--size-chart-height', CHART_HEIGHT],
     ['--size-gauge-width', GAUGE_WIDTH],
     ['--size-gauge-height', GAUGE_HEIGHT],
+    // Task 026: the Saving Summary chart's box and its y labels' column.
+    ['--size-saving-summary-chart-height', SAVING_SUMMARY_CHART_HEIGHT],
+    ['--size-saving-summary-axis-width', SAVING_SUMMARY_AXIS_WIDTH],
   ])('sizes the SVG with %s, the constant its geometry is drawn in', (token, constant) => {
     expect(tokenPx(token)).toBe(constant);
   });

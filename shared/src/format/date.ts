@@ -55,6 +55,17 @@ export function formatDayLabel(value: string): string {
 }
 
 /**
+ * The Saving Summary chart's x labels: the two-digit day and the 3-letter month, `01 Oct` (#42, #84). Plain dates only,
+ * like the days the backend sends; display only, no zone and no arithmetic.
+ */
+export function formatChartDayLabel(value: string): string {
+  if (!plainDateSchema.safeParse(value).success) {
+    throw new RangeError(`Not a plain date: ${value}`);
+  }
+  return format(parseISO(value), 'dd MMM');
+}
+
+/**
  * The Expenses chart's x labels: the 3-letter month of a `YYYY-MM` month, `Jan` to `Dec`, `Jul` never "July" (#55),
  * true of both bars, since the gray one is last year's same month. Display only, no zone and no arithmetic.
  */

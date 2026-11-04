@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
+import { useSavingSummary } from '../../api/saving-summary';
 import { useSavingsGoal, useSavingsGoalMonths } from '../../api/savings-goals';
-import { Card, SavingsGoal, Section } from '../../components';
+import { Card, SavingSummary, SavingsGoal, Section } from '../../components';
 import styles from './GoalsPage.module.css';
 
 /** The six category cards of 110, filled by task 027. */
@@ -9,13 +10,14 @@ const categoryCards = ['housing', 'food', 'transportation', 'entertainment', 'sh
 
 /**
  * Goals (110, US-16): the section "Goals" with the Savings Goal card and the Saving Summary card in one row (368 : 712,
- * #94), and 32 under it the section "Expenses Goals by Category" with six cards on a 3x2 grid. The Saving Summary and
- * the category cards stay white and empty until tasks 026 and 027 (#105 a pattern). The Savings Goal card's month is
- * the newest of the list until the user picks one, so a page left open past midnight moves to the new month when the
+ * #94), and 32 under it the section "Expenses Goals by Category" with six cards on a 3x2 grid. The category cards stay
+ * white and empty until task 027 (#105 a pattern). The Savings Goal card's month is the newest of the list until the user picks one, so a page left open past midnight moves to the new month when the
  * list is fetched again; a picked month stays while it is in the list. While the Adjust Goal popup is open its month is
  * held, so the card behind it stays on the month the save names (as Overview's popup keeps its month, task 014); if the
  * list moved on meanwhile, that month stays selected after the popup closes, as if picked, so the card shows what was
- * just saved and "Adjust Goal" keeps its focus. Every visit opens on the current month (#30); nothing is remembered.
+ * just saved and "Adjust Goal" keeps its focus. The Saving Summary card has its own selected month by the same rule, on
+ * the same months query (one list, #60); a pick in either card never changes the other (#30), and a goal save never
+ * asks for the summary again (#59). Every visit opens on the current month (#30); nothing is remembered.
  */
 export function GoalsPage() {
   const months = useSavingsGoalMonths();
@@ -26,6 +28,10 @@ export function GoalsPage() {
   const selected =
     list === undefined ? undefined : (held ?? (picked !== null && list.includes(picked) ? picked : list[0]));
   const goal = useSavingsGoal(selected);
+  const [summaryPicked, setSummaryPicked] = useState<string | null>(null);
+  const summaryMonth =
+    list === undefined ? undefined : summaryPicked !== null && list.includes(summaryPicked) ? summaryPicked : list[0];
+  const summary = useSavingSummary(summaryMonth);
 
   const onPopupOpenChange = (open: boolean) => {
     if (open) {
@@ -52,7 +58,11 @@ export function GoalsPage() {
               />
             </div>
           </Card>
-          <Card>{null}</Card>
+          <Card padding="none" className={styles.savingSummaryCard}>
+            <div className={styles.savingSummaryBody}>
+              <SavingSummary months={months} selected={summaryMonth} onSelect={setSummaryPicked} summary={summary} />
+            </div>
+          </Card>
         </div>
       </Section>
       <Section title="Expenses Goals by Category" gap="lg">

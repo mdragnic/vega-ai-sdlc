@@ -1,0 +1,95 @@
+/* The colors, the typography, the stroke widths, the fill's opacities and the outer sizes are tokens; the drawing
+   inside is numeric, from geometry.ts (#92). */
+.chart {
+  position: relative;
+  display: flex;
+  height: var(--size-saving-summary-chart-height);
+}
+
+/* The y labels' column: the plot starts at its end. */
+.axis {
+  display: block;
+  flex-shrink: 0;
+  width: var(--size-saving-summary-axis-width);
+  height: 100%;
+  overflow: visible;
+}
+
+/* The rest of the width, which the card's width sets (#94). The first and the last x labels reach past it. */
+.plot {
+  display: block;
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 110: 1px Gray/05 at every width, on whole pixels. */
+.gridLine {
+  stroke: var(--color-gray-05);
+  shape-rendering: crispEdges;
+}
+
+/* 110: Regular 14 in Gray/03, the y labels and the x labels alike. */
+.yLabel,
+.xLabel {
+  fill: var(--color-gray-03);
+  font: var(--font-regular-14-20);
+}
+
+/* The lines' nested SVG over the plot: a stroke on the top or the lowest tick, and the dot of a lone point on the 1st,
+   reach past its box. */
+.lines {
+  overflow: visible;
+}
+
+/* The area under this month's line: the gradient, no outline. */
+.fill {
+  stroke: none;
+}
+
+/* The nested SVG stretches the days over the plot's width; the strokes keep their px widths and dashes (#94). */
+.lastMonth,
+.thisMonth {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 110: the month before, a 2px dashed Gray/05 line with square ends, under the fill. */
+.lastMonth {
+  stroke: var(--color-gray-05);
+  stroke-width: var(--border-width-saving-summary-dashed-line);
+}
+
+/* 110: this month, a 2px Primary line, round so a lone point shows as a dot. */
+.thisMonth {
+  stroke: var(--color-primary);
+  stroke-width: var(--border-width-saving-summary-line);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Not designed: a lone point (the 1st, the only day so far) is the line's round cap, which at 2px is a speck; drawn
+   at a marker's size instead (dataviz: an end dot 8px at least). */
+.point {
+  stroke-width: var(--size-saving-summary-point);
+}
+
+/* 110: Primary from the area's top, fading out at the plot's bottom (#124 f). */
+.fillTop,
+.fillMiddle,
+.fillBottom {
+  stop-color: var(--color-primary);
+}
+
+.fillTop {
+  stop-opacity: var(--opacity-saving-summary-fill-top);
+}
+
+.fillMiddle {
+  stop-opacity: var(--opacity-saving-summary-fill-middle);
+}
+
+.fillBottom {
+  stop-opacity: 0;
+}

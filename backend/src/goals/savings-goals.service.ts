@@ -1,7 +1,6 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-  goalMessages,
   goalProgress,
   type Money,
   type SavingsGoalMonthsResponse,
@@ -10,9 +9,9 @@ import {
 } from '@finebank/shared';
 import type { Repository } from 'typeorm';
 
-import { VisibleTransactions } from '../bank-data/visible-transactions.js';
 import { CLOCK, type Clock } from '../common/clock/clock.js';
 import { addMonths, monthIn } from '../common/time-zone/plain-date.js';
+import { GoalMonths } from './goal-months.js';
 import { SavingsGoal } from './savings-goal.entity.js';
 
 /** Integer cents in USD, the only currency (#11, #96). */
@@ -26,20 +25,18 @@ function toResponse(month: string, row: SavingsGoal | null): SavingsGoalResponse
   return { month, goal: { target, present, progress: goalProgress(present, target) } };
 }
 
-/** The months a user can choose, `YYYY-MM`: `YYYY-MM` strings of four-digit years compare as their months do. */
-type MonthRange = { current: string; earliest: string };
-
 /**
  * The savings goals of the signed-in user only, read and saved by month: every query is keyed on the user from the
  * session (#39, #46). The current month comes from the Clock in the user's zone (#54, #80); the months the user can
- * choose run from it back to the earliest (#60, #123 a), and the one-month read and the save take only those (#123 b).
+ * choose run from it back to the earliest (#60, #123 a), and the one-month read and the save take only those (#123 b):
+ * `GoalMonths`, the range the Saving Summary shares.
  */
 @Injectable()
 export class SavingsGoalsService {
   constructor(
     @Inject(CLOCK) private readonly clock: Clock,
     @InjectRepository(SavingsGoal) private readonly goals: Repository<SavingsGoal>,
-    private readonly visibleTransactions: VisibleTransactions,
+    private readonly goalMonths: GoalMonths,
   ) {}
 
   /** The current month and its goal, or `goal: null` when the month has no row (#58, #85). Overview's card. */
@@ -50,7 +47,7 @@ export class SavingsGoalsService {
 
   /** The months the user can choose, from the current one back to the earliest, newest first (#60, #123 a). */
   async months(userId: number, timeZone: string): Promise<SavingsGoalMonthsResponse> {
-    const { current, earliest } = await this.range(userId, timeZone);
+    const { current, earliest } = await this.goalMonths.range(userId, timeZone);
     const months: string[] = [];
     for (let month = current; month >= earliest; month = addMonths(month, -1)) months.push(month);
     return { months };
@@ -58,7 +55,7 @@ export class SavingsGoalsService {
 
   /** One month's goal, or `goal: null` without a row; a month outside the range is a 409 (#58, #85, #123 b). */
   async forMonth(userId: number, timeZone: string, month: string): Promise<SavingsGoalResponse> {
-    await this.checkMonth(userId, timeZone, month);
+    await this.goalMonths.check(userId, timeZone, month);
     return toResponse(month, await this.goals.findOneBy({ userId, month }));
   }
 
@@ -71,41 +68,12 @@ export class SavingsGoalsService {
    */
   async save(userId: number, timeZone: string, request: SavingsGoalRequest): Promise<SavingsGoalResponse> {
     const { month } = request;
-    await this.checkMonth(userId, timeZone, month);
+    await this.goalMonths.check(userId, timeZone, month);
 
     await this.goals.upsert(
       { userId, month, targetCents: request.target.cents, presentCents: request.present.cents },
       { conflictPaths: ['userId', 'month'], skipUpdateIfNoValuesChanged: false },
     );
     return toResponse(month, await this.goals.findOneByOrFail({ userId, month }));
-  }
-
-  /** A month after the current one or before the earliest: 409 `monthUnavailable` (#123 b), before anything else. */
-  private async checkMonth(userId: number, timeZone: string, month: string): Promise<void> {
-    const { current, earliest } = await this.range(userId, timeZone);
-    if (month > current || month < earliest) throw new ConflictException(goalMessages.monthUnavailable);
-  }
-
-  /**
-   * The current month in the zone, and the earliest (#123 a): the earlier of the month of the user's earliest
-   * transaction dated up to today (any status, direction or account, through `VisibleTransactions`, #53, #77) and the
-   * user's lowest goal month not after the current one, each in the user's zone; the current month when neither exists.
-   * Since a save never takes a month before it, a save never moves it earlier.
-   */
-  private async range(userId: number, timeZone: string): Promise<MonthRange> {
-    const current = monthIn(this.clock.now(), timeZone);
-    const firstTransaction = await this.visibleTransactions.earliestOccurredAt(userId, timeZone);
-    const firstGoal = await this.goals
-      .createQueryBuilder('g')
-      .select('MIN(g.month)', 'earliest')
-      .where('g.userId = :userId', { userId })
-      .andWhere('g.month <= :current', { current })
-      .getRawOne<{ earliest: string | null }>();
-    const candidates = [
-      current,
-      ...(firstTransaction === null ? [] : [monthIn(firstTransaction, timeZone)]),
-      ...(firstGoal?.earliest ? [firstGoal.earliest] : []),
-    ];
-    return { current, earliest: candidates.toSorted()[0]! };
   }
 }

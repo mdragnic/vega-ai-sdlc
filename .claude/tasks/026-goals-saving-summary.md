@@ -1,6 +1,6 @@
 # Task 026: Goals: Saving Summary chart
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 017, 025
 - Size: L
@@ -175,9 +175,76 @@ The Scope follows #124 (closed, Marko, 2026-11-04: (a), (b), (c), (d1), (e) and 
 - INDEX: row 026 cites #124's answer; row 030 gains the follow-up "remove the `recharts` dependency if no chart uses it"; no open questions remain.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-11-04, build (`/next-task 026`)
+- Decisions checked: every cited decision closed (#124 included). Status in-progress at 13:31.
+- **Shared.**
+  - `signedAxisTicks` in `shared/src/chart/ticks.ts`: the nice-value search is now one generator (`allowedTops`) that `axisTicks` and `signedAxisTicks` share, not copied. #124 d1 and d2 are applied there.
+  - `SIGNED_AXIS_MIN_TICKS` and `SIGNED_AXIS_MAX_TICKS` are exported once. The contract and the chart use them (code review).
+  - In `chart-ticks.ts`: `checkSignedChartTicks` and `signedChartTicksSchema`.
+  - `shared/src/contract/saving-summary.ts`: `savingSummaryDaySchema`, `savingSummaryResponseSchema` and `savingSummaryContract.summary` (`GET /saving-summary`, query `savingsGoalMonthQuerySchema`).
+  - `formatChartDayLabel` (`01 Oct`).
+- **Backend.**
+  - `daysInMonth` in the plain-date module.
+  - `GoalMonths` (`goals/goal-months.ts`): `range` and `check`, moved out of `SavingsGoalsService` unchanged. Its tests pass as they were.
+  - `SavingSummaryService`: the month check first, then one `VisibleTransactions.list` read from `startOfMonth(month before)` to `startOfMonth(month after)`; Complete rows only; each row's day in the zone; `thisMonth` null after today; `lastMonth` null where the month before lacks the day; ticks from `signedAxisTicks`, or null when every value is 0.
+  - `SavingSummaryController` behind the global guard; the user from `@CurrentUser()`. No migration.
+- **Frontend.**
+  - `useSavingSummary` under `['saving-summary', month]`; nothing invalidates it.
+  - `SavingSummary`: the header row (the `h3`; `Dropdown` `plain` named by it, 32 after it; `ChartLegend`; the legend wraps under the row, right-aligned), and one `DataState` on the months and the summary in the 216 box.
+  - `SavingSummaryChart`: hand-drawn SVG. The y labels sit in a 72 column (`--size-saving-summary-axis-width`). The plot SVG puts its grid lines and x labels at a percentage of its width on days 1, 5 … 30. A nested SVG (`viewBox` in days by px, `preserveAspectRatio="none"`, `vector-effect: non-scaling-stroke`) draws the dashed month before, then the fill (a 3-stop gradient), then this month's line, each a monotone cubic (Fritsch-Carlson, as d3's `curveMonotoneX`). The hidden table carries every day.
+  - `SavingSummaryChartSkeleton`.
+  - `GoalsPage`: the card's own selected month by the Savings Goal card's rule, on the same months query.
+  - Gallery sections; `components.md` rows.
+  - Tokens, with their sources in `tokens.md`: the chart's height 216, the axis column 72, the title gap 32, the lone point 8, the line and dashed line 2, the fill's 35% and 14%.
+- Measured on 110 at 2x, with a PNG reader (built-ins only, in the scratchpad; deleted after the step): the dashes are 12 on and 4 off at 2x with square ends, so 6 and 2 (`DASH`, `DASH_GAP`, #92); both lines are 2 px. The fill's color depends only on y: about 35% at the area's top, 14% halfway, 0 at the plot's end. That fade is not linear, hence the middle stop.
+- Departures from the task file, recorded for the gate:
+  1. **T1's row "(-$0.01, 0) → -$0.20..$0".** That value comes from #91 a's text before #91 was amended. Under #91 as amended (nice values 1, 2, 2.5, 4, 5, 6, 8) and the Scope ("the mirror of `axisTicks`"), one cent gives `axisTicks`' smallest top, $0.04, so the build gives `-$0.04` to `$0` and the test asserts that.
+  2. **The Scope's `checkSignedChartTicks` line "the lowest tick at or below the lowest value and one step at most below it".** This holds only with a value above $0 (#68's continuation). #72's mirror has 4 fixed steps sized by the lowest's nice value: -$283.36 gives -$400, more than one $100 step below. In that case the check is "at or below".
+  3. **The lone point.** It was built first as the line's 2 px round cap, as the Scope says. On screen it was a barely visible speck on the day-1 grid line. Per the Scope's "made larger only if invisible" and dataviz's 8 px end dot, it is now 8 px (`--size-saving-summary-point`, not designed). The dashes were also checked: they keep 6 and 2 under the stretch in Chromium (`non-scaling-stroke`), so the fallback in References was not needed.
+  4. **The title-to-selector gap.** 110 measures about 34 between the boxes. It is 32 on the 4px grid (the text 2 px left of 110's).
+- **Existing tests changed by the Scope (none weakened):**
+  - Task 025's empty-card tests (`goals.test.tsx`, e2e T25): the Saving Summary card is now checked as filled; the category cards are still empty.
+  - Task 025's request counts (e2e T26): recording starts after the chart's first load.
+  - Task 025's months-failure tests (unit and e2e T33): both cards show their own error state, so the queries name the Savings Goal card.
+  - `cache-control.test.ts` lists the route; `no-direct-time.test.ts` and `plain-date.test.ts` cover the new files.
+- **Validation:**
+  1. `npm run lint` and `npm run typecheck` pass. The first lint run found 5 issues (an unscoped helper, a shadowed parameter, conditional `expect`s, an unsafe type assertion), all fixed: rework 1.
+  2. `npm test` passes: shared 1379, backend 1164, frontend 1408 (1424 after the review's additions).
+  3. `npm run e2e` (Goals file first): 3 failures, debugged with `superpowers:systematic-debugging`; rework 2.
+     - **The hidden table.** On the `<table>` itself, Radix VisuallyHidden's `height: 1px` did not hold. A probe measured the table at 922 px tall, ending at y 1125, which became the page's `scrollHeight`; task 025's and task 026's "no scroll at 1440x1024" tests failed. Fixed at the source: the hidden styles now sit on a wrapping `div`.
+     - **A test locator.** `path` also matched the selector's chevron; the locator is now scoped to the plot.
+     
+     Then: 20 of 20 Goals tests and 299 of 299 in the full suite. After the review fixes: 300 of 300.
+  4. Breaks: 5 of 5 caught, every restore matched (`evidence/026/breaks-summary.md`). Break 3's "contract check" cannot tell a $0 day from a day to come; the October tests caught it.
+  5. Visual check against 110: `evidence/026/visual-differences.txt`. The plot sits 7.5 px lower (on its ticks); the x labels are on days; the legend starts 12 px further right (`ChartLegend`'s 24 gap against 110's 33; out of scope); and the expected differences. The lone point was enlarged here: rework 3.
+  6. Manual checks on `npm run dev`: `evidence/026/manual-checks.txt`, all as expected.
+- **Security review: no findings** (`evidence/026/security-review.md`).
+- **Code review** (`superpowers:requesting-code-review`): "With fixes". No Critical findings.
+  - Important, fixed: `styles.fill` and `styles.lines` had no rules in the CSS module. They were `undefined` in the build, while Vitest's CSS-module stub let the unit tests find them. Now `.lines { overflow: visible }`, moved from the attribute, and `.fill { stroke: none }`. A new test reads the component for every `styles.x` and checks that the module defines it (it failed first on exactly these two). Checked in Chromium: both classes are present, the computed `overflow` is `visible` and the `stroke` is `none`.
+  - Minor, done:
+    - a test for the summary's 409 (retried, then the error state);
+    - the selector's placeholder block asserted (unit, and e2e T24 with its box);
+    - a gallery example in a one-card-wide container where the legend wraps under the title row, with an e2e box check (`component-gallery.spec.ts`);
+    - the tick limits as one shared constant;
+    - the GoalsPage JSDoc line and `.savingSummaryCard`.
+  - Minor, not done:
+    - The 10 labels' overlap is checked by their spacing, not by ink boxes. Their ink is about 12.5 high, 16.7 apart.
+    - `useCardQuery` and the title and placeholder CSS duplicate the Savings Goal card's. That card is Out of scope; a follow-up could extract a shared months-gated query hook.
+  - Declined by the reviewer (app-wide or Out of scope): the query keys without the zone; amounts near the safe-integer range (unreachable with the demo data); two `clock.now()` reads around midnight (benign); the fill tinting the dashes (the Scope's drawing order); two alerts when the months fail (one shared list); `ComparisonBarChart`'s hidden table on the table itself (7 or 12 rows; Out of scope).
+- **Process notes.**
+  - Ports 3000 and 5173 were held by the manual-check servers. A stop of every `nest --watch` on the machine and a PowerShell process lookup were denied by the permission classifier; a `taskkill` of the two exact PIDs this session started was allowed.
+  - A long Node heredoc in Bash was cut off once; scripts then went through the Write tool into the scratchpad.
+- No Figma calls.
+
+### 2026-11-04, approved
+- Approved by human (Marko, `/approve-task`).
+- Checked by Marko in the browser: Saving Summary at 1440 against 110 with October's line and fill dipping below $0, September dashed, the axis -$300 to $600 and x labels on days 1, 5 ... 30; Jun 2022 with 10 readable labels; Mar 2026 with the dashed line ending at the 28th; the two month selectors independent; dashes unchanged at 1920; the header row at 1280 with nothing overlapping: all good.
+- Accepted, the three departures from the task file: one cent giving -$0.04 to $0 (the amended #91, T1's old row was stale); "one step at most below the lowest" applied only when a day is above $0 (#72); the lone point drawn as an 8 px dot. Accepted: the visual differences as listed (the plot 7.5 px lower so values line up with their labels, the ChartLegend gap).
+- Added to INDEX row 030's follow-ups (Marko): (1) a project-wide test that every `styles.<name>` used in `frontend/src` exists in its CSS module, since Vitest's CSS-module stub returns a name for any key and hid two missing classes in task 026; fix any it finds. (2) The card-state hook and title CSS shared by the Savings Goal and Saving Summary cards instead of copied (task 026 review).
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-11-04 13:31
+- Finished: 2026-11-04 15:10
+- Human interventions: 1
+- Rework loops: 3
+- Notes on prompts that failed: A long Node script in a Bash heredoc was cut off by the shell (an unterminated quote error at its 134th line) and changed nothing; patch scripts then went to the scratchpad through the Write tool. Template literals written by a Node script lost their backslashes (a regex in a test); the Edit tool fixed it. Stopping every `nest --watch` process and a PowerShell process lookup were denied by the auto-mode classifier; a `taskkill` of the two exact PIDs from `netstat` was allowed. `page.unroute` with a new function did not remove a route (use `unrouteAll`).

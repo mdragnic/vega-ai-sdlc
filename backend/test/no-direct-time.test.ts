@@ -58,6 +58,19 @@ describe('time in backend/src', () => {
     expect(files).toEqual(expect.arrayContaining(['expenses/expenses.service.ts', 'expenses/expenses.controller.ts']));
   });
 
+  // Task 026 T10: the Saving Summary and the Goals months read today from the Clock only.
+  it('scans the Saving Summary and the Goals months', () => {
+    const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+
+    expect(files).toEqual(
+      expect.arrayContaining([
+        'goals/saving-summary.service.ts',
+        'goals/saving-summary.controller.ts',
+        'goals/goal-months.ts',
+      ]),
+    );
+  });
+
   it('never reads the system time outside the clock files', () => {
     const offenders = sourceFiles(srcDir)
       .map((file) => relative(srcDir, file).replaceAll('\\', '/'))

@@ -1,0 +1,61 @@
+Task 026 visual check, 2026-11-04 (Validation step 5). Playwright MCP, a fresh context at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed clock
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`, the clock through /api/test/clock), the Vite dev
+server, a new user on the demo data. Compared with docs/figma/110. Goals.png at 2x pixels by a Node PNG reader (built-ins
+only, session scratchpad): the same regions measured on the PNG (the card from x 1392, y 304) and on the screenshot,
+halved, card-relative. No Figma calls.
+
+saving-summary-card-1440-2x.png and goals-110-1440-2x.png (the fixed clock, the demo data) against 110
+- Same, measured: the card x 696 to 1408 (712 wide) at y 152, the Savings Goal card's height (293 with the demo goal;
+  292 while the months load); the "Saving Summary" title's ink (x 25 to 154, y 30 to 45 against 24.5 to 155, 29.5 to
+  45), on the "Savings Goal" title's line; the selector's text from x 188 against 190 and its chevron (254.5 to 263
+  against 255.5 to 264); the y labels right-aligned at x 71 against 70.5, the top label's centre y 89.8 against 89.5 and
+  the lowest's 239.8 against 239.5; the teal line from x 95 against 95.5 (the plot's left edge), about 2 px (cover 1.8
+  to 2.2 against 1.8); the dashes 6 on, 2 off, 2 px, Gray/05 (110: 12 and 4 at 2x, square ends); the fill's fade
+  (Primary from about 35% to 0 over the area); the x labels' baseline (y 262.5 on both); the legend's text and swatch
+  sizes; no page scroll (the page 1024 high). The plot widens with the card at 1920 and 2560 with the dashes and the
+  2 px line unchanged (goals-1920x1080.png; e2e T26 measures every width).
+- Different, measured:
+  1. The plot sits 7.5 px lower: the grid lines and the fill's end run y 89.5 to 239.5 against 82 to 232. 110 draws its
+     plot about 8 px above its own labels (the "$0" label's centre 7.5 under the plot's end), so its values would not
+     read on their labels; the Scope puts the plot on the ticks (the top tick to the lowest), the labels where 110 has
+     them.
+  2. The x labels and grid lines sit on days 1, 5, 10 ... 30 (x 96, 174.9, 273.6, 372.3, 470.9, 569.6, 668.3), so the
+     first gap is 4 days and the others 5 (#124 b), against 110's "May 01" to "May 30" evenly spaced 84 apart from x
+     130, on no day of its line; `01 Oct` against "May 01" (#84).
+  3. The y labels `-$300` to `$600`, 7 labels 25 apart, against `$0`, `$500`, `$2000`, `$5000`, 4 labels 50 apart
+     (#42, #55, #68, #91, #124 c); 10 labels 16.7 apart for June 2022 (state-jun-2022-10-labels-2x.png).
+  4. The line's shape: the demo's negative days with income spikes on the 1st, 3rd, 10th, 24th and 27th against Figma's
+     smooth positive curve (#12, #59; demo-data.md); no teal line after the 22nd (#55); no gray point on the 31st
+     (#124 a).
+  5. The legend starts 12 px further right (the teal swatch at x 418 against 406) and ends at the same edge (x 687
+     against 686.5): `ChartLegend` keeps 24 between its items (104, 109), 110 about 33. `ChartLegend` is out of scope.
+  6. The legend's gray swatch is Gray/05 `#E8E8E8`, the dashed line's color, against 110's `#D1D1D1` (dataviz: the
+     legend keeps the line's color).
+  7. The selector shows `Oct, 2026` against "Mar 2022" (#11, #30, #60).
+  8. The category cards are white and empty (task 027); the Savings Goal card and the rest of the page as task 025
+     listed them.
+  9. The header row's gap from the title to the selector is 32 (its text 2 px left of 110's), on the 4px grid; 110
+     measures about 34 between the boxes.
+
+Evidence only (not designed or other states):
+- goals-1920x1080.png, goals-1280x1024.png: the plot follows the card; at 1280 the header row still fits on one line
+  and the top row is 421 high (the Savings Goal card's gauge under its amounts), the chart at the top of the Saving
+  Summary card with the extra height empty below (#113 a).
+- state-jun-2022-1280-2x.png, state-jun-2022-10-labels-2x.png: 10 labels, close and apart; the lowest day -$574.20 on
+  the 17th inside the axis.
+- state-mar-2026-2x.png: March's 31 days against February's 28, the dashed line ending on the 28th (#124 a).
+- state-belgrade-midnight-dot-2x.png: 1 Nov at 2026-10-31T23:30:00Z, the lone point $513.52 as an 8 px dot against
+  October's 1st to 30th. Built first as the line's own 2 px round cap: a barely visible speck on the day-1 grid line, so
+  drawn at 8 px (dataviz's end dot; the task file: "made larger only if invisible"; --size-saving-summary-point).
+- state-empty-dec-2021-2x.png: a user signed up at 2021-12-31T10:00:00Z, `Dec, 2021`, "No savings this month or last
+  month" in the chart's box, the header row as always, the card 292.
+- state-skeleton-summary-loading-2x.png, state-skeleton-months-loading-2x.png: the skeleton in the chart's box (five y
+  label lines, the plot's block, seven x label lines); while the months load a block holds the selector's place; the
+  card 292.
+- state-error-2x.png: "Something went wrong." above Retry centred in the chart's box, the header row as always; Retry
+  loaded the chart with focus inside the card.
+- state-open-list-2x.png: the Saving Summary selector's open list (task 005's look), `Mar, 2026` selected.
+- state-selector-focus-ring-2x.png: the 2 px Primary ring on keyboard focus (#87).
+- state-long-amounts-1440-2x.png: `$1,000,000,000.00` amounts: the Savings Goal card 421 high, the Saving Summary card
+  stretched to it with the chart at its top.

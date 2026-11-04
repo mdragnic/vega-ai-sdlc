@@ -452,3 +452,17 @@
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-24);
 }
+
+/* The Saving Summary card of Goals (110, task 026) in the top row's second column: inset 20 at the top and 24 at the
+   sides and the bottom, at least 292 high. */
+.savingSummaryCard {
+  min-height: var(--size-savings-goal-card-min-height);
+  padding: var(--space-savings-goal-padding-top) var(--space-card-padding) var(--space-card-padding);
+}
+
+/* One card wide, narrower than the Saving Summary's header row needs (about 522 of content at the least page width it
+   fits, 1265), so the legend moves under the title row (#108 b). The page never gets this narrow (#4, #94). */
+.savingSummaryNarrow {
+  width: var(--size-card-width);
+  margin: 0 auto;
+}

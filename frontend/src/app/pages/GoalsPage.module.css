@@ -29,6 +29,17 @@
   padding: var(--space-savings-goal-padding-top) var(--space-card-padding) var(--space-card-padding);
 }
 
+/* The Saving Summary card's content: the same inset as the Savings Goal card's (110), the chart at the top of a taller
+   card (#113 a). */
+.savingSummaryCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.savingSummaryBody {
+  padding: var(--space-savings-goal-padding-top) var(--space-card-padding) var(--space-card-padding);
+}
+
 /* 110: three columns 24 apart and two rows 16 apart, each card at least 104 high. */
 .categoryGrid {
   display: grid;

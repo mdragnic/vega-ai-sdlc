@@ -1,0 +1,63 @@
+/* Fills the content box of the Saving Summary card (inset 20 at the top, 24 at the sides and the bottom, see
+   GoalsPage): the header row, then the chart's box at the top; a taller card leaves the extra height empty below
+   (#113 a). */
+.savingSummary {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 110: one 32px row, "Saving Summary" and the period at the left, the legend at the right; a wider card widens the
+   space between them (#94). Where the row does not fit, the legend moves under it, right-aligned (#106, #108 b). */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0 var(--space-goals-wrap-gap);
+  min-height: var(--size-dropdown-box-height);
+}
+
+/* 110: the period's text 35 after the title's ink (32 between the boxes, on the 4px grid). */
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-saving-summary-title-gap);
+  min-height: var(--size-dropdown-box-height);
+}
+
+/* 110 "Saving Summary": the "Savings Goal" title's style, Secondary Semibold 16 on a 24 line, on its line. */
+.title {
+  margin: 0;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* Not designed: the period's place while the months load, about as wide as `Oct, 2026` and its chevron. */
+.selectorPlaceholder {
+  display: flex;
+}
+
+.selectorBlock {
+  width: var(--size-date-box-width-lg);
+  height: var(--line-height-16);
+}
+
+/* Under the title row when wrapped, still at the right. */
+.legend {
+  display: flex;
+  align-items: center;
+  min-height: var(--size-dropdown-box-height);
+  margin-left: auto;
+}
+
+/* The chart's box right under the header row: the chart, its skeleton, the empty message and the error state all fill
+   it. */
+.chartBox {
+  display: flex;
+  flex-direction: column;
+  height: var(--size-saving-summary-chart-height);
+}

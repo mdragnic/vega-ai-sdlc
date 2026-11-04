@@ -18,7 +18,9 @@ import { Outlet, type RouteObject } from 'react-router';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { routes } from '../../src/app/routes';
+import dropdownStyles from '../../src/components/Dropdown/Dropdown.module.css';
 import inputStyles from '../../src/components/PopupInputSmall/PopupInputSmall.module.css';
+import chartStyles from '../../src/components/SavingSummaryChart/SavingSummaryChart.module.css';
 import {
   authenticationRequired,
   dataStateRootIn,
@@ -27,6 +29,7 @@ import {
   goalsBackend,
   me,
   renderApp,
+  savingSummary,
   savingsGoalForMonth,
   savingsGoalMonths,
   signedInDefaults,
@@ -118,6 +121,22 @@ const amounts = () =>
     .getAllByRole('term')
     .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
 
+/** The Saving Summary's selector, its chart's hidden table, and its labels as drawn (task 026). */
+const summarySelector = () => within(goals()).getByRole('combobox', { name: 'Saving Summary' });
+const CHART_TITLE = 'Savings per day, this month and the same period last month';
+const chartShown = () => within(savingSummaryCard()).findByRole('table', { name: CHART_TITLE });
+const chartTable = () => within(savingSummaryCard()).getByRole('table', { name: CHART_TITLE });
+const drawn = (className: string | undefined) =>
+  [...savingSummaryCard().querySelectorAll(`.${className}`)].map((label) => label.textContent);
+/** The hidden table's rows: the day, this month's amount and the month before's. */
+const tableRows = () =>
+  within(chartTable())
+    .getAllByRole('row')
+    .slice(1)
+    .map((row) => [...row.children].map((cell) => cell.textContent));
+const summaryRequests = () => requests.filter((sent) => sent.startsWith('GET /api/saving-summary'));
+const summaryBusy = () => savingSummaryCard().querySelector('[aria-busy="true"]');
+
 /** Waits until the card shows a goal's meter. */
 const goalShown = () => within(goals()).findByRole('meter', { name: 'Target vs Achievement' });
 
@@ -135,6 +154,13 @@ async function pick(user: User, label: string) {
   await user.click(await within(goals()).findByRole('combobox', { name: 'Savings Goal' }));
   await user.click(await screen.findByRole('option', { name: label }));
   await waitFor(() => expect(selector()).toHaveTextContent(label));
+}
+
+/** Picks a month in the Saving Summary selector with the mouse. */
+async function pickSummary(user: User, label: string) {
+  await user.click(await within(goals()).findByRole('combobox', { name: 'Saving Summary' }));
+  await user.click(await screen.findByRole('option', { name: label }));
+  await waitFor(() => expect(summarySelector()).toHaveTextContent(label));
 }
 
 /** Opens the popup with "Adjust Goal", once the card shows it. */
@@ -233,16 +259,19 @@ describe('the Goals page', () => {
     ]);
   });
 
-  it('shows the Saving Summary card and six category cards, white and empty, with nothing focusable', async () => {
+  // Task 026 changes task 025's empty-card test: the Saving Summary card is filled; the category cards stay empty
+  // until task 027.
+  it('shows the Saving Summary card filled and six category cards, white and empty, with nothing focusable', async () => {
     await openGoals();
     await goalShown();
+    await chartShown();
 
     expect(topCards()).toHaveLength(2);
-    expect(savingSummaryCard().textContent).toBe('');
+    expect(within(savingSummaryCard()).getByRole('heading', { level: 3 })).toHaveTextContent('Saving Summary');
     const categoryCards = [...(categories().lastElementChild as HTMLElement).children];
     expect(categoryCards).toHaveLength(6);
     expect(within(categories()).getByRole('heading', { level: 2 })).toHaveTextContent('Expenses Goals by Category');
-    for (const card of [savingSummaryCard(), ...categoryCards]) {
+    for (const card of categoryCards) {
       expect(card.textContent).toBe('');
       expect(card.querySelectorAll('a, button, input, select, textarea, [tabindex], [role]')).toHaveLength(0);
     }
@@ -881,15 +910,16 @@ describe('the Savings Goal card states', () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(count(path)).toBe(4);
-    expect(within(goals()).getByRole('alert')).toHaveTextContent('Something went wrong.');
-    expect(within(goals()).queryByRole('button', { name: 'Adjust Goal' })).toBeNull();
+    // Task 026: the Saving Summary card shows its own error state when the months fail, so the queries name the card.
+    expect(within(savingsGoalCard()).getByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(within(savingsGoalCard()).queryByRole('button', { name: 'Adjust Goal' })).toBeNull();
     expect(within(savingsGoalCard()).getByRole('heading', { level: 3 })).toHaveTextContent('Savings Goal');
     expect(categories()).toBeInTheDocument();
 
-    await user.click(within(goals()).getByRole('button', { name: 'Retry' }));
+    await user.click(within(savingsGoalCard()).getByRole('button', { name: 'Retry' }));
 
     expect(await goalShown()).toHaveAttribute('aria-valuenow', '0.8125');
-    expect(within(goals()).queryByRole('alert')).toBeNull();
+    expect(within(savingsGoalCard()).queryByRole('alert')).toBeNull();
     expect(selector()).toHaveTextContent('Oct, 2026');
     expect(count(path)).toBe(5);
   });
@@ -978,5 +1008,377 @@ describe('keyboard use', () => {
         .getAllByRole('option')
         .map((option) => option.textContent),
     ).toEqual(['Oct, 2026', 'Jun, 2021']);
+  });
+});
+
+// Task 026 T12: AC1 and AC2, the first login's Saving Summary (US-16 criteria 3, 4 and 12; #11, #42, #55, #59, #84).
+describe('the Saving Summary card', () => {
+  it('shows the title, Oct, 2026 in the plain selector named by it, the legend and October’s axis', async () => {
+    await openGoals();
+    await chartShown();
+
+    expect(within(savingSummaryCard()).getByRole('heading', { level: 3 })).toHaveTextContent('Saving Summary');
+    expect(summarySelector()).toHaveTextContent('Oct, 2026');
+    expect(summarySelector()).toHaveClass(dropdownStyles.plain!);
+    expect(
+      within(savingSummaryCard())
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['This month', 'Same period last month']);
+    expect(drawn(chartStyles.yLabel)).toEqual(['-$300', '-$150', '$0', '$150', '$300', '$450', '$600']);
+    expect(drawn(chartStyles.xLabel)).toEqual(['01 Oct', '05 Oct', '10 Oct', '15 Oct', '20 Oct', '25 Oct', '30 Oct']);
+  });
+
+  it('carries October’s days in the hidden table, nothing after the 22nd, no gray value on the 31st', async () => {
+    await openGoals();
+    await chartShown();
+
+    const rows = tableRows();
+    expect(rows).toHaveLength(31);
+    expect(rows[0]).toEqual(['01 Oct', '$552.16', '$526.40']);
+    expect(rows[3]).toEqual(['04 Oct', '-$283.36', '-$244.72']);
+    expect(rows[15]).toEqual(['16 Oct', '-$14.78', '-$12.77']);
+    expect(rows[21]).toEqual(['22 Oct', '-$266.00', '-$223.44']);
+    expect(rows.slice(22).map((row) => row[1])).toEqual(Array.from({ length: 9 }, () => ''));
+    expect(rows[29]).toEqual(['30 Oct', '', '-$14.28']);
+    expect(rows[30]).toEqual(['31 Oct', '', '']);
+  });
+
+  it('draws the teal line to the 22nd and the dashed line to the 30th, nothing focusable in the chart', async () => {
+    await openGoals();
+    await chartShown();
+
+    const card = savingSummaryCard();
+    expect(card.querySelector(`.${chartStyles.thisMonth}`)?.getAttribute('d')).toMatch(/,21,[-\d.]+$/);
+    expect(card.querySelector(`.${chartStyles.lastMonth}`)?.getAttribute('d')).toMatch(/,29,[-\d.]+$/);
+    expect([...card.querySelectorAll('button, a, input, [tabindex]')]).toEqual([summarySelector()]);
+  });
+
+  it('asks for October’s summary once, with the browser’s time zone', async () => {
+    const zones: (string | null)[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname === '/api/saving-summary') zones.push(request.headers.get('x-time-zone'));
+    });
+    await openGoals();
+    await chartShown();
+    await settle();
+
+    expect(summaryRequests()).toEqual(['GET /api/saving-summary?month=2026-10']);
+    expect(zones).toEqual([Intl.DateTimeFormat().resolvedOptions().timeZone]);
+  });
+});
+
+// Task 026 T13: AC3 and AC4, the selector's one list and a picked month (US-16 criteria 4 to 6; #30, #60, #124 a).
+describe('the Saving Summary selector', () => {
+  it('opens one list of the same 58 months, Oct, 2026 selected, from the one months request', async () => {
+    const { user } = await openGoals();
+    await chartShown();
+
+    await user.click(summarySelector());
+
+    const options = within(await screen.findByRole('listbox')).getAllByRole('option');
+    expect(options).toHaveLength(58);
+    expect(options.slice(0, 3).map((option) => option.textContent)).toEqual(['Oct, 2026', 'Sep, 2026', 'Aug, 2026']);
+    expect(options.at(-1)).toHaveTextContent('Jan, 2022');
+    expect(screen.getByRole('option', { name: 'Oct, 2026' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getAllByRole('listbox')).toHaveLength(1);
+    expect(count('GET /api/savings-goals/months')).toBe(1);
+  });
+
+  it('shows March 2026 against February when picked: one summary request, no goal request, the goal card as it was', async () => {
+    const { user } = await openGoals();
+    await goalShown();
+    await chartShown();
+    const before = requests.length;
+
+    await pickSummary(user, 'Mar, 2026');
+    await waitFor(() => expect(tableRows()[0]).toEqual(['01 Mar', '$526.40', '$539.28']));
+
+    const rows = tableRows();
+    expect(rows).toHaveLength(31);
+    expect(rows[27]).toEqual(['28 Mar', '$21.28', '$23.52']);
+    expect(rows.slice(28).map((row) => row[2])).toEqual(['', '', '']);
+    expect(rows[30]).toEqual(['31 Mar', '-$14.11', '']);
+    expect(drawn(chartStyles.yLabel)).toEqual(['-$300', '-$150', '$0', '$150', '$300', '$450', '$600']);
+    await settle();
+    expect(requests.slice(before)).toEqual(['GET /api/saving-summary?month=2026-03']);
+    expect(selector()).toHaveTextContent('Oct, 2026');
+    await expectAmounts('$16,250.00', '$20,000.00');
+  });
+
+  it.each([
+    ['Dec, 2025', ['-$375', '-$250', '-$125', '$0', '$125', '$250', '$375', '$500']],
+    ['Jun, 2022', ['-$625', '-$500', '-$375', '-$250', '-$125', '$0', '$125', '$250', '$375', '$500']],
+  ])('draws %s’s y labels as sent', async (label, ticks) => {
+    const { user } = await openGoals();
+    await chartShown();
+
+    await pickSummary(user, label);
+
+    await waitFor(() => expect(drawn(chartStyles.yLabel)).toEqual(ticks));
+  });
+
+  it('keeps the chart and asks for no summary when a month is picked in the Savings Goal selector', async () => {
+    const { user } = await openGoals();
+    await goalShown();
+    await chartShown();
+    const table = chartTable();
+
+    await pick(user, 'Mar, 2026');
+    await expectAmounts('$11,000.00', '$20,000.00');
+    await settle();
+
+    expect(summaryRequests()).toEqual(['GET /api/saving-summary?month=2026-10']);
+    expect(chartTable()).toBe(table);
+    expect(summarySelector()).toHaveTextContent('Oct, 2026');
+  });
+});
+
+// Task 026 T14: the Saving Summary's own default month follows the list; a picked month stays (#30).
+describe('the Saving Summary default month', () => {
+  it('moves to November when the list fetched again on window focus starts there', async () => {
+    await openGoals(savingSummary.belgradeMidnight());
+    await chartShown();
+
+    server.use(savingsGoalMonths.belgradeMidnight());
+    refocusWindow();
+
+    await waitFor(() => expect(summarySelector()).toHaveTextContent('Nov, 2026'));
+    await waitFor(() => expect(tableRows()[0]).toEqual(['01 Nov', '$513.52', '$552.16']));
+    expect(
+      tableRows()
+        .slice(1)
+        .every((row) => row[1] === ''),
+    ).toBe(true);
+    expect(tableRows()).toHaveLength(30);
+  });
+
+  it('keeps a picked month when the list moves on', async () => {
+    const { user } = await openGoals(savingSummary.belgradeMidnight());
+    await chartShown();
+    await pickSummary(user, 'Mar, 2026');
+    await waitFor(() => expect(tableRows()[0]).toEqual(['01 Mar', '$526.40', '$539.28']));
+
+    server.use(savingsGoalMonths.belgradeMidnight());
+    refocusWindow();
+    await waitFor(() => expect(count('GET /api/savings-goals/months')).toBe(2));
+    await waitFor(() => expect(selector()).toHaveTextContent('Nov, 2026'));
+    await settle();
+
+    expect(summarySelector()).toHaveTextContent('Mar, 2026');
+    expect(tableRows()[0]).toEqual(['01 Mar', '$526.40', '$539.28']);
+    expect(count('GET /api/saving-summary?month=2026-11')).toBe(0);
+  });
+});
+
+// Task 026 T15: AC13, not linked to the goal (#59); removed with the rest when a session ends (#39).
+describe('the Saving Summary and the goal', () => {
+  it('asks for no summary after a goal save and keeps the chart', async () => {
+    const backend = goalsBackend();
+    const { user } = await openGoals(...backend.handlers);
+    await goalShown();
+    await chartShown();
+    const table = chartTable();
+
+    await openPopup(user);
+    await retype(user, targetField(), '25000');
+    await user.click(saveButton());
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await expectAmounts('$16,250.00', '$25,000.00');
+    await settle();
+
+    expect(backend.saved).toHaveLength(1);
+    expect(summaryRequests()).toEqual(['GET /api/saving-summary?month=2026-10']);
+    expect(chartTable()).toBe(table);
+  });
+
+  it('is removed with the rest of the cached data at a logout', async () => {
+    server.use(http.post('*/api/auth/logout', () => new HttpResponse(null, { status: 204 })));
+    const { user, url } = await openGoals();
+    await chartShown();
+    expect(queryKeys()).toContain('["saving-summary","2026-10"]');
+
+    server.use(me.signedOut());
+    await user.click(screen.getByRole('button', { name: 'Logout' }));
+    await waitFor(() => expect(url()).toBe('/login'));
+
+    expect(queryKeys()).toEqual(['["session"]']);
+  });
+
+  it('is asked for again for the new user when another user signs in in another tab', async () => {
+    await openGoals();
+    await chartShown();
+    const otherUser: CurrentUser = { fullName: 'Ada Lovelace', email: 'ada@example.com', username: 'ada' };
+
+    server.use(http.get('*/api/auth/me', () => HttpResponse.json(otherUser)));
+    refocusWindow();
+
+    await waitFor(() => expect(count('GET /api/saving-summary?month=2026-10')).toBe(2));
+    expect(await chartShown()).toBeInTheDocument();
+  });
+});
+
+// Task 026 T16: AC9 and AC14, the states (#6, #88, #89, #105 a, #114, #124 e).
+describe('the Saving Summary card states', () => {
+  it('shows the title, the legend, no selector and the busy skeleton while the months load', async () => {
+    await openGoals(savingsGoalMonths.pending());
+
+    await waitFor(() => expect(summaryBusy()).not.toBeNull());
+    expect(within(savingSummaryCard()).getByRole('heading', { level: 3 })).toHaveTextContent('Saving Summary');
+    expect(within(savingSummaryCard()).queryByRole('combobox')).toBeNull();
+    expect(savingSummaryCard().textContent).toBe('Saving SummaryThis monthSame period last month');
+    // A block holds the selector's place beside the title, hidden from assistive technology (not designed).
+    const placeholder = savingSummaryCard().querySelector('h3 + [aria-hidden="true"]');
+    expect(placeholder).not.toBeNull();
+    expect(placeholder!.querySelectorAll('span')).toHaveLength(1);
+  });
+
+  it('shows the selector and the busy skeleton while the month’s summary loads', async () => {
+    await openGoals(savingSummary.pending());
+
+    await waitFor(() => expect(summarySelector()).toHaveTextContent('Oct, 2026'));
+    await waitFor(() => expect(summaryBusy()).not.toBeNull());
+    expect(within(savingSummaryCard()).queryByRole('table')).toBeNull();
+  });
+
+  it('shows the error state when the summary fails after 3 retries; the rest works; Retry loads the chart', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { user } = await openGoals(savingSummary.failsThenAnswers());
+
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(count('GET /api/saving-summary?month=2026-10')).toBe(4);
+    expect(within(savingSummaryCard()).getByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(within(savingSummaryCard()).getByRole('heading', { level: 3 })).toHaveTextContent('Saving Summary');
+    expect(summarySelector()).toHaveTextContent('Oct, 2026');
+    expect(await goalShown()).toBeInTheDocument();
+    expect(categories()).toBeInTheDocument();
+
+    await user.click(within(savingSummaryCard()).getByRole('button', { name: 'Retry' }));
+
+    expect(await chartShown()).toBeInTheDocument();
+    expect(within(savingSummaryCard()).queryByRole('alert')).toBeNull();
+    expect(count('GET /api/saving-summary?month=2026-10')).toBe(5);
+    expect(document.activeElement).toBe(dataStateRootIn(savingSummaryCard()));
+  });
+
+  it('shows the error state when the months fail after 3 retries; its Retry asks for them again and loads the chart', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { user } = await openGoals(savingsGoalMonths.failsThenAnswers());
+
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(count('GET /api/savings-goals/months')).toBe(4);
+    expect(within(savingSummaryCard()).getByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(within(savingSummaryCard()).queryByRole('combobox')).toBeNull();
+    expect(summaryRequests()).toEqual([]);
+
+    await user.click(within(savingSummaryCard()).getByRole('button', { name: 'Retry' }));
+
+    expect(await chartShown()).toBeInTheDocument();
+    expect(summarySelector()).toHaveTextContent('Oct, 2026');
+    expect(count('GET /api/savings-goals/months')).toBe(5);
+    expect(summaryRequests()).toEqual(['GET /api/saving-summary?month=2026-10']);
+  });
+
+  // Code review: the #123 b 409 of a month no longer in the list (a page left open on a month that moved out) is an
+  // error like any other: retried by the app's rule, then the error state in the chart's box.
+  it('shows the error state when the month answers 409 after its retries, the header row as always', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await openGoals(savingSummary.unavailable());
+
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(count('GET /api/saving-summary?month=2026-10')).toBe(4);
+    expect(within(savingSummaryCard()).getByRole('alert')).toHaveTextContent('Something went wrong.');
+    expect(summarySelector()).toHaveTextContent('Oct, 2026');
+    expect(await goalShown()).toBeInTheDocument();
+  });
+
+  it('keeps the chart, with no message, when a later refetch fails', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await openGoals();
+    await chartShown();
+    server.use(savingSummary.fails());
+    const before = count('GET /api/saving-summary?month=2026-10');
+
+    refocusWindow();
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(count('GET /api/saving-summary?month=2026-10') - before).toBe(4);
+    expect(tableRows()[0]).toEqual(['01 Oct', '$552.16', '$526.40']);
+    expect(within(savingSummaryCard()).queryByRole('alert')).toBeNull();
+  });
+
+  it('shows "No savings this month or last month" when every value is $0, the header row as always', async () => {
+    await openGoals(savingSummary.empty());
+
+    expect(await within(savingSummaryCard()).findByText('No savings this month or last month')).toBeInTheDocument();
+    expect(within(savingSummaryCard()).queryByRole('table')).toBeNull();
+    expect(summarySelector()).toHaveTextContent('Oct, 2026');
+    expect(within(savingSummaryCard()).getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('keeps focus on the selector while a month picked with the keyboard loads', async () => {
+    const { user } = await openGoals();
+    await chartShown();
+    server.use(savingSummary.pending());
+    summarySelector().focus();
+
+    await user.keyboard('{Enter}');
+    await screen.findByRole('listbox');
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    await waitFor(() => expect(summarySelector()).toHaveTextContent('Sep, 2026'));
+    await waitFor(() => expect(summaryBusy()).not.toBeNull());
+    await settle();
+    expect(summarySelector()).toHaveFocus();
+    expect(summaryRequests()).toContain('GET /api/saving-summary?month=2026-09');
+  });
+});
+
+// Task 026 AC15: Tab reaches the Saving Summary selector after "Adjust Goal" (#87).
+describe('keyboard use with the Saving Summary', () => {
+  it('tabs from "Adjust Goal" to the Saving Summary selector, and nothing in the chart takes focus', async () => {
+    const { user } = await openGoals();
+    await goalShown();
+    await chartShown();
+
+    adjustButton().focus();
+    await user.tab();
+
+    expect(summarySelector()).toHaveFocus();
+    await user.tab();
+    expect(savingSummaryCard().contains(document.activeElement)).toBe(false);
+  });
+});
+
+// Task 026 T17: AC12, the frontend formats and draws; it computes no amount, day or month.
+describe('the Saving Summary sources', () => {
+  const files = [
+    'components/SavingSummary/SavingSummary.tsx',
+    'components/SavingSummaryChart/SavingSummaryChart.tsx',
+    'app/pages/GoalsPage.tsx',
+    'api/saving-summary.ts',
+  ];
+
+  it.each(files)('%s never splits, slices or parses a month or a date', (file) => {
+    expect(source(file)).not.toMatch(
+      /\.split\(|\b(month|date)\.(slice|substring|substr)\(|new Date\b|Date\.(parse|UTC)\b/,
+    );
+  });
+
+  it.each(files.filter((file) => !file.includes('SavingSummaryChart')))('%s does no arithmetic on cents', (file) => {
+    expect(source(file)).not.toMatch(/\.cents\b/);
+  });
+
+  it('formats the chart only with the shared formatters', () => {
+    const chart = source('components/SavingSummaryChart/SavingSummaryChart.tsx');
+
+    expect(chart).toMatch(/formatChartDayLabel\(/);
+    expect(chart).toMatch(/formatCompactMoney\(/);
+    expect(chart).toMatch(/formatMoney\(/);
+    expect(chart).not.toMatch(/toLocale|Intl\.|toFixed\(/);
+    expect(source('components/SavingSummary/SavingSummary.tsx')).toMatch(/formatMonthLabel\(/);
   });
 });

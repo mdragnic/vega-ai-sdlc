@@ -61,6 +61,25 @@ test('the gallery shows every component section without console errors', async (
   expect(warnings).toEqual([]);
 });
 
+// Task 026 code review: the Saving Summary's header row where it does not fit: the legend under the title row,
+// right-aligned on the content's edge, nothing overlapping (#106, #108 b).
+test('the Saving Summary legend moves under its title row in a narrow card, right-aligned', async ({ page }) => {
+  await openGallery(page);
+  const figure = page.getByRole('figure', { name: 'Narrow: the legend under the title row (#108 b)' });
+  await expect(figure.getByText('No savings this month or last month')).toBeVisible();
+  const title = (await figure.getByRole('heading', { level: 3 }).boundingBox())!;
+  const selector = (await figure.getByRole('combobox', { name: 'Saving Summary' }).boundingBox())!;
+  const legend = (await figure.getByRole('list').boundingBox())!;
+  // The header row: the title's group's parent.
+  const row = (await figure.getByRole('heading', { level: 3 }).locator('xpath=../..').boundingBox())!;
+
+  expect(selector.x).toBeGreaterThan(title.x + title.width);
+  expect(selector.y + selector.height).toBeLessThanOrEqual(legend.y);
+  expect(title.y + title.height).toBeLessThanOrEqual(legend.y);
+  // Right-aligned on the header row's end, the card's content edge.
+  expect(Math.abs(legend.x + legend.width - (row.x + row.width))).toBeLessThanOrEqual(1);
+});
+
 // T2: the Active border and text color only while the field has focus; empty or filled without focus is normal (AC1, #63).
 test('an input shows the Active style only while it has focus', async ({ page }) => {
   await openGallery(page);

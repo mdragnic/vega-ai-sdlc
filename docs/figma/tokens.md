@@ -217,6 +217,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-savings-goal-body-gap` | `20px` | measured: PNG 110, the divider's bottom (y 432) to the gauge arc's top (y 472), 40 px, halved, as Overview's (`--space-goals-body-gap`). Added in task 025 |
 | `--space-savings-goal-button-gap` | `24px` | measured: PNG 110, the gauge caption (Medium 12/16, ink y 694 to 716, its line box to about y 720) to the Adjust Goal box (y 768), about 48 px, halved. The least space above the button when the body grows (#108 b); at the card's 292 minimum the button sits on the bottom inset. Added in task 025 |
 | `--space-goals-category-row-gap` | `16px` | measured: PNG 110, the Expenses Goals by Category cards y 1048 to 1255 and 1288 to 1495, 32 px between the rows, halved. Added in task 025 |
+| `--space-saving-summary-title-gap` | `32px` | measured: PNG 110, the "Saving Summary" title (ink to x 1702) to the period text "Mar 2022" (ink from x 1772), 70 px, halved 35; less the title's and the text's side bearings in Chromium with Inter, about 34, on the 4px grid 32. The space between the title and the `plain` selector. Added in task 026 |
 | `--space-adjust-button-padding-x` | `20px` | measured: PNG 110 "Adjust Goal", the box's outer left edge (x 834, its 2 px Primary border to 835) to the text ink (x 875, about 1 px of side bearing), 40 px, and the pencil's 32 px box (ink x 1049 to 1074, centred) to the outer right edge (x 1117), 40 px; halved, the border included. Added in task 025 |
 | `--space-adjust-button-icon-gap` | `8px` | measured: PNG 110 "Adjust Goal", the text's end ("Goal" ink to x 1025, its advance about 2 px after) to the pencil's 32 px box (from about x 1045), about 18 px, halved 9, rounded 8. Added in task 025 |
 
@@ -317,6 +318,9 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-goals-category-card-min-height` | `104px` | measured: PNG 110, each Expenses Goals by Category card y 1048 to 1255 (row 2: 1288 to 1495), 208 px, halved. Added in task 025 |
 | `--size-adjust-button-height` | `36px` | measured: PNG 110 "Adjust Goal" box y 768 to 839, 72 px, halved. Added in task 025 |
 | `--size-adjust-button-skeleton-width` | `140px` | task 025, not designed (the Savings Goal skeleton): about the Adjust Goal box, x 834 to 1117 in PNG 110, 284 px, halved 142, on the 4px grid. Added in task 025 |
+| `--size-saving-summary-chart-height` | `216px` | measured: PNG 110, the Saving Summary chart from the header row's end (y 408: the card top 304, 40 and 64) to the x labels' descent (the card's 24 bottom inset above its end at y 887; the labels' ink y 809 to 835), 432 px, halved. One height for the chart, its skeleton, its empty message and its error state; the chart draws inside it from named constants (#92, #113 a). Added in task 026 |
+| `--size-saving-summary-axis-width` | `72px` | measured: PNG 110, the card content's left edge (x 1440) to the teal line's start (x 1583, its round end from about x 1584), 144 px, halved: the y labels' column, the plot from its end. Added in task 026 |
+| `--size-saving-summary-point` | `8px` | not designed (task 026): a lone point of the Saving Summary's line (the 1st, the only day so far, 1 Nov in Belgrade at midnight) drawn as a dot this wide, the stroke of a zero-length path with a round cap; the line's own 2 px cap was a barely visible speck at 1440. dataviz's end dot, 8 px at least. Added in task 026 |
 
 ## Radius
 
@@ -352,6 +356,8 @@ Halved, not rounded.
 | `--border-width-auth-divider` | `1px` | measured: PNG 101 "or sign in with" lines (y 1203), 1 px, halved 0.5; set to 1px in review (Marko, 2026-10-23) |
 | `--border-width-tab-indicator` | `2px` | measured: PNG 104 active "All" tab underline (y 1004 to 1007), 4 px, halved |
 | `--border-width-focus-ring` | `2px` | decision #87: not measured, keyboard focus is not designed. Width of the `:focus-visible` outline. Added in task 002 |
+| `--border-width-saving-summary-line` | `2px` | measured: PNG 110, the Saving Summary teal line, 4 px of full cover across a flat stretch (x 2300 and 2500 as the line slopes, about 4.9 and 7.3), halved. Added in task 026 |
+| `--border-width-saving-summary-dashed-line` | `2px` | measured: PNG 110, the dashed Gray/05 line, its cover summed down a dash (x 2028 to 2062, y 582 to 594), 4.0 px, halved. Added in task 026 |
 
 ## Shadow
 
@@ -368,6 +374,8 @@ Fitted as a Gaussian blur (CSS blur = 2 sigma) with x-offset 0 and spread 0, fro
 | CSS variable | Value | Source |
 |--------------|-------|--------|
 | `--opacity-expenses-arrow` | `50%` | measured: PNG 104 Expenses Breakdown, the right arrows are `#CFCFCF`, Gray/03 `#9F9F9F` at 50% on white exactly ((159 + 255) / 2 = 207); Housing's, drawn hovered, is `#94CEC8`, Primary `#299D91` at 50% on white exactly. The whole icon at 50%, so its two strokes do not darken where they meet. Added in task 018 |
+| `--opacity-saving-summary-fill-top` | `35%` | measured: PNG 110, the Saving Summary fill under the line: the same color at the same y in every column (a vertical gradient over the area), `#B8DDD9` at y 533 just under the highest stretch of the line (y 523), Primary `#299D91` over white at 34%, about 35% at the area's top. Added in task 026 |
+| `--opacity-saving-summary-fill-middle` | `14%` | measured: PNG 110, the same fill halfway from the area's top (y 523) to the plot's end (y 768, white from there): `#E6F1F0` at y 650, Primary over white at 13 to 14%; the fade is not linear (21% a third of the way, 7% at three quarters), so this middle stop keeps it to about 1% of 110. Added in task 026 |
 
 ## Review (Marko, 2026-10-23)
 

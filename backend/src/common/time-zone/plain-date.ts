@@ -19,6 +19,10 @@ export const addMonths = (month: string, months: number): string => {
   return `${String(Math.floor(index / MONTHS_PER_YEAR)).padStart(4, '0')}-${String((index % MONTHS_PER_YEAR) + 1).padStart(2, '0')}`;
 };
 
+/** The number of days of a `YYYY-MM` month, 28 to 31: day 0 of the next month is its last. Exact, no zone. */
+export const daysInMonth = (month: string): number =>
+  new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
+
 /**
  * The month `YYYY-MM` of an instant in `timeZone`, the user's IANA zone (#54, #80): the month of its date there. The
  * one way the backend reads the month of an instant: the current month (the Clock's now), a transaction's month.

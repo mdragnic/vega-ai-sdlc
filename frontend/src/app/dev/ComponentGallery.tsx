@@ -13,6 +13,8 @@ import {
   type MonthlyComparisonResponse,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
+  type SavingSummaryDay,
+  type SavingSummaryResponse,
   type SavingsGoalMonthsResponse,
   type SavingsGoalResponse,
   type TransactionHistoryPage,
@@ -82,6 +84,9 @@ import {
   RecentTransactionItem,
   RecentTransactionSkeleton,
   RemindMe,
+  SavingSummary,
+  SavingSummaryChart,
+  SavingSummaryChartSkeleton,
   SavingsGoal,
   SavingsGoalSkeleton,
   SavingsGoalSummary,
@@ -1419,6 +1424,175 @@ function SavingsGoalExample({
   );
 }
 
+/** A month's days for the Saving Summary samples: this month's values in cents (null after today), the month before's. */
+function savingDays(month: string, thisMonth: (number | null)[], lastMonth: (number | null)[]): SavingSummaryDay[] {
+  return thisMonth.map((value, index) => ({
+    date: `${month}-${String(index + 1).padStart(2, '0')}`,
+    thisMonth: value === null ? null : usd(value),
+    lastMonth: lastMonth[index] === undefined || lastMonth[index] === null ? null : usd(lastMonth[index]),
+  }));
+}
+
+const usdTicks = (ticks: number[]) => ticks.map(usd);
+
+/** October 2026 at the fixed clock (the demo data, task 026): to the 22nd, against September's 30 days. */
+const octoberSavings = [
+  55216, -2800, 16856, -28336, -1478, -1764, -2128, -2464, -4200, 7280, -3192, -5880, -1064, -2016, -23800, -1478, -896,
+  -14784, -1064, -2464, -1764, -26600,
+];
+const septemberSavings = [
+  52640, -2352, 16800, -24472, -1277, -1428, -2240, -2128, -3528, 4480, -4032, -4760, -1120, -2240, -18648, -1277, 2688,
+  -12768, -1120, -2128, -1428, -22344, -1277, 15232, -1120, -2352, 48160, 2352, -1120, -1428,
+];
+const sampleSavingSummary: SavingSummaryResponse = {
+  month: '2026-10',
+  days: savingDays('2026-10', [...octoberSavings, ...Array<null>(9).fill(null)], septemberSavings),
+  ticks: usdTicks([-30000, -15000, 0, 15000, 30000, 45000, 60000]),
+};
+
+/** June 2022 against May (the demo data): the 17th -$574.20, 10 labels, the most in the dataset. */
+const juneSavingSummary: SavingSummaryResponse = {
+  month: '2022-06',
+  days: savingDays(
+    '2022-06',
+    [
+      43557, -2280, 14392, -19665, -1026, -1568, -1615, -1710, -3420, 4750, -3135, -5225, -808, -1995, -19095, -1026,
+      -57420, -10260, -808, -1710, -1568, -21660, -1026, 13110, -808, -2280, 40755, 2090, -808, -1568,
+    ],
+    [
+      44650, -1900, 14250, -21850, -1140, -1425, -1900, -1900, -2850, 5700, -2850, -4750, -950, -16900, -14725, -1140,
+      0, -11400, -950, -1900, -1425, -18050, -1140, 13300, -950, -1900, 40850, 1900, -950, -1425,
+    ],
+  ),
+  ticks: usdTicks([-62500, -50000, -37500, -25000, -12500, 0, 12500, 25000, 37500, 50000]),
+};
+
+/** No day above $0 (#72): every day an expense or nothing, the lowest -$283.36; $0 at the top and 4 steps down. */
+const belowZeroSavings = [
+  -1478, -2800, -16856, -28336, -1478, -1764, -2128, -2464, -4200, 0, -3192, -5880, -1064, -2016, -23800, -1478, -896,
+  -14784, -1064, -2464, -1764, -26600,
+];
+const belowZeroSavingSummary: SavingSummaryResponse = {
+  month: '2026-10',
+  days: savingDays(
+    '2026-10',
+    [...belowZeroSavings, ...Array<null>(9).fill(null)],
+    [...belowZeroSavings, -1277, 0, -1120, -2352, 0, 0, -1120, -1428],
+  ),
+  ticks: usdTicks([-40000, -30000, -20000, -10000, 0]),
+};
+
+/** 1 Nov at 2026-10-31T23:30:00Z in Belgrade: one teal value, against October's 1st to 30th. */
+const lonePointSavingSummary: SavingSummaryResponse = {
+  month: '2026-11',
+  days: savingDays(
+    '2026-11',
+    [51352, ...Array<null>(29).fill(null)],
+    [...octoberSavings, -1478, 15792, -1064, -2800, 48384, 2016, -1064, -1764],
+  ),
+  ticks: usdTicks([-30000, -15000, 0, 15000, 30000, 45000, 60000]),
+};
+
+/** February 2026 against January (the demo data): 28 days, so no label on the 30th. */
+const februarySavingSummary: SavingSummaryResponse = {
+  month: '2026-02',
+  days: savingDays(
+    '2026-02',
+    [
+      53928, -1904, 16800, -24472, -1277, -1512, -2240, -2128, -2856, 6160, -3528, -5040, -1120, -2128, -13496, -1277,
+      1792, -12768, -1120, -2128, -1512, -18088, -1277, 15568, -1120, -1904, 48272, 2352,
+    ],
+    [
+      52640, -2576, 16856, -28336, -1478, -2016, -2128, -2464, -3864, 7840, -3024, -6720, -1064, -2240, -21224, -1478,
+      -3584, -14784, -1064, -2464, -2016, -24472, -1478, 15904, -1064, -2576, 48160, 2016,
+    ],
+  ),
+  ticks: usdTicks([-30000, -15000, 0, 15000, 30000, 45000, 60000]),
+};
+
+/** Every value of both lines $0: the empty state (#124 e). */
+const emptySavingSummary: SavingSummaryResponse = {
+  month: '2026-10',
+  days: savingDays(
+    '2026-10',
+    Array.from({ length: 31 }, (_, index) => (index < 22 ? 0 : null)),
+    Array.from({ length: 30 }, () => 0),
+  ),
+  ticks: null,
+};
+
+/** The Saving Summary card as Goals draws it at 1440: the top row's second column, 712 wide, inset 20, 24 and 24. */
+function SavingSummaryCard({ children, narrow = false }: { children: ReactNode; narrow?: boolean }) {
+  if (narrow) {
+    return (
+      <div className={styles.savingSummaryNarrow}>
+        <Card padding="none" className={styles.savingSummaryCard}>
+          {children}
+        </Card>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.savingsGoalSample}>
+      <div />
+      <Card padding="none" className={styles.savingSummaryCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * The Saving Summary card on local queries: the months as `months` answers them, the summary as `summary` does
+ * (`sample`: October's demo answer for every month). Its own selection, as GoalsPage keeps it.
+ */
+function SavingSummaryExample({
+  name,
+  months,
+  summary,
+  narrow = false,
+}: {
+  name: string;
+  months: SavingsGoalMonthsResponse | 'pending' | 'fails';
+  summary: SavingSummaryResponse | 'pending' | 'fails';
+  /** One card wide (352): too narrow for the header row, so the legend moves under it (#108 b). */
+  narrow?: boolean;
+}) {
+  const monthsQuery = useSampleQuery(['saving-summary-months', name], months);
+  const [picked, setPicked] = useState<string | null>(null);
+  const list = monthsQuery.data?.months;
+  const selected = list === undefined ? undefined : picked !== null && list.includes(picked) ? picked : list[0];
+  const summaryQuery = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'saving-summary', name, selected],
+    queryFn: () =>
+      summary === 'pending'
+        ? new Promise<SavingSummaryResponse>(() => undefined)
+        : summary === 'fails'
+          ? waitThenFail<SavingSummaryResponse>()
+          : Promise.resolve(summary),
+    enabled: selected !== undefined,
+  });
+  return (
+    <SavingSummaryCard narrow={narrow}>
+      <SavingSummary months={monthsQuery} selected={selected} onSelect={setPicked} summary={summaryQuery} />
+    </SavingSummaryCard>
+  );
+}
+
+/** The chart alone in the card's content box at 1440 (664 wide). */
+function SavingSummaryChartSample({ answer }: { answer: SavingSummaryResponse }) {
+  return (
+    <SavingSummaryCard>
+      <SavingSummaryChart
+        title="Savings per day, this month and the same period last month"
+        days={answer.days}
+        ticks={answer.ticks ?? []}
+      />
+    </SavingSummaryCard>
+  );
+}
+
 /** The carousel control with its own position, so Previous and Next can be tried. */
 function SliderOptionExample({ count, start = 0 }: { count: number; start?: number }) {
   const [position, setPosition] = useState(start);
@@ -2204,6 +2378,62 @@ export function ComponentGallery() {
           <SavingsGoalCard>
             <SavingsGoalSkeleton />
           </SavingsGoalCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingSummary" wide>
+        <Example name="The demo month (110)">
+          <SavingSummaryExample name="demo" months={{ months: sampleMonths }} summary={sampleSavingSummary} />
+        </Example>
+        <Example name="Every value $0 (#124 e)">
+          <SavingSummaryExample
+            name="empty"
+            months={{ months: sampleMonths.slice(0, 1) }}
+            summary={emptySavingSummary}
+          />
+        </Example>
+        <Example name="Narrow: the legend under the title row (#108 b)">
+          <SavingSummaryExample
+            name="narrow"
+            months={{ months: sampleMonths.slice(0, 1) }}
+            summary={emptySavingSummary}
+            narrow
+          />
+        </Example>
+        <Example name="The months loading">
+          <SavingSummaryExample name="months-pending" months="pending" summary={sampleSavingSummary} />
+        </Example>
+        <Example name="The summary loading">
+          <SavingSummaryExample name="summary-pending" months={{ months: sampleMonths }} summary="pending" />
+        </Example>
+        <Example name="Error">
+          <SavingSummaryExample name="fails" months={{ months: sampleMonths }} summary="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingSummaryChart" wide>
+        <Example name="October at the fixed clock (110, #68)">
+          <SavingSummaryChartSample answer={sampleSavingSummary} />
+        </Example>
+        <Example name="June 2022: 10 labels, the cap (#124 d2)">
+          <SavingSummaryChartSample answer={juneSavingSummary} />
+        </Example>
+        <Example name="No day above $0 (#72)">
+          <SavingSummaryChartSample answer={belowZeroSavingSummary} />
+        </Example>
+        <Example name="A lone point: 1 Nov in Belgrade">
+          <SavingSummaryChartSample answer={lonePointSavingSummary} />
+        </Example>
+        <Example name="February: 28 days, no 30">
+          <SavingSummaryChartSample answer={februarySavingSummary} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingSummaryChartSkeleton" wide>
+        <Example name="Loading">
+          <SavingSummaryCard>
+            <SavingSummaryChartSkeleton />
+          </SavingSummaryCard>
         </Example>
       </GallerySection>
 

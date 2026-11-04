@@ -198,6 +198,7 @@
   --space-savings-goal-body-gap: 20px;
   --space-savings-goal-button-gap: 24px;
   --space-goals-category-row-gap: 16px;
+  --space-saving-summary-title-gap: 32px;
   --space-adjust-button-padding-x: 20px;
   --space-adjust-button-icon-gap: 8px;
 
@@ -295,6 +296,9 @@
   --size-goals-category-card-min-height: 104px;
   --size-adjust-button-height: 36px;
   --size-adjust-button-skeleton-width: 140px;
+  --size-saving-summary-chart-height: 216px;
+  --size-saving-summary-axis-width: 72px;
+  --size-saving-summary-point: 8px;
 
   /* Radius */
   --radius-input: 8px;
@@ -320,6 +324,8 @@
   --border-width-auth-divider: 1px;
   --border-width-tab-indicator: 2px;
   --border-width-focus-ring: 2px;
+  --border-width-saving-summary-line: 2px;
+  --border-width-saving-summary-dashed-line: 2px;
 
   /* Shadow */
   --shadow-card: 0 20px 24px rgb(76 103 100 / 10%);
@@ -328,4 +334,6 @@
 
   /* Opacity */
   --opacity-expenses-arrow: 50%;
+  --opacity-saving-summary-fill-top: 35%;
+  --opacity-saving-summary-fill-middle: 14%;
 }

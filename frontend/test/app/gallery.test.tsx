@@ -671,6 +671,60 @@ describe('component gallery', () => {
     expect(figure('ExpensesBreakdownSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(66);
   });
 
+  // Task 026 T18: the Saving Summary parts on sample data, with no request.
+  it('shows the Saving Summary samples: the chart’s cases, the card in every state and the skeleton', async () => {
+    await renderGallery();
+
+    const dayTable = (example: string) =>
+      within(figure('SavingSummaryChart', example)).getByRole('table', {
+        name: 'Savings per day, this month and the same period last month',
+      });
+    const yLabels = (example: string) =>
+      [...figure('SavingSummaryChart', example).querySelectorAll('svg text[text-anchor="end"]')].map(
+        (label) => label.textContent,
+      );
+    const october = dayTable('October at the fixed clock (110, #68)');
+    expect(cells(october, 0)).toHaveLength(31);
+    expect(cells(october, 1).slice(0, 4)).toEqual(['$552.16', '-$28.00', '$168.56', '-$283.36']);
+    expect(cells(october, 1).slice(21, 23)).toEqual(['-$266.00', '']);
+    expect(cells(october, 2).slice(29)).toEqual(['-$14.28', '']);
+    expect(yLabels('June 2022: 10 labels, the cap (#124 d2)')).toEqual([
+      '-$625',
+      '-$500',
+      '-$375',
+      '-$250',
+      '-$125',
+      '$0',
+      '$125',
+      '$250',
+      '$375',
+      '$500',
+    ]);
+    expect(yLabels('No day above $0 (#72)')).toEqual(['-$400', '-$300', '-$200', '-$100', '$0']);
+    expect(cells(dayTable('A lone point: 1 Nov in Belgrade'), 1).filter(Boolean)).toEqual(['$513.52']);
+    expect(cells(dayTable('February: 28 days, no 30'), 0)).toHaveLength(28);
+
+    const card = (example: string) => figure('SavingSummary', example);
+    expect(
+      await within(card('The demo month (110)')).findByRole('combobox', { name: 'Saving Summary' }),
+    ).toHaveTextContent('Oct, 2026');
+    expect(await within(card('The demo month (110)')).findByRole('table')).toBeInTheDocument();
+    expect(
+      await within(card('Every value $0 (#124 e)')).findByText('No savings this month or last month'),
+    ).toBeVisible();
+    expect(
+      await within(card('Narrow: the legend under the title row (#108 b)')).findByText(
+        'No savings this month or last month',
+      ),
+    ).toBeVisible();
+    expect(card('The months loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(within(card('The months loading')).queryByRole('combobox')).toBeNull();
+    expect(card('The summary loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(card('Error')).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    // Five y label lines, the plot's block and seven x label lines.
+    expect(figure('SavingSummaryChartSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(13);
+  });
+
   // Task 019 T15: the Balances parts on sample data, with no request.
   it('shows the Balances samples: the cards, a long Bank Name and balance, Details, the Add Accounts cell and the skeleton', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');

@@ -15,6 +15,7 @@ import {
   goalProgress,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
+  type SavingSummaryResponse,
   type SavingsGoalRequest,
   type SavingsGoalResponse,
   type TransactionHistoryPage,
@@ -22,6 +23,7 @@ import {
   type TransactionRow,
   type TransactionsPage,
   type TransactionsTab,
+  signedAxisTicks,
   type UpcomingBillsResponse,
   type WeeklyComparisonResponse,
   writeGuardMessages,
@@ -343,6 +345,97 @@ export const savingsGoalForMonth = {
   },
   /** The 409 of a month the user cannot choose (#123 b). */
   unavailable: () => http.get(goalMonthPath, monthUnavailable),
+};
+
+/** The demo dataset's transactions (demo-data.md, Transactions), read from the backend's file. */
+const demoTransactions = (
+  JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../backend/src/demo/demo-dataset.json'), 'utf8')) as {
+    transactions: { occurredAt: string; direction: 'income' | 'expense'; status: string; amountCents: number }[];
+  }
+).transactions;
+
+/** The `YYYY-MM` month before a month, and a month's number of days: fixture arithmetic, the test's own. */
+const monthBefore = (month: string) => {
+  const [year, number] = month.split('-').map(Number) as [number, number];
+  return number === 1 ? `${year - 1}-12` : `${year}-${String(number - 1).padStart(2, '0')}`;
+};
+const daysIn = (month: string) => {
+  const [year, number] = month.split('-').map(Number) as [number, number];
+  return new Date(Date.UTC(year, number, 0)).getUTCDate();
+};
+
+/**
+ * A month's Saving Summary as `GET /api/saving-summary?month=` answers it for a first login (task 026): each day's
+ * Complete income less Complete expenses in `timeZone` up to `upTo` (today), against the same days of the month before, the
+ * ticks from the shared `signedAxisTicks`. Computed here from the demo dataset; the tests assert the task file's values.
+ */
+export function demoSavingSummaryOf(
+  month: string,
+  upTo = '2026-10-22',
+  timeZone = 'Europe/Belgrade',
+): SavingSummaryResponse {
+  const dayIn = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const savings = new Map<string, number>();
+  for (const row of demoTransactions) {
+    if (row.status !== 'complete') continue;
+    const day = dayIn.format(new Date(row.occurredAt));
+    if (day > upTo) continue;
+    savings.set(day, (savings.get(day) ?? 0) + (row.direction === 'income' ? row.amountCents : -row.amountCents));
+  }
+  const before = monthBefore(month);
+  const days = Array.from({ length: daysIn(month) }, (_, index) => {
+    const day = String(index + 1).padStart(2, '0');
+    const date = `${month}-${day}`;
+    return {
+      date,
+      thisMonth: date > upTo ? null : usd(savings.get(date) ?? 0),
+      lastMonth: index < daysIn(before) ? usd(savings.get(`${before}-${day}`) ?? 0) : null,
+    };
+  });
+  const drawn = days.flatMap(({ thisMonth, lastMonth }) =>
+    [thisMonth, lastMonth].flatMap((value) => (value === null ? [] : [value.cents])),
+  );
+  const [lowest, highest] = [Math.min(...drawn), Math.max(...drawn)];
+  return {
+    month,
+    days,
+    ticks: lowest === 0 && highest === 0 ? null : signedAxisTicks(usd(lowest), usd(highest)),
+  };
+}
+
+/** Every value of both lines $0 (2021-12-31T10:00:00Z, before the dataset): no ticks, the empty state (#124 e). */
+export const emptySavingSummary: SavingSummaryResponse = demoSavingSummaryOf('2021-12', '2021-12-31');
+
+const savingSummaryPath = '*/api/saving-summary';
+const summaryFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/** `GET /api/saving-summary?month=` answers (task 026). */
+export const savingSummary = {
+  /** The demo answer of the month the query names, at the fixed clock in Belgrade. */
+  answers: () => http.get(savingSummaryPath, ({ request }) => HttpResponse.json(demoSavingSummaryOf(monthOf(request)))),
+  /** At 2026-10-31T23:30:00Z in Belgrade: today is 1 Nov. */
+  belgradeMidnight: () =>
+    http.get(savingSummaryPath, ({ request }) =>
+      HttpResponse.json(demoSavingSummaryOf(monthOf(request), '2026-11-01')),
+    ),
+  /** Every value $0, whatever the month: the empty state. */
+  empty: () => http.get(savingSummaryPath, () => HttpResponse.json(emptySavingSummary)),
+  pending: () =>
+    http.get(savingSummaryPath, async ({ request }) => {
+      await delay('infinite');
+      return HttpResponse.json(demoSavingSummaryOf(monthOf(request)));
+    }),
+  fails: () => http.get(savingSummaryPath, summaryFailure),
+  /** Fails the first load and its 3 retries, then answers the demo month (Retry). */
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(savingSummaryPath, ({ request }) => {
+      tries += 1;
+      return tries <= 4 ? summaryFailure() : HttpResponse.json(demoSavingSummaryOf(monthOf(request)));
+    });
+  },
+  /** The 409 of a month the user cannot choose (#123 b). */
+  unavailable: () => http.get(savingSummaryPath, monthUnavailable),
 };
 
 /**
@@ -1529,13 +1622,14 @@ export const monthlyComparison = {
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
  * asking, one that opens Transactions has its pages, one that opens a demo account's Account Details has its details
  * and history, one that opens Expenses has its monthly comparison and the same expenses breakdown, and one that opens
- * Goals has its months and each month's goal: the demo data of each. A test's own `server.use` comes first.
+ * Goals has its months, each month's goal and each month's Saving Summary: the demo data of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
   savingsGoal.answers(),
   savingsGoalMonths.answers(),
   savingsGoalForMonth.answers(),
+  savingSummary.answers(),
   upcomingBills.answers(),
   recentTransactions.answers(),
   weeklyComparison.answers(),

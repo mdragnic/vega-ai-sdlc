@@ -1,0 +1,31 @@
+Task 026 manual checks, 2026-11-04 (Validation step 6). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page is 1425 wide in a 1440 window, #101), Europe/Belgrade. The development backend on the real clock
+(today 4 Nov 2026 in Belgrade: the current month November) and Vite, run separately (`npm run dev -w backend`, `npm run
+dev -w frontend`) so the backend alone could be stopped. No Figma calls.
+
+1. Sign up through the form (/sign-up): lands on /overview; the sidebar's "Goals" opens /goals. The Saving Summary card:
+   "Saving Summary", the selector `Nov, 2026`, the legend, the y labels `-$300` to `$600`; the table's first rows
+   `01 Nov $513.52 / $552.16`, `02 Nov -$20.16 / -$28.00`, `03 Nov $166.88 / $168.56`, `04 Nov -$257.60 / -$283.36`,
+   `05 Nov` empty / `-$14.78` (nothing after today). The page asked for the months once, the goal of 2026-11 once and the
+   summary of 2026-11 once. The card at x 690.9, 702.1 wide, 293 high; no horizontal or vertical scroll (1425 x 1024,
+   manual-1440.png).
+2. The Saving Summary selector by mouse: one list of 59 months, `Nov, 2026` to `Jan, 2022`; `Jun, 2022` shows 30 days,
+   the 10 labels `-$625` to `$500`, the 17th `-$574.20` against May's `$0.00`. By keyboard: focus on the selector, Enter
+   opens the list on `Jun, 2022`, four ArrowDown to `Feb, 2022`, Enter: 28 days, the x labels `01 Feb` to `25 Feb` (no
+   30), the last row `28 Feb $19.95 / $17.10`, the labels `-$250` to `$500`; focus stays on the selector. (The arrows
+   were sent once Radix had focused the open list's selected option, as by hand; see task 025's note.)
+3. The Savings Goal selector: picking `Mar, 2026` asked only for `GET /api/savings-goals?month=2026-03`; the chart and its
+   selector (`Feb, 2022`) stayed as they were.
+4. "Adjust Goal" on `Mar, 2026`, Target 25000, Save: the popup closed; the requests after it were the goal queries only
+   (`/api/savings-goals/months`, `/api/savings-goals?month=2026-03`), no summary; the chart unchanged (#59).
+5. Resized to 1920x1080 (the card 1019 wide, 293 high, manual-1920.png), 1280x1024 (597 wide, 421 high with the Savings
+   Goal card's gauge under its amounts; the chart at the top, the extra height empty below, manual-1280.png) and back to
+   1440x1024 (702 wide, 293): the dashes `6px, 2px` at 2 px with `non-scaling-stroke` at every width, the x labels moving
+   with the plot (centres 951 to 1749 at 1920, 733 to 1156 at 1280, 787 to 1305 at 1440 for February's six), no
+   horizontal scroll (scroll widths 1905, 1265, 1425).
+6. The backend stopped (its process and the `nest --watch` watchers ended by PID): picking `Aug, 2024` showed the
+   skeleton in the chart's box, the card 293 (manual-backend-down-skeleton.png); after about 7.5 s (the request and its
+   3 retries) "Something went wrong." and Retry, the header row as always and the Savings Goal card unchanged
+   (manual-backend-down-error.png). The backend started again: Tab from the selector reached Retry with the ring, Enter
+   loaded August 2024 (`01 Aug $464.88 / $500.76`), and focus stayed inside the card on its DataState root
+   (tabindex -1), not the page body (#114; manual-retry-loaded.png).

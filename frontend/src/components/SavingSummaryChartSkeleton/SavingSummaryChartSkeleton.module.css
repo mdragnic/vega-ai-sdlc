@@ -1,0 +1,48 @@
+/* Not designed (#6): existing tokens only, in the chart's box (--size-saving-summary-chart-height), on the chart's
+   layout: the y labels' column, then the plot from the top tick (about 37.5 down) to the lowest (about 187.5), then the
+   x labels' row. */
+.skeleton {
+  display: flex;
+  height: var(--size-saving-summary-chart-height);
+}
+
+/* Five 16px label lines ending 48 in (the column less the card padding's 24), the first centred about the top tick
+   (28 + 8) and the last about the lowest (216 - 20 - 8). */
+.axis {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: var(--size-saving-summary-axis-width);
+  padding: var(--space-auth-divider-inset) var(--space-card-padding) var(--space-goals-body-gap) 0;
+}
+
+.axisLabel {
+  width: var(--size-avatar);
+  height: var(--line-height-16);
+}
+
+/* The plot's block from 36 down, the x label lines 12 under it, 4 above the box's end. */
+.plot {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  gap: var(--space-goals-divider-gap);
+  min-width: 0;
+  padding: var(--space-forgot-password-text-gap) 0 var(--space-goals-icon-gap);
+}
+
+.area {
+  flex-grow: 1;
+}
+
+.days {
+  display: flex;
+  justify-content: space-between;
+}
+
+.dayLabel {
+  width: var(--size-category-tile);
+  height: var(--line-height-16);
+}
