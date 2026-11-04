@@ -85,11 +85,17 @@ describe('the writes in frontend/src/api', () => {
   const counts = (name: string) =>
     Object.fromEntries(files.map((file) => [file, calls(readFileSync(join(apiDir, file), 'utf8'), name)]));
 
-  it('finds the mutations: the goal save (through useUserWrite), the account save and the session’s hooks', () => {
-    expect(counts('useMutation')).toMatchObject({ 'accounts.ts': 1, 'savings-goals.ts': 0, 'session.ts': 3 });
+  // Task 027: the limit save is the second write through `useUserWrite`.
+  it('finds the mutations: the goal and limit saves (through useUserWrite), the account save and the session’s hooks', () => {
+    expect(counts('useMutation')).toMatchObject({
+      'accounts.ts': 1,
+      'savings-goals.ts': 0,
+      'category-limits.ts': 0,
+      'session.ts': 3,
+    });
     expect(Object.values(counts('useMutation')).reduce((sum, count) => sum + count, 0)).toBe(4);
-    expect(counts('useUserWrite')).toMatchObject({ 'savings-goals.ts': 1 });
-    expect(Object.values(counts('useUserWrite')).reduce((sum, count) => sum + count, 0)).toBe(1);
+    expect(counts('useUserWrite')).toMatchObject({ 'savings-goals.ts': 1, 'category-limits.ts': 1 });
+    expect(Object.values(counts('useUserWrite')).reduce((sum, count) => sum + count, 0)).toBe(2);
   });
 
   it.each(files.filter((name) => name !== 'session.ts'))('sends every mutation of %s through sendWrite', (name) => {

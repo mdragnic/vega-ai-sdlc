@@ -466,3 +466,10 @@
   width: var(--size-card-width);
   margin: 0 auto;
 }
+
+/* Task 027: one category card as Goals draws it, at least 104 high, its content centred. */
+.goalItemCard {
+  display: flex;
+  align-items: center;
+  min-height: var(--size-goals-category-card-min-height);
+}

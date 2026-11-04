@@ -28,3 +28,9 @@
   outline: var(--border-width-focus-ring) solid var(--color-primary);
   outline-offset: var(--space-focus-ring-offset);
 }
+
+/* 110's category cards: "Adjust" 16 from the box's outer edges to the text and to the pencil (99 wide in PNG 110, 98 as built), where "Adjust
+   Goal" has 20 (task 027). */
+.compact {
+  padding: 0 calc(var(--space-adjust-button-padding-x-compact) - var(--border-width-input));
+}

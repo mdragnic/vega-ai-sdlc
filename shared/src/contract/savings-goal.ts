@@ -80,11 +80,17 @@ const amountText = (emptyCents: number | null) =>
   });
 
 /**
+ * A popup's Target text to the request amount, through the Target rule of the API (#31, #74, #84, #108 a): an empty
+ * field, or a lone `.`, is required. Shared by the goal popup and the category limit popup (task 027).
+ */
+export const goalTargetTextSchema = amountText(null).pipe(goalTargetSchema);
+
+/**
  * The goal popup's two text fields to the request amounts, through the same rules as the API (#74): an empty
  * Target is required, an empty Present is $0 (#84 b).
  */
 export const savingsGoalFormSchema = z.object({
-  target: amountText(null).pipe(goalTargetSchema),
+  target: goalTargetTextSchema,
   present: amountText(0).pipe(goalPresentSchema),
 });
 

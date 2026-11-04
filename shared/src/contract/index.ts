@@ -3,6 +3,7 @@ export * from './auth.js';
 export * from './bill.js';
 export * from './calendar.js';
 export * from './category.js';
+export * from './category-limit.js';
 export * from './entry.js';
 export * from './error.js';
 export * from './expenses.js';

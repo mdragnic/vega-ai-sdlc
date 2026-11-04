@@ -1,0 +1,60 @@
+Task 027 visual check, 2026-11-04 (Validation step 4). Playwright MCP, a fresh context at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed clock
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`), the Vite dev server, a new user on the demo data.
+Compared with docs/figma/110. Goals.png and docs/figma/110.2. Goals.png at 2x pixels by a Node PNG reader (built-ins
+only, session scratchpad, deleted at the end): the same regions measured on the PNG and on the screenshot, halved.
+No Figma calls.
+
+goals-110-1440-2x.png and category-cards-1440-2x.png (the demo limits) against 110
+- Same, measured: the six cards at x 304, 680 and 1056, 352 wide, 104 high, 24 apart, the rows 16 apart; in each card
+  the 40x48 Gray/06 tile at 24 from the left and 28 from the top with its 24px icon in Secondary at the same pixels
+  (Housing's icon ink x 338 to 358, y 569 to 584 on both); the name in Gray/03 Regular 16 and the limit in Default
+  Black Extrabold 18 from x 384 (16 after the tile; the ink from 385 to 386 on both); "Adjust" 36 high, its right edge
+  at x 632 (24 from the card's) and its pencil's ink at x 601 to 615, y 569 to 582 on both; the text "Adjust" in
+  Primary Regular 14; the 1px Primary border on white. The six in the order Housing, Food, Transportation,
+  Entertainment, Shopping, Others with the same icons and `$250.00` (the demo values match 110). No page scroll (the
+  page 1440 x 1024).
+- Different, measured:
+  1. Everything in the section is 1 px lower (the cards from y 525, 110's 524): the Savings Goal card above is 293
+     high with the demo goal, 110's 292 (task 025's listed difference).
+  2. The name's and the limit's lines are 1 px lower in the card: the two 24 lines with 4 between them centred on the
+     104 card (from 26 down), where 110 has them 25 down (Housing's name ink y 556 to 571.5 against 555 to 570.5 once
+     the 1 px of item 1 is taken off).
+  3. "Adjust" is 98 wide against 99 (x 534 to 632 against 533 to 632): the label in Chromium's Inter 14 is about
+     1.5 px narrower (its ink from x 551 against 549.5) and the 8 to the pencil is the 4px-grid token where 110
+     measures about 7 to 9; the 16 at the sides as measured. "Adjust Goal" is 140 against 142 for the same reason
+     (task 025).
+  4. The glyphs are about 1 px narrower in Chromium: "Housing" ink 59 wide against 61, `$250.00` 75.5 against 76.5.
+  5. The Savings Goal and Saving Summary cards, the header and the sidebar as tasks 011, 025 and 026 left them (the
+     period labels, the demo values, the chart, the date, the avatar initials).
+
+popup-110.2-1440-2x.png (Housing's "Adjust") against 110.2
+- Same, measured: the 488x280 panel from y 276 to 556; the field's box y 372 to 428 from panel x 64 to 424 with the
+  `$` at panel x 92 to 95 on both; Save 192x48 at panel x 148 to 340, y 460 to 508; the X at the same place; only the
+  content area dimmed (#DDDDDD over the page on both); "Target Amounts" alone, no Present Amounts.
+- Different:
+  1. The panel is 12 px right of the PNG, x 616 to 1104 against 604 to 1092: centred on the content area (#90 c).
+  2. The field shows `250` against `500000` (#31, #64: prefilled with the card's limit).
+  3. The field's border is Secondary (#525256) against #D1D1D1 (the unfocused `--color-special-bg`, #D2D2D2): the field has
+     focus when the popup opens (#35); 110.2 draws it unfocused. Task 005's focus style (not designed, #63).
+  4. The page behind as item 5 above.
+
+Evidence only (not designed or other sizes)
+- goals-1920x1080-2x.png: the cards 512 wide, 104 high, the tile and text at the left, "Adjust" at the right edge.
+- goals-1280x1024-2x.png (scrollbars hidden: the page 1280 wide): Transportation and Entertainment have "Adjust" under
+  the text, right-aligned, 16 below; the other four keep one line (#108 b); each row's cards one height (152); no
+  horizontal scroll. Housing's "Adjust" shows the #87 ring there: Esc had just closed the popup and returned focus to
+  it from the keyboard. (With a classic scrollbar, 1265 wide, every card wraps: e2e T30.)
+- state-long-limit-1440-2x.png: `$1,000,000,000.00` on Transportation at 1440: its "Adjust" under the text, its row
+  152 high, the second row 104.
+- state-skeleton-2x.png: six skeleton cards at 104 (a tile block, two lines centred in the text column's 52, a block of
+  "Adjust"'s size), no text. Retaken after the code review fix: the skeleton's text column is the cards' 52, so at 1280
+  its cards are 152 as the loaded ones (e2e "keeps the skeleton cards as high as the loaded cards").
+- state-error-2x.png: "Something went wrong." over Retry in one white card across the grid, 1104 x 224; the Savings
+  Goal card showed its goal meanwhile.
+- state-no-limit-card-2x.png: Food with "No limit set" in Gray/01 Regular 14 in the amount's place (its 24 line), the
+  tile, the name and "Adjust" kept (#125 a); Food's name level with Housing's and Transportation's (y 551). Retaken
+  after the code review fix (the line was 20 high, so Food's name sat 2 px lower).
+- state-no-limit-popup-2x.png, state-no-limit-required-2x.png: 110.2 for Food empty, the `$` alone, no placeholder; Save
+  shows "Target Amount is required" under the field (#125 b).
+- state-adjust-focus-ring-2x.png: Housing's "Adjust" from the keyboard with the 2px Primary ring at offset 2 (#87).

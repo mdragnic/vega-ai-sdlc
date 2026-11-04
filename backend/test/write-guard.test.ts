@@ -4,6 +4,7 @@ import { join, relative, resolve } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import {
   authContract,
+  categoryLimitsContract,
   type ContractEntry,
   savingsGoalsContract,
   testClockContract,
@@ -93,6 +94,14 @@ describe('the write guard (#119)', () => {
       }),
       stored: () => db.query('SELECT user_id, month, target_cents, present_cents FROM savings_goals ORDER BY id'),
     },
+    // Task 027: the limit save.
+    [keyOf(categoryLimitsContract.save)]: {
+      send: (marker) => ({
+        path: `/api${categoryLimitsContract.save.path}`,
+        body: { category: 'food', limit: usd(marker) },
+      }),
+      stored: () => db.query('SELECT user_id, category, limit_cents FROM category_limits ORDER BY id'),
+    },
     'PATCH /accounts/:accountId': {
       send: (marker) => ({
         path: `/api/accounts/${checkingId}`,
@@ -124,7 +133,9 @@ describe('the write guard (#119)', () => {
     ].toSorted();
 
     expect(guarded).toEqual(expected);
-    expect(guarded).toEqual(expect.arrayContaining(['PUT /api/savings-goals', 'PATCH /api/accounts/:accountId']));
+    expect(guarded).toEqual(
+      expect.arrayContaining(['PUT /api/savings-goals', 'PATCH /api/accounts/:accountId', 'PUT /api/category-limits']),
+    );
     // A new write needs a valid request below, so it is checked like these.
     expect(Object.keys(writes).toSorted()).toEqual(guardedEntries.map(keyOf).toSorted());
   });
@@ -217,7 +228,7 @@ describe('the stale tab (#110, #119)', () => {
     await app.close();
   });
 
-  it('refuses the goal PUT and the account PATCH sent with B’s cookie and A’s email, storing nothing', async () => {
+  it('refuses the goal PUT, the account PATCH and the limit PUT sent with B’s cookie and A’s email, storing nothing', async () => {
     const a = await signUp(app);
     const aId = (await userIdOf(db, a.user.email))!;
     const aChecking = Number((await financeRows(db, aId)).accounts[1]!.id);
@@ -246,10 +257,15 @@ describe('the stale tab (#110, #119)', () => {
       accountType: 'loan',
     });
 
+    // Task 027: the limit save.
+    const limit = await fromStaleTab('put', '/api/category-limits').send({ category: 'food', limit: usd(9_999_900) });
+
     expect(goal.status).toBe(409);
     expect(account.status).toBe(409);
+    expect(limit.status).toBe(409);
     expect(goal.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
     expect(account.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
+    expect(limit.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
     expect({ a: await financeRows(db, aId), b: await financeRows(db, bId) }).toEqual(before);
   });
 });

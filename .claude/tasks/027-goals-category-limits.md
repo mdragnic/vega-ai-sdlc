@@ -1,6 +1,6 @@
 # Task 027: Goals: Expenses Goals by Category and Adjust popup
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 025
 - Size: M
@@ -189,9 +189,81 @@ The no-limit card and popup follow #125 (closed, Marko, 2026-11-04: as proposed)
 - INDEX: row 027 cites #125's answer; no open questions remain.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-11-04, build (`/next-task 027`)
+- Decisions checked: every cited decision closed (#125 included). Status in-progress at 16:01.
+- **Shared.**
+  - `goalTargetTextSchema` extracted from `savingsGoalFormSchema` (the same expression; its tests unchanged).
+  - `shared/src/contract/category-limit.ts`:
+    - `categoryLimitMessages.invalidCategory` ("Enter a valid category");
+    - `categoryLimitSchema` (`limit` nullable);
+    - `categoryLimitsResponseSchema` (the six once each, in order);
+    - `categoryLimitRequestSchema` (the category through an enum of the six with that text; the limit through `goalTargetSchema`);
+    - `categoryLimitResponseSchema`, `categoryLimitFormSchema` and `categoryLimitsContract` (`list`, `save`).
+- **Backend.** No table, column or migration.
+  - `CategoryLimitsService.list`: one `findBy({ userId })`, the six in order, `null` without a row.
+  - `CategoryLimitsService.save`: one `upsert` on (`userId`, `category`) with `skipUpdateIfNoValuesChanged: false`, then the row read back.
+  - `CategoryLimitsController`: the two contract paths, the user from `@CurrentUser()`, the body through `@Body({ schema })`.
+  - `GoalsModule` registers both. Neither reads the Clock or the zone.
+- **Frontend.**
+  - `api/category-limits.ts`: `useCategoryLimits` (`['category-limits']`) and `useSaveCategoryLimit`, through `useUserWrite`. The answer replaces its entry, then only `['category-limits']` is invalidated (exact).
+  - `useGoalPopupSubmit`, next to `GoalPopupInput`: `SavingsGoalPopup`'s submit and close logic, moved unchanged. Both popups use it; `SavingsGoalPopup`'s tests pass as they were.
+  - `CategoryLimitPopup` (110.2).
+  - `GoalItem`: the tile, the name with soft hyphens over a hidden clean `h3`, the limit or "No limit set", and the compact "Adjust" described by the name; it wraps per #108 b.
+  - `GoalItemList`: `DataState`, the list on 110's grid, the error card across it at least 224 high. `GoalItemSkeleton`.
+  - `AdjustButton` `compact`. `GoalsPage` uses `GoalItemList`.
+  - Gallery sections, `components.md` rows (three Code-only, `GoalItem` and `AdjustButton` notes).
+  - Five tokens with their sources in `tokens.md`, measured on 110 at 2x (the compact inset 16, the tile gap 16, the text gap 4) or set by #108 b (the wrap gap 16) and the grid (224).
+- Measured on 110 at 2x with a PNG reader (built-ins only, in the scratchpad, deleted after the step). The task file's places hold: the tile x 656 to 735, the name ink from 770, "Adjust"'s border x 1066 to 1263, the card y 1048 to 1255.
+- **Departure from the task file, for the gate.** AC17's "Adjust" 99x36 is the PNG's measure; as built it is 98x36. The label in Chromium's Inter 14 is about 1.5 px narrower, and the 8 to the pencil is the 4px-grid token where 110 measures about 7 to 9; the 16 at the sides is as measured. This is task 025's "Adjust Goal" 142 against 140. e2e T30 asserts 98 and the 15px padding (16 less the border).
+- **Existing tests changed by the Scope (none weakened):**
+  - `goals.test.tsx` T13 and e2e `goals.spec.ts` T25 keep the section title and its six (white) cards, and leave their content to this task's tests.
+  - `goals.spec.ts`'s category-card locator is now the list items. Its layout helper allows a taller row only where a row grows (one height per row, at least 104, the second row 16 under the first). The callers assert `[104, 104]` at 1440, 1920 and 2560.
+  - `write-guard.test.ts` covers the limit `PUT` in the route list, the 400/409 cases and the stale tab. `csrf.test.ts` adds the cross-site cases; `cache-control.test.ts` and `no-direct-time.test.ts` list the new routes and files.
+  - `finance-schema.test.ts` adds a -1 limit. `account-details-source.test.ts` counts `useUserWrite` twice, none in `category-limits.ts`. The gallery test is extended.
+  - The MSW support gains `categoryLimits`, `saveCategoryLimit`, `categoryLimitsBackend` and the demo answer in `signedInDefaults()`.
+- **Validation:**
+  1. `npm run lint` failed first on 8 test-file rule findings (unscoped helpers, `expect` with a message argument, conditional `expect`s), all fixed: rework 1. Then `npm run lint` and `npm run typecheck` exit 0.
+  2. `npm test` exit 0: shared 1438, backend 1215, frontend 1479 (1480 after the review's addition).
+  3. e2e during the build: "Adjust" measured 97.9 against the 99 the test took from the PNG (the departure above). The test was corrected to the build's 98 and now also asserts the padding: rework 2. `npm run e2e` exit 0: 308 passed; after the review fixes 311 passed.
+  4. Breaks: 5 of 5 caught, every restore matched (`evidence/027/breaks-summary.md`). Break 1 was caught by the service tests while the API's "whatever userId the query names" passed; after the review that test was reordered and catches it too (re-run recorded).
+  5. Visual check against 110 and 110.2: `evidence/027/visual-differences.txt`. The section's places match at 2x; it sits 1 px lower (the 293 Savings Goal card, task 025), the text lines 1 px lower in the card, "Adjust" 98 wide, the glyphs about 1 px narrower. 110.2's panel, field, Save and X match, with the panel 12 px right (#90 c), `250` against `500000`, and the focused field's border.
+  6. Manual checks on `npm run dev`: `evidence/027/manual-checks.txt`, all as expected. A first scripted loop closed the popups faster than Radix starts listening and read focus too early; at human pace every close works on both popups (task 025 noted the same timing).
+- **Security review: no findings** (`evidence/027/security-review.md`).
+- **Code review** (`superpowers:requesting-code-review`): "Ready to merge: Yes"; no Critical or Important. The five Minor items were all done, each test first where a test applies:
+  1. The API isolation test could not fail on break 1. It is reordered (the session user first, the other user's changed rows after) and fails under break 1.
+  2. The skeleton's text column is the cards' 52, so at 1280 its cards are 152 like the loaded ones (138 before). New e2e: "keeps the skeleton cards as high as the loaded cards" at 1440 and 1280, red at 1280 first.
+  3. "No limit set" takes the amount's 24 line (14/20 type kept), so the card's name is level with its row's (2 px lower before). New e2e, red first.
+  4. AC14's failing Saving Summary card added beside the Savings Goal one (passes; the behavior existed).
+  5. "99 wide" in `components.md`, `tokens.md` and the CSS comment now says "99 in PNG 110, 98 as built".
+  - Set aside by the reviewer, accepted as set aside:
+    - the `usd` helper copied as in six other services;
+    - a save not cancelled when the popup closes (inherited from `SavingsGoalPopup`, whose behavior stays unchanged);
+    - the gallery samples' real popup (as `SavingsGoalPopup`'s);
+    - the per-component wrap-gap token (the project's convention);
+    - an ignored `userId` query (as every route);
+    - the shared type `CategoryLimit` sharing the entity's name (as `SavingsGoal`);
+    - no `aria-labelledby` on the `li` (AC16 is met by the `h3`);
+    - an old JSDoc line;
+    - the Out of scope items.
+- Evidence screenshots retaken after the review fixes: the skeleton and the no-limit card.
+- Process: listing processes through PowerShell to stop the manual-check backend was denied by the permission classifier. The backend's background task was stopped instead, and its orphaned process on port 3000 was ended by PID.
+- No Figma calls.
+
+### 2026-11-04, approved
+- Approved by human (Marko, `/approve-task`).
+- Checked by Marko in the browser, all good:
+  - the six category cards at 1440 against 110, in #61's order;
+  - popup 110.2 for Food: prefilled with 250, Target only, the errors for empty, 0 and over the maximum;
+  - a save changing only Food's card, with Savings Goal and Saving Summary unchanged;
+  - the limits the same in another month;
+  - Tab to each "Adjust" with the ring, and Escape returning focus to that card's "Adjust";
+  - 1280 with "Adjust" under the text, nothing overlapping, and the bottom inset.
+- Accepted as built: "Adjust" 98 wide against 110's 99 (the 4px grid, as task 025's "Adjust Goal"); the 1px offsets and the narrower glyphs as listed; the e2e expectation corrected to the built 98.
+- Metrics note (Marko): the code review again found a test that could not fail on the bug it names (the other-user API test, fixed by reordering). This is the same pattern as tasks 016 and 019. It is counted as "tests that passed by construction" in the task 027 row of `docs/metrics.md`.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-11-04 16:01
+- Finished: 2026-11-04 17:26
+- Human interventions: 1
+- Rework loops: 2
+- Notes on prompts that failed: a scripted popup close faster than Radix starts listening (and a focus read before it returned) looked like a defect in headed Chromium; at human pace it is not (task 025 noted the same). A PowerShell process lookup was denied by the permission classifier; stopping the background task and then `taskkill` by the exact PID worked.

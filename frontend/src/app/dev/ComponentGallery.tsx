@@ -1,6 +1,9 @@
 import {
   type AccountDetailsResponse,
   type AccountsResponse,
+  type CategoryLimit,
+  type CategoryLimitsResponse,
+  categoryLabel,
   expenseCategorySchema,
   formatAmountInput,
   formatMonthLabel,
@@ -66,6 +69,9 @@ import {
   ExpensesLineItem,
   FieldError,
   FormError,
+  GoalItem,
+  GoalItemList,
+  GoalItemSkeleton,
   Goals,
   GoalsSkeleton,
   Header,
@@ -1580,6 +1586,32 @@ function SavingSummaryExample({
   );
 }
 
+/** A first login's limits as `GET /api/category-limits` sends them: $250.00 for each of the six (demo-data.md). */
+const sampleCategoryLimits: CategoryLimitsResponse = {
+  limits: expenseCategorySchema.options.map((category) => ({ category, limit: { cents: 25_000, currency: 'USD' } })),
+};
+
+/** One category card as Goals draws it at 1440: a 352 wide `Card`, at least 104 high, its content centred. */
+function GoalItemCard({ item }: { item: CategoryLimit }) {
+  return (
+    <div className={styles.sampleCard}>
+      <Card className={styles.goalItemCard}>
+        <GoalItem item={item} />
+      </Card>
+    </div>
+  );
+}
+
+/** The category cards on a local query, as the page's grid at 1440 (three 352 cards). */
+function GoalItemListExample({ name, answer }: { name: string; answer: CategoryLimitsResponse | 'pending' | 'fails' }) {
+  const query = useSampleQuery(['category-limits', name], answer);
+  return (
+    <div className={styles.chartThreeCards}>
+      <GoalItemList query={query} />
+    </div>
+  );
+}
+
 /** The chart alone in the card's content box at 1440 (664 wide). */
 function SavingSummaryChartSample({ answer }: { answer: SavingSummaryResponse }) {
   return (
@@ -2441,8 +2473,50 @@ export function ComponentGallery() {
         <Example name="Adjust Goal (110)">
           <AdjustButton label="Adjust Goal" />
         </Example>
-        <Example name="Adjust (110, task 027)">
-          <AdjustButton label="Adjust" />
+        <Example name="Adjust, compact (110 category cards)">
+          <AdjustButton label="Adjust" compact />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="GoalItem" wide>
+        {sampleCategoryLimits.limits.map((item) => (
+          <Example key={item.category} name={categoryLabel(item.category)}>
+            <GoalItemCard item={item} />
+          </Example>
+        ))}
+        <Example name='A $1,000,000,000.00 limit: "Adjust" under the text'>
+          <GoalItemCard item={{ category: 'transportation', limit: { cents: 100_000_000_000, currency: 'USD' } }} />
+        </Example>
+        <Example name="No limit set (#125)">
+          <GoalItemCard item={{ category: 'food', limit: null }} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="GoalItemList" wide>
+        <Example name="The demo limits (110)">
+          <GoalItemListExample name="demo" answer={sampleCategoryLimits} />
+        </Example>
+        <Example name="Loading">
+          <GoalItemListExample name="loading" answer="pending" />
+        </Example>
+        <Example name="Error">
+          <GoalItemListExample name="error" answer="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="GoalItemSkeleton" wide>
+        <Example name="Loading">
+          <div className={styles.chartThreeCards}>
+            <GoalItemSkeleton />
+          </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="CategoryLimitPopup">
+        <Example name="110.2 from a category card">
+          <p className={styles.panelText}>
+            Adjust on a GoalItem card above opens it. It saves through the API, so Save works when signed in.
+          </p>
         </Example>
       </GallerySection>
 

@@ -725,6 +725,36 @@ describe('component gallery', () => {
     expect(figure('SavingSummaryChartSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(13);
   });
 
+  // Task 027 T22: the Expenses Goals by Category parts on sample data, with no request.
+  it('shows the category limit samples: each category, a long limit, no limit, the list’s states, the skeleton and "Adjust"', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    await renderGallery();
+
+    const item = (example: string) => figure('GoalItem', example);
+    expect(within(item('Housing')).getByRole('heading', { level: 3 })).toHaveTextContent('Housing');
+    expect(within(item('Transportation')).getByText('$250.00')).toBeInTheDocument();
+    for (const name of ['Housing', 'Food', 'Transportation', 'Entertainment', 'Shopping', 'Others']) {
+      expect(within(item(name)).getByRole('button', { name: 'Adjust' })).toHaveAccessibleDescription(name);
+    }
+    expect(
+      within(item('A $1,000,000,000.00 limit: "Adjust" under the text')).getByText('$1,000,000,000.00'),
+    ).toBeVisible();
+    expect(within(item('No limit set (#125)')).getByText('No limit set')).toBeVisible();
+
+    const list = (example: string) => figure('GoalItemList', example);
+    expect(await within(list('The demo limits (110)')).findAllByRole('listitem')).toHaveLength(6);
+    expect(list('Loading').querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(await within(list('Error')).findByRole('alert')).toHaveTextContent('Something went wrong.');
+    // Six cards: a tile block, two lines and the button's block.
+    expect(figure('GoalItemSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(24);
+
+    expect(
+      within(figure('AdjustButton', 'Adjust, compact (110 category cards)')).getByRole('button'),
+    ).toHaveTextContent('Adjust');
+    expect(within(figure('CategoryLimitPopup', '110.2 from a category card')).getByText(/Adjust/)).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   // Task 019 T15: the Balances parts on sample data, with no request.
   it('shows the Balances samples: the cards, a long Bank Name and balance, Details, the Add Accounts cell and the skeleton', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');

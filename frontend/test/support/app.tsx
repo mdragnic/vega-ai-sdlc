@@ -6,13 +6,17 @@ import {
   type AccountDetailsResponse,
   type AccountsResponse,
   type AccountType,
+  type CategoryLimitRequest,
+  type CategoryLimitsResponse,
   type CurrentUser,
   type ErrorResponse,
   EXPECTED_USER_HEADER,
+  type ExpenseCategory,
   type ExpensesBreakdownResponse,
   type MonthlyComparisonResponse,
   goalMessages,
   goalProgress,
+  type Money,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
   type SavingSummaryResponse,
@@ -473,6 +477,103 @@ export function goalsBackend(months: string[] = demoGoalMonths) {
   /** Sets a month's stored goal, as another tab's save would. */
   const set = (answer: SavingsGoalResponse) => goals.set(answer.month, answer);
   return { handlers, saved, expectedUsers, set };
+}
+
+/** The six categories in the designed order (#56, #61), written out. */
+const limitCategories = ['housing', 'food', 'transportation', 'entertainment', 'shopping', 'others'] as const;
+
+/** A first login's limits as `GET /api/category-limits` sends them: $250.00 each (demo-data.md, Categories). */
+export const demoCategoryLimits: CategoryLimitsResponse = {
+  limits: limitCategories.map((category) => ({ category, limit: usd(25_000) })),
+};
+
+/** The demo limits with one category's limit replaced (`null`: no row, #125 a). */
+export const categoryLimitsWith = (category: ExpenseCategory, limit: Money | null): CategoryLimitsResponse => ({
+  limits: demoCategoryLimits.limits.map((entry) => (entry.category === category ? { category, limit } : entry)),
+});
+
+const categoryLimitsPath = '*/api/category-limits';
+const limitsFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/** `GET /api/category-limits` answers (task 027). */
+export const categoryLimits = {
+  answers: (body: CategoryLimitsResponse = demoCategoryLimits) =>
+    http.get(categoryLimitsPath, () => HttpResponse.json(body)),
+  /** Food's limit changed to $300.50. */
+  foodChanged: () => http.get(categoryLimitsPath, () => HttpResponse.json(categoryLimitsWith('food', usd(30_050)))),
+  /** Food without a row: `limit: null` (#125 a). */
+  noFoodLimit: () => http.get(categoryLimitsPath, () => HttpResponse.json(categoryLimitsWith('food', null))),
+  pending: () =>
+    http.get(categoryLimitsPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoCategoryLimits);
+    }),
+  fails: () => http.get(categoryLimitsPath, limitsFailure),
+  /** Fails the first load and its 3 retries, then answers the demo limits (Retry). */
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(categoryLimitsPath, () => {
+      tries += 1;
+      return tries <= 4 ? limitsFailure() : HttpResponse.json(demoCategoryLimits);
+    });
+  },
+};
+
+/** `PUT /api/category-limits` answers (task 027). */
+export const saveCategoryLimit = {
+  /** 200 with the body it was sent, as the backend answers a valid save. */
+  echoes: () =>
+    http.put(categoryLimitsPath, async ({ request }) => {
+      const { category, limit } = (await request.json()) as CategoryLimitRequest;
+      return HttpResponse.json({ category, limit });
+    }),
+  /** Held until `release`, then answered with `answer`. */
+  held: (answer: CategoryLimitRequest = { category: 'food', limit: usd(9_900_000) }) => {
+    const { promise: released, resolve: release } = Promise.withResolvers<void>();
+    const handler = http.put(categoryLimitsPath, async () => {
+      await released;
+      return HttpResponse.json(answer);
+    });
+    return { handler, release };
+  },
+  fails: () => http.put(categoryLimitsPath, limitsFailure),
+  networkError: () => http.put(categoryLimitsPath, () => HttpResponse.error()),
+  /** The write guard's 409: another user is signed in (#119). */
+  otherUser: () => http.put(categoryLimitsPath, () => HttpResponse.json(otherUserSignedIn, { status: 409 })),
+  /** A 400 with the field's text, as the backend answers a limit the form would not send. */
+  fieldError: (message: string) =>
+    http.put(categoryLimitsPath, () =>
+      HttpResponse.json({ message: 'Validation failed', fieldErrors: { limit: message } } satisfies ErrorResponse, {
+        status: 400,
+      }),
+    ),
+};
+
+/**
+ * A backend's limits for one test (task 027): `GET /api/category-limits` answers the stored six (the demo limits, or
+ * `initial`); `PUT /api/category-limits` records the body and its `X-Expected-User`, stores the limit and answers
+ * `{ category, limit }`; without the header the write guard's 400 and nothing stored.
+ */
+export function categoryLimitsBackend(initial: CategoryLimitsResponse = demoCategoryLimits) {
+  let stored = initial;
+  const saved: CategoryLimitRequest[] = [];
+  const expectedUsers: (string | null)[] = [];
+  const handlers = [
+    http.get(categoryLimitsPath, () => HttpResponse.json(stored)),
+    http.put(categoryLimitsPath, async ({ request }) => {
+      expectedUsers.push(request.headers.get(EXPECTED_USER_HEADER));
+      if (!request.headers.get(EXPECTED_USER_HEADER)) return expectedUserMissing();
+      const body = (await request.json()) as CategoryLimitRequest;
+      saved.push(body);
+      stored = {
+        limits: stored.limits.map((entry) =>
+          entry.category === body.category ? { category: body.category, limit: body.limit } : entry,
+        ),
+      };
+      return HttpResponse.json({ category: body.category, limit: body.limit });
+    }),
+  ];
+  return { handlers, saved, expectedUsers };
 }
 
 /** A bill as `GET /api/bills/upcoming` sends it. */
@@ -1622,7 +1723,8 @@ export const monthlyComparison = {
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
  * asking, one that opens Transactions has its pages, one that opens a demo account's Account Details has its details
  * and history, one that opens Expenses has its monthly comparison and the same expenses breakdown, and one that opens
- * Goals has its months, each month's goal and each month's Saving Summary: the demo data of each. A test's own `server.use` comes first.
+ * Goals has its months, each month's goal, each month's Saving Summary and the category limits (task 027): the demo data
+ * of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
@@ -1630,6 +1732,7 @@ export const signedInDefaults = () => [
   savingsGoalMonths.answers(),
   savingsGoalForMonth.answers(),
   savingSummary.answers(),
+  categoryLimits.answers(),
   upcomingBills.answers(),
   recentTransactions.answers(),
   weeklyComparison.answers(),

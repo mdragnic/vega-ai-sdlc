@@ -1,0 +1,63 @@
+/* 110 `Goal Item`: the tile, then the text and "Adjust" 16 after it, centred on the card's content (24 inset, see
+   GoalItemList), so at the card's 104 the tile sits 28 from the top and "Adjust" 34. */
+.item {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  gap: var(--space-goal-item-tile-gap);
+  min-width: 0;
+}
+
+/* The text at the left, "Adjust" at the right edge. The text is as wide as its longer line, so "Adjust" stays beside it
+   while 16 at least keeps them apart; otherwise it moves under the text, right-aligned, 16 below (#106, #108 b, #111 a).
+   Wider cards widen the space between them (#94). */
+.body {
+  display: flex;
+  flex-grow: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-goal-item-wrap-gap);
+  min-width: 0;
+}
+
+/* The name over the limit, 4 between their line boxes. A name or amount wider than the text column wraps inside it: the
+   name at its soft hyphens, with `hyphens: auto` for browsers with a dictionary, `overflow-wrap: anywhere` the fallback
+   (#115 b). */
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goal-item-text-gap);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 110 "Housing": Regular 16/24, Gray/03. */
+.name {
+  margin: 0;
+  color: var(--color-gray-03);
+  font: var(--font-regular-16-24);
+}
+
+/* 110 "$250.00": Extrabold 18/24, Default Black, as 109's card total. */
+.amount {
+  margin: 0;
+  color: var(--color-default-black);
+  font: var(--font-exbold-18-24);
+}
+
+/* Not designed (#125 a): "No limit set" in the amount's place, in DataState's empty-message style: Gray/01, so 14px
+   text keeps a 4.5:1 contrast on white. In the amount's 24 line, so the text column keeps its 52 and the name stays
+   level with its row's (task 027 code review). */
+.noLimit {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+  line-height: var(--line-height-24);
+}
+
+/* "Adjust" at the content's right edge, also when it moves under the text. */
+.adjust {
+  display: flex;
+  margin-left: auto;
+}

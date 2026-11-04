@@ -70,6 +70,9 @@ describe('Cache-Control on /api', () => {
         shared.expensesContract.breakdown,
         // Task 024: the Expenses chart.
         shared.expensesContract.monthlyComparison,
+        // Task 027: the category limits.
+        shared.categoryLimitsContract.list,
+        shared.categoryLimitsContract.save,
         // Task 026: the Saving Summary chart.
         shared.savingSummaryContract.summary,
         // Task 022: the account write and, below, its empty-segment form.

@@ -13,7 +13,8 @@ const categories = (page: Page) => region(page, 'Expenses Goals by Category');
 const topRow = (page: Page) => goals(page).locator(':scope > div').last();
 const savingsGoalCard = (page: Page) => topRow(page).locator(':scope > div').first();
 const savingSummaryCard = (page: Page) => topRow(page).locator(':scope > div').nth(1);
-const categoryCards = (page: Page) => categories(page).locator(':scope > div').last().locator(':scope > div');
+/** Task 027: the six category cards, each a list item (`GoalItemList`). */
+const categoryCards = (page: Page) => categories(page).getByRole('listitem');
 const selector = (page: Page) => goals(page).getByRole('combobox', { name: 'Savings Goal' });
 /** Task 026: the Saving Summary's selector and its chart's hidden table. */
 const summarySelector = (page: Page) => goals(page).getByRole('combobox', { name: 'Saving Summary', exact: true });
@@ -108,8 +109,9 @@ async function save(page: Page, target: string, present: string) {
 }
 
 // T25: AC1 and AC2, the first login's Goals page (US-16 criteria 1 and 2; #11, #18, #30, #58, #60, #105 a). Task 026:
-// the Saving Summary card is filled; the category cards stay empty until task 027.
-test('opens Goals from the sidebar with October’s goal and the Saving Summary, and the category cards empty', async ({
+// the Saving Summary card is filled. Task 027 fills the category cards: this test keeps the section's title and its six
+// white cards; their content is goals-category-limits.spec.ts's.
+test('opens Goals from the sidebar with October’s goal, the Saving Summary and six white category cards', async ({
   page,
 }) => {
   await signUp(page.request);
@@ -131,9 +133,7 @@ test('opens Goals from the sidebar with October’s goal and the Saving Summary,
   expect(await computed(savingSummaryCard(page), 'background-color')).toBe(white);
   await expect(categoryCards(page)).toHaveCount(6);
   for (const card of await categoryCards(page).all()) {
-    await expect(card).toHaveText('');
-    expect(await computed(card, 'background-color')).toBe(white);
-    expect(await card.locator('a, button, input, select, textarea, [tabindex]').count()).toBe(0);
+    expect(await computed(card.locator(':scope > div'), 'background-color')).toBe(white);
   }
 });
 
@@ -536,16 +536,21 @@ async function expectLayout(page: Page) {
 
   const categoriesTop = parts.card.y + parts.card.height + 32 + 32 + 16;
   const cardWidth = (width - 48) / 3;
-  for (const [index, card] of (await categoryCards(page).all()).entries()) {
-    const cell = await box(card);
+  const categoryBoxes = await Promise.all((await categoryCards(page).all()).map(box));
+  expect(categoryBoxes).toHaveLength(6);
+  // Task 027: the cards are filled, so a row grows where its "Adjust" moves under the text (1280, #108 b); each row's
+  // cards one height, at least 104, the second row 16 under the first. The callers check 104 where nothing wraps.
+  const rowHeights = [categoryBoxes[0]!.height, categoryBoxes[3]!.height];
+  for (const [index, cell] of categoryBoxes.entries()) {
     const [row, column] = [Math.floor(index / 3), index % 3];
     near(cell.x, content.x + column * (cardWidth + 24), `category ${index + 1} x`);
-    near(cell.y, categoriesTop + row * (104 + 16), `category ${index + 1} y`);
+    near(cell.y, categoriesTop + (row === 0 ? 0 : rowHeights[0]! + 16), `category ${index + 1} y`);
     near(cell.width, cardWidth, `category ${index + 1} width`);
-    near(cell.height, 104, `category ${index + 1} height`);
+    near(cell.height, rowHeights[row]!, `category ${index + 1} height: one per row`);
+    expect(cell.height, `category ${index + 1} at least 104`).toBeGreaterThanOrEqual(103.5);
   }
   expect(await scrollWidth(page), 'no horizontal scroll').toBe(Math.round(right));
-  return parts;
+  return { ...parts, categoryHeights: rowHeights };
 }
 
 // T34: AC21, 110's boxes at 1440x1024, wider at 1920 and 2560, #108 b at 1280 and with long amounts, the bottom inset.
@@ -557,6 +562,7 @@ test('places the cards where 110 does at 1440, keeps 368 : 712 wider, and wraps 
   // 368 wide with no scrollbar gutter (110); headless Chromium keeps a classic one's 15 px, so the split is checked
   // from the page's right edge in expectLayout (#101).
   near(at1440.card.height, CARD_HEIGHT, 'Savings Goal height at 1440');
+  expect(at1440.categoryHeights, 'the category cards 104 at 1440').toEqual([104, 104]);
   // 110's 142 less 2: the label in Inter 14 (76) and the 8 to the pencil on the 4px grid, measured about 9 (#65).
   near(at1440.adjust.width, 140, 'Adjust Goal 140 wide', 1);
   near(at1440.adjust.height, 36, 'Adjust Goal 36 high');
@@ -572,6 +578,7 @@ test('places the cards where 110 does at 1440, keeps 368 : 712 wider, and wraps 
     await page.setViewportSize({ width, height });
     const parts = await expectLayout(page);
     near(parts.card.height, CARD_HEIGHT, `${width}: height unchanged`);
+    expect(parts.categoryHeights, `${width}: the category cards 104`).toEqual([104, 104]);
     expect(parts.meter.x, `${width}: the gauge at the right`).toBeGreaterThan(parts.card.x + parts.card.width / 2);
   }
 
@@ -590,9 +597,8 @@ test('places the cards where 110 does at 1440, keeps 368 : 712 wider, and wraps 
   await page.setViewportSize({ width: 1440, height: 600 });
   const { pageEnd, lastBottom } = await page.evaluate(() => {
     window.scrollTo(0, document.documentElement.scrollHeight);
-    const cards = [...document.querySelectorAll('main section')]
-      .at(-1)!
-      .querySelectorAll(':scope > div:last-child > div');
+    // Task 027: the category cards are list items.
+    const cards = [...document.querySelectorAll('main section')].at(-1)!.querySelectorAll('li');
     return {
       pageEnd: document.documentElement.scrollHeight,
       lastBottom: cards[cards.length - 1]!.getBoundingClientRect().bottom + window.scrollY,

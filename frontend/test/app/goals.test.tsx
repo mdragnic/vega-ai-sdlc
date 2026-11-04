@@ -259,22 +259,17 @@ describe('the Goals page', () => {
     ]);
   });
 
-  // Task 026 changes task 025's empty-card test: the Saving Summary card is filled; the category cards stay empty
-  // until task 027.
-  it('shows the Saving Summary card filled and six category cards, white and empty, with nothing focusable', async () => {
+  // Task 026 changes task 025's empty-card test: the Saving Summary card is filled. Task 027 fills the category cards:
+  // this test keeps the section's title and its six cards; their content is goals-category-limits.test.tsx's.
+  it('shows the Saving Summary card filled and the section "Expenses Goals by Category" with six cards', async () => {
     await openGoals();
     await goalShown();
     await chartShown();
 
     expect(topCards()).toHaveLength(2);
     expect(within(savingSummaryCard()).getByRole('heading', { level: 3 })).toHaveTextContent('Saving Summary');
-    const categoryCards = [...(categories().lastElementChild as HTMLElement).children];
-    expect(categoryCards).toHaveLength(6);
     expect(within(categories()).getByRole('heading', { level: 2 })).toHaveTextContent('Expenses Goals by Category');
-    for (const card of categoryCards) {
-      expect(card.textContent).toBe('');
-      expect(card.querySelectorAll('a, button, input, select, textarea, [tabindex], [role]')).toHaveLength(0);
-    }
+    expect(await within(categories()).findAllByRole('listitem')).toHaveLength(6);
   });
 });
 

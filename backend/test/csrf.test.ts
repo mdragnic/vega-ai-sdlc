@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import { errorResponseSchema, savingsGoalsContract } from '@finebank/shared';
+import { categoryLimitsContract, errorResponseSchema, savingsGoalsContract } from '@finebank/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -47,6 +47,14 @@ describe('CSRF protection', () => {
 
   const goalRows = async () =>
     db.query<Record<string, unknown>[]>("SELECT * FROM savings_goals WHERE month = '2026-10' ORDER BY id");
+
+  // Task 027: the limit rows and a limit PUT with the signed-in user's email in X-Expected-User (#119).
+  const limitRows = async () => db.query<Record<string, unknown>[]>('SELECT * FROM category_limits ORDER BY id');
+  const putLimit = ({ token, user }: { token: string; user: { email: string } }, headers: Record<string, string>) =>
+    request(app.getHttpServer())
+      .put(`/api${categoryLimitsContract.save.path}`)
+      .set({ ...headers, Cookie: cookieFor(token), 'X-Expected-User': user.email })
+      .send({ category: 'food', limit: { cents: 100, currency: 'USD' } });
 
   it.each(crossSite)('rejects a sign up with %s and stores nothing', async (_case, headers) => {
     const response = await post('/api/auth/signup', headers).send(newUser());
@@ -115,6 +123,28 @@ describe('CSRF protection', () => {
 
       expect(response.status).toBe(200);
       expect((await goalRows())[0]).toMatchObject({ target_cents: 100, present_cents: 0 });
+    });
+  });
+
+  // Task 027: the limit PUT.
+  describe('the category limit PUT', () => {
+    it.each(crossSite)('rejects it with %s and keeps the limits', async (_case, headers) => {
+      const signedUp = await signUp(app);
+      const before = await limitRows();
+
+      const response = await putLimit(signedUp, headers);
+
+      expectForbidden(response);
+      expect(await limitRows()).toEqual(before);
+    });
+
+    it('lets a same-origin one through', async () => {
+      const signedUp = await signUp(app);
+
+      const response = await putLimit(signedUp, { 'Sec-Fetch-Site': 'same-origin' });
+
+      expect(response.status).toBe(200);
+      expect(await limitRows()).toContainEqual(expect.objectContaining({ category: 'food', limit_cents: 100 }));
     });
   });
 

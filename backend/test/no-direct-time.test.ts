@@ -71,6 +71,15 @@ describe('time in backend/src', () => {
     );
   });
 
+  // Task 027 T10: the category limits, which read no time at all (#32).
+  it('scans the category limits', () => {
+    const files = sourceFiles(srcDir).map((file) => relative(srcDir, file).replaceAll('\\', '/'));
+
+    expect(files).toEqual(
+      expect.arrayContaining(['goals/category-limits.service.ts', 'goals/category-limits.controller.ts']),
+    );
+  });
+
   it('never reads the system time outside the clock files', () => {
     const offenders = sourceFiles(srcDir)
       .map((file) => relative(srcDir, file).replaceAll('\\', '/'))

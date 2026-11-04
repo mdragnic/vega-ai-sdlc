@@ -1,17 +1,16 @@
 import { useState } from 'react';
 
+import { useCategoryLimits } from '../../api/category-limits';
 import { useSavingSummary } from '../../api/saving-summary';
 import { useSavingsGoal, useSavingsGoalMonths } from '../../api/savings-goals';
-import { Card, SavingSummary, SavingsGoal, Section } from '../../components';
+import { Card, GoalItemList, SavingSummary, SavingsGoal, Section } from '../../components';
 import styles from './GoalsPage.module.css';
-
-/** The six category cards of 110, filled by task 027. */
-const categoryCards = ['housing', 'food', 'transportation', 'entertainment', 'shopping', 'others'] as const;
 
 /**
  * Goals (110, US-16): the section "Goals" with the Savings Goal card and the Saving Summary card in one row (368 : 712,
- * #94), and 32 under it the section "Expenses Goals by Category" with six cards on a 3x2 grid. The category cards stay
- * white and empty until task 027 (#105 a pattern). The Savings Goal card's month is the newest of the list until the user picks one, so a page left open past midnight moves to the new month when the
+ * #94), and 32 under it the section "Expenses Goals by Category" with the six category cards on a 3x2 grid
+ * (`GoalItemList`, task 027): one limit per category for every month, so no selector picks a month for them and a pick
+ * in either card never changes them (#32). The Savings Goal card's month is the newest of the list until the user picks one, so a page left open past midnight moves to the new month when the
  * list is fetched again; a picked month stays while it is in the list. While the Adjust Goal popup is open its month is
  * held, so the card behind it stays on the month the save names (as Overview's popup keeps its month, task 014); if the
  * list moved on meanwhile, that month stays selected after the popup closes, as if picked, so the card shows what was
@@ -32,6 +31,7 @@ export function GoalsPage() {
   const summaryMonth =
     list === undefined ? undefined : summaryPicked !== null && list.includes(summaryPicked) ? summaryPicked : list[0];
   const summary = useSavingSummary(summaryMonth);
+  const limits = useCategoryLimits();
 
   const onPopupOpenChange = (open: boolean) => {
     if (open) {
@@ -66,13 +66,7 @@ export function GoalsPage() {
         </div>
       </Section>
       <Section title="Expenses Goals by Category" gap="lg">
-        <div className={styles.categoryGrid}>
-          {categoryCards.map((category) => (
-            <Card key={category} className={styles.categoryCard}>
-              {null}
-            </Card>
-          ))}
-        </div>
+        <GoalItemList query={limits} />
       </Section>
     </div>
   );

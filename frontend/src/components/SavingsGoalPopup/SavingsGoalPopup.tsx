@@ -1,11 +1,11 @@
 import { formatAmountInput, type SavingsGoal, savingsGoalFormSchema } from '@finebank/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type FormEvent, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { formErrorFor, serverFieldErrors } from '../../api/client';
 import { useSaveSavingsGoal } from '../../api/savings-goals';
 import { GoalPopupInput } from '../GoalPopupInput/GoalPopupInput';
+import { useGoalPopupSubmit } from '../GoalPopupInput/useGoalPopupSubmit';
 import { PopupInputSmall } from '../PopupInputSmall/PopupInputSmall';
 
 /** The fields a failed request's `fieldErrors` can point to in this popup (#74). */
@@ -37,10 +37,11 @@ const fieldsFor = (goal: SavingsGoal | null) =>
 
 /**
  * 104.1 and 110.1 (Figma `Popup Input` 416:6381): the goal popup of Overview and Goals, Target Amounts and Present
- * Amounts, prefilled with the goal on the card (#18, #31). The shared form schema reads the texts and checks the amount rules the API checks
- * (#74, #84, #108 a). While saving, Save is disabled with its spinner and nothing else is sent; on success the popup
- * closes; on a failure the field errors show under their fields, or the message above Save (#6, #97 a), and the
- * typed values stay. X, Esc and the dimmed area discard the typing (#35). A save still running when the popup closes
+ * Amounts, prefilled with the goal on the card (#18, #31). The shared form schema reads the texts and checks the amount
+ * rules the API checks (#74, #84, #108 a). The submit and close logic is the goal popups' shared hook
+ * (`useGoalPopupSubmit`, task 027): while saving, Save is disabled with its spinner and nothing else is sent; on success
+ * the popup closes; on a failure the field errors show under their fields, or the message above Save (#6, #97 a), and
+ * the typed values stay. X, Esc and the dimmed area discard the typing (#35). A save still running when the popup closes
  * is not cancelled: the card shows its answer (`useSaveSavingsGoal`). Mount one per opening (a new `key`), so the form
  * starts from the goal on the card.
  */
@@ -48,55 +49,21 @@ export function SavingsGoalPopup({ open, onOpenChange, month, goal, title }: Sav
   // The month the prefilled values belong to: October's values are never saved as November's (#58, #123 b).
   const [openedMonth] = useState(month);
   const save = useSaveSavingsGoal();
+  const form = useForm({ resolver: zodResolver(savingsGoalFormSchema), defaultValues: fieldsFor(goal) });
   const {
     formState: { errors },
-    handleSubmit,
     register,
-    setError,
-  } = useForm({ resolver: zodResolver(savingsGoalFormSchema), defaultValues: fieldsFor(goal) });
-  // True from a submit until its save settles or the form stops it, also before the next render shows Save busy.
-  const submitting = useRef(false);
-
-  // The save's amounts leave the mutation cache with the popup.
-  const close = () => {
-    save.reset();
-    onOpenChange(false);
-  };
-
-  // Save or Enter in a field: one save at a time, and nothing is sent while a rule is broken (#6).
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    if (submitting.current) return;
-    submitting.current = true;
-    // The last attempt's message stays until the next one starts.
-    save.reset();
-    const done = () => {
-      submitting.current = false;
-    };
-    void handleSubmit((amounts) => {
-      save.mutate(
-        { month: openedMonth, ...amounts },
-        {
-          onSuccess: close,
-          onError: (error) => {
-            for (const [name, message] of serverFieldErrors(error, fieldNames)) {
-              setError(name, { type: 'server', message });
-            }
-          },
-          onSettled: done,
-        },
-      );
-    }, done)(event);
-  };
+  } = form;
+  const popup = useGoalPopupSubmit({
+    form,
+    save,
+    variables: (amounts) => ({ month: openedMonth, ...amounts }),
+    fieldNames,
+    onOpenChange,
+  });
 
   return (
-    <GoalPopupInput
-      open={open}
-      onOpenChange={(next) => (next ? onOpenChange(true) : close())}
-      title={title}
-      onSubmit={submit}
-      saving={save.isPending}
-      formError={save.isError ? formErrorFor(save.error, fieldNames) : undefined}
-    >
+    <GoalPopupInput open={open} title={title} {...popup}>
       <PopupInputSmall label="Target Amounts" error={errors.target?.message} {...register('target')} />
       <PopupInputSmall
         label="Present Amounts"

@@ -1,0 +1,39 @@
+Task 027 manual checks, 2026-11-04 (Validation step 5). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page is 1425 wide in a 1440 window, #101), Europe/Belgrade. The development backend on the real clock
+(today 4 Nov 2026) and Vite, run separately (`npm run dev -w backend`, `npm run dev -w frontend`) so the backend alone
+could be stopped. No Figma calls.
+
+1. Sign up through the form (/sign-up): lands on /overview; the sidebar's "Goals" opens /goals. The six cards in the
+   order Housing, Food, Transportation, Entertainment, Shopping, Others, each `$250.00` with "Adjust"; each card 347
+   wide and 104 high, "Adjust" 24 from its right edge; the page asked for the limits once (`GET /api/category-limits`,
+   no query); no horizontal or vertical scroll (1425 x 1024, manual-1440.png).
+   Food's "Adjust": the dialog "Adjust limit for Food", the field `250`. Esc, X and a click on the dimmed area each
+   close it with the typed `777` discarded, focus back on Food's "Adjust", and it reopens with `250`; the same for
+   "Adjust Goal" on the Savings Goal card. (A first scripted loop closed the popup within a tick of typing, faster than
+   Radix starts listening: one dimmed-area click was missed and, after the X or the dimmed area, focus was read as the
+   page body before it had returned. With 300 ms pauses, as by hand, every close works and focus is back on the opener,
+   for both popups. Task 025 recorded the same script timing; `Popup` is task 005's, not changed here.)
+   Saved Food with `300.5`: `PUT /api/category-limits` with `{ category: "food", limit: { cents: 30050, currency: "USD" } }`
+   and `X-Expected-User` the signed-in email; the popup closed, focus on Food's "Adjust"; the requests after it were
+   only the PUT and one `GET /api/category-limits`; Food `$300.50`, the other five `$250.00`. After a reload the same.
+2. Both month selectors after the save: the Savings Goal selector `Mar, 2026` asked only for
+   `GET /api/savings-goals?month=2026-03`, the Saving Summary selector `Mar, 2026` only for
+   `GET /api/saving-summary?month=2026-03`; no limits request; the cards stayed `$250.00`, `$300.50`, `$250.00` x 4.
+3. Resized to 1920x1080 (each card 507 wide, 104 high, "Adjust" beside the text, manual-1920.png), 1280x1024 (the page
+   1265 wide: each card 293.7 wide and 152 high with "Adjust" under the text, right-aligned, 24 from the edge,
+   manual-1280.png) and back to 1440x1024 (347 wide, 104, all beside); no horizontal scroll at any width (scroll widths
+   1905, 1265, 1425). Saved `1000000000` on Transportation at 1440: `$1,000,000,000.00` on one line, its "Adjust" under
+   the text, the first row 152 high (Housing and Food stretched to it), the second row 104 (manual-long-limit-1440.png).
+4. Two tabs of one browser: tab 1 on Goals with Shopping's popup open and `444` typed; tab 2 logged out and signed up
+   a second user. Back in tab 1, Save: 409 "Another user is signed in. Nothing was saved."; the session check then found
+   the second user, the cached data was cleared, the popup closed and the cards showed the second user's six `$250.00`
+   (manual-two-tabs.png). The second user's Shopping limit was still 25000 cents (`GET /api/category-limits` from tab 2).
+5. Tab 3 opened on Overview first (no limits loaded there), tab 1 with Others' popup open and `600` typed. The backend
+   stopped (its `npm run dev` task and the orphaned process on port 3000 ended). Tab 1, Save: "Something went wrong."
+   above Save, `600` kept, the popup open (manual-backend-down-save.png). Tab 3, the sidebar's "Goals": six skeleton
+   cards at 104 (manual-backend-down-skeleton.png); after about 7 s (the request and its 3 retries) "Something went
+   wrong." and Retry in one white card across the grid, 1089 x 224, the section title above it
+   (manual-backend-down-error.png); the Savings Goal and Saving Summary cards showed their own error states. The
+   backend started again: Tab from the Saving Summary card's Retry reached the category card's Retry with the ring;
+   Enter loaded the six cards, and focus stayed on the section's DataState root with the ring, not the page body
+   (#114, manual-retry-loaded.png).

@@ -1,0 +1,43 @@
+/* The section's content, a flex column at least the grid's two rows high (224), so DataState's states take its room and
+   the section keeps its height in every state (#105 a). */
+.content {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-goal-item-list-min-height);
+}
+
+/* Not designed (#6, #116): the error state in one white card across the grid's width and height, drawn here whenever the
+   content holds neither the cards' nor the skeleton's grid. The card's look is `Card`'s (components/Card/Card.module.css):
+   keep the two the same. */
+.content:not(:has(.grid)) {
+  padding: var(--space-card-padding);
+  border-radius: var(--radius-card);
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+/* 110: three equal columns that fill the content area at any width (#94), 24 apart, the rows 16 apart; each row as high
+   as its tallest card, the cards stretched to it (#108 b). The skeleton uses the same grid. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-goals-category-row-gap) var(--space-card-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A grid cell; its card fills it. */
+.cell {
+  display: flex;
+  min-width: 0;
+}
+
+/* 110: `Card`'s radius, shadow and 24 inset, 104 high at least; the content centred in a card stretched by its row. */
+.card {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--size-goals-category-card-min-height);
+}

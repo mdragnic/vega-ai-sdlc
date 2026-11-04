@@ -39,14 +39,3 @@
 .savingSummaryBody {
   padding: var(--space-savings-goal-padding-top) var(--space-card-padding) var(--space-card-padding);
 }
-
-/* 110: three columns 24 apart and two rows 16 apart, each card at least 104 high. */
-.categoryGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-goals-category-row-gap) var(--space-card-gap);
-}
-
-.categoryCard {
-  min-height: var(--size-goals-category-card-min-height);
-}

@@ -267,6 +267,8 @@ describe('finance tables', () => {
       ['a target of 0', 'savings_goals', { target_cents: 0 }],
       ['a negative present amount', 'savings_goals', { present_cents: -1 }],
       ['a limit of 0', 'category_limits', { limit_cents: 0 }],
+      // Task 027 T9: below 0 too.
+      ['a negative limit', 'category_limits', { limit_cents: -1 }],
       ['an unknown limit category', 'category_limits', { category: 'bills' }],
     ])('rejects %s', async (_case, table, change) => {
       await expect(insert(table, { ...rows[table]!(), ...change })).rejects.toThrow(/constraint failed/i);
