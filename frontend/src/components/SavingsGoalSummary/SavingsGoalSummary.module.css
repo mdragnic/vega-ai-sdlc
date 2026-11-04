@@ -1,0 +1,59 @@
+/* 104 and 110: the amounts on the left, centered on the gauge on the right. Where they do not fit side by side, the
+   gauge moves under the amounts, right-aligned (#108 b). Wider columns widen the space between (#94). */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-goals-wrap-gap);
+}
+
+.amounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goals-group-gap);
+  margin: 0;
+}
+
+/* The 24px icon at the left of its label and amount, the text 4 after it. */
+.amount {
+  position: relative;
+  padding-left: calc(var(--size-icon) + var(--space-goals-icon-gap));
+}
+
+.icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  color: var(--color-secondary);
+}
+
+/* 104 "Target Achieved": Gray/02, Regular 12/16. */
+.label {
+  color: var(--color-gray-02);
+  font: var(--font-regular-12-16);
+  white-space: nowrap;
+}
+
+/* 104 "$12,500": Default Black, Bold 16/24. */
+.value {
+  margin: var(--space-goals-amount-gap) 0 0;
+  color: var(--color-default-black);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* The gauge's drawing box, as wide as its arc: the caption reaches a little past it on both sides, and the `$20k`
+   label to the content's right edge, 8 past the arc (104, 110). */
+.gauge {
+  display: flex;
+  justify-content: center;
+  width: var(--size-gauge-width);
+  margin-right: var(--space-goals-gauge-inset);
+  margin-left: auto;
+}

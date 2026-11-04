@@ -1,0 +1,76 @@
+/* Not designed (#6): the shapes of `SavingsGoalSummary`, the amounts on the left and the gauge on the right, for the
+   Overview Goals skeleton and the Goals page's Savings Goal skeleton. Existing tokens only. */
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.amounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goals-group-gap);
+}
+
+.amount {
+  display: flex;
+  gap: var(--space-goals-icon-gap);
+}
+
+.icon {
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+/* The label line (12px text) over the amount line (16px text). */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-goals-amount-gap);
+}
+
+.label {
+  width: var(--size-amount-box-width-lg);
+  height: var(--font-size-12);
+}
+
+.value {
+  width: var(--size-amount-box-width);
+  height: var(--font-size-16);
+}
+
+/* The gauge's 128px box at the card's right, its half circle and the $0, Present and Target label lines below. */
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-label-gap);
+  width: var(--size-gauge-width);
+  margin-right: var(--space-goals-gauge-inset);
+}
+
+.arc {
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 2;
+}
+
+.circle {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.gaugeLabels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.limit {
+  width: var(--size-icon);
+  height: var(--font-size-12);
+}
+
+.gaugeValue {
+  width: var(--size-category-tile);
+  height: var(--font-size-16);
+}

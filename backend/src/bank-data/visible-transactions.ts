@@ -34,4 +34,12 @@ export class VisibleTransactions {
         : filter.occurredBefore;
     return this.bankData.listTransactions(userId, { ...filter, occurredBefore });
   }
+
+  /**
+   * The instant of the user's earliest transaction dated up to today in `timeZone`, of any status, direction or
+   * account, or null: a row dated after today never counts (#53, #123 a).
+   */
+  earliestOccurredAt(userId: number, timeZone: string): Promise<Date | null> {
+    return this.bankData.earliestTransactionAt(userId, startOfNextDay(this.clock.now(), timeZone));
+  }
 }

@@ -1,6 +1,6 @@
 # Task 025: Goals: Savings Goal card, month selector and Adjust Goal popup
 
-- Status: todo
+- Status: done
 - Gate: human
 - Depends on: 014
 - Size: L
@@ -197,9 +197,45 @@ The Scope follows #123 (closed, Marko, 2026-11-04: (a) a1; (b) 409, as proposed)
 - INDEX: row 025 cites #123's answer; no open questions remain.
 - Not started: Marko asked for the detailing commit only. No Figma calls.
 
+### 2026-11-04, build (`/next-task 025`)
+- Started 09:12; status `in-progress` in this file and INDEX. #123 closed; every cited decision closed. No Figma calls (budget 0).
+- Built test-first, layer by layer, each red watched before the code:
+  - **Shared**: `goalMessages.monthUnavailable` (#123 b) in place of `monthEnded`; `savingsGoalMonthsResponseSchema` (at least one month, strictly newest first); `savingsGoalMonthQuerySchema`; `savingsGoalsContract.months` and `.month`; `formatMonthLabel('2026-10')` on `goalMonthSchema`.
+  - **Backend**: `monthIn` in `plain-date.ts` (task 014's `currentMonthIn` moved, its test renamed `month-in.test.ts` with the 2021-12-31T23:30:00Z cases added; `ExpensesService`'s two inline copies use it; a source test keeps it the only way); `BankDataProvider.earliestTransactionAt` (one `MIN` query, the user in its WHERE, `before` exclusive, NaN refused) behind `VisibleTransactions.earliestOccurredAt` (tomorrow's start in the zone), added to the bank-data source guard; `SavingsGoalsService.months`, `forMonth` and `save` with one private `checkMonth` on `range()` (#123 a1: the earlier of the earliest visible transaction's month and the lowest goal month not after the current one, the current month without either); the two routes in `SavingsGoalsController`; `GoalsModule` imports `BankDataModule`. No table, column or migration.
+  - **Frontend**: `useUserWrite` in `session.ts` (through `sendWrite`, the epoch noted at the start, the success handler only in the same session, `gcTime: 0`); `useSavingsGoalMonths`, `useSavingsGoal(month)`, `useSaveSavingsGoal` on the helper (the answer into its month's query, into `current` only for the same month); `SavingsGoalSummary` (from `Goals`, Overview unchanged), `SavingsGoal` (one `DataState` over the months and the selected goal through a small combined query), `SavingsGoalSkeleton`, `AdjustButton`, and `SummarySkeleton` in `SavingsGoalSummary`'s folder, shared with `GoalsSkeleton` (its look unchanged); `SavingsGoalPopup` takes its `title`; `GoalsPage` at `paths.goals`; tokens; Code-only rows; gallery sections, the month sample written out as `YYYY-MM`.
+- Settled while building, for the gate:
+  - **The card is 293 high with the demo goal, not 292**: 110 puts the divider 11 px under the period box; on the 4px grid (#65) the token is 12 (as Overview's `--space-goals-divider-gap`), so everything under it is 1 px lower. The 292 minimum holds in the other states (skeleton, error: 292). AC21's y 444 is 445; the e2e checks 293 with this reason.
+  - **Measured, not as detailed**: "Savings Goal" is Semibold 16 (Semibold 18 was 110.5 wide against 110's 99.5; 16 matches to half a pixel); "Adjust Goal" is Regular 14 (the cap 10 high, the label 75 wide; Regular 16 made the button 151 wide). The button is 140 wide against 142 (the 8 px to the pencil on the grid, measured about 9).
+  - **New tokens as the Scope lists them**, with 110 sources, even where Overview has the same value (the divider and body gaps): `--space-savings-goal-padding-top`, `-divider-gap`, `-body-gap`, `-button-gap`, `--space-goals-category-row-gap`, `--space-adjust-button-padding-x`, `-icon-gap`, `--size-goals-column-savings-goal` / `-saving-summary` (368fr / 712fr), `--size-savings-goal-card-min-height`, `--size-goals-category-card-min-height`, `--size-adjust-button-height`, `--size-adjust-button-skeleton-width` (not designed).
+  - **The popup across midnight on Goals** (code review, below): while the popup is open the page holds its month, so a list fetched again behind it never swaps the card, the typing or the month the save names; if the list moved meanwhile, that month stays selected after the popup closes, as if picked (the card shows what was saved, "Adjust Goal" keeps the focus). Opened and closed with the list unchanged, the default month still follows the list (AC7).
+  - The selector's placeholder is a `Skeleton` of `--size-amount-box-width-lg` x the box height; after a failed first months load the selector's place stays empty (the row keeps its 32).
+  - `VisibleTransactions.earliestOccurredAt` reads "now" itself (as its `list`), so `range()` reads the Clock twice, microseconds apart: accepted (code review minor 3).
+- Existing tests changed by the Scope, none weakened: task 014's month-rule tests (a past month now 200, future and earlier 409 `monthUnavailable`); `overview-goals.test.tsx` (the 409 text; the midnight test now checks the 200 and that November stays on the card); the path guard and 404 list; `cache-control.test.ts`; the fake providers; `format-date.test.ts`; T4 and T15 for `/goals`; task 022's write-source guard (`account-details-source.test.ts`) follows the goal save into `useUserWrite` (still exactly one `sendWrite` caller per write, the session's own mutations without it).
+- Validation:
+  1. Lint + typecheck: failed once (rework loop 1: `unicorn(consistent-function-scoping)` on ten test helpers declared inside `describe`/`it`; moved to their outer scope), then pass.
+  2. Unit tests: pass (shared 1215, backend 1102, frontend 1346; after the review fix 1348).
+  3. E2E: failed once (rework loop 2: `charts.spec.ts`, the gauge and bar chart samples: two box reads straddled the 112 px shift when the gallery's DataState "Error" example switches at 800 ms, which the longer gallery now always hit; fixed by waiting for every "Error" example's alert, as `popup-amount-dropdown.spec.ts` since task 024; 75 of 75 over 3 repeats), then 290 passed. Also fixed while writing `goals.spec.ts`: Playwright's role name match is a substring, so "Goals" matched "Expenses Goals by Category" (exact now); headless Chromium keeps the 15 px gutter, so the 368 is checked from the page edge.
+  4. Visual (`evidence/025/visual-differences.txt`, the screenshots): 110 and 110.1 at 1440x1024 2x measured with a Node PNG reader; the same titles, card x, title, period box edge, amounts, caption, label and pencil x, category columns; the differences listed (1 px lower under the divider, the 140 button, the period label, the demo values, the empty cards, the header date and avatar; the panel 12 px right, #90 c). Every undesigned state as evidence.
+  5. Manual (`evidence/025/manual-checks.txt`): headed Chromium with classic scrollbars on the development stack (4 Nov 2026): sign up, the card, the selector by mouse and keyboard, the popup on a past month closed each way, saves and Overview, 1920 / 1280 / 1440 and long amounts, two tabs, the backend stopped (Save's message, the cached goal, the skeleton and error state of an unloaded month) and Retry by keyboard. Two script-speed artefacts noted (keys sent before Radix focused the list; presses before Radix listens), not reachable by hand. Run before the review fix, which the unit tests cover.
+- Proof by breaking it on purpose (`evidence/025/breaks-summary.md`): 5 of 5 caught, every restore hash matched. Break 4 (a past month's answer into Overview's `current`) was caught by one test at first; "still shows October's $16,250.00 after a September save" was strengthened (Overview's own read held, so a cache-only render is seen) and the rerun caught it with both. Working files deleted.
+- Security review (`evidence/025/security-review.md`): no findings.
+- Code review (`superpowers:requesting-code-review`): no critical; "with fixes".
+  - Important, fixed: on Goals an open popup was torn down and reopened for the new month when the default month moved behind it (the card's skeleton unmounted the popup, losing the typing; it came back open on November, so October's figures could be saved into November; focus fell to the body). Test-first (red: the October popup gone), then the hold above; two tests (the popup kept with its typing, the save naming October, focus on "Adjust Goal", the month kept after; the default still following the list after a plain open and close).
+  - Minor, fixed: `SummarySkeleton` got its Code-only row; a misleading test value (`progress: 0.48`) replaced by the asserted amounts.
+  - Minor, accepted: the Clock read twice in `range()` (above).
+  - Declined by the reviewer and accepted here: the gallery popup's Save has no session (a dev page); `MIN` over the join at demo size; the list length bound by the user's own data; the placeholder's borrowed width token; no placeholder after a failed months load; the e2e `page.request` without Origin (as earlier tasks; `csrf.test.ts` covers cross-site).
+- Final verification after the review fix: lint and typecheck exit 0; `npm test` exit 0 (shared 1215, backend 1102, frontend 1348). `npm run e2e` failed once more (rework loop 3, the second on step 3): in `goals.spec.ts` (1) the keyboard pick pressed ArrowDown before Radix had focused the open list's selected option, so Enter kept October: now it waits for that option's focus first, as `account-details-edit.spec.ts` does; (2) found in a 5x repeat: after a broken rule, react-hook-form moves focus to the field with the error twice (`_focusError(); setTimeout(_focusError)`), so the next `fill` of Target could type into Present (refused there, Target kept `20000`): each broken rule now waits for its field's focus. Both are test races a person cannot hit; `goals.spec.ts` then passed 55 of 55 over 5 repeats, and `npm run e2e` 290 passed, exit 0; lint exit 0 again.
+- Gate report 11:23; status `awaiting-human`. No Figma calls.
+
+### 2026-11-04, approval (`/approve-task`)
+- Approved by human (Marko, 11:48). His notes, verbatim:
+  > Checked by Marko in the browser: Goals at 1440 against 110 with Oct, 2026 and the empty Saving Summary and category cards; the selector from Oct 2026 down to Jan 2022 with no future month; a past month (Mar 2026) adjusted with popup 110.1 prefilled and named, the card updating and Overview's Goals card unchanged; the current month adjusted and Overview updated; keyboard order, the ring on Adjust Goal, Escape returning focus: all good.
+  > Accepted, as built: the card 293 high and Adjust Goal 140 wide (4px grid, AC21's y 444 reads 445); the font sizes measured from the PNG (Savings Goal Semibold 16, Adjust Goal Regular 14) over the task file; the popup-across-midnight rule (the open popup keeps its month and typed values, that month stays selected after closing); the backend reading the clock twice in one decision.
+- Status `done` in this file and INDEX; the metrics row copied into `docs/metrics.md`. No Figma calls.
+
 ## Metrics
-- Started:
-- Finished:
-- Human interventions: 0
-- Rework loops: 0
-- Notes on prompts that failed:
+- Started: 2026-11-04 09:12
+- Finished: 2026-11-04 11:48
+- Human interventions: 1
+- Rework loops: 3
+- Notes on prompts that failed: Python in Git Bash is version 2 (no UTF-8 source): edits went through Node scripts in quoted heredocs and the Edit tool. Playwright role names match substrings ("Goals" also matched "Expenses Goals by Category"; `exact: true`). Stopping `npm run dev` from the shell left the backend, its `nest --watch` and Vite running (ended by PID before each e2e run).

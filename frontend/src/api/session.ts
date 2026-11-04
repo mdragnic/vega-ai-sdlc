@@ -209,6 +209,49 @@ export async function sendWrite<
   return apiWrite(user.email, entry, ...args);
 }
 
+/** A user-data write for `useUserWrite`: its key, its contract entry and the success handler of its answer. */
+type UserWrite<
+  Variables,
+  Req extends z.ZodType | undefined,
+  Res extends z.ZodType,
+  Search extends QuerySchema | undefined,
+  Params extends ParamsSchema | undefined,
+> = {
+  mutationKey: readonly string[];
+  entry: ContractEntry<Req, Res, Search, Params>;
+  /** The entry's arguments for the mutation's variables: its path parameters, its body, then its query. */
+  args: (variables: Variables) => RequestArgs<Req, Search, Params>;
+  /** Runs only when the answer comes in the session the write started in. */
+  onSuccess: (response: z.output<Res>, variables: Variables) => void;
+};
+
+/**
+ * The one way a user-data write is sent (every goal write: task 025's save, task 027's limit): through `sendWrite`, so
+ * it carries the tab's user (#119), with the session count noted when it starts. Its success handler runs only when the
+ * count is the same at the answer: a write answered after its session ended (a logout, a 401, another user found in
+ * another tab) changes no query or cache (#39). Its variables leave the mutation cache as soon as nothing shows the
+ * write (`gcTime: 0`): they hold the typed amounts.
+ */
+export function useUserWrite<
+  Variables,
+  Req extends z.ZodType | undefined,
+  Res extends z.ZodType,
+  Search extends QuerySchema | undefined = undefined,
+  Params extends ParamsSchema | undefined = undefined,
+>({ mutationKey, entry, args, onSuccess }: UserWrite<Variables, Req, Res, Search, Params>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey,
+    mutationFn: (variables: Variables) => sendWrite(queryClient, entry, ...args(variables)),
+    gcTime: 0,
+    onMutate: () => ({ epoch: sessionEpoch(queryClient) }),
+    onSuccess: (response, variables, started) => {
+      if (started.epoch !== sessionEpoch(queryClient)) return;
+      onSuccess(response, variables);
+    },
+  });
+}
+
 /** The write guard's 409 (#119): another user is signed in, so nothing was saved. */
 const isOtherUserSignedIn = (error: unknown) =>
   error instanceof ApiError &&

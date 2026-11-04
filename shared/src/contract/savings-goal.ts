@@ -4,7 +4,7 @@ import { isAllowedAmountInput, parseAmountInput } from '../amount-input/index.js
 import type { ContractEntry } from './entry.js';
 import { type Money, moneySchema } from './money.js';
 
-/** The texts of the goal amount rules (#108 a) and of a save after the month ended (#108 d). */
+/** The texts of the goal amount rules (#108 a) and of a month outside the months the user can choose (#123 b). */
 export const goalMessages = {
   targetRequired: 'Target Amount is required',
   targetPositive: 'Target Amount must be greater than $0.00',
@@ -13,7 +13,8 @@ export const goalMessages = {
   /** A request the form cannot send: a negative amount, cents that are not whole, another currency, none. */
   invalidAmount: 'Enter a valid amount',
   invalidMonth: 'Enter a valid month',
-  monthEnded: 'This month has ended. Reload the page to see the current month.',
+  /** The 409 for a month after the current one or before the earliest, on the save and the one-month read (#123 b). */
+  monthUnavailable: 'This month is not available. Reload the page to see the months you can choose.',
 } as const;
 
 /** The largest goal amount, $1,000,000,000.00, in cents (#31). */
@@ -47,7 +48,10 @@ export const goalPresentSchema = goalMoney
   .refine((money) => money.cents <= MAX_GOAL_CENTS, { error: goalMessages.presentMax })
   .transform(ownKeys);
 
-/** `PUT /savings-goals`: the month the card shows (#108 d) and its amounts. Unknown keys, such as a user, are dropped. */
+/**
+ * `PUT /savings-goals`: the month the popup opened with and its amounts. The month is any one from the earliest the
+ * user can choose to the current one in their zone (#58 d, #123 b). Unknown keys, such as a user, are dropped.
+ */
 export const savingsGoalRequestSchema = z.object({
   month: goalMonthSchema,
   target: goalTargetSchema,
@@ -104,11 +108,47 @@ export const savingsGoalResponseSchema = z.object({
 export type SavingsGoalResponse = z.infer<typeof savingsGoalResponseSchema>;
 
 /**
- * The signed-in user's savings goal for the current month in the zone sent as `X-Time-Zone` (#39, #54, #58):
- * read it, or create or update it. Tasks 025 to 027 extend this for the Goals page.
+ * The months the user can choose (#60, #123 a): from the current month in their zone back to the earliest, at least
+ * one, strictly newest first. `YYYY-MM` strings of four-digit years sort as their months do. Unknown keys are dropped.
+ */
+export const savingsGoalMonthsResponseSchema = z.object({
+  months: z
+    .array(goalMonthSchema)
+    .min(1)
+    .refine((months) => months.every((month, index) => index === 0 || month < months[index - 1]!), {
+      error: 'The months are strictly newest first',
+    }),
+});
+
+export type SavingsGoalMonthsResponse = z.infer<typeof savingsGoalMonthsResponseSchema>;
+
+/** The query of `GET /savings-goals?month=`: the month, required. Nothing names a user (#39); unknown keys are dropped. */
+export const savingsGoalMonthQuerySchema = z.object({ month: goalMonthSchema });
+
+export type SavingsGoalMonthQuery = z.infer<typeof savingsGoalMonthQuerySchema>;
+
+/**
+ * The signed-in user's savings goals in the zone sent as `X-Time-Zone` (#39, #54, #58): the current month's (Overview);
+ * the months the user can choose, which both Goals selectors list (#60; the Saving Summary's in task 026); one of those
+ * months' goal (Goals); and the save, which creates or updates the goal of any of those months. A month after the
+ * current one or before the earliest answers 409 `goalMessages.monthUnavailable` on the one-month read and the save
+ * (#123 b), so no future goal is ever sent.
  */
 export const savingsGoalsContract = {
   current: { method: 'GET', path: '/savings-goals/current', request: undefined, response: savingsGoalResponseSchema },
+  months: {
+    method: 'GET',
+    path: '/savings-goals/months',
+    request: undefined,
+    response: savingsGoalMonthsResponseSchema,
+  },
+  month: {
+    method: 'GET',
+    path: '/savings-goals',
+    request: undefined,
+    query: savingsGoalMonthQuerySchema,
+    response: savingsGoalResponseSchema,
+  },
   save: {
     method: 'PUT',
     path: '/savings-goals',

@@ -373,3 +373,99 @@ describe('TypeOrmBankDataProvider', () => {
     });
   });
 });
+
+/** An instant as the transactions table stores it: `YYYY-MM-DD HH:MM:SS.SSS` in UTC. */
+const stored = (instant: string) => new Date(instant).toISOString().replace('T', ' ').replace('Z', '');
+
+/** Adds an expense to an account at an instant, with plain SQL. */
+async function addTransaction(db: DataSource, accountId: number, instant: string) {
+  await db.query(
+    `INSERT INTO transactions (account_id, occurred_at, direction, status, category, item, shop_name, receipt, amount_cents)
+     VALUES (?, ?, 'expense', 'complete', 'food', 'Added row', 'Pizza Hit', 'Ab3dE5gH9jK', 1000)`,
+    [accountId, stored(instant)],
+  );
+}
+
+// Task 025 T4, AC6: the user's earliest transaction before an instant, for the Goals months (#39, #77, #123 a).
+describe('TypeOrmBankDataProvider.earliestTransactionAt', () => {
+  let app: INestApplication;
+  let db: DataSource;
+  let provider: BankDataProvider;
+  let other: number;
+  let userId: number;
+
+  const FAR_FUTURE = new Date('2100-01-01T00:00:00Z');
+  /** The demo dataset's first rows (demo-data.md, Transactions). */
+  const DEMO_START = '2022-01-01T12:00:00.000Z';
+
+  beforeAll(async () => {
+    app = await createTestApp();
+    db = app.get(DataSource);
+    provider = app.get<BankDataProvider>(BANK_DATA_PROVIDER);
+    // The other user signs up first, so IDs never equal positions, and has a row in 2021.
+    other = (await userIdOf(db, (await signUp(app)).user.email))!;
+    userId = (await userIdOf(db, (await signUp(app)).user.email))!;
+    const [otherAccount] = await provider.listAccounts(other);
+    await addTransaction(db, otherAccount!.id, '2021-06-15T12:00:00Z');
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('answers the user’s own earliest instant, never another user’s', async () => {
+    expect((await provider.earliestTransactionAt(userId, FAR_FUTURE))?.toISOString()).toBe(DEMO_START);
+    expect((await provider.earliestTransactionAt(other, FAR_FUTURE))?.toISOString()).toBe('2021-06-15T12:00:00.000Z');
+  });
+
+  it('counts only rows before `before`, which is exclusive', async () => {
+    expect(await provider.earliestTransactionAt(userId, new Date(DEMO_START))).toBeNull();
+    expect((await provider.earliestTransactionAt(userId, new Date('2022-01-01T12:00:00.001Z')))?.toISOString()).toBe(
+      DEMO_START,
+    );
+    // The other user's row at 2021-06-15 is before it, and still not the user's.
+    expect(await provider.earliestTransactionAt(userId, new Date('2021-12-31T00:00:00Z'))).toBeNull();
+  });
+
+  it('counts any status, direction and account', async () => {
+    const accounts = await provider.listAccounts(userId);
+    await db.query(
+      `INSERT INTO transactions (account_id, occurred_at, direction, status, category, item, shop_name, receipt, amount_cents)
+       VALUES (?, ?, 'income', 'pending', NULL, 'Pending refund', 'Bright Studio', 'Ab3dE5gH9jK', 500)`,
+      [accounts.at(-1)!.id, stored('2021-11-30T08:00:00Z')],
+    );
+
+    expect((await provider.earliestTransactionAt(userId, FAR_FUTURE))?.toISOString()).toBe('2021-11-30T08:00:00.000Z');
+
+    await db.query('DELETE FROM transactions WHERE item = ?', ['Pending refund']);
+  });
+
+  it('answers null for a user with no rows', async () => {
+    await db.query("INSERT INTO users (email, full_name, username) VALUES ('empty@example.com', 'Empty', 'empty')");
+    const empty = (await userIdOf(db, 'empty@example.com'))!;
+
+    expect(await provider.earliestTransactionAt(empty, FAR_FUTURE)).toBeNull();
+  });
+
+  it('reads it in one query with the user and the bound in its WHERE', async () => {
+    const statements: string[] = [];
+    const logQuery = vi.spyOn(db.logger, 'logQuery').mockImplementation((sql) => {
+      statements.push(sql);
+    });
+    try {
+      await provider.earliestTransactionAt(userId, FAR_FUTURE);
+    } finally {
+      logQuery.mockRestore();
+    }
+
+    expect(statements).toHaveLength(1);
+    const [sql] = statements as [string];
+    expect(sql).toMatch(/^SELECT\b.*\bMIN\(/is);
+    expect(/"a"\."user_id" = (\d+)/.exec(whereOf(sql))?.[1]).toBe(String(userId));
+    expect(whereOf(sql)).toMatch(/"t"\."occurred_at" </);
+  });
+
+  it('rejects an invalid date, which would bind as NaN and drop the bound', async () => {
+    await expect(provider.earliestTransactionAt(userId, new Date('not a date'))).rejects.toThrow(RangeError);
+  });
+});

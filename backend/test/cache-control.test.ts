@@ -63,6 +63,9 @@ describe('Cache-Control on /api', () => {
         shared.authContract.logout,
         shared.testClockContract.set,
         shared.savingsGoalsContract.save,
+        // Task 025: the Goals months and one month's goal.
+        shared.savingsGoalsContract.months,
+        shared.savingsGoalsContract.month,
         shared.statisticsContract.weeklyComparison,
         shared.expensesContract.breakdown,
         // Task 024: the Expenses chart.

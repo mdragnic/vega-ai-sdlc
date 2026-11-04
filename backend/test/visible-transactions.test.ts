@@ -4,6 +4,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { VisibleTransactions } from '../src/bank-data/visible-transactions.js';
 import { FixedClock } from '../src/common/clock/fixed-clock.js';
+import { signUp } from './helpers/auth.js';
+import { userIdOf } from './helpers/finance.js';
 import { createTestApp } from './helpers/test-app.js';
 
 /**
@@ -115,8 +117,48 @@ describe('VisibleTransactions', () => {
     expect(await items(BELGRADE, { direction: 'income' })).toEqual([]);
   });
 
+  // Task 025 T5, AC6: the earliest instant counts only rows dated up to today in the zone (#53, #123 a).
+  it('answers the earliest instant dated up to today in the zone, or null', async () => {
+    // 22:00 on 21 Oct in Belgrade, 16:00 in New York: the first row is tomorrow in Belgrade, tonight in New York.
+    clock.set(new Date('2026-10-21T20:00:00Z'));
+
+    expect(await visible.earliestOccurredAt(userId, BELGRADE)).toBeNull();
+    expect((await visible.earliestOccurredAt(userId, NEW_YORK))?.toISOString()).toBe('2026-10-21T22:30:00.000Z');
+    expect(await visible.earliestOccurredAt(userId + 1, NEW_YORK)).toBeNull();
+  });
+
   it('lists only the signed-in user’s rows', async () => {
     expect(await items(BELGRADE, { accountId: accountId + 1 })).toEqual([]);
     expect((await visible.list(userId + 1, NEW_YORK)).transactions).toEqual([]);
+  });
+});
+
+// Task 025 T5, AC6: on the demo dataset, the earliest instant up to today (#53, #77, #123 a).
+describe('VisibleTransactions.earliestOccurredAt on the demo dataset', () => {
+  let app: INestApplication;
+  let clock: FixedClock;
+  let visible: VisibleTransactions;
+  let userId: number;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+    clock = app.get(FixedClock);
+    visible = app.get(VisibleTransactions);
+    const db = app.get(DataSource);
+    await signUp(app);
+    userId = (await userIdOf(db, (await signUp(app)).user.email))!;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it.each([
+    ['at the fixed clock', '2026-10-22T10:00:00Z', '2022-01-01T12:00:00.000Z'],
+    ['with the clock before the dataset', '2021-12-31T10:00:00Z', null],
+  ])('answers %s: %s', async (_case, now, earliest) => {
+    clock.set(new Date(now));
+
+    expect((await visible.earliestOccurredAt(userId, BELGRADE))?.toISOString() ?? null).toBe(earliest);
   });
 });

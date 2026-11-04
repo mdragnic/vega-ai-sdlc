@@ -1,9 +1,9 @@
 import { formatMoney, formatMonthLabel, type SavingsGoalResponse } from '@finebank/shared';
 import { useState } from 'react';
 
-import { Award, Edit, OcticonGoal16 } from '../../assets/icons';
+import { Edit } from '../../assets/icons';
 import { SavingsGoalPopup } from '../SavingsGoalPopup/SavingsGoalPopup';
-import { TargetVsAchievementMeter } from '../TargetVsAchievementMeter/TargetVsAchievementMeter';
+import { SavingsGoalSummary } from '../SavingsGoalSummary/SavingsGoalSummary';
 import styles from './Goals.module.css';
 
 type GoalsProps = {
@@ -19,12 +19,12 @@ type PopupState = { open: boolean; opened: number };
  * `SavingsGoalPopup` (#18) and the month over the divider; then "Target Achieved" (the Present) and "This month
  * Target" on the left and the gauge at the progress the backend sent on the right (#18, #31). Without a goal the
  * pencil and the month stay and "No goal for this month" fills the rest (#58, #108 c). Where a line does not fit,
- * its right part moves under it (#108 b). The amounts are shown as sent; nothing is calculated here (#11).
+ * its right part moves under it (#108 b). The amounts and the gauge are `SavingsGoalSummary`, shared with the Goals
+ * page (task 025). The amounts are shown as sent; nothing is calculated here (#11).
  */
 export function Goals({ data }: GoalsProps) {
   const { month, goal } = data;
   const [popup, setPopup] = useState<PopupState>({ open: false, opened: 0 });
-  const [year, monthNumber] = month.split('-').map(Number);
 
   return (
     <div className={styles.goals}>
@@ -40,30 +40,10 @@ export function Goals({ data }: GoalsProps) {
             <Edit aria-hidden="true" />
           </button>
         </div>
-        <p className={styles.month}>{formatMonthLabel(year!, monthNumber!)}</p>
+        <p className={styles.month}>{formatMonthLabel(month)}</p>
       </div>
       {goal ? (
-        <div className={styles.body}>
-          <dl className={styles.amounts}>
-            <div className={styles.amount}>
-              <dt className={styles.label}>
-                <Award className={styles.icon} aria-hidden="true" />
-                Target Achieved
-              </dt>
-              <dd className={styles.value}>{formatMoney(goal.present)}</dd>
-            </div>
-            <div className={styles.amount}>
-              <dt className={styles.label}>
-                <OcticonGoal16 className={styles.icon} aria-hidden="true" />
-                This month Target
-              </dt>
-              <dd className={styles.value}>{formatMoney(goal.target)}</dd>
-            </div>
-          </dl>
-          <div className={styles.gauge}>
-            <TargetVsAchievementMeter present={goal.present} target={goal.target} progress={goal.progress} />
-          </div>
-        </div>
+        <SavingsGoalSummary goal={goal} className={styles.body} />
       ) : (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No goal for this month</p>
@@ -75,6 +55,7 @@ export function Goals({ data }: GoalsProps) {
         onOpenChange={(open) => setPopup(({ opened }) => ({ open, opened }))}
         month={month}
         goal={goal}
+        title="Edit savings goal"
       />
     </div>
   );

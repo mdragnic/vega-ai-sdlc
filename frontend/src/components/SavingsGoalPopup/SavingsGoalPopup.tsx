@@ -15,12 +15,18 @@ type SavingsGoalPopupProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /**
-   * The month the card shows, `YYYY-MM`, read once when the popup mounts: the save names it, and the backend saves
-   * only the current one (#108 d). A card that moves to the next month behind the open popup does not move the save.
+   * The month the card shows, `YYYY-MM`, read once when the popup mounts: the save names it, and the backend saves any
+   * month from the earliest the user can choose to the current one (#58 d, #123 b). A card that moves to the next month
+   * behind the open popup does not move the save.
    */
   month: string;
   /** The goal the card shows, read once when the popup mounts as the fields' values, or `null` without one (#58). */
   goal: SavingsGoal | null;
+  /**
+   * The dialog's visually hidden title, its accessible name: "Edit savings goal" on Overview, "Adjust goal for Mar,
+   * 2026" on Goals (task 025).
+   */
+  title: string;
 };
 
 /** The fields' texts: the goal's amounts as `$500000`, `$1250.50` (#31, #64); both empty without a goal (#58, #69). */
@@ -30,16 +36,16 @@ const fieldsFor = (goal: SavingsGoal | null) =>
     : { target: '', present: '' };
 
 /**
- * 104.1 (Figma `Popup Input` 416:6381): the Overview goal popup, Target Amounts and Present Amounts, prefilled with
- * the goal on the card (#18, #31). The shared form schema reads the texts and checks the amount rules the API checks
+ * 104.1 and 110.1 (Figma `Popup Input` 416:6381): the goal popup of Overview and Goals, Target Amounts and Present
+ * Amounts, prefilled with the goal on the card (#18, #31). The shared form schema reads the texts and checks the amount rules the API checks
  * (#74, #84, #108 a). While saving, Save is disabled with its spinner and nothing else is sent; on success the popup
  * closes; on a failure the field errors show under their fields, or the message above Save (#6, #97 a), and the
  * typed values stay. X, Esc and the dimmed area discard the typing (#35). A save still running when the popup closes
  * is not cancelled: the card shows its answer (`useSaveSavingsGoal`). Mount one per opening (a new `key`), so the form
  * starts from the goal on the card.
  */
-export function SavingsGoalPopup({ open, onOpenChange, month, goal }: SavingsGoalPopupProps) {
-  // The month the prefilled values belong to: October's values are never saved as November's (#58, #108 d).
+export function SavingsGoalPopup({ open, onOpenChange, month, goal, title }: SavingsGoalPopupProps) {
+  // The month the prefilled values belong to: October's values are never saved as November's (#58, #123 b).
   const [openedMonth] = useState(month);
   const save = useSaveSavingsGoal();
   const {
@@ -86,7 +92,7 @@ export function SavingsGoalPopup({ open, onOpenChange, month, goal }: SavingsGoa
     <GoalPopupInput
       open={open}
       onOpenChange={(next) => (next ? onOpenChange(true) : close())}
-      title="Edit savings goal"
+      title={title}
       onSubmit={submit}
       saving={save.isPending}
       formError={save.isError ? formErrorFor(save.error, fieldNames) : undefined}

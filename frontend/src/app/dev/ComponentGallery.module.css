@@ -283,6 +283,29 @@
   padding: var(--space-overview-card-padding-y) var(--space-card-padding);
 }
 
+/* The Savings Goal card of Goals (110, task 025) in the first of the top row's columns, 368 : 712 of the content's
+   1104 at 1440 (three 352 columns and two gaps); inset 20 at the top and 24 at the sides and the bottom, at least 292
+   high. */
+.savingsGoalSample {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--size-goals-column-savings-goal))
+    minmax(0, var(--size-goals-column-saving-summary));
+  gap: var(--space-card-gap);
+  width: calc(
+    var(--size-card-width) + var(--size-card-width) + var(--size-card-width) + var(--space-card-gap) +
+      var(--space-card-gap)
+  );
+  margin: 0 auto;
+}
+
+.savingsGoalCard {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--size-savings-goal-card-min-height);
+  padding: var(--space-savings-goal-padding-top) var(--space-card-padding) var(--space-card-padding);
+}
+
 /* The Upcoming Bill card of Overview: inset 32 at the top, 28 at the bottom and 24 at the sides, at least 232 high
    (task 015). */
 .billsCard {

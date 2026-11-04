@@ -1,0 +1,16 @@
+# Task 025: security review
+
+`security-review` on the task's uncommitted changes (`git diff HEAD`, the new files intent-to-add), 2026-11-04. One review sub-task over the diff and the codebase's security patterns; no candidate reached the 0.7 confidence floor, so no false-positive filtering sub-tasks were needed.
+
+**No findings.**
+
+Checked:
+
+1. **The new routes' guards.** `GET /api/savings-goals/months` and `GET /api/savings-goals?month=` are not `@Public()`: the global `SessionGuard` (`APP_GUARD`) answers 401 without a valid session cookie. The `PUT` is not GET, HEAD or OPTIONS, so it still passes the #119 write guard (`checkExpectedUser`: 400 for a missing or invalid header, 409 for another user's email) and Nest's CSRF protection (`enableCsrfProtection()` in `app.setup.ts`). No `enableCors`, so another site cannot read the new GETs with credentials; the required `X-Time-Zone` header forces a preflight anyway. The global `Cache-Control: no-store` covers them (`cache-control.test.ts`).
+2. **User scoping.** `userId` only from `@CurrentUser()`; no contract schema carries a user and the Zod objects drop unknown keys. `earliestTransactionAt` joins `t.account a` and filters `a.userId = :userId` in its one query, as `listTransactions` does, reached only through `VisibleTransactions.earliestOccurredAt` (a source guard keeps it there). The goal `MIN(g.month)`, `findOneBy({ userId, month })` and the upsert (conflict on the unique user and month) are keyed on the session user. The month range comes only from the user's own transactions and goals; a save cannot move the earliest month back, since a month before it is refused.
+3. **SQL.** Every new QueryBuilder call binds named parameters (`:userId`, `:before`, `:current`); no value is concatenated. `before` is a Date from the Clock, checked for NaN first.
+4. **Query parsing.** `@Query({ schema: savingsGoalMonthQuerySchema })` through the global validation pipe, as the transactions controller. `goalMonthSchema` (`/^\d{4}-(0[1-9]|1[0-2])$/`) takes ASCII digits only and no trailing newline; a repeated `month` (an array) or an object fails with 400. The string comparison against the range is sound for 4-digit `YYYY-MM`. The zone still goes through `parseTimeZone`; another zone moves only the user's own current month by about a day.
+5. **Response keys.** `toResponse` builds `{ month, goal: { target, present, progress } }` explicitly and `months` returns `{ months }`: no row ID, user ID or entity field. The 409 carries the fixed `goalMessages.monthUnavailable` text.
+6. **Frontend.** `useUserWrite` always sends through `sendWrite` (so `X-Expected-User` is always set) and skips its success handler when the session count changed. The new query keys (`['savings-goals', 'months']`, `['savings-goals', 'month', m]`) are removed with every other query at a session change. The query string is built with `url.searchParams.set` after the contract schema parses it. Rendering is React text only (`formatMonthLabel` output, money strings); no `dangerouslySetInnerHTML` or raw DOM sink in the changed components; the gallery is a dev-only route.
+
+The one change in behaviour is the intended one (#123): the save accepts past months back to the user's earliest month instead of only the current month, still only on the signed-in user's own rows.

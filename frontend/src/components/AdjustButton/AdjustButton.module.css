@@ -1,0 +1,30 @@
+/* 110 "Adjust Goal": Primary Regular 14/20 (its cap 10 high, the label 75 wide: Inter 14) and the 16px pencil 8 after
+   it, in a 36px box with a 1px Primary border, 20 from its outer edges to the text and to the pencil. It hugs its
+   label. */
+.button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-adjust-button-icon-gap);
+  height: var(--size-adjust-button-height);
+  padding: 0 calc(var(--space-adjust-button-padding-x) - var(--border-width-input));
+  border: var(--border-width-input) solid var(--color-primary);
+  border-radius: var(--radius-button);
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  font: var(--font-regular-14-20);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+/* Keyboard focus (#87); a mouse click shows none. */
+.button:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

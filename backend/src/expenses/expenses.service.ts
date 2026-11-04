@@ -13,8 +13,7 @@ import {
 import type { BankTransaction } from '../bank-data/bank-data-provider.js';
 import { VisibleTransactions } from '../bank-data/visible-transactions.js';
 import { CLOCK, type Clock } from '../common/clock/clock.js';
-import { addMonths, startOfMonth } from '../common/time-zone/plain-date.js';
-import { todayIn } from '../common/time-zone/today-in.js';
+import { addMonths, monthIn, startOfMonth } from '../common/time-zone/plain-date.js';
 import { expenseChange } from './percent-change.js';
 
 const MONTHS_PER_YEAR = 12;
@@ -47,7 +46,7 @@ export class ExpensesService {
 
   /** This month, `YYYY-MM`, from the Clock in the zone (#54, #80). */
   private thisMonth(timeZone: string): string {
-    return todayIn(this.clock.now(), timeZone).slice(0, 7);
+    return monthIn(this.clock.now(), timeZone);
   }
 
   /**
@@ -68,7 +67,7 @@ export class ExpensesService {
     for (const transaction of transactions) {
       const { category } = transaction;
       if (transaction.status !== 'complete' || category === null) continue;
-      const month = todayIn(transaction.occurredAt, timeZone).slice(0, 7);
+      const month = monthIn(transaction.occurredAt, timeZone);
       rows.push({ month, category, transaction });
       const key = `${month} ${category}`;
       totals.set(key, (totals.get(key) ?? 0) + transaction.amountCents);

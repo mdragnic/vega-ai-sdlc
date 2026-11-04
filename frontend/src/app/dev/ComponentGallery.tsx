@@ -13,6 +13,7 @@ import {
   type MonthlyComparisonResponse,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
+  type SavingsGoalMonthsResponse,
   type SavingsGoalResponse,
   type TransactionHistoryPage,
   type TransactionHistoryRow,
@@ -35,6 +36,7 @@ import {
   AccountTypeSlide,
   AddAccountsButtonBig,
   AddAccountsCell,
+  AdjustButton,
   AmountBox,
   AppLayout,
   AuthLayout,
@@ -80,6 +82,9 @@ import {
   RecentTransactionItem,
   RecentTransactionSkeleton,
   RemindMe,
+  SavingsGoal,
+  SavingsGoalSkeleton,
+  SavingsGoalSummary,
   Section,
   Skeleton,
   SliderOption,
@@ -418,15 +423,16 @@ function InteractiveAmount() {
   );
 }
 
-// The month list of the Goals selectors (#60): newest first, `formatMonthLabel` labels. A fixed sample from
-// Oct 2026; the screens list from the current month back to the user's earliest data (tasks 025, 026).
+// The month list of the Goals selectors (#60): newest first, `formatMonthLabel` labels of `YYYY-MM` months. A fixed
+// sample written out from Oct 2026; the screens list the months the backend sends (tasks 025, 026).
+const sampleMonths = ['2026', '2025', '2024', '2023', '2022', '2021']
+  .flatMap((year) =>
+    ['12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'].map((m) => `${year}-${m}`),
+  )
+  .filter((month) => month <= '2026-10');
+
 function monthOptions(count: number): DropdownOption[] {
-  return Array.from({ length: count }, (_, index) => {
-    const monthIndex = 2026 * 12 + 9 - index;
-    const year = Math.floor(monthIndex / 12);
-    const month = (monthIndex % 12) + 1;
-    return { value: `${year}-${String(month).padStart(2, '0')}`, label: formatMonthLabel(year, month) };
-  });
+  return sampleMonths.slice(0, count).map((month) => ({ value: month, label: formatMonthLabel(month) }));
 }
 
 // The Account Type values of #26 and sample country codes (#43); the full code list is task 028's.
@@ -1356,6 +1362,63 @@ function TopRowCard({ children }: { children: ReactNode }) {
   );
 }
 
+/** The Savings Goal card as Goals draws it at 1440: 368 wide, inset 20 at the top and 24 at the sides and the bottom. */
+function SavingsGoalCard({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.savingsGoalSample}>
+      <Card padding="none" className={styles.savingsGoalCard}>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+/** A sample month's goal: the demo Target and a Present that changes with the month, so a pick shows. */
+const sampleMonthGoal = (month: string): SavingsGoalResponse =>
+  month === '2026-10' ? sampleGoal(2000000, 1625000, 0.8125) : { ...sampleGoal(2000000, 1100000, 0.55), month };
+
+/**
+ * The Savings Goal card on local queries: the months as `months` answers them, each month's goal as `goal` does
+ * (`sample`: the demo goal of Oct 2026, then $11,000.00 for every other month; `none`: no goal). The selection as
+ * GoalsPage keeps it: the newest month until one is picked.
+ */
+function SavingsGoalExample({
+  name,
+  months,
+  goal,
+}: {
+  name: string;
+  months: SavingsGoalMonthsResponse | 'pending' | 'fails';
+  goal: 'sample' | 'none' | 'pending' | 'fails';
+}) {
+  const monthsQuery = useSampleQuery(['savings-goal-months', name], months);
+  const [picked, setPicked] = useState<string | null>(null);
+  const list = monthsQuery.data?.months;
+  const selected = list === undefined ? undefined : picked !== null && list.includes(picked) ? picked : list[0];
+  const goalQuery = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'savings-goal', name, selected],
+    queryFn: () =>
+      goal === 'pending'
+        ? new Promise<SavingsGoalResponse>(() => undefined)
+        : goal === 'fails'
+          ? waitThenFail<SavingsGoalResponse>()
+          : Promise.resolve(goal === 'none' ? { month: selected!, goal: null } : sampleMonthGoal(selected!)),
+    enabled: selected !== undefined,
+  });
+  return (
+    <SavingsGoalCard>
+      <SavingsGoal
+        months={monthsQuery}
+        selected={selected}
+        onSelect={setPicked}
+        onPopupOpenChange={() => undefined}
+        goal={goalQuery}
+      />
+    </SavingsGoalCard>
+  );
+}
+
 /** The carousel control with its own position, so Previous and Next can be tried. */
 function SliderOptionExample({ count, start = 0 }: { count: number; start?: number }) {
   const [position, setPosition] = useState(start);
@@ -2102,6 +2165,54 @@ export function ComponentGallery() {
           <TopRowCard>
             <Goals data={sampleGoal(100000000000, 100000000000, 1)} />
           </TopRowCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingsGoalSummary" wide>
+        <Example name="The demo goal (104, 110): $16,250 of $20,000">
+          <SavingsGoalCard>
+            <SavingsGoalSummary goal={sampleGoal(2000000, 1625000, 0.8125).goal!} />
+          </SavingsGoalCard>
+        </Example>
+        <Example name="Long amounts: the gauge moves under the amounts (#108 b)">
+          <SavingsGoalCard>
+            <SavingsGoalSummary goal={sampleGoal(100000000000, 100000000000, 1).goal!} />
+          </SavingsGoalCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingsGoal" wide>
+        <Example name="The demo months and goals (110)">
+          <SavingsGoalExample name="demo" months={{ months: sampleMonths }} goal="sample" />
+        </Example>
+        <Example name="No goal for this month (#58)">
+          <SavingsGoalExample name="none" months={{ months: sampleMonths.slice(0, 3) }} goal="none" />
+        </Example>
+        <Example name="The months loading">
+          <SavingsGoalExample name="months-pending" months="pending" goal="sample" />
+        </Example>
+        <Example name="The goal loading">
+          <SavingsGoalExample name="goal-pending" months={{ months: sampleMonths }} goal="pending" />
+        </Example>
+        <Example name="Error">
+          <SavingsGoalExample name="fails" months={{ months: sampleMonths }} goal="fails" />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SavingsGoalSkeleton" wide>
+        <Example name="Loading">
+          <SavingsGoalCard>
+            <SavingsGoalSkeleton />
+          </SavingsGoalCard>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="AdjustButton">
+        <Example name="Adjust Goal (110)">
+          <AdjustButton label="Adjust Goal" />
+        </Example>
+        <Example name="Adjust (110, task 027)">
+          <AdjustButton label="Adjust" />
         </Example>
       </GallerySection>
 

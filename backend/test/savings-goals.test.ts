@@ -2,7 +2,14 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
 import type { INestApplication } from '@nestjs/common';
-import { errorResponseSchema, goalMessages, savingsGoalResponseSchema, savingsGoalsContract } from '@finebank/shared';
+import {
+  errorResponseSchema,
+  goalMessages,
+  savingsGoalMonthsResponseSchema,
+  savingsGoalResponseSchema,
+  savingsGoalsContract,
+  writeGuardMessages,
+} from '@finebank/shared';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -10,11 +17,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock } from '../src/common/clock/fixed-clock.js';
 import { cookieFor, signUp } from './helpers/auth.js';
 import { userIdOf } from './helpers/finance.js';
+import { registeredRoutes } from './helpers/routes.js';
 import { createTestApp } from './helpers/test-app.js';
 
 // The paths come from the contract, so a route declared anywhere else would not answer them.
 const currentPath = `/api${savingsGoalsContract.current.path}`;
 const savePath = `/api${savingsGoalsContract.save.path}`;
+const monthsPath = `/api${savingsGoalsContract.months.path}`;
 
 const FIXED_NOW = '2026-10-22T10:00:00.000Z';
 const BELGRADE = 'Europe/Belgrade';
@@ -48,6 +57,25 @@ const invalidBodies: [string, Record<string, unknown>, string, string][] = [
   ['no month', { target: usd(100), present: usd(0) }, 'month', goalMessages.invalidMonth],
   ['a month that does not exist', { ...validBody, month: '2026-13' }, 'month', goalMessages.invalidMonth],
 ];
+
+/** The 12 months of a year, newest first. */
+const yearDown = (year: number) =>
+  ['12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'].map((month) => `${year}-${month}`);
+
+/** The 58 months at the fixed clock, written out: `2026-10` down to `2022-01` (#123 a, demo-data.md). */
+const demoMonths = [
+  ...yearDown(2026).slice(2),
+  ...yearDown(2025),
+  ...yearDown(2024),
+  ...yearDown(2023),
+  ...yearDown(2022),
+];
+
+/** A one-month read's path with its query. */
+const monthPath = (query: string) => `${savePath}?${query}`;
+
+/** A save of a month with the amounts AC11 sends. */
+const saveOf = (month: string) => ({ month, target: usd(2_500_050), present: usd(1_200_000) });
 
 describe('the savings goal API', () => {
   let app: INestApplication;
@@ -222,17 +250,22 @@ describe('the savings goal API', () => {
       },
     );
 
-    it('answers 409 with the #108 d text for another month and stores nothing', async () => {
+    // Task 025 (#123 b, which updates #108 d): October is a past month at 00:30 on 1 Nov in Belgrade, so it is saved.
+    it('saves October at 00:30 on 1 Nov in Belgrade, the month the popup opened with, and nothing else', async () => {
       const { token, id } = await newUser();
       const before = await goalRows(id);
-      // 00:30 on 1 Nov in Belgrade: the card showed October.
       clock.set(new Date('2026-10-31T23:30:00Z'));
 
       const response = await put(validBody, { token, zone: BELGRADE });
 
-      expect(response.status).toBe(409);
-      expect(errorResponseSchema.strict().parse(response.body)).toEqual({ message: goalMessages.monthEnded });
-      expect(await goalRows(id)).toEqual(before);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        month: '2026-10',
+        goal: { target: usd(2_500_050), present: usd(0), progress: 0 },
+      });
+      expect(await goalRows(id)).toEqual(
+        before.map((row) => (row.month === '2026-10' ? { ...row, target_cents: 2_500_050, present_cents: 0 } : row)),
+      );
     });
 
     it('saves October in New York at the same instant, where it is still 31 Oct', async () => {
@@ -265,6 +298,247 @@ describe('the savings goal API', () => {
       expect(response.status).toBe(400);
       expect(errorResponseSchema.strict().parse(response.body).message).toMatch(/X-Time-Zone/);
       expect(await goalRows(id)).toEqual(before);
+    });
+  });
+
+  /** Adds an expense to the user's first account at an instant, with plain SQL. */
+  async function addTransaction(userId: number, instant: string) {
+    const [first] = await db.query<{ id: number }[]>('SELECT id FROM accounts WHERE user_id = ? ORDER BY id LIMIT 1', [
+      userId,
+    ]);
+    await db.query(
+      `INSERT INTO transactions (account_id, occurred_at, direction, status, category, item, shop_name, receipt, amount_cents)
+       VALUES (?, ?, 'expense', 'complete', 'food', 'Added row', 'Pizza Hit', 'Ab3dE5gH9jK', 1000)`,
+      [first!.id, new Date(instant).toISOString().replace('T', ' ').replace('Z', '')],
+    );
+  }
+
+  // Task 025 T8: AC3, AC5 and AC14 (#54, #60, #74, #75, #123 a).
+  describe('GET /api/savings-goals/months', () => {
+    it('answers 200 with the 58 months from 2026-10 to 2022-01, newest first, and only the contract’s keys', async () => {
+      const { token } = await newUser();
+
+      const response = await get({ token, zone: BELGRADE, path: monthsPath });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ months: demoMonths });
+      expect(Object.keys(response.body as object)).toEqual(['months']);
+      expect(savingsGoalMonthsResponseSchema.parse(response.body).months).toHaveLength(58);
+    });
+
+    it.each([
+      [BELGRADE, ['2026-11', ...demoMonths]],
+      [NEW_YORK, demoMonths],
+    ])('at 2026-10-31T23:30:00Z in %s starts at the current month there', async (zone, months) => {
+      const { token } = await newUser();
+      clock.set(new Date('2026-10-31T23:30:00Z'));
+
+      expect((await get({ token, zone, path: monthsPath })).body).toEqual({ months });
+    });
+
+    it('ends at 2021-12 in New York and at 2022-01 in Belgrade with a row at 2021-12-31T23:30:00Z', async () => {
+      const { token, id } = await newUser();
+      await addTransaction(id, '2021-12-31T23:30:00Z');
+
+      expect((await get({ token, zone: NEW_YORK, path: monthsPath })).body).toEqual({
+        months: [...demoMonths, '2021-12'],
+      });
+      expect((await get({ token, zone: BELGRADE, path: monthsPath })).body).toEqual({ months: demoMonths });
+    });
+
+    it('answers 401 without a session', async () => {
+      const response = await get({ zone: BELGRADE, path: monthsPath });
+
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.strict().parse(response.body).message).toBe('Authentication required');
+    });
+
+    it.each([
+      ['missing', undefined],
+      ['an offset, not a zone', '+01:00'],
+    ])('answers 400 in the shared error shape when X-Time-Zone is %s', async (_case, zone) => {
+      const { token } = await newUser();
+
+      const response = await get({ token, zone, path: monthsPath });
+
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.strict().parse(response.body).message).toMatch(/X-Time-Zone/);
+    });
+  });
+
+  // Task 025 T9: AC4 and AC15 (#39, #74, #85, #123 b).
+  describe('GET /api/savings-goals?month=', () => {
+    it.each([
+      ['2026-03', usd(1_100_000), 0.55],
+      ['2025-12', usd(2_100_000), 1],
+      ['2026-10', usd(1_625_000), 0.8125],
+    ])(
+      'answers 200 with the demo goal of %s, as `current` answers, only the contract’s keys',
+      async (month, present, progress) => {
+        const { token } = await newUser();
+
+        const response = await get({ token, zone: BELGRADE, path: monthPath(`month=${month}`) });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ month, goal: { target: usd(2_000_000), present, progress } });
+        expect(savingsGoalResponseSchema.strict().parse(response.body)).toEqual(response.body);
+      },
+    );
+
+    it('answers goal: null for a month in the list without a row', async () => {
+      const { token, id } = await newUser();
+      await db.query('DELETE FROM savings_goals WHERE user_id = ? AND month = ?', [id, '2026-03']);
+
+      const response = await get({ token, zone: BELGRADE, path: monthPath('month=2026-03') });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ month: '2026-03', goal: null });
+    });
+
+    it.each([
+      ['no month', ''],
+      ['a month without its zero', 'month=2026-1'],
+      ['a month that does not exist', 'month=2026-13'],
+      ['a repeated month', 'month=2026-03&month=2026-04'],
+    ])('answers 400 in the shared error shape for %s', async (_case, query) => {
+      const { token } = await newUser();
+
+      const response = await get({ token, zone: BELGRADE, path: monthPath(query) });
+
+      expect(response.status).toBe(400);
+      const body = errorResponseSchema.strict().parse(response.body);
+      expect(body.fieldErrors).toEqual({ month: expect.any(String) as unknown });
+      expect(JSON.stringify(body)).not.toMatch(/SELECT|sqlite|stack|Error:/i);
+    });
+
+    it.each([
+      ['a future month with a demo goal', '2027-05'],
+      ['the next month', '2026-11'],
+      ['the month before the earliest', '2021-12'],
+    ])('answers 409 with the #123 b message and no goal for %s', async (_case, month) => {
+      const { token } = await newUser();
+
+      const response = await get({ token, zone: BELGRADE, path: monthPath(`month=${month}`) });
+
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ message: goalMessages.monthUnavailable });
+    });
+
+    it('answers the session user’s goal whatever userId the query names', async () => {
+      const other = await newUser();
+      await db.query('UPDATE savings_goals SET present_cents = 7 WHERE user_id = ? AND month = ?', [
+        other.id,
+        '2026-03',
+      ]);
+      const { token } = await newUser();
+
+      const response = await get({ token, zone: BELGRADE, path: monthPath(`month=2026-03&userId=${other.id}`) });
+
+      expect(response.status).toBe(200);
+      expect(savingsGoalResponseSchema.parse(response.body).goal?.present).toEqual(usd(1_100_000));
+    });
+
+    it('answers 401 without a session', async () => {
+      const response = await get({ zone: BELGRADE, path: monthPath('month=2026-03') });
+
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.strict().parse(response.body).message).toBe('Authentication required');
+    });
+  });
+
+  // Task 025 T10: AC11, AC12 and AC16, the save's month rule (#58 d, #119, #123 b).
+  describe('PUT /api/savings-goals for any month the user can choose', () => {
+    it('saves a past month, 2026-09: only its row changes and `current` still answers October', async () => {
+      const { token, id } = await newUser();
+      const before = await goalRows(id);
+      const currentBefore = (await get({ token, zone: BELGRADE })).body as object;
+
+      const response = await put(saveOf('2026-09'), { token, zone: BELGRADE });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        month: '2026-09',
+        goal: { target: usd(2_500_050), present: usd(1_200_000), progress: 1_200_000 / 2_500_050 },
+      });
+      expect(await goalRows(id)).toEqual(
+        before.map((row) =>
+          row.month === '2026-09' ? { ...row, target_cents: 2_500_050, present_cents: 1_200_000 } : row,
+        ),
+      );
+      expect((await get({ token, zone: BELGRADE })).body).toEqual(currentBefore);
+      expect(currentBefore).toEqual({ month: '2026-10', goal: demoGoal });
+      expect((await get({ token, zone: BELGRADE, path: `${savePath}?month=2026-09` })).body).toEqual(response.body);
+    });
+
+    it.each([
+      ['a future month whose demo row stays as it was', '2026-11'],
+      ['the month before the earliest, which gets no row', '2021-12'],
+    ])('answers 409 with the #123 b message for %s and stores nothing', async (_case, month) => {
+      const { token, id } = await newUser();
+      const before = await goalRows(id);
+
+      const response = await put(saveOf(month), { token, zone: BELGRADE });
+
+      expect(response.status).toBe(409);
+      expect(errorResponseSchema.strict().parse(response.body)).toEqual({ message: goalMessages.monthUnavailable });
+      expect(await goalRows(id)).toEqual(before);
+    });
+
+    it('saves 2021-12 in New York with a row dated then there', async () => {
+      const { token, id } = await newUser();
+      await addTransaction(id, '2021-12-31T23:30:00Z');
+
+      expect((await put(saveOf('2021-12'), { token, zone: BELGRADE })).status).toBe(409);
+      const response = await put(saveOf('2021-12'), { token, zone: NEW_YORK });
+
+      expect(response.status).toBe(200);
+      expect(await monthRows(id, '2021-12')).toEqual([{ target_cents: 2_500_050, present_cents: 1_200_000 }]);
+    });
+
+    it.each([
+      ['a past month', '2026-09'],
+      ['a refused month', '2021-12'],
+    ])('runs the write guard first on %s: 400 without X-Expected-User, 409 for another user', async (_case, month) => {
+      const { token, id } = await newUser();
+      const before = await goalRows(id);
+      const send = (expectedUser?: string) => {
+        let req = request(app.getHttpServer())
+          .put(savePath)
+          .set('Cookie', cookieFor(token))
+          .set('X-Time-Zone', BELGRADE);
+        if (expectedUser !== undefined) req = req.set('X-Expected-User', expectedUser);
+        return req.send(saveOf(month));
+      };
+
+      const missing = await send();
+      const other = await send('someone.else@example.com');
+
+      expect([missing.status, missing.body]).toEqual([400, { message: writeGuardMessages.expectedUserInvalid }]);
+      expect([other.status, other.body]).toEqual([409, { message: writeGuardMessages.otherUser }]);
+      expect(await goalRows(id)).toEqual(before);
+    });
+  });
+
+  // Task 025 T11, AC6 and AC16: another user's data never moves a user's months or goals (#39, #46).
+  it('leaves the second user’s months and goals as they were when the first saves with the second’s userId', async () => {
+    const first = await newUser();
+    const second = await newUser();
+    await addTransaction(first.id, '2020-02-01T12:00:00Z');
+    const secondRows = await goalRows(second.id);
+    const secondMonths = (await get({ token: second.token, zone: BELGRADE, path: monthsPath })).body as object;
+
+    const response = await put({ ...saveOf('2026-09'), userId: second.id }, { token: first.token, zone: BELGRADE });
+
+    expect(response.status).toBe(200);
+    expect(await goalRows(second.id)).toEqual(secondRows);
+    expect(secondMonths).toEqual({ months: demoMonths });
+    expect((await get({ token: second.token, zone: BELGRADE, path: monthsPath })).body).toEqual(secondMonths);
+    expect((await get({ token: second.token, zone: BELGRADE, path: `${savePath}?month=2026-09` })).body).toEqual({
+      month: '2026-09',
+      goal: { target: usd(2_000_000), present: usd(1_550_000), progress: 0.775 },
+    });
+    expect((await get({ token: first.token, zone: BELGRADE, path: monthsPath })).body).toMatchObject({
+      months: expect.arrayContaining(['2020-02']) as unknown,
     });
   });
 
@@ -309,10 +583,23 @@ describe('the savings goal API', () => {
         `${savePath}/${second.id}`,
         `${savePath}/${String(secondGoal!.id)}`,
         `${currentPath}/${second.id}`,
+        // Task 025: the month only in the query; no path takes a month.
+        `${savePath}/2026-10`,
+        `${monthsPath}/2026`,
       ]) {
         expect((await get({ token: first.token, zone: BELGRADE, path })).status, `GET ${path}`).toBe(404);
         expect((await put(validBody, { token: first.token, zone: BELGRADE, path })).status, `PUT ${path}`).toBe(404);
       }
+    });
+
+    // Task 025 T12, AC14 and AC15: the four contract paths are the only savings goal routes (#74).
+    it('registers exactly the contract’s four savings goal routes', () => {
+      expect(registeredRoutes(app).filter((route) => route.includes('/savings-goals'))).toEqual([
+        'GET /api/savings-goals',
+        'GET /api/savings-goals/current',
+        'GET /api/savings-goals/months',
+        'PUT /api/savings-goals',
+      ]);
     });
   });
 });

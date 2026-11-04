@@ -6,6 +6,8 @@ import {
   goalPresentSchema,
   goalTargetSchema,
   savingsGoalFormSchema,
+  savingsGoalMonthQuerySchema,
+  savingsGoalMonthsResponseSchema,
   savingsGoalRequestSchema,
   savingsGoalResponseSchema,
   savingsGoalsContract,
@@ -210,10 +212,80 @@ describe('savingsGoalsContract', () => {
     expect(savingsGoalsContract.save.request).toBe(savingsGoalRequestSchema);
     expect(savingsGoalsContract.save.response).toBe(savingsGoalResponseSchema);
   });
+
+  // Task 025 T1, AC14 and AC15: the selector's months and one month's goal (#60, #123).
+  it('lists the months with GET /savings-goals/months and no body', () => {
+    expect(savingsGoalsContract.months).toMatchObject({
+      method: 'GET',
+      path: '/savings-goals/months',
+      request: undefined,
+    });
+    expect(savingsGoalsContract.months.response).toBe(savingsGoalMonthsResponseSchema);
+  });
+
+  it('reads one month’s goal with GET /savings-goals and the month in the query, answered as `current`', () => {
+    expect(savingsGoalsContract.month).toMatchObject({ method: 'GET', path: '/savings-goals', request: undefined });
+    expect(savingsGoalsContract.month.query).toBe(savingsGoalMonthQuerySchema);
+    expect(savingsGoalsContract.month.response).toBe(savingsGoalResponseSchema);
+  });
+});
+
+// Task 025 T1, AC3, AC5 and AC14: the months from the current one back to the earliest, newest first (#60, #123 a).
+describe('savingsGoalMonthsResponseSchema', () => {
+  /** The 58 months of the fixed clock in Belgrade, `2026-10` down to `2022-01`, written out by year. */
+  const twelve = ['12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'];
+  const demoMonths = [
+    ...twelve.slice(2).map((month) => `2026-${month}`),
+    ...[2025, 2024, 2023, 2022].flatMap((year) => twelve.map((month) => `${year}-${month}`)),
+  ];
+
+  it('writes out the 58 demo months from Oct, 2026 to Jan, 2022', () => {
+    expect(demoMonths).toHaveLength(58);
+    expect([demoMonths[0], demoMonths[1], demoMonths.at(-1)]).toEqual(['2026-10', '2026-09', '2022-01']);
+  });
+
+  it.each([
+    ['one month', ['2021-12']],
+    ['58 months', demoMonths],
+    ['a year edge', ['2027-01', '2026-12']],
+  ])('accepts %s', (_case, months) => {
+    expect(savingsGoalMonthsResponseSchema.parse({ months })).toEqual({ months });
+  });
+
+  it('drops unknown keys', () => {
+    expect(savingsGoalMonthsResponseSchema.parse({ months: ['2026-10'], userId: 7 })).toEqual({ months: ['2026-10'] });
+  });
+
+  it.each([
+    ['an empty list', []],
+    ['an older month first', ['2026-09', '2026-10']],
+    ['a repeat', ['2026-10', '2026-10', '2026-09']],
+    ['a month that does not exist', ['2026-13', '2026-10']],
+    ['a date, not a month', ['2026-10-01']],
+    ['no months', undefined],
+  ])('rejects %s', (_case, months) => {
+    expect(savingsGoalMonthsResponseSchema.safeParse({ months }).success).toBe(false);
+  });
+});
+
+// Task 025 T1, AC15: the month of `GET /savings-goals?month=`, required, in the one `YYYY-MM` rule.
+describe('savingsGoalMonthQuerySchema', () => {
+  it('reads the month and drops unknown keys, such as a user', () => {
+    expect(savingsGoalMonthQuerySchema.parse({ month: '2026-03', userId: '7' })).toEqual({ month: '2026-03' });
+  });
+
+  it.each([
+    ['no month', {}],
+    ['a month that does not exist', { month: '2026-13' }],
+    ['a month without its zero', { month: '2026-1' }],
+    ['an empty month', { month: '' }],
+  ])('rejects %s with the month message', (_case, query) => {
+    expect(fieldErrors(savingsGoalMonthQuerySchema.safeParse(query))).toEqual([`month: ${goalMessages.invalidMonth}`]);
+  });
 });
 
 describe('goalMessages', () => {
-  it('holds the texts of #108 a and d', () => {
+  it('holds the texts of #108 a and #123 b', () => {
     expect(goalMessages).toEqual({
       targetRequired: 'Target Amount is required',
       targetPositive: 'Target Amount must be greater than $0.00',
@@ -221,7 +293,7 @@ describe('goalMessages', () => {
       presentMax: 'Present Amount must be at most $1,000,000,000.00',
       invalidAmount: 'Enter a valid amount',
       invalidMonth: 'Enter a valid month',
-      monthEnded: 'This month has ended. Reload the page to see the current month.',
+      monthUnavailable: 'This month is not available. Reload the page to see the months you can choose.',
     });
   });
 });

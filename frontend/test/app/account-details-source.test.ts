@@ -79,13 +79,17 @@ describe('the writes in frontend/src/api', () => {
   const apiDir = join(srcDir, 'api');
   const files = readdirSync(apiDir).filter((name) => name.endsWith('.ts'));
 
-  it('finds the mutations: the goal save, the account save and the session’s two hooks (login and sign up, logout)', () => {
-    const counts = Object.fromEntries(
-      files.map((name) => [name, calls(readFileSync(join(apiDir, name), 'utf8'), 'useMutation')]),
-    );
+  // Task 025: the goal save is sent through the shared write helper, `useUserWrite` in session.ts (its one
+  // `useMutation`), so session.ts holds three: its two hooks (login and sign up, logout) and the helper's.
+  /** How many times each file of frontend/src/api calls `name(`. */
+  const counts = (name: string) =>
+    Object.fromEntries(files.map((file) => [file, calls(readFileSync(join(apiDir, file), 'utf8'), name)]));
 
-    expect(counts).toMatchObject({ 'accounts.ts': 1, 'savings-goals.ts': 1, 'session.ts': 2 });
-    expect(Object.values(counts).reduce((sum, count) => sum + count, 0)).toBe(4);
+  it('finds the mutations: the goal save (through useUserWrite), the account save and the session’s hooks', () => {
+    expect(counts('useMutation')).toMatchObject({ 'accounts.ts': 1, 'savings-goals.ts': 0, 'session.ts': 3 });
+    expect(Object.values(counts('useMutation')).reduce((sum, count) => sum + count, 0)).toBe(4);
+    expect(counts('useUserWrite')).toMatchObject({ 'savings-goals.ts': 1 });
+    expect(Object.values(counts('useUserWrite')).reduce((sum, count) => sum + count, 0)).toBe(1);
   });
 
   it.each(files.filter((name) => name !== 'session.ts'))('sends every mutation of %s through sendWrite', (name) => {
@@ -97,9 +101,15 @@ describe('the writes in frontend/src/api', () => {
     }
   });
 
-  it('sends the session’s own mutations (login, sign up, logout) without it: session.ts defines it, never calls it', () => {
-    expect(calls(source('api/session.ts'), 'sendWrite')).toBe(0);
-    expect(source('api/session.ts')).toMatch(/export async function sendWrite</);
+  // Task 025: session.ts calls it once, as the shared write helper's mutationFn; its own mutations never do.
+  it('sends the session’s own mutations (login, sign up, logout) without it: only useUserWrite calls it', () => {
+    const text = source('api/session.ts');
+    const helper = /\nexport function useUserWrite<[\s\S]*?\n\}\n/.exec(text)?.[0] ?? '';
+
+    expect(text).toMatch(/export async function sendWrite</);
+    expect(mutationFns(helper)).toHaveLength(1);
+    expect(mutationFns(helper)[0]).toMatch(/\bsendWrite\(queryClient,/);
+    expect(calls(text.replace(helper, ''), 'sendWrite')).toBe(0);
   });
 
   it('calls apiWrite only from sendWrite', () => {

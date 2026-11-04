@@ -103,7 +103,33 @@ describe('the plain-date helpers’ sources', () => {
     expect(declaring).toEqual(['common/time-zone/plain-date.ts']);
   });
 
-  it.each(['statistics/statistics.service.ts', 'expenses/expenses.service.ts'])('%s imports them', (file) => {
-    expect(readFileSync(join(srcDir, file), 'utf8')).toMatch(/from '\.\.\/common\/time-zone\/plain-date\.js'/);
+  it.each(['statistics/statistics.service.ts', 'expenses/expenses.service.ts', 'goals/savings-goals.service.ts'])(
+    '%s imports them',
+    (file) => {
+      expect(readFileSync(join(srcDir, file), 'utf8')).toMatch(/from '\.\.\/common\/time-zone\/plain-date\.js'/);
+    },
+  );
+
+  // Task 025 T12, AC18: the month of an instant only through `monthIn` (task 014 review, task 024).
+  const monthOfToday = /todayIn\([^;]*\)\s*\.slice\(\s*0\s*,\s*7\s*\)/;
+
+  it('reads the month of an instant only through monthIn, declared in plain-date.ts alone', () => {
+    const declaring = files.filter((file) =>
+      /\b(const|let|function)\s+(monthIn|currentMonthIn)\b/.test(readFileSync(join(srcDir, file), 'utf8')),
+    );
+    const slicing = files.filter(
+      (file) =>
+        file !== 'common/time-zone/plain-date.ts' && monthOfToday.test(readFileSync(join(srcDir, file), 'utf8')),
+    );
+
+    expect(declaring).toEqual(['common/time-zone/plain-date.ts']);
+    expect(slicing).toEqual([]);
   });
+
+  it.each(['todayIn(this.clock.now(), timeZone).slice(0, 7)', 'todayIn(transaction.occurredAt, zone).slice(0,7)'])(
+    'flags %s',
+    (code) => {
+      expect(monthOfToday.test(code)).toBe(true);
+    },
+  );
 });

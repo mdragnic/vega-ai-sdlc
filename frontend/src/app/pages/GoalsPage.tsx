@@ -1,0 +1,69 @@
+import { useState } from 'react';
+
+import { useSavingsGoal, useSavingsGoalMonths } from '../../api/savings-goals';
+import { Card, SavingsGoal, Section } from '../../components';
+import styles from './GoalsPage.module.css';
+
+/** The six category cards of 110, filled by task 027. */
+const categoryCards = ['housing', 'food', 'transportation', 'entertainment', 'shopping', 'others'] as const;
+
+/**
+ * Goals (110, US-16): the section "Goals" with the Savings Goal card and the Saving Summary card in one row (368 : 712,
+ * #94), and 32 under it the section "Expenses Goals by Category" with six cards on a 3x2 grid. The Saving Summary and
+ * the category cards stay white and empty until tasks 026 and 027 (#105 a pattern). The Savings Goal card's month is
+ * the newest of the list until the user picks one, so a page left open past midnight moves to the new month when the
+ * list is fetched again; a picked month stays while it is in the list. While the Adjust Goal popup is open its month is
+ * held, so the card behind it stays on the month the save names (as Overview's popup keeps its month, task 014); if the
+ * list moved on meanwhile, that month stays selected after the popup closes, as if picked, so the card shows what was
+ * just saved and "Adjust Goal" keeps its focus. Every visit opens on the current month (#30); nothing is remembered.
+ */
+export function GoalsPage() {
+  const months = useSavingsGoalMonths();
+  const [picked, setPicked] = useState<string | null>(null);
+  /** The month the Adjust Goal popup opened with, while it is open. */
+  const [held, setHeld] = useState<string | null>(null);
+  const list = months.data?.months;
+  const selected =
+    list === undefined ? undefined : (held ?? (picked !== null && list.includes(picked) ? picked : list[0]));
+  const goal = useSavingsGoal(selected);
+
+  const onPopupOpenChange = (open: boolean) => {
+    if (open) {
+      setHeld(selected ?? null);
+      return;
+    }
+    // The list moved on behind the popup: its month stays selected, so the card does not swap under the user.
+    if (held !== null && held !== list?.[0]) setPicked(held);
+    setHeld(null);
+  };
+
+  return (
+    <div className={styles.page}>
+      <Section title="Goals" gap="lg">
+        <div className={styles.topRow}>
+          <Card padding="none" className={styles.savingsGoalCard}>
+            <div className={styles.savingsGoalBody}>
+              <SavingsGoal
+                months={months}
+                selected={selected}
+                onSelect={setPicked}
+                onPopupOpenChange={onPopupOpenChange}
+                goal={goal}
+              />
+            </div>
+          </Card>
+          <Card>{null}</Card>
+        </div>
+      </Section>
+      <Section title="Expenses Goals by Category" gap="lg">
+        <div className={styles.categoryGrid}>
+          {categoryCards.map((category) => (
+            <Card key={category} className={styles.categoryCard}>
+              {null}
+            </Card>
+          ))}
+        </div>
+      </Section>
+    </div>
+  );
+}

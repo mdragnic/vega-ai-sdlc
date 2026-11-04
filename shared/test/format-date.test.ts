@@ -31,7 +31,7 @@ describe('formatDate', () => {
     });
 
     it('keeps a month label', () => {
-      expect(formatMonthLabel(2023, 5)).toBe('May, 2023');
+      expect(formatMonthLabel('2023-05')).toBe('May, 2023');
     });
   });
 
@@ -71,24 +71,21 @@ describe('formatDate', () => {
   );
 });
 
-// T8: month labels show as `May, 2023` (#11). Months are numbered 1 to 12.
+// T8: month labels show as `May, 2023` (#11), from a `YYYY-MM` month in the one month rule, `goalMonthSchema`
+// (task 025 T2, AC18).
 describe('formatMonthLabel', () => {
   it.each([
-    [2023, 5, 'May, 2023'],
-    [2026, 5, 'May, 2026'],
-    [2026, 10, 'Oct, 2026'],
-    [2022, 1, 'Jan, 2022'],
-    [2025, 12, 'Dec, 2025'],
-  ])('formats %i and month %i as %s', (year, month, expected) => {
-    expect(formatMonthLabel(year, month)).toBe(expected);
+    ['2023-05', 'May, 2023'],
+    ['2026-05', 'May, 2026'],
+    ['2026-10', 'Oct, 2026'],
+    ['2022-01', 'Jan, 2022'],
+    ['2025-12', 'Dec, 2025'],
+    ['0999-12', 'Dec, 0999'],
+  ])('formats %s as %s', (month, expected) => {
+    expect(formatMonthLabel(month)).toBe(expected);
   });
 
-  it.each([
-    [2023, 0],
-    [2023, 13],
-    [2023, 5.5],
-    [2023.5, 5],
-  ])('rejects year %s and month %s', (year, month) => {
-    expect(() => formatMonthLabel(year, month)).toThrow(RangeError);
+  it.each(['2026-13', '2026-00', '2026-1', '', '2026-10-01', 'Oct, 2026'])('rejects %j', (month) => {
+    expect(() => formatMonthLabel(month)).toThrow(RangeError);
   });
 });

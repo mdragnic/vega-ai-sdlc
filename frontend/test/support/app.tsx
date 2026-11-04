@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import {
   type AccountDetailsRequest,
   type AccountDetailsResponse,
@@ -8,6 +11,7 @@ import {
   EXPECTED_USER_HEADER,
   type ExpensesBreakdownResponse,
   type MonthlyComparisonResponse,
+  goalMessages,
   goalProgress,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
@@ -248,6 +252,134 @@ export function goalBackend(initial: SavingsGoalResponse = demoGoal) {
     }),
   ];
   return { handlers, saved, expectedUsers };
+}
+
+/** The 12 months of a year, newest first. */
+const yearDown = (year: number) =>
+  ['12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'].map((month) => `${year}-${month}`);
+
+/**
+ * The 58 months of `GET /api/savings-goals/months` at the fixed clock in Belgrade, `2026-10` down to `2022-01`, written
+ * out (task 025 AC3; #123 a).
+ */
+export const demoGoalMonths: string[] = [
+  ...yearDown(2026).slice(2),
+  ...yearDown(2025),
+  ...yearDown(2024),
+  ...yearDown(2023),
+  ...yearDown(2022),
+];
+
+/** The demo dataset's savings goals by month (demo-data.md, Savings goals), read from the backend's file. */
+const demoGoalRows = new Map(
+  (
+    JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../backend/src/demo/demo-dataset.json'), 'utf8')) as {
+      savingsGoals: { month: string; targetCents: number; presentCents: number }[];
+    }
+  ).savingsGoals.map((row) => [row.month, row]),
+);
+
+/** A month's demo goal as `GET /api/savings-goals?month=` answers it, `goal: null` for a month the dataset lacks. */
+export function demoGoalOf(month: string): SavingsGoalResponse {
+  const row = demoGoalRows.get(month);
+  if (!row) return { month, goal: null };
+  const target = usd(row.targetCents);
+  const present = usd(row.presentCents);
+  return { month, goal: { target, present, progress: goalProgress(present, target) } };
+}
+
+const goalMonthsPath = '*/api/savings-goals/months';
+const goalMonthPath = '*/api/savings-goals';
+const goalReadFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+/** The 409 of a month the user cannot choose, on the one-month read and the save (#123 b). */
+const monthUnavailable = () =>
+  HttpResponse.json({ message: goalMessages.monthUnavailable } satisfies ErrorResponse, { status: 409 });
+
+/** `GET /api/savings-goals/months` answers (task 025). */
+export const savingsGoalMonths = {
+  answers: (months: string[] = demoGoalMonths) => http.get(goalMonthsPath, () => HttpResponse.json({ months })),
+  /** Only the current month, as for a user with no data up to today. */
+  one: () => http.get(goalMonthsPath, () => HttpResponse.json({ months: ['2026-10'] })),
+  /** At 2026-10-31T23:30:00Z in Belgrade: 59 months from `2026-11`. */
+  belgradeMidnight: () => http.get(goalMonthsPath, () => HttpResponse.json({ months: ['2026-11', ...demoGoalMonths] })),
+  pending: () =>
+    http.get(goalMonthsPath, async () => {
+      await delay('infinite');
+      return HttpResponse.json({ months: demoGoalMonths });
+    }),
+  fails: () => http.get(goalMonthsPath, goalReadFailure),
+  /** Fails the first load and its 3 retries, then answers the demo list (Retry). */
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(goalMonthsPath, () => {
+      tries += 1;
+      return tries <= 4 ? goalReadFailure() : HttpResponse.json({ months: demoGoalMonths });
+    });
+  },
+};
+
+/** The month a `GET /api/savings-goals?month=` request names. */
+const monthOf = (request: Request) => new URL(request.url).searchParams.get('month') ?? '';
+
+/** `GET /api/savings-goals?month=` answers (task 025). */
+export const savingsGoalForMonth = {
+  /** The demo goal of the month the query names. */
+  answers: () => http.get(goalMonthPath, ({ request }) => HttpResponse.json(demoGoalOf(monthOf(request)))),
+  /** The month with no goal. */
+  none: () => http.get(goalMonthPath, ({ request }) => HttpResponse.json({ month: monthOf(request), goal: null })),
+  pending: () =>
+    http.get(goalMonthPath, async ({ request }) => {
+      await delay('infinite');
+      return HttpResponse.json(demoGoalOf(monthOf(request)));
+    }),
+  fails: () => http.get(goalMonthPath, goalReadFailure),
+  /** Fails the first load and its 3 retries, then answers the demo goal (Retry). */
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(goalMonthPath, ({ request }) => {
+      tries += 1;
+      return tries <= 4 ? goalReadFailure() : HttpResponse.json(demoGoalOf(monthOf(request)));
+    });
+  },
+  /** The 409 of a month the user cannot choose (#123 b). */
+  unavailable: () => http.get(goalMonthPath, monthUnavailable),
+};
+
+/**
+ * A backend's goals for one Goals test (task 025): `GET /api/savings-goals/months` answers `months`;
+ * `GET /api/savings-goals?month=` the month's goal (the demo goals unless changed), or the #123 b 409 for a month not in
+ * the list; `GET /api/savings-goals/current` the first month's; `PUT /api/savings-goals` records the body and its
+ * `X-Expected-User`, refuses a month not in the list with the 409, saves the rest with the progress from `goalProgress`
+ * and answers it; without the header the write guard's 400.
+ */
+export function goalsBackend(months: string[] = demoGoalMonths) {
+  const goals = new Map(months.map((month) => [month, demoGoalOf(month)]));
+  const saved: SavingsGoalRequest[] = [];
+  const expectedUsers: (string | null)[] = [];
+  const handlers = [
+    http.get(goalMonthsPath, () => HttpResponse.json({ months })),
+    http.get(currentGoalPath, () => HttpResponse.json(goals.get(months[0]!))),
+    http.get(goalMonthPath, ({ request }) => {
+      const goal = goals.get(monthOf(request));
+      return goal ? HttpResponse.json(goal) : monthUnavailable();
+    }),
+    http.put(saveGoalPath, async ({ request }) => {
+      expectedUsers.push(request.headers.get(EXPECTED_USER_HEADER));
+      if (!request.headers.get(EXPECTED_USER_HEADER)) return expectedUserMissing();
+      const body = (await request.json()) as SavingsGoalRequest;
+      saved.push(body);
+      if (!goals.has(body.month)) return monthUnavailable();
+      const answer: SavingsGoalResponse = {
+        month: body.month,
+        goal: { target: body.target, present: body.present, progress: goalProgress(body.present, body.target) },
+      };
+      goals.set(body.month, answer);
+      return HttpResponse.json(answer);
+    }),
+  ];
+  /** Sets a month's stored goal, as another tab's save would. */
+  const set = (answer: SavingsGoalResponse) => goals.set(answer.month, answer);
+  return { handlers, saved, expectedUsers, set };
 }
 
 /** A bill as `GET /api/bills/upcoming` sends it. */
@@ -1396,12 +1528,14 @@ export const monthlyComparison = {
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
  * asking, one that opens Transactions has its pages, one that opens a demo account's Account Details has its details
- * and history, and one that opens Expenses has its monthly comparison and the same expenses breakdown: the demo data of
- * each. A test's own `server.use` comes first.
+ * and history, one that opens Expenses has its monthly comparison and the same expenses breakdown, and one that opens
+ * Goals has its months and each month's goal: the demo data of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
   accounts.answers(),
   savingsGoal.answers(),
+  savingsGoalMonths.answers(),
+  savingsGoalForMonth.answers(),
   upcomingBills.answers(),
   recentTransactions.answers(),
   weeklyComparison.answers(),

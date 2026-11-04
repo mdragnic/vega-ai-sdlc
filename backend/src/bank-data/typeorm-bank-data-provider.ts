@@ -82,6 +82,21 @@ export class TypeOrmBankDataProvider implements BankDataProvider {
       nextCursor: limit !== undefined && rows.length > limit && last ? encodeCursor(last) : null,
     };
   }
+
+  async earliestTransactionAt(userId: number, before: Date): Promise<Date | null> {
+    if (Number.isNaN(before.getTime())) throw new RangeError('before must be a valid date');
+    // One query: a transaction reaches its user only through its account, so the user is in the same WHERE.
+    const row = await this.dataSource
+      .getRepository(Transaction)
+      .createQueryBuilder('t')
+      .innerJoin('t.account', 'a')
+      .select('MIN(t.occurredAt)', 'earliest')
+      .where('a.userId = :userId', { userId })
+      .andWhere('t.occurredAt < :before', { before })
+      .getRawOne<{ earliest: string | null }>();
+    // SQLite gives the stored text, `YYYY-MM-DD HH:MM:SS.SSS` in UTC.
+    return row?.earliest ? new Date(`${row.earliest.replace(' ', 'T')}Z`) : null;
+  }
 }
 
 function toBankAccount(row: Account): BankAccount {

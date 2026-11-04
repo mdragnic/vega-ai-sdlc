@@ -7,6 +7,12 @@ async function openGallery(page: Page) {
   await page.goto('/dev/components');
   await expect(page.getByRole('heading', { level: 1, name: 'Component gallery' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+  // Every "Error" example fails its query 800 ms after the gallery mounts, and its error state replaces its skeleton,
+  // which moves the sections below it (the DataState one sits above both charts: 112 px). Boxes are measured once each
+  // has its error state, so two boxes read a moment apart are on the same layout (as popup-amount-dropdown.spec.ts,
+  // task 024; task 025's longer gallery made the reads here straddle the change).
+  const errorExamples = page.getByRole('figure', { name: 'Error', exact: true });
+  await expect(errorExamples.getByRole('alert')).toHaveCount(await errorExamples.count());
 }
 
 const figure = (page: Page, region: string, name: string) =>

@@ -86,6 +86,12 @@ export interface BankDataProvider {
    * make and RangeError for a limit that is not a positive integer.
    */
   listTransactions(userId: number, filter: TransactionFilter): Promise<TransactionPage>;
+  /**
+   * The instant of the user's earliest transaction before `before` (exclusive), of any status, direction or account,
+   * or null when there is none. Read it through VisibleTransactions, which sets `before` to tomorrow's start (#53).
+   * Throws RangeError for an invalid date.
+   */
+  earliestTransactionAt(userId: number, before: Date): Promise<Date | null>;
 }
 
 export const BANK_DATA_PROVIDER = Symbol('BankDataProvider');

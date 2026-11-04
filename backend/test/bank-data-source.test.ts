@@ -13,12 +13,15 @@ const guards = {
   accountNumber: /\baccountNumber\b/,
   // Later tasks read transactions through VisibleTransactions.list, never the provider (#53).
   listTransactions: /\blistTransactions\b/,
+  // Task 025: the earliest transaction too, read through VisibleTransactions.earliestOccurredAt (#53, #123 a).
+  earliestTransactionAt: /\bearliestTransactionAt\b/,
 };
 
 /** The single files outside those folders that may use a name. */
 const allowedFiles: Record<keyof typeof guards, string[]> = {
   accountNumber: ['accounts/mask-account-number.ts'],
   listTransactions: [],
+  earliestTransactionAt: [],
 };
 
 function sourceFiles(dir: string): string[] {
@@ -51,6 +54,8 @@ describe('bank data in backend/src', () => {
         'expenses/expenses.service.ts',
         'expenses/expenses.controller.ts',
         'expenses/percent-change.ts',
+        // Task 025 T12: the Goals months read the earliest transaction through VisibleTransactions only.
+        'goals/savings-goals.service.ts',
       ]),
     );
     expect(outside.length).toBeGreaterThan(10);
@@ -80,6 +85,7 @@ describe('bank data in backend/src', () => {
     ['listTransactions', 'await this.bankData.listTransactions(userId, {});'],
     ['listTransactions', "provider['listTransactions'](userId)"],
     ['listTransactions', 'const { listTransactions } = this.bankData;'],
+    ['earliestTransactionAt', 'await this.bankData.earliestTransactionAt(userId, before);'],
   ] as const)('flags a use of %s: %s', (name, code) => {
     expect(guards[name].test(code)).toBe(true);
   });
@@ -88,6 +94,7 @@ describe('bank data in backend/src', () => {
     ['accountNumber', 'const masked = maskAccountNumber(row);'],
     ['accountNumber', 'SELECT account_number FROM accounts'],
     ['listTransactions', 'await this.visibleTransactions.list(userId, timeZone, filter);'],
+    ['earliestTransactionAt', 'await this.visibleTransactions.earliestOccurredAt(userId, timeZone);'],
   ] as const)('allows %s look-alikes: %s', (name, code) => {
     expect(guards[name].test(code)).toBe(false);
   });

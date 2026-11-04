@@ -58,6 +58,7 @@ function serviceWith(accounts: BankAccount[], transactions: BankTransaction[]) {
     getAccount: vi.fn<BankDataProvider['getAccount']>(),
     updateAccountDetails: vi.fn<BankDataProvider['updateAccountDetails']>(),
     listTransactions,
+    earliestTransactionAt: vi.fn<BankDataProvider['earliestTransactionAt']>(),
   };
   const list = vi.fn<VisibleTransactions['list']>(() => Promise.resolve({ transactions, nextCursor: null }));
   const visible = { list } as unknown as VisibleTransactions;
@@ -281,6 +282,7 @@ function detailsServiceWith(accounts: BankAccount[], transactions: BankTransacti
     getAccount,
     updateAccountDetails: vi.fn<BankDataProvider['updateAccountDetails']>(),
     listTransactions,
+    earliestTransactionAt: vi.fn<BankDataProvider['earliestTransactionAt']>(),
   };
   const list = vi.fn<VisibleTransactions['list']>((userId, _zone, filter = {}) =>
     Promise.resolve({
@@ -421,7 +423,13 @@ function updateServiceWith(accounts: BankAccount[], transactions: BankTransactio
   const listTransactions = vi.fn<BankDataProvider['listTransactions']>(() => {
     throw new Error('Transactions are read through VisibleTransactions only');
   });
-  const provider: BankDataProvider = { listAccounts, getAccount, updateAccountDetails, listTransactions };
+  const provider: BankDataProvider = {
+    listAccounts,
+    getAccount,
+    updateAccountDetails,
+    listTransactions,
+    earliestTransactionAt: vi.fn<BankDataProvider['earliestTransactionAt']>(),
+  };
   const list = vi.fn<VisibleTransactions['list']>((userId, _zone, filter = {}) => {
     calls.push('list');
     return Promise.resolve({

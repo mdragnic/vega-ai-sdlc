@@ -1,0 +1,66 @@
+Task 025 visual check, 2026-11-04 (Validation step 4). Playwright MCP, a fresh context at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed clock
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`, the clock through /api/test/clock), the Vite dev
+server, a new user on the demo data. Compared with docs/figma/110. Goals.png and 110.1. Goals.png at 2x pixels by a Node
+PNG reader (built-ins only, session scratchpad): the same regions measured on the PNG and on the screenshot, halved.
+No Figma calls.
+
+goals-110-1440-2x.png (the fixed clock, the demo data) against 110
+- Same, measured: the "Goals" title's ink (x 305.5 to 361, y 112 to 127.5; 361.5 and 128 on the build); the Savings Goal
+  card's top (y 152) and x (304 to 672, 368 wide); the Saving Summary card x 696 to 1408; the "Savings Goal" title's ink
+  (x 328.5 to 428 / 329 to 427, y 182 to 197); the period box's right edge (x 648) and y (172 to 203); its text's right
+  end (x 625); the amounts' ink x (331 to 458.5); the gauge caption's x (510.5 to 641 / 511 to 641); the "Adjust Goal"
+  label's ink x (437.5 to 512.5 / 438.5 to 512.5) and the pencil's (x 524 to 537 / 523.5 to 536); the category cards'
+  columns exactly (x 304 to 656, 680 to 1032, 1056 to 1408) and 104 high, 16 apart; "Expenses Goals by Category" ink x
+  (306 to 601.5 / 602.5). No vertical scroll (the page 1024 high).
+- Different, measured:
+  1. Everything under the divider is 1 px lower: the divider at y 216 against 215, the gauge top 237 against 236, the
+     caption 348 to 359 against 347 to 358, "Adjust Goal" 385 to 420 against 384 to 419, the card's end 445 against
+     444, the second title and the category cards 1 px lower (y 525 to 629 and 645 to 749). 110 draws the divider 11 px
+     under the period box; its token is on the 4px grid, 12 (#65, as Overview's Goals card,
+     --space-goals-divider-gap). So the card is 293 high with the demo goal (its 292 minimum holds in the other states:
+     the skeleton and the error state measured 292).
+  2. "Adjust Goal" is 140 wide against 142 (x 418 to 558 against 417 to 559, centred on the card): the 8 px from the
+     label to the pencil (--space-adjust-button-icon-gap) is on the 4px grid, measured about 9 (#65).
+  3. The period box hugs its label: `Oct, 2026` (x 536 to 648) against Figma's "01 May ~ 31 May" (x 492 to 648) (#60).
+  4. The amounts and the gauge centre: `$16,250.00`, `$20,000.00`, `$16.2k` at 81.25% against `$12,500`, `$20,000`,
+     "12K" (#11, #12, #18).
+  5. The Saving Summary card and the six category cards are white and empty (tasks 026, 027; #105 a pattern).
+  6. The header date `22 Oct, 2026` against "May 19, 2023" (#11, #54) and the initials avatar "TR" against the photo
+     (task 011, US-04); the page background as on the other screens (tasks 013 to 024).
+- Corrected during the check (built first from the detailing's estimates, then measured):
+  - "Savings Goal" is Semibold 16, not 18: in Semibold 18 its ink was 110.5 wide and 17 high (x 329 to 439.5,
+    y 180.5 to 197.5) against 99.5 and 15; in 16 it matches (x 329 to 427, y 182 to 197).
+  - "Adjust Goal" is Regular 14, not 16: the "A" cap is 10 px high on 110 (y 794 to 813 at 2x) and the label 75 px
+    wide, Inter 14 in Chromium 76; in 16 the button was 151 wide.
+
+goals-110.1-popup-1440-2x.png (Adjust Goal on Oct, 2026) against 110.1
+- Same, measured: the panel 488x392 with its top at y 276 (276 to 668 on both); Save's ink relative to the panel (x 148
+  to 339.5 from its left edge, y 572 to 619.5); the fields, their labels and the X as task 014's popup (104.1's box,
+  which 110.1 equals); only the content area dimmed (the sidebar unchanged at #191919: 25, 25, 25 on both; the page under
+  the dim 210 against 211 to 212).
+- Different, measured:
+  1. The panel at x 616 to 1104 against 604 to 1092: centred on the content area (#90 c, as task 014).
+  2. The fields prefilled `$20000` and `$16250` against `$500000` and Figma's placeholder (#31, #64); with no goal both
+     are empty, Target with the `$` alone and Present with "Write present amount here" (state-no-goal-popup-2x.png;
+     #18, #69, #71, #90 b).
+  3. Behind the dim, the card as in goals-110-1440-2x.png above (1 px lower, the period label).
+
+Evidence only (not designed or not on a PNG):
+- goals-1920x1080.png: the columns keep 368 : 712 (the Savings Goal card 531.5 wide), the card 293 high, the amounts at
+  the left, the gauge at the right edge, "Adjust Goal" centred (#94).
+- goals-1280x1024.png: the gauge under the amounts, right-aligned; the card and the Saving Summary card grow together
+  to 421 (#108 b); the ring on "Adjust Goal" is the keyboard focus returned there by Esc.
+- state-long-amounts-1440-2x.png: Target and Present $1,000,000,000.00 on one line each, the gauge under them, the card
+  and the row 421 high; the gauge's centre `$1,000M` meets its `$1,000M` end label (#109, #110: the gauge at the maximum
+  amounts, accepted).
+- state-open-list-2x.png: one list, newest first, `Oct, 2026` selected (Primary), scrolling (58 months) (#60, #90 a).
+- state-past-month-mar-2026-2x.png: Mar, 2026 selected: $11,000.00, $20,000.00, `$11k` at 0.55.
+- state-adjust-goal-focus-ring-2x.png: the #87 ring on "Adjust Goal" after Tab from the selector.
+- state-skeleton-months-loading-2x.png: the title, the selector's placeholder block, the skeleton (the summary's shapes
+  and the button's block), 292 high.
+- state-skeleton-goal-loading-2x.png: the selector with `Oct, 2026`, the skeleton.
+- state-error-2x.png: the months failing after their retries: the title, "Something went wrong." and Retry under the
+  divider, 292 high, the other cards in place.
+- state-no-goal-2x.png and state-no-goal-popup-2x.png: "No goal for this month" centred under the divider with "Adjust
+  Goal" (#58, #108 c); the popup empty, named "Adjust goal for Oct, 2026".

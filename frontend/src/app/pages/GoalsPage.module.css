@@ -1,0 +1,41 @@
+/* 110: the two sections, the second's title 32 under the top row (as 104, 105 and 109). */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-card-row-gap);
+}
+
+/* 110: the Savings Goal and Saving Summary cards, 368 : 712 of the width less the 24 between them at any width (#94),
+   one height: at least 292, both growing with the taller (#108 b). */
+.topRow {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--size-goals-column-savings-goal))
+    minmax(0, var(--size-goals-column-saving-summary));
+  gap: var(--space-card-gap);
+  min-height: var(--size-savings-goal-card-min-height);
+}
+
+.savingsGoalCard {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 110: the Savings Goal content inset 20 at the top and 24 at the sides and the bottom. */
+.savingsGoalBody {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  padding: var(--space-savings-goal-padding-top) var(--space-card-padding) var(--space-card-padding);
+}
+
+/* 110: three columns 24 apart and two rows 16 apart, each card at least 104 high. */
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-goals-category-row-gap) var(--space-card-gap);
+}
+
+.categoryCard {
+  min-height: var(--size-goals-category-card-min-height);
+}

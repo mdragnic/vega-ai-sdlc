@@ -10,6 +10,7 @@ import { BalancesPage } from './pages/BalancesPage';
 import { BillsPage } from './pages/BillsPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { GoalsPage } from './pages/GoalsPage';
 import { LoginPage } from './pages/LoginPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { SignUpPage } from './pages/SignUpPage';
@@ -71,7 +72,7 @@ const appPages: { path: string; handle: ShellHandle; element?: ReactNode }[] = [
   { path: paths.transactions, handle: { section: 'transactions' }, element: <TransactionsPage /> },
   { path: paths.bills, handle: { section: 'bills' }, element: <BillsPage /> },
   { path: paths.expenses, handle: { section: 'expenses' }, element: <ExpensesPage /> },
-  { path: paths.goals, handle: { section: 'goals' } },
+  { path: paths.goals, handle: { section: 'goals' }, element: <GoalsPage /> },
   { path: paths.settingsAccount, handle: { section: 'settings' } },
   { path: paths.settingsSecurity, handle: { section: 'settings' } },
 ];

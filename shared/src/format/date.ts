@@ -66,11 +66,13 @@ export function formatMonthAxisLabel(month: string): string {
   return format(parseISO(`${month}-01`), 'MMM');
 }
 
-/** Month labels: `May, 2023` (#11). `month` runs from 1 (January) to 12. */
-export function formatMonthLabel(year: number, month: number): string {
-  const firstDay = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
-  if (!plainDateSchema.safeParse(firstDay).success) {
-    throw new RangeError(`Not a year and month: ${year}, ${month}`);
+/**
+ * Month labels: `May, 2023` (#11), of a `YYYY-MM` month checked with the one month rule, `goalMonthSchema`, so nothing
+ * that shows a month splits it (task 025). Display only, no zone and no arithmetic.
+ */
+export function formatMonthLabel(month: string): string {
+  if (!goalMonthSchema.safeParse(month).success) {
+    throw new RangeError(`Not a YYYY-MM month: ${month}`);
   }
-  return format(parseISO(firstDay), 'MMM, yyyy');
+  return format(parseISO(`${month}-01`), 'MMM, yyyy');
 }

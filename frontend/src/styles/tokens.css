@@ -193,6 +193,13 @@
   --space-expenses-line-item-date-gap: 4px;
   --space-expenses-line-item-gap: 16px;
   --space-expenses-card-body-bottom: 8px;
+  --space-savings-goal-padding-top: 20px;
+  --space-savings-goal-divider-gap: 12px;
+  --space-savings-goal-body-gap: 20px;
+  --space-savings-goal-button-gap: 24px;
+  --space-goals-category-row-gap: 16px;
+  --space-adjust-button-padding-x: 20px;
+  --space-adjust-button-icon-gap: 8px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -282,6 +289,12 @@
   --size-test-scroll-fixture-height: 3000px;
   --size-expenses-card-min-height: 238px;
   --size-expenses-card-header-height: 78px;
+  --size-goals-column-savings-goal: 368fr;
+  --size-goals-column-saving-summary: 712fr;
+  --size-savings-goal-card-min-height: 292px;
+  --size-goals-category-card-min-height: 104px;
+  --size-adjust-button-height: 36px;
+  --size-adjust-button-skeleton-width: 140px;
 
   /* Radius */
   --radius-input: 8px;

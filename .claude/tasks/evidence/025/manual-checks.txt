@@ -1,0 +1,38 @@
+Task 025 manual checks, 2026-11-04 (Validation step 5). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page is 1425 wide in a 1440 window, #101). The development backend on the real clock (today 4 Nov
+2026, Europe/Belgrade: the current month November) and Vite, run separately (`npm run dev -w backend`, `npm run dev -w
+frontend`) so the backend alone could be stopped. No Figma calls.
+
+1. Sign up through the form ("Create an account" on Login): lands on /overview. The sidebar's "Goals": /goals, Goals
+   active. The Savings Goal card: "Savings Goal", `Nov, 2026`, Target Achieved $17,000.00, This month Target $20,000.00,
+   the gauge `$17k` of `$20k`, "Adjust Goal"; the card 362.9 wide and 293 high at x 304, y 152; no horizontal or
+   vertical scroll (1425 x 1024, manual-1440.png).
+   (A first read taken right after the sidebar click still saw Overview's Goals card, also a region named "Goals" with
+   a meter: read again once /goals rendered.)
+2. The selector by mouse: one list of 59 months, `Nov, 2026` to `Jan, 2022`; picking `Jun, 2024` shows $13,250.00 and
+   `$13.2k`. By keyboard: focus on the selector, Enter opens the list on `Jun, 2024`, two ArrowUp to `Aug, 2024`, Enter:
+   the card shows $14,750.00, focus stays on the selector with the ring. (A first scripted try sent the arrows before
+   Radix had focused the open list's selected option, within the same few milliseconds, and the pick stayed on June;
+   with the list open for 300 ms, as by hand, it works. Task 005's Dropdown, not changed here.)
+3. "Adjust Goal" on `Aug, 2024`: the dialog "Adjust goal for Aug, 2024", prefilled `20000` and `14750`. Esc, X and a
+   click on the dimmed area each close it with the typed `99` discarded, focus back on "Adjust Goal", and it reopens with
+   `20000` / `14750`. (A first scripted loop pressed faster than Radix starts listening, one tick after opening, as
+   popup-amount-dropdown.spec.ts notes; with 150 ms, as by hand, all three close.)
+4. Saved `Aug, 2024` with 31000 / 15000.5: the card shows $15,000.50 of $31,000.00 (`$15k`, `$31k`). Overview: still
+   `Nov, 2026`, $17,000.00 of $20,000.00. Back on Goals: the page opens on `Nov, 2026` (nothing remembered, #30). Saved
+   November with 22000 / 18000: Overview shows $18,000.00 of $22,000.00, `Nov, 2026`.
+5. Resized: at 1920 the card 526.4 wide and 293 high, the Saving Summary 1018.6, ratio 0.5168 (368 : 712), the gauge
+   beside the amounts, "Adjust Goal" centred (manual-1920.png); at 1280 the card 308.4 wide and 421 high with the
+   Saving Summary, the gauge under the amounts (#108 b, manual-1280.png); back at 1440, 293 high. Saved
+   $1,000,000,000.00 twice at 1440: both amounts on one line, the gauge under them, the card and its row 421 high,
+   nothing past the card, no horizontal scroll (manual-long-amounts-1440.png).
+6. Two tabs: the popup open on `Mar, 2026` with `45000` typed; in a second tab of the same browser, logout and sign up
+   as Ada Lovelace; back in the first, the window's focus check: one GET /api/auth/me, the popup closes, the typed
+   `45000` gone, the shell shows Ada Lovelace, the card Ada's `Nov, 2026` ($17,000.00); no PUT was sent.
+7. The backend stopped (the watcher and its child ended) with the popup open on `Sep, 2026`: Save shows "Something went
+   wrong." above Save, `26000` kept (manual-backend-down-save.png). Esc; Bills, then Goals from the sidebar: the cached
+   November goal shows, with no message (#89). Picking `Jan, 2023`, never loaded: the skeleton (aria-busy) under the
+   divider, the selector kept with `Jan, 2023` (manual-backend-down-skeleton.png); after the retries "Something went
+   wrong." and Retry (manual-backend-down-error.png).
+8. The backend started again; Tab from the selector reaches Retry; Enter: January 2023's $9,500.00 of $20,000.00, focus
+   on the card's DataState root with the ring, not the page body (#114, manual-retry-loaded.png).

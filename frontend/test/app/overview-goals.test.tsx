@@ -438,9 +438,9 @@ describe('a save in flight and a failed save', () => {
     ['a 500', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }), 'Something went wrong.'],
     ['a network failure', () => HttpResponse.error(), 'Something went wrong.'],
     [
-      'a 409 in the shared shape',
-      () => HttpResponse.json({ message: goalMessages.monthEnded } satisfies ErrorResponse, { status: 409 }),
-      goalMessages.monthEnded,
+      'a 409 in the shared shape (#123 b)',
+      () => HttpResponse.json({ message: goalMessages.monthUnavailable } satisfies ErrorResponse, { status: 409 }),
+      goalMessages.monthUnavailable,
     ],
   ];
 
@@ -484,16 +484,18 @@ describe('a save in flight and a failed save', () => {
     expect(dialog()).toBeInTheDocument();
   });
 
-  // Code review: a refetch behind the open popup must not move the save to the new month (#108 d).
-  it('saves the month the popup opened for when the card moves to the next month behind it, and shows the 409', async () => {
+  // Code review: a refetch behind the open popup must not move the save to the new month (#108 d). Task 025 (#123 b,
+  // which updates #108 d): October is then a past month, saved with 200; its answer never replaces November's card.
+  it('saves the month the popup opened for when the card moves to the next month behind it, and keeps November', async () => {
     const bodies: SavingsGoalRequest[] = [];
     server.use(
       http.put('*/api/savings-goals', async ({ request }) => {
         const body = (await request.json()) as SavingsGoalRequest;
         bodies.push(body);
-        return body.month === '2026-11'
-          ? HttpResponse.json({ ...goalOf(body.target.cents, body.present.cents, 1), month: '2026-11' })
-          : HttpResponse.json({ message: goalMessages.monthEnded } satisfies ErrorResponse, { status: 409 });
+        return HttpResponse.json({
+          month: body.month,
+          goal: { target: body.target, present: body.present, progress: 1 },
+        } satisfies SavingsGoalResponse);
       }),
     );
     const { user } = await openOverview();
@@ -508,9 +510,15 @@ describe('a save in flight and a failed save', () => {
     );
     await user.click(saveButton());
 
-    expect(await within(dialog()).findByRole('alert')).toHaveTextContent(goalMessages.monthEnded);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(bodies.map((body) => body.month)).toEqual(['2026-10']);
-    expect(targetField()).toHaveValue('30000');
+    await settle();
+    expect(appClient!.getQueryData<SavingsGoalResponse>(['savings-goals', 'current'])?.month).toBe('2026-11');
+    expect(within(goals()).getByText('Nov, 2026')).toBeInTheDocument();
+    expect(amounts()).toEqual([
+      ['Target Achieved', '$17,000.00'],
+      ['This month Target', '$20,000.00'],
+    ]);
   });
 
   it('clears the message when the next save starts', async () => {

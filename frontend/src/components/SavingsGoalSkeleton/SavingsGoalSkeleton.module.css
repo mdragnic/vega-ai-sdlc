@@ -1,0 +1,24 @@
+/* Not designed (#6): existing tokens only, on the Savings Goal card's grid. It fills the part under the divider at the
+   card's 292 minimum (less the insets, the header row, the divider and the gaps), the summary's shapes at its top and
+   the button's block at its bottom, as the card draws them. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(
+    var(--size-savings-goal-card-min-height) - var(--space-savings-goal-padding-top) - var(--space-card-padding) -
+      var(--size-dropdown-box-height) - var(--space-savings-goal-divider-gap) - var(--border-width-divider) -
+      var(--space-savings-goal-body-gap)
+  );
+}
+
+/* "Adjust Goal"'s box, centred, at least 24 under the summary and on the card's bottom inset. */
+.button {
+  align-self: center;
+  width: var(--size-adjust-button-skeleton-width);
+  height: var(--size-adjust-button-height);
+  margin-top: auto;
+}
+
+.summary {
+  margin-bottom: var(--space-savings-goal-button-gap);
+}

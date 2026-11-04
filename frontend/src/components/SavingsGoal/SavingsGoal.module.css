@@ -1,0 +1,82 @@
+/* Fills the content box of the Savings Goal card (inset 20 at the top, 24 at the sides and the bottom, see GoalsPage),
+   so the body takes the rest of the card's 292 minimum. */
+.savingsGoal {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+/* 110: "Savings Goal" on the left and the period box on the right of one 32px row, then the Gray/06 divider 12 below.
+   Where the row does not fit, the selector moves under the title, right-aligned (#106, #108 b). */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-goals-wrap-gap);
+  padding-bottom: var(--space-savings-goal-divider-gap);
+  border-bottom: var(--border-width-divider) solid var(--color-gray-06);
+}
+
+/* 110 "Savings Goal": Secondary, Semibold 16 by its ink (x 328.5 to 428, 99.5 wide; y 182 to 197 with the `g`; Semibold
+   18 is 110.5 wide in Chromium), on a 24 line centred in the row. */
+.title {
+  margin: 0;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* The period box's 32px place, also while the months load or after they failed. */
+.selector {
+  display: flex;
+  align-items: center;
+  min-height: var(--size-dropdown-box-height);
+  margin-left: auto;
+}
+
+/* Not designed: the period box's place while the months load, about as wide as `Oct, 2026` in it. */
+.selectorPlaceholder {
+  display: flex;
+}
+
+.selectorBlock {
+  width: var(--size-amount-box-width-lg);
+  height: var(--size-dropdown-box-height);
+}
+
+/* 110: the body 20 under the divider, taking the rest of the card; "Adjust Goal" at its bottom. */
+.body {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  margin-top: var(--space-savings-goal-body-gap);
+}
+
+/* 110: "Adjust Goal" centred on the card, at least 24 under the body, on the card's bottom inset. */
+.adjust {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: var(--space-savings-goal-button-gap);
+}
+
+/* Not designed (#58, #108 c): the message centered in the body above "Adjust Goal", in DataState's empty-message
+   style. */
+.empty {
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Gray/01, so 14px text keeps a 4.5:1 contrast on white (as DataState's empty message). */
+.emptyText {
+  margin: 0;
+  color: var(--color-gray-01);
+  font: var(--font-regular-14-20);
+}
