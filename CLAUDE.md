@@ -7,6 +7,7 @@ Personal finance dashboard, desktop only (1440x1024). React SPA, NestJS API, SQL
 - Decisions: `docs/decisions.md`, cited as `#N`. Read the ones a story cites before building it.
 - Design: `docs/figma/`: screen PNGs (the visual reference), `components.md` (Figma name to code name), `tokens.md`, `assets/`. Figma file: https://www.figma.com/design/wZQT9xEAtFjkZtlxvVtpPu (screens 66:4728, components 56:1396).
 - Stack and versions: the `package.json` files (root, `frontend/`, `backend/`, `shared/`, `e2e/`).
+- Architecture: `docs/architecture.md` (overview; the decisions it cites win).
 
 ## Rules you would otherwise get wrong
 - Money is integer cents everywhere, calculated only in the backend. Never decimal or float (#11).
