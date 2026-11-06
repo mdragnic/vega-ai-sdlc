@@ -236,6 +236,7 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-phone-separator-gap` | `4px` | measured: PNG 111, "+880" (ink to x 800, its advance about x 801) to the separator's 24 px box (its 4 px line x 823 to 826 in the middle: x 812 to 836), 11 px, and the box's end to "51547" (ink from x 850, about 1 px of bearing), 13 px; halved 5.5 and 6.5, on the 4 px grid 4 (the nearer of 4 and 8 to their 6; the number about 3 px left of 111). Added in task 028 |
 | `--space-profile-photo-gap` | `32px` | measured: PNG 111, "Your Profile Picture"'s 48 px line box end (y 480; its ink y 443 to 468) to the upload box (y 544), 64 px, halved. Added in task 028 |
 | `--space-profile-photo-icon-gap` | `12px` | measured: PNG 111, the upload icon's ink end (y 663, its 80 px box to about y 668) to the "Upload your" 32 px line box (its ink from y 700, about 7 px under the line top), about 25 px, halved 12.5, rounded. Added in task 028 |
+| `--space-profile-photo-note-gap` | `8px` | not designed (#128 a2): the "Not saved" line 8 under the upload box, and "Clear" 8 after "Not saved" on it; 8 on the 4 px grid, as a field's message under its field (`--space-form-label-gap`). Added in task 029 |
 
 ## Size
 

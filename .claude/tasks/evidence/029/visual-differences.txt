@@ -1,0 +1,48 @@
+Task 029 visual check, 2026-11-06 (Validation step 5). Playwright MCP, fresh contexts at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed clock
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`, a fresh test database), the Vite dev server.
+Signed up as "Tanzir Rahman" with tanzir.rahman@email.com (username tanzir.rahman), +880 and "51547 58868" saved, as
+task 028. Compared with docs/figma/111. Settings.png at 2x pixels by a Node PNG reader (built-ins only, session
+scratchpad, deleted at the end). No Figma calls.
+
+settings-111-1440-2x.png (no photo) against 111
+- Pixel-identical to task 028's evidence/028/settings-111-1440-2x.png of the same state: 0 of 2880x2048 pixels differ
+  by more than 8 in any channel. The box is a button since this task (the icon and the text in spans, the pointer
+  cursor) and draws exactly as task 028's visual-only box. So the comparison with 111 is task 028's, unchanged: see
+  evidence/028/visual-differences.txt (the upload box: 111's image glyph against Lucide's `image-plus`, as listed
+  there; everything else as measured there).
+
+settings-photo-saved-1440-2x.png (frontend/src/app/dev/sample-avatar.png chosen through the picker and saved, then
+reloaded: nothing focused, no message) against 111
+- The sidebar avatar: its circle's bounds x 56 to 119, y 1816 to 1879 on both (32 px at 1x, task 003's place); its
+  row widths every 8 rows the same on both but the top row (x 82 to 93 in 111, 84 to 92 here: the anti-aliased top
+  of the circle). Its pixels: mean absolute difference 0.6 of 255 per channel over the 4,096 pixels, largest 36 (the
+  sample photo is 111's own avatar photo, cropped from 104, so only the edge's anti-aliasing differs).
+- The name, "View profile" and the dots beside the avatar: as task 028's screenshot (not changed by this task).
+- The upload box with the stored photo: not designed in 111 (111 draws the empty box). The photo covers the box inside
+  its dashed border (142 x 130 at 1x inside the 144 x 132 box), the icon and the text not shown.
+
+Undesigned states (evidence for Marko; tokens only, nothing measured against a design)
+- state-preview-2x.png: a chosen file's preview (the sample photo) from a local blob: URL, covering the box inside the
+  dashed border; under it, 8 below, "Not saved" (Regular 12/16, Gray/03) and "Clear" (Primary), 8 apart, centred
+  under the box. "Save changes" available (Primary).
+- state-saving-2x.png: saving with the photo (the PATCH held): "Save changes" in its loading pattern, the preview kept,
+  the box and "Clear" disabled with their look unchanged.
+- settings-photo-saved-1440-2x.png: the stored photo in the box and the sidebar after the save and a reload.
+- state-refused-not-image-2x.png: a text file named photo.png chosen alone: the empty box with its dashes in Special
+  Red (#E73D1C measured on the left edge), "Photo must be a JPG or PNG file" (FieldError, Special Red 14/20) 8 under
+  the box, wrapping on two lines within the label's width, centred.
+- state-refused-too-large-2x.png: a file of 2,097,153 bytes chosen alone: "Photo must be at most 2 MB", the same way.
+- state-refused-after-valid-2x.png: a valid choice, then a refused one: the preview, "Not saved" and "Clear" kept, the
+  message under them, the dashes red over the preview's edge.
+- state-cannot-draw-2x.png: a JPEG cut short (its first bytes valid, 40 bytes): kept, the box's empty look (the icon
+  and the text) with "Not saved" and "Clear".
+- state-focus-box-2x.png: keyboard focus on the box (Tab from Phone Number): the #87 teal ring (#299D91 measured) 2 px
+  outside the box, 2 px wide; the dashes unchanged.
+- state-focus-clear-2x.png: keyboard focus on "Clear": the same ring around the text button.
+- state-hover-2x.png: the mouse over the empty box: the dashes one gray darker, Gray/02 (#878787 measured; Gray/03
+  #9F9F9F at rest), no ring.
+- state-avatar-initials-failed-image-2x.png: the photo's address answering 404 (the file removed out of band): the
+  sidebar shows the initials "TR" and the box its empty look.
+
+Differences found: none against 111 beyond task 028's list. Not designed, so not compared: every state above.

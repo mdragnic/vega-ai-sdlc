@@ -14,6 +14,7 @@ import { z } from 'zod';
 
 import { ApiError, apiRequest, formErrorFor, formErrorMessage, serverFieldErrors } from '../../src/api/client';
 import { createQueryClient, sendWrite, sessionQueryKey } from '../../src/api/session';
+import { readMultipart, sendFilesThroughNodeFetch } from '../support/multipart';
 
 const echo = {
   method: 'PUT',
@@ -490,6 +491,106 @@ describe('sendWrite', () => {
     const init = fetchSpy.mock.calls[0]![1]!;
     expect(new Headers(init.headers).has('Content-Type')).toBe(false);
     expect(init.body).toBeInstanceOf(FormData);
+  });
+
+  // Task 029 T13: AC4, AC5, the entry's file part (`filePart: 'photo'`) sent as a file under the fixed name `photo`.
+  describe('with a photo', () => {
+    /** Every part as the backend reads it: a text, or a file's name, type and bytes. */
+    const parts: [string, string | { name: string; type: string; bytes: number[] }][] = [];
+    let contentType: string | null = null;
+
+    const receive = () =>
+      server.use(
+        http.patch('*/api/profile', async ({ request }) => {
+          contentType = request.headers.get('Content-Type');
+          for (const part of await readMultipart(request)) {
+            parts.push([part.name, 'value' in part ? part.value : part.file]);
+          }
+          return HttpResponse.json({ ...profileBody, email: 'a@x.com', photoUpdatedAt: '2026-10-22T10:00:00.000Z' });
+        }),
+      );
+
+    let restoreFetch: () => void;
+    // After the server listens: the wrapper goes around MSW's fetch.
+    beforeAll(() => {
+      restoreFetch = sendFilesThroughNodeFetch();
+    });
+    afterAll(() => restoreFetch());
+
+    afterEach(() => {
+      parts.length = 0;
+      contentType = null;
+    });
+
+    it('sends the four text parts and one file part photo, named photo, with the chosen bytes', async () => {
+      receive();
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+      const photo = new File([Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3])], 'my holiday.png', {
+        type: 'image/png',
+      });
+
+      const profile = await sendWrite(clientWithSession(sessionUser), profileContract.update, {
+        ...profileBody,
+        photo,
+      });
+
+      expect(profile.photoUpdatedAt).toBe('2026-10-22T10:00:00.000Z');
+      expect(parts).toEqual([
+        ['fullName', 'Ana Marija Petrović'],
+        ['username', 'ana.petrovic'],
+        ['phoneCountryCode', '+381'],
+        ['phoneNumber', ''],
+        ['photo', { name: 'photo', type: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47, 1, 2, 3] }],
+      ]);
+      expect(contentType).toMatch(/^multipart\/form-data; boundary=/);
+      expect(new Headers(fetchSpy.mock.calls[0]![1]!.headers).has('Content-Type')).toBe(false);
+    });
+
+    it('sends exactly the four text parts when the photo is absent', async () => {
+      receive();
+
+      await sendWrite(clientWithSession(sessionUser), profileContract.update, { ...profileBody, photo: undefined });
+
+      expect(parts.map(([name]) => name)).toEqual(['fullName', 'username', 'phoneCountryCode', 'phoneNumber']);
+    });
+
+    it.each<[string, unknown]>([
+      ['a number', 42],
+      ['an object', { name: 'x.png' }],
+      ['null', null],
+    ])('refuses %s as the photo before anything is sent', async (_case, photo) => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      await expect(
+        sendWrite(clientWithSession(sessionUser), profileContract.update, {
+          ...profileBody,
+          photo: photo as File,
+        }),
+      ).rejects.toThrow(/photo/);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('refuses a file in a part that is not the entry’s file part', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      await expect(
+        sendWrite(clientWithSession(sessionUser), profileContract.update, {
+          ...profileBody,
+          fullName: new File(['x'], 'x.png') as unknown as string,
+        }),
+      ).rejects.toThrow(/fullName/);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  it('never reads a file response through apiRequest: the photo’s address is for an <img>', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(apiRequest(profileContract.photo)).rejects.toThrow(/file/);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it('sends the goal PUT with the header', async () => {

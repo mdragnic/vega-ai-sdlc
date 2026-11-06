@@ -1,12 +1,9 @@
-/* The column hugs its label; the box is centred under it (PNG 111: both centred on x 2188 at 2x). Visual only until
-   task 029: the default cursor everywhere in it. */
+/* The column hugs its label; the box is centred under it (PNG 111: both centred on x 2188 at 2x). */
 .photo {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-profile-photo-gap);
-  cursor: default;
-  user-select: none;
 }
 
 /* "Your Profile Picture": Medium 16/24 in Gray/01 (PNG 111, #666666), on the first label's line. */
@@ -17,19 +14,61 @@
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-24);
   white-space: nowrap;
+  cursor: default;
 }
 
-/* The dashed Gray/03 box, its icon and text centred (111: the icon 22 under its top, the text 24 above its end). */
+/* The dashed Gray/03 box, its icon and text centred (111: the icon 22 under its top, the text 24 above its end). A
+   button since task 029: the browser's own button look removed, the pointer cursor; a photo covers it inside its
+   border. */
 .box {
+  position: relative;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   gap: var(--space-profile-photo-icon-gap);
   width: var(--size-profile-photo-box-width);
   height: var(--size-profile-photo-box-height);
+  padding: 0;
+  overflow: hidden;
   border: var(--border-width-profile-photo-box) dashed var(--color-gray-03);
   border-radius: var(--radius-profile-photo-box);
+  background-color: var(--color-white);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Not designed: hover darkens the dashes one gray step. */
+.box:hover:not(:disabled) {
+  border-color: var(--color-gray-02);
+}
+
+/* Keyboard focus (#87); a mouse click shows none. */
+.box:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* A refused choice or the server's photo error (#87 b): the dashes red, hover included. */
+.invalid,
+.invalid:hover:not(:disabled) {
+  border-color: var(--color-special-red);
+}
+
+/* While saving: unchanged but for the cursor. */
+.box:disabled {
+  cursor: default;
+}
+
+/* The stored photo or the preview covers the box inside its dashed border. */
+.image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Lucide's `image-plus` in Gray/02 (PNG 111, #878787), its ink about 36 px as 111's glyph. */
@@ -46,4 +85,50 @@
   color: var(--color-gray-03);
   font: var(--font-regular-12-16);
   text-align: center;
+}
+
+/* Under the box (not designed, #128 a2): "Not saved" with "Clear", and the error, each 8 under the one above. They take
+   the label's width (they never widen the column, so the box keeps its place) and wrap in it. The column's 32 gap is
+   taken back to 8. The error's live region is always there, so a message added to it is announced. */
+.below {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-profile-photo-note-gap);
+  width: 0;
+  min-width: 100%;
+  margin-top: calc(var(--space-profile-photo-note-gap) - var(--space-profile-photo-gap));
+  text-align: center;
+}
+
+/* The error's own 8 above it (`FieldError`) is the column's gap here. */
+.below p {
+  margin: 0;
+}
+
+.note {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-profile-photo-note-gap);
+  color: var(--color-gray-03);
+  font: var(--font-regular-12-16);
+}
+
+/* "Clear": a text button in Primary, as the app's actions. */
+.clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.clear:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.clear:disabled {
+  cursor: default;
 }

@@ -16,6 +16,21 @@ export default defineConfig({
     strictPort: true,
     // One origin for the browser: /api goes to the backend (#73).
     proxy: { '/api': 'http://127.0.0.1:3000' },
+    fs: {
+      // Setting `deny` replaces Vite's own list, so Vite 8.3.5's defaults are repeated here unchanged, and the backend's
+      // data folder is added: the SQLite files and the profile photos are never served (task 029 security review). Vite
+      // matches these against the file's absolute path, so the folder takes a leading `**/` (`backend/data/**` alone
+      // matches nothing).
+      deny: [
+        '.env',
+        '.env.*',
+        '*.{crt,pem,key,p12,pfx,cer,der}',
+        '.npmrc',
+        '.yarnrc.yml',
+        '**/.git/**',
+        '**/backend/data/**',
+      ],
+    },
   },
   test: {
     environment: 'jsdom',

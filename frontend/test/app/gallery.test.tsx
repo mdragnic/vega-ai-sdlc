@@ -1,5 +1,5 @@
 import { axisTicks, formatCompactMoney } from '@finebank/shared';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -13,6 +13,14 @@ import * as components from '../../src/components';
 // The module is loaded here first, so each render waits only for React; the route still loads it through `lazy`.
 beforeAll(async () => {
   await import('../../src/app/dev/ComponentGallery');
+  // jsdom has no object URLs: the photo preview examples (task 029) get the browser's stand-ins.
+  let next = 0;
+  Object.defineProperty(URL, 'createObjectURL', {
+    configurable: true,
+    writable: true,
+    value: () => `blob:http://localhost:3000/gallery-${(next += 1)}`,
+  });
+  Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, writable: true, value: () => undefined });
 });
 
 afterEach(() => {
@@ -126,7 +134,26 @@ describe('component gallery', () => {
         name: 'Phone Number',
       }),
     ).toHaveValue('5154758868');
-    expect(figure('ProfilePhotoUpload', 'Empty, visual only (111)')).toHaveTextContent('Your Profile Picture');
+    // Task 029: no longer visual only, so the example's name lost "visual only"; the check is the same.
+    expect(figure('ProfilePhotoUpload', 'Empty (111)')).toHaveTextContent('Your Profile Picture');
+    // Task 029: the box's undesigned states.
+    const photo = (name: string) =>
+      within(figure('ProfilePhotoUpload', name)).getByRole('button', { name: 'Upload your photo' });
+    expect(photo('The stored photo (not designed)').querySelector('img')).not.toBeNull();
+    await waitFor(() =>
+      expect(photo("A chosen file's preview, not saved (not designed)").querySelector('img')).toHaveAttribute(
+        'src',
+        expect.stringMatching(/^blob:/),
+      ),
+    );
+    expect(figure('ProfilePhotoUpload', "A chosen file's preview, not saved (not designed)")).toHaveTextContent(
+      'Not saved',
+    );
+    expect(photo('A refused choice (not designed)')).toHaveAccessibleDescription('Photo must be a JPG or PNG file');
+    expect(photo('A refused choice after a valid one: the preview kept (not designed)')).toHaveAccessibleDescription(
+      'Not saved Photo must be at most 2 MB',
+    );
+    expect(photo('Saving (not designed)')).toBeDisabled();
     expect(within(screen.getByRole('region', { name: 'FormSuccess' })).getByRole('status')).toHaveTextContent(
       'Profile updated',
     );

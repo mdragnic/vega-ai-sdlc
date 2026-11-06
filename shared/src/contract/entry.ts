@@ -17,6 +17,9 @@ export type ParamsSchema = z.ZodType<Record<string, string | number>, Record<str
  * query, absent when the endpoint takes none (task 020). `params` is the object schema of the path's parameters, each
  * named `:name` in `path` (the syntax of Nest and React Router), absent when the path has none (task 021). `encoding` is
  * the body's encoding: absent, JSON; `multipart`, `multipart/form-data` with each body key a text part (task 028, #76).
+ * `filePart` names a multipart entry's one file part: that body key is sent as a file, every other key as text (task
+ * 029). `responseEncoding` `file` says the answer is a file's bytes with their own `Content-Type`, not JSON: its
+ * address is built from `path` and the client never reads it through `apiRequest` (task 029).
  */
 export interface ContractEntry<
   TRequest extends z.ZodType | undefined = z.ZodType | undefined,
@@ -31,4 +34,6 @@ export interface ContractEntry<
   readonly query?: TQuery;
   readonly params?: TParams;
   readonly encoding?: 'multipart';
+  readonly filePart?: string;
+  readonly responseEncoding?: 'file';
 }

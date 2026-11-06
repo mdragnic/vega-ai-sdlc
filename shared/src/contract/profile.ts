@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { fullNameSchema } from './auth.js';
 import { countryCallingCodes } from './country-calling-codes.js';
 import type { ContractEntry } from './entry.js';
+import { photoSchema } from './profile-photo.js';
 import { currentUserSchema, profileMessages, usernameSchema } from './user.js';
 
 /** The most digits of a Phone Number: E.164's maximum for a whole number (#126 c). */
@@ -27,22 +28,25 @@ export const phoneNumberSchema = z
 
 /**
  * `PATCH /profile`, Update Profile (#33): exactly the four editable fields, all required (the form always sends all four;
- * no number is the empty string), each by its one shared rule (#74, #126), the output trimmed and the number digits only.
- * Unknown keys are dropped, so an email, a password, an ID, a user or a photo URL never reaches the backend's logic: the
- * email is read-only (#33) and stays the write guard's identity (#119). The form uses it as is.
+ * no number is the empty string), each by its one shared rule (#74, #126), the output trimmed and the number digits only,
+ * and an optional `photo`, the shared photo rule (#76, task 029): with one, async (`parseAsync`). Unknown keys are
+ * dropped, so an email, a password, an ID, a user or a photo URL never reaches the backend's logic: the email is
+ * read-only (#33) and stays the write guard's identity (#119). The form uses it as is.
  */
 export const profileUpdateRequestSchema = z.object({
   fullName: fullNameSchema,
   username: usernameSchema,
   phoneCountryCode: phoneCountryCodeSchema,
   phoneNumber: phoneNumberSchema,
+  photo: photoSchema.optional(),
 });
 
 export type ProfileUpdateRequest = z.infer<typeof profileUpdateRequestSchema>;
 
 /**
- * The signed-in user's profile, the Account tab's fields: the session user's three keys and the phone's two, as stored.
- * Its `fullName` is any stored string (#126 a's condition). Unknown keys are dropped.
+ * The signed-in user's profile, the Account tab's fields: the session user's keys (`photoUpdatedAt` only with a stored
+ * photo, task 029) and the phone's two, as stored. Its `fullName` is any stored string (#126 a's condition). Unknown
+ * keys are dropped.
  */
 export const profileSchema = currentUserSchema.extend({
   phoneCountryCode: z.string(),
@@ -52,9 +56,10 @@ export const profileSchema = currentUserSchema.extend({
 export type Profile = z.infer<typeof profileSchema>;
 
 /**
- * The signed-in user's profile (US-18, #33): `get` its five fields for the Account tab, and `update` its four editable
- * ones, one `multipart/form-data` request (#76: the photo part follows in task 029), answering the stored profile. The
- * user comes from the session only (#39, #46).
+ * The signed-in user's profile (US-18, #33): `get` its fields for the Account tab; `update` its four editable ones and
+ * an optional photo, one `multipart/form-data` request with the photo as its one file part `photo` (#76), answering
+ * the stored profile; `photo`, the stored photo's bytes with their stored type (#76), a file, not JSON: the frontend
+ * puts its address, `?v=` and `photoUpdatedAt`, in an `<img>`. The user comes from the session only (#39, #46).
  */
 export const profileContract = {
   get: { method: 'GET', path: '/profile', request: undefined, response: profileSchema },
@@ -64,5 +69,14 @@ export const profileContract = {
     request: profileUpdateRequestSchema,
     response: profileSchema,
     encoding: 'multipart',
+    filePart: 'photo',
+  },
+  photo: {
+    method: 'GET',
+    path: '/profile/photo',
+    request: undefined,
+    // The bytes of a file with their own type, never read as JSON (`responseEncoding`).
+    response: z.unknown(),
+    responseEncoding: 'file',
   },
 } as const satisfies Record<string, ContractEntry>;

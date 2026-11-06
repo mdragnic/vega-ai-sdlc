@@ -318,6 +318,10 @@ test('tabs through the form in order with the ring where there is no caret, and 
   await expectBorder(page, phoneRow(page), '--color-input-active');
   await page.keyboard.press('Tab');
   await expectFocusBorder(page, field(page, 'Phone Number'), phoneRow(page));
+  // Changed by task 029 (#128 c): the upload box, a button since then, comes between Phone Number and the button.
+  await page.keyboard.press('Tab');
+  await expect(main(page).getByRole('button', { name: 'Upload your photo', exact: true })).toBeFocused();
+  await expectRing(page, main(page).getByRole('button', { name: 'Upload your photo', exact: true }));
   await page.keyboard.press('Tab');
   // Nothing changed yet: "Save changes" is unavailable but takes focus with its ring (#127 b, as task 022).
   await expect(saveButton(page)).toBeFocused();
@@ -501,8 +505,9 @@ async function expectLayout(page: Page) {
   near(uploadBox.height, 132, 'upload box height');
   near(uploadBox.y, picture.y + 24 + 32, 'upload box 32 under its label');
   near(uploadBox.x + uploadBox.width / 2, picture.x + picture.width / 2, 'upload box centred under its label');
-  // Visual only until task 029 (AC4): the default cursor, not a pointer or text one.
-  expect(await computed(main(page).getByText('Upload your photo').locator('..'), 'cursor')).toBe('default');
+  // Changed by task 029 (#128 c): the box is a button that opens the file picker, so the pointer cursor; the label
+  // keeps the default one.
+  expect(await computed(main(page).getByText('Upload your photo').locator('..'), 'cursor')).toBe('pointer');
   expect(await computed(main(page).getByText('Your Profile Picture', { exact: true }), 'cursor')).toBe('default');
   const button = await box(saveButton(page));
   near(button.x, contentLeft, 'button left');

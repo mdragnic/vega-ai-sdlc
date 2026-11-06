@@ -16,6 +16,13 @@ interface IndexRow {
   unique: number;
 }
 
+/** A photo's three columns, the time fixed (task 029). */
+const photo = (path: string, type: string) => ({
+  photo_path: path,
+  photo_mime_type: type,
+  photo_updated_at: '2026-10-22 10:00:00.000',
+});
+
 // T16: the migrations create users and sessions with their constraints, and match the entities (#75, #79).
 describe('migrations', () => {
   let dataSource: DataSource;
@@ -73,6 +80,10 @@ describe('migrations', () => {
       // Task 028: the phone (#33, #43, #126 c, d).
       { name: 'phone_country_code', notnull: 1, pk: 0 },
       { name: 'phone_number', notnull: 1, pk: 0 },
+      // Task 029: the photo (#76).
+      { name: 'photo_path', notnull: 0, pk: 0 },
+      { name: 'photo_mime_type', notnull: 0, pk: 0 },
+      { name: 'photo_updated_at', notnull: 0, pk: 0 },
     ]);
     expect(await indexes('users')).toEqual(
       expect.arrayContaining([
@@ -165,6 +176,69 @@ describe('migrations', () => {
     );
   });
 
+  // Task 029 T22: AddUserPhoto gives users the photo's name, type and time (#76): null without a photo, all three or none,
+  // the name a lowercase UUID v4 with the type's extension.
+  describe('the photo columns', () => {
+    let next = 0;
+    const name = '0e6f6b5c-3c1d-4d8a-9f00-0123456789ab';
+    const insert = (columns: Record<string, string>) => {
+      next += 1;
+      const values = { email: `photo${next}@x.com`, full_name: 'P', username: `photo${next}`, ...columns };
+      const names = Object.keys(values).map((column) => `"${column}"`);
+      return dataSource.query(
+        `INSERT INTO users (${names.join(', ')}) VALUES (${names.map(() => '?').join(', ')})`,
+        Object.values(values),
+      );
+    };
+
+    it('are nullable text, text and datetime', async () => {
+      const columns = await query<{ name: string; type: string; notnull: number; dflt_value: unknown }>(
+        'PRAGMA table_info(users)',
+      );
+
+      expect(columns.filter((column) => column.name.startsWith('photo_'))).toEqual([
+        expect.objectContaining({ name: 'photo_path', type: 'TEXT', notnull: 0, dflt_value: null }),
+        expect.objectContaining({ name: 'photo_mime_type', type: 'TEXT', notnull: 0, dflt_value: null }),
+        expect.objectContaining({ name: 'photo_updated_at', type: 'datetime', notnull: 0, dflt_value: null }),
+      ]);
+    });
+
+    it('leave a new row without a photo', async () => {
+      await insert({});
+      const [row] = await query<Record<string, unknown>>(
+        `SELECT photo_path, photo_mime_type, photo_updated_at FROM users WHERE email = 'photo${next}@x.com'`,
+      );
+
+      expect(row).toEqual({ photo_path: null, photo_mime_type: null, photo_updated_at: null });
+    });
+
+    it.each([
+      ['a JPEG', photo(`${name}.jpg`, 'image/jpeg')],
+      ['a PNG', photo(`${name}.png`, 'image/png')],
+    ])('accept %s with all three set', async (_case, columns) => {
+      await expect(insert(columns)).resolves.not.toThrow();
+    });
+
+    it.each([
+      ['a name alone', { photo_path: `${name}.png` }],
+      ['a type alone', { photo_mime_type: 'image/png' }],
+      ['a time alone', { photo_updated_at: '2026-10-22 10:00:00.000' }],
+      ['no time', { photo_path: `${name}.png`, photo_mime_type: 'image/png' }],
+      ['a path', photo(`../${name}.png`, 'image/png')],
+      ['a name in a folder', photo(`uploads/${name}.png`, 'image/png')],
+      ['an uppercase UUID', photo(`${name.toUpperCase()}.png`, 'image/png')],
+      ['a UUID of version 1', photo(`${name.replace('-4d8a-', '-1d8a-')}.png`, 'image/png')],
+      ['a UUID of another variant', photo(`${name.replace('-9f00-', '-cf00-')}.png`, 'image/png')],
+      ['a name with more after it', photo(`${name}.png.html`, 'image/png')],
+      ['.jpeg', photo(`${name}.jpeg`, 'image/jpeg')],
+      ['.png for a JPEG', photo(`${name}.png`, 'image/jpeg')],
+      ['.jpg for a PNG', photo(`${name}.jpg`, 'image/png')],
+      ['another type', photo(`${name}.png`, 'image/gif')],
+    ])('refuse %s', async (_case, columns) => {
+      await expect(insert(columns)).rejects.toThrow(/CHECK constraint failed/);
+    });
+  });
+
   it('leaves no schema change pending between the entities and the migrations', async () => {
     const pending = await dataSource.driver.createSchemaBuilder().log();
 
@@ -226,6 +300,52 @@ describe('AddUserPhone on an existing database', () => {
           phone_number: '',
         },
       ]);
+      expect(await referencingRows(after)).toEqual(kept);
+      expect(kept.sessions).toHaveLength(1);
+      expect(kept.accounts).toHaveLength(1);
+      expect(await after.query('PRAGMA foreign_key_check')).toEqual([]);
+    } finally {
+      await after.destroy();
+    }
+  });
+});
+
+// Task 029 T22: AddUserPhoto rebuilds `users` (SQLite cannot add a CHECK to a table); every row is kept, with no photo.
+describe('AddUserPhoto on an existing database', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = mkdtempSync(join(tmpdir(), 'finebank-'));
+  });
+
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it('keeps every user, session and finance row, and gives every user no photo', async () => {
+    const databaseFile = join(root, 'existing.sqlite');
+    const options = databaseOptions({ ...readConfig({ NODE_ENV: 'test' }), databaseFile });
+    const addUserPhoto = migrations.findIndex((migration) => migration.name.startsWith('AddUserPhoto'));
+    expect(addUserPhoto).toBeGreaterThan(0);
+    const before = await new DataSource({ ...options, migrations: migrations.slice(0, addUserPhoto) }).initialize();
+    await before.runMigrations();
+    await before.query(
+      `INSERT INTO users (email, full_name, username, phone_country_code, phone_number)
+       VALUES ('old@x.com', 'Old User', 'old.user', '+44', '2071234567')`,
+    );
+    await before.query("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ('h-old', 1, '2026-11-21')");
+    await before.query(
+      `INSERT INTO accounts (user_id, account_type, bank_name, branch_name, account_number, opening_balance_cents)
+       VALUES (1, 'checking', 'AB Bank Ltd', 'Main Branch', '1234567890123456', 0)`,
+    );
+    const users = await before.query('SELECT * FROM users');
+    const kept = await referencingRows(before);
+    await before.destroy();
+
+    const after = await new DataSource(options).initialize();
+    try {
+      expect(await after.runMigrations()).toHaveLength(migrations.length - addUserPhoto);
+      expect(await after.query('SELECT * FROM users')).toEqual(
+        users.map((user: object) => ({ ...user, photo_path: null, photo_mime_type: null, photo_updated_at: null })),
+      );
       expect(await referencingRows(after)).toEqual(kept);
       expect(kept.sessions).toHaveLength(1);
       expect(kept.accounts).toHaveLength(1);

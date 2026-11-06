@@ -8,6 +8,7 @@ import {
   formatAmountInput,
   formatMonthLabel,
   parseAmountInput,
+  photoMessages,
   type ExpenseCategory,
   type ExpenseLineItem,
   type ExpensesBreakdownCategory,
@@ -206,6 +207,26 @@ const directionText: Record<Direction, string> = {
 
 // Selecting a tab in a fixed example does nothing.
 const keepSelection = () => undefined;
+
+/** The photo examples keep their look: a choice or Clear changes nothing here. */
+const keepPhoto = () => undefined;
+
+/**
+ * A chosen file for the preview examples (task 029): a 12 x 12 PNG of teal and gray stripes, built in code, so the
+ * preview is a real local object URL as in Settings.
+ */
+const samplePhotoFile = new File(
+  [
+    Uint8Array.from(
+      atob(
+        'iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAALUlEQVR4nGPQnDsRgl7AAKYIA0EVmnMnMhBUAVJEUAVCEX6XMRBUgXD4MPUdAFvfJEhDOpuJAAAAAElFTkSuQmCC',
+      ),
+      (char) => char.charCodeAt(0),
+    ),
+  ],
+  'sample.png',
+  { type: 'image/png' },
+);
 
 /** One tab set and the panel it controls. Fixed on `value`, or interactive. */
 function TabsExample({ id, value, interactive = false }: { id: string; value: Direction; interactive?: boolean }) {
@@ -1830,9 +1851,39 @@ export function ComponentGallery() {
       </GallerySection>
 
       <GallerySection name="ProfilePhotoUpload">
-        <Example name="Empty, visual only (111)">
+        <Example name="Empty (111)">
           <Card>
-            <ProfilePhotoUpload />
+            <ProfilePhotoUpload onChoose={keepPhoto} onClear={keepPhoto} />
+          </Card>
+        </Example>
+        <Example name="The stored photo (not designed)">
+          <Card>
+            <ProfilePhotoUpload storedUrl={sampleAvatarUrl} onChoose={keepPhoto} onClear={keepPhoto} />
+          </Card>
+        </Example>
+        <Example name="A chosen file's preview, not saved (not designed)">
+          <Card>
+            <ProfilePhotoUpload chosen={samplePhotoFile} onChoose={keepPhoto} onClear={keepPhoto} />
+          </Card>
+        </Example>
+        <Example name="A refused choice (not designed)">
+          <Card>
+            <ProfilePhotoUpload error={photoMessages.notImage} onChoose={keepPhoto} onClear={keepPhoto} />
+          </Card>
+        </Example>
+        <Example name="A refused choice after a valid one: the preview kept (not designed)">
+          <Card>
+            <ProfilePhotoUpload
+              chosen={samplePhotoFile}
+              error={photoMessages.tooLarge}
+              onChoose={keepPhoto}
+              onClear={keepPhoto}
+            />
+          </Card>
+        </Example>
+        <Example name="Saving (not designed)">
+          <Card>
+            <ProfilePhotoUpload chosen={samplePhotoFile} saving onChoose={keepPhoto} onClear={keepPhoto} />
           </Card>
         </Example>
       </GallerySection>

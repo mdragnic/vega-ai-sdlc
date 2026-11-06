@@ -1,13 +1,27 @@
-import { Body, ConflictException, Controller, Get, Patch, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Get,
+  Header,
+  NotFoundException,
+  Patch,
+  StreamableFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { type Profile, profileContract, profileMessages, type ProfileUpdateRequest } from '@finebank/shared';
 
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { ProfileBodyInterceptor } from './profile-body.interceptor.js';
 import { UsernameTakenError, UsersService } from './users.service.js';
 
+/** The one answer for no photo and for a photo whose file is missing (#76): nothing tells them apart. */
+const photoNotFound = 'Photo not found';
+
 /**
- * `/api/profile`: the signed-in user's Account tab (US-18, #33). The user comes from the session only (#39, #46); the
- * email is never taken from a request (#33), so the write guard's identity stays the stored one (#119).
+ * `/api/profile`: the signed-in user's Account tab (US-18, #33) and profile photo (#76, task 029). The user comes from
+ * the session only (#39, #46); the email is never taken from a request (#33), so the write guard's identity stays the
+ * stored one (#119).
  */
 @Controller()
 export class ProfileController {
@@ -40,5 +54,22 @@ export class ProfileController {
         fieldErrors: { username: profileMessages.usernameTaken },
       });
     }
+  }
+
+  /**
+   * The session user's photo (#76): the stored bytes as uploaded (#128 b3) with the stored type, by the session's user
+   * only (#39, #46); no parameter, so nothing in the request names a user or a file, and a `?v=` is ignored. Served so
+   * that a polyglot stays harmless (#128 b): `nosniff` (never read as another type), a CSP sandbox (opened directly,
+   * nothing in it runs) and `Cross-Origin-Resource-Policy: same-origin` (no other site loads it); `no-store` as every
+   * /api answer. One 404 body without a photo or with its file missing.
+   */
+  @Get(profileContract.photo.path)
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Header('Content-Security-Policy', "default-src 'none'; sandbox")
+  @Header('Cross-Origin-Resource-Policy', 'same-origin')
+  async photo(@CurrentUser() userId: number): Promise<StreamableFile> {
+    const stored = await this.users.photo(userId);
+    if (stored === undefined) throw new NotFoundException(photoNotFound);
+    return new StreamableFile(stored.bytes, { type: stored.mimeType, length: stored.bytes.length });
   }
 }

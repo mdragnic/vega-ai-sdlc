@@ -34,12 +34,15 @@ export const usernameSchema = z
 
 /**
  * The signed-in user. `fullName` is any stored string (#126 a's condition): the name rule applies to requests, so a
- * name stored before it never breaks the session.
+ * name stored before it never breaks the session. `photoUpdatedAt`, an ISO instant in UTC (#74), is present only when
+ * the user has a stored photo (#76, task 029): the frontend builds the photo's address from it, so a user without one
+ * gets exactly the three keys.
  */
 export const currentUserSchema = z.object({
   fullName: z.string(),
   email: z.email(),
   username: usernameSchema,
+  photoUpdatedAt: z.iso.datetime().optional(),
 });
 
 export type CurrentUser = z.infer<typeof currentUserSchema>;

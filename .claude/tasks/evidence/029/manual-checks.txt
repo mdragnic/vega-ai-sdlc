@@ -1,0 +1,40 @@
+Task 029 manual checks, 2026-11-06 (Validation step 6). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page 1425 wide in a 1440 window, #101), Europe/Belgrade, a fresh context. The development backend on the
+real clock and Vite (`npm run dev`); for check 5 the backend's node process alone was stopped (Vite answered 502 for
+/api), then the backend started alone (`npm run dev -w backend`). The files chosen: frontend/src/app/dev/sample-avatar.png
+(64 x 64 PNG), the EXIF JPEG built by e2e/images.ts (`withExif()`: GPS location, camera, time taken, orientation 6, a
+comment, data after its end; 1,740 bytes, encoded 120 x 80) and e2e/fixtures/photo-baseline.jpg. No Figma calls.
+
+1. Signed up through the form (/sign-up, "Tanzir Rahman", a new email), then "View profile". By mouse: the box opened
+   the file picker, the PNG chosen: a blob: preview, "Not saved" and "Clear", no request sent. "Clear": the empty box,
+   focus on the box, "Save changes" aria-disabled again. By keyboard (Enter on the focused box): the picker, the PNG
+   again; "Save changes": one PATCH /api/profile and no other API request but the image loads; "Profile updated"; the
+   box and the sidebar avatar at once from /api/profile/photo?v=2026-11-06T17%3A04%3A58.883Z (manual-saved-1440.png).
+   Overview: the avatar the photo (an IMG, 64 px natural). A reload of Settings: the avatar and the box the photo.
+
+2. The phone JPEG named holiday.png: the preview drawn upright, 80 x 120 (encoded 120 x 80, orientation 6)
+   (manual-exif-preview.png); saved: the box 80 x 120 from its address, /api/profile/photo answered image/jpeg,
+   byte-identical to the file. It replaced the PNG: backend/data/uploads/ held one file, <uuid>.jpg, 1,740 bytes,
+   SHA-256 the same as the chosen file's; the PNG's file was gone.
+
+3. The errors at once. Alone (nothing chosen): a PDF renamed report.png, "Photo must be a JPG or PNG file" under the box
+   at once; a file of 3 MB and 64 bytes (big.png), "Photo must be at most 2 MB"; neither kept ("Not saved" absent),
+   "Save changes" still aria-disabled (manual-errors.png). After a valid photo: each refused file showed its message,
+   the earlier preview kept with "Not saved" and "Clear", "Save changes" still available
+   (manual-errors-after-valid.png). No API request for any of the four.
+
+4. Two tabs of the same user: tab B on Overview with the photo saved in check 2; tab A saved the sample PNG; tab B kept
+   the old address until its session check, then (focus and visibilitychange dispatched: Playwright keeps every page
+   visible) its avatar took the new address, /api/profile/photo?v=2026-11-06T17%3A05%3A38.363Z (manual-two-tabs.png).
+
+5. The backend stopped, a JPEG chosen and "Save changes": "Something went wrong." above the button with focus on it,
+   the preview and "Not saved" kept (manual-backend-down-save.png). The backend started again, "Save changes" again:
+   "Profile updated", the box the stored JPEG (120 x 80), served as image/jpeg; backend/data/uploads/ held only that
+   file (1,429 bytes, byte-identical to the chosen file): the replaced one removed.
+
+6. Resized to 1280 x 1024 and 1920 x 1080 and back to 1440: the box 144 x 132 at each width, no horizontal scroll
+   (scrollWidth equal to the page's width: 1265, 1905, 1425 with the classic scrollbar) (manual-1280.png,
+   manual-1920.png).
+
+Found: nothing to fix. Note for check 5: stopping the backend's node process also ended `nest --watch` (touching a
+source file did not bring it back), so the backend was started again on its own, as task 028 did.

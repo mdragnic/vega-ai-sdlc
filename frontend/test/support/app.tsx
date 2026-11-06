@@ -44,6 +44,7 @@ import { createMemoryRouter, type RouteObject } from 'react-router';
 import { AppProviders } from '../../src/app/AppProviders';
 import { routes } from '../../src/app/routes';
 import dataStateStyles from '../../src/components/DataState/DataState.module.css';
+import { readMultipart } from './multipart';
 
 /** The signed-in user as `GET /api/auth/me` returns it. */
 export const signedInUser: CurrentUser = {
@@ -1749,16 +1750,34 @@ export const profile = {
   },
 };
 
-/** One `PATCH /api/profile` as the backend received it: its multipart parts in order, its content type, its header. */
-export type ProfileWrite = { parts: [string, string][]; contentType: string | null; expectedUser: string | null };
+/** A file part as the backend received it: its file name, its declared type and its bytes (task 029). */
+export type ReceivedFile = { name: string; type: string; bytes: number[] };
 
-/** The parts of a multipart request, in order, each a text value (a file part shows as `file <its name>`). */
-async function partsOf(request: Request): Promise<[string, string][]> {
-  return [...(await request.formData())].map(([name, value]) => [
-    name,
-    typeof value === 'string' ? value : `file ${value.name}`,
-  ]);
+/**
+ * One `PATCH /api/profile` as the backend received it: its multipart parts in order (a file part shows as
+ * `file <its name>`), its content type, its header, and its file part `photo` when it has one (task 029).
+ */
+export type ProfileWrite = {
+  parts: [string, string][];
+  contentType: string | null;
+  expectedUser: string | null;
+  photo?: ReceivedFile;
+};
+
+/** A `PATCH /api/profile` as the backend receives it, read from its raw bytes (`readMultipart`). */
+async function profileWriteOf(request: Request): Promise<ProfileWrite> {
+  const contentType = request.headers.get('Content-Type');
+  const expectedUser = request.headers.get(EXPECTED_USER_HEADER);
+  const received = await readMultipart(request);
+  const parts = received.map((part): [string, string] =>
+    'value' in part ? [part.name, part.value] : [part.name, `file ${part.file.name}`],
+  );
+  const photo = received.find((part) => part.name === 'photo' && 'file' in part);
+  return { parts, contentType, expectedUser, ...(photo && 'file' in photo ? { photo: photo.file } : {}) };
 }
+
+/** The time the profile backend gives a stored photo: one per save, so each save's `?v=` differs (task 029). */
+export const savedPhotoTimes = ['2026-10-22T10:00:00.000Z', '2026-10-22T10:05:00.000Z', '2026-10-22T10:10:00.000Z'];
 
 /** The backend's 400 for a body that breaks the shared rules: `{ message, fieldErrors }`, one message per field. */
 function validationFailed(issues: { path: PropertyKey[]; message: string }[]) {
@@ -1769,27 +1788,33 @@ function validationFailed(issues: { path: PropertyKey[]; message: string }[]) {
 
 /**
  * A backend's profile for one test (task 028), as the real one behaves: `GET /api/profile` answers the stored profile,
- * `GET /api/auth/me` its three session keys; `PATCH /api/profile` records each request, refuses one without
- * `X-Expected-User` with the guard's 400, checks the parts with the shared schema (400 with field errors), refuses
- * `taken` usernames with the 409 under Username, then stores the four fields and answers the stored profile.
+ * `GET /api/auth/me` its session keys (`photoUpdatedAt` with a photo, task 029); `PATCH /api/profile` records each
+ * request, refuses one without `X-Expected-User` with the guard's 400, checks the text parts and the photo with the
+ * shared schema (400 with field errors), refuses `taken` usernames with the 409 under Username, then stores the four
+ * fields (and with a photo the next of `savedPhotoTimes`) and answers the stored profile.
  */
 export function profileBackend(initial: Profile = demoProfile, { taken = [] as string[] } = {}) {
   let stored = initial;
+  let photos = 0;
   const writes: ProfileWrite[] = [];
   const handlers = [
     http.get(profilePath, () => HttpResponse.json(stored)),
-    http.get('*/api/auth/me', () =>
-      HttpResponse.json({ fullName: stored.fullName, email: stored.email, username: stored.username }),
-    ),
+    http.get('*/api/auth/me', () => {
+      const { fullName, email, username, photoUpdatedAt } = stored;
+      return HttpResponse.json({ fullName, email, username, ...(photoUpdatedAt ? { photoUpdatedAt } : {}) });
+    }),
     http.patch(profilePath, async ({ request }) => {
-      const expectedUser = request.headers.get(EXPECTED_USER_HEADER);
-      const parts = await partsOf(request);
-      writes.push({ parts, contentType: request.headers.get('Content-Type'), expectedUser });
-      if (!expectedUser) return expectedUserMissing();
-      const parsed = profileUpdateRequestSchema.safeParse(Object.fromEntries(parts));
+      const write = await profileWriteOf(request);
+      writes.push(write);
+      if (!write.expectedUser) return expectedUserMissing();
+      const texts = Object.fromEntries(write.parts.filter(([name]) => name !== 'photo'));
+      const photo = write.photo && new Blob([Uint8Array.from(write.photo.bytes)]);
+      const parsed = await profileUpdateRequestSchema.safeParseAsync({ ...texts, ...(photo ? { photo } : {}) });
       if (!parsed.success) return validationFailed(parsed.error.issues);
       if (taken.includes(parsed.data.username)) return usernameTakenResponse();
-      stored = { ...stored, ...parsed.data };
+      const { photo: savedPhoto, ...fields } = parsed.data;
+      stored = { ...stored, ...fields };
+      if (savedPhoto) stored = { ...stored, photoUpdatedAt: savedPhotoTimes[photos++] };
       return HttpResponse.json(stored);
     }),
   ];
@@ -1813,11 +1838,7 @@ export const updateProfile = {
     const { promise: released, resolve: release } = Promise.withResolvers<void>();
     const writes: ProfileWrite[] = [];
     const handler = http.patch(profilePath, async ({ request }) => {
-      writes.push({
-        parts: await partsOf(request),
-        contentType: request.headers.get('Content-Type'),
-        expectedUser: request.headers.get(EXPECTED_USER_HEADER),
-      });
+      writes.push(await profileWriteOf(request));
       await released;
       return HttpResponse.json(answer);
     });

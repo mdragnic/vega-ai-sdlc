@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -28,6 +28,19 @@ describe('Avatar', () => {
     expect(circle).toHaveAccessibleName(fullName.trim().replace(/\s+/g, ' '));
     expect(circle.tagName).not.toBe('IMG');
     expect(circle.textContent).toBe(letters);
+  });
+
+  // Task 029 T14: AC13, a photo that fails to load (its file removed out of band) shows the initials instead.
+  it('shows the initials when the photo fails to load, and the photo again for a new address', () => {
+    const { rerender } = render(<Avatar fullName="Tanzir Rahman" photoUrl="/api/profile/photo?v=1" />);
+
+    fireEvent.error(screen.getByRole('img', { name: 'Tanzir Rahman' }));
+
+    const circle = screen.getByRole('img', { name: 'Tanzir Rahman' });
+    expect(circle.tagName).not.toBe('IMG');
+    expect(circle).toHaveTextContent('TR');
+    rerender(<Avatar fullName="Tanzir Rahman" photoUrl="/api/profile/photo?v=2" />);
+    expect(screen.getByRole('img', { name: 'Tanzir Rahman' })).toHaveAttribute('src', '/api/profile/photo?v=2');
   });
 
   it('treats an empty photo URL as no photo', () => {

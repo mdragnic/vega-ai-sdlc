@@ -173,9 +173,11 @@ describe('Settings, Account tab', () => {
     expect(phoneNumber()).toHaveValue('');
     expect(screen.getByRole('group', { name: 'Phone Number' })).toContainElement(countryCode());
     expect(screen.getByRole('group', { name: 'Phone Number' })).toContainElement(phoneNumber());
-    // No placeholder where none is designed (#63).
+    // No placeholder where none is designed (#63). Task 029: the photo's hidden file input is a fifth input, so the four
+    // fields are counted without it; every input is still checked for a placeholder.
     const inputs = screen.getByRole('tabpanel').querySelectorAll('input');
-    expect(inputs).toHaveLength(4);
+    expect([...inputs].filter((input) => input.type !== 'file')).toHaveLength(4);
+    expect([...inputs].filter((input) => input.type === 'file')).toHaveLength(1);
     for (const input of inputs) expect(input).not.toHaveAttribute('placeholder');
     expect(updateButton()).toHaveAttribute('type', 'submit');
   });
@@ -192,21 +194,8 @@ describe('Settings, Account tab', () => {
     expect(email()).toHaveValue('tanzir@example.com');
   });
 
-  it('draws "Your Profile Picture" and the upload box as visual only: hidden, not focusable, no file picker', async () => {
-    const { user } = await openSettings('/settings/account');
-    await formShown();
-
-    const label = screen.getByText('Your Profile Picture');
-    const box = screen.getByText('Upload your photo').parentElement!;
-    const hidden = label.closest('[aria-hidden="true"]');
-    expect(hidden).not.toBeNull();
-    expect(hidden).toContainElement(box);
-    expect(hidden!.querySelectorAll('a, button, input, select, textarea, [tabindex]')).toHaveLength(0);
-    expect(hidden).toHaveAttribute('inert');
-    await user.click(box);
-    expect(document.querySelector('input[type="file"]')).toBeNull();
-    expect(requests.filter((request) => !request.startsWith('GET '))).toEqual([]);
-  });
+  // Task 029 (#128 c): "draws "Your Profile Picture" and the upload box as visual only" is replaced by the control's tests
+  // in settings-photo.test.tsx (T14 to T21): the box is now a button that opens the file picker.
 
   it('opens the Account tab from "View profile"', async () => {
     const { user, url } = await openSettings('/overview');

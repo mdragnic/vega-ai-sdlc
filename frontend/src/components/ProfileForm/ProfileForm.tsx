@@ -1,6 +1,7 @@
 import {
   countryCallingCodes,
   type CountryCallingCode,
+  photoSchema,
   type Profile,
   type ProfileUpdateRequest,
   profileUpdateRequestSchema,
@@ -11,6 +12,7 @@ import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { serverFieldErrors } from '../../api/client';
+import { photoUrl } from '../../api/profile';
 import { ButtonPrimary } from '../ButtonPrimary/ButtonPrimary';
 import { FormError } from '../FormError/FormError';
 import { FormSuccess } from '../FormSuccess/FormSuccess';
@@ -19,8 +21,8 @@ import { SettingsInput } from '../SettingsInput/SettingsInput';
 import { SettingsPhoneInput } from '../SettingsPhoneInput/SettingsPhoneInput';
 import styles from './ProfileForm.module.css';
 
-/** The fields a failed request's `fieldErrors` can point to, in the form's order (#74). */
-export const profileFieldNames = ['fullName', 'username', 'phoneCountryCode', 'phoneNumber'] as const;
+/** The fields a failed request's `fieldErrors` can point to, in the form's Tab order (#74), the photo's box last. */
+export const profileFieldNames = ['fullName', 'username', 'phoneCountryCode', 'phoneNumber', 'photo'] as const;
 
 type ProfileFormValues = z.input<typeof profileUpdateRequestSchema>;
 
@@ -28,7 +30,8 @@ const isListedCode = (code: string): code is CountryCallingCode =>
   countryCallingCodes.some((listed) => listed === code);
 
 /**
- * A stored profile as the form's four values; the email is shown, never sent (#33). A stored code is always one of the
+ * A stored profile as the form's values: the four text fields and no chosen photo (task 029); the email is shown, never
+ * sent (#33). A stored code is always one of the
  * list (the API stores no other); were it not, the field would start on the default `+1` (#43).
  */
 const valuesOf = ({ fullName, username, phoneCountryCode, phoneNumber }: Profile): ProfileFormValues => ({
@@ -36,6 +39,7 @@ const valuesOf = ({ fullName, username, phoneCountryCode, phoneNumber }: Profile
   username,
   phoneCountryCode: isListedCode(phoneCountryCode) ? phoneCountryCode : countryCallingCodes[0],
   phoneNumber,
+  photo: undefined,
 });
 
 /** What a save tells the form back: the stored profile, a failure, and the end, either way. */
@@ -50,7 +54,7 @@ type ProfileFormProps = {
   profile: Profile;
   /**
    * "Save changes", or Enter in a text field, with a field changed and every field valid: the request as the shared
-   * schema gives it, all four fields.
+   * schema gives it, all four fields and the chosen photo, if any (task 029).
    */
   onSave: (request: ProfileUpdateRequest, handlers: ProfileSaveHandlers) => void;
   /** While the save runs: "Save changes" in its loading pattern, the text fields read-only, the code disabled. */
@@ -65,16 +69,23 @@ type ProfileFormProps = {
 
 /**
  * 111's Account tab form (Code-only): Full name, Email (read-only, #33), Username and Phone Number in the fields' column,
- * "Your Profile Picture" in the picture column (visual only until task 029), "Save changes" under the fields. A
- * react-hook-form form on the shared `profileUpdateRequestSchema` (#74, #126), as task 022's form: one submit at a time;
- * the rule's messages under their fields, focus on the first field with an error and nothing sent (#6, #95 a); the
- * server's field errors under their fields with focus on the first, other failures above the button with focus on it
- * (#97 a). "Save changes" is unavailable (aria-disabled, focus kept) until a field differs from the stored value, and
- * again once the values are back to it or a save stored them (#127); a save sends the four fields. After a save the
- * fields show the stored values and focus stays on the button.
+ * "Your Profile Picture" in the picture column (in the DOM between Phone Number and the button, so in that Tab order),
+ * "Save changes" under the fields. A react-hook-form form on the shared `profileUpdateRequestSchema` (#74, #126), as task
+ * 022's form: one submit at a time; the rule's messages under their fields, focus on the first field with an error and
+ * nothing sent (#6, #95 a); the server's field errors under their fields (the photo's under its box) with focus on the
+ * first, other failures above the button with focus on it (#97 a). "Save changes" is unavailable (aria-disabled, focus
+ * kept) until a field differs from the stored value, and again once the values are back to it or a save stored them
+ * (#127); a save sends the four fields and a chosen photo. After a save the fields show the stored values, the choice is
+ * gone, and focus stays on the button.
+ *
+ * The photo (task 029, #128 and the change after it): a chosen file is checked at once with the shared `photoSchema`
+ * (the API's rule, #74). One that passes is kept as the `photo` value, a change (#127 b), shown as a preview; one that
+ * fails shows its message under the box and is not kept, so an earlier choice stays as it was. Only the latest choice's
+ * check counts. The message goes on the next choice, on "Clear" and when "Save changes" runs.
  */
 export function ProfileForm({ profile, onSave, saving, formError, updated = false, onFieldChange }: ProfileFormProps) {
   const {
+    clearErrors,
     control,
     formState: { errors, isDirty },
     handleSubmit,
@@ -82,6 +93,7 @@ export function ProfileForm({ profile, onSave, saving, formError, updated = fals
     reset,
     setError,
     setFocus,
+    setValue,
   } = useForm<ProfileFormValues, unknown, ProfileUpdateRequest>({
     resolver: zodResolver(profileUpdateRequestSchema),
     defaultValues: valuesOf(profile),
@@ -105,11 +117,37 @@ export function ProfileForm({ profile, onSave, saving, formError, updated = fals
     else setFocus(focusAfterFailure.target);
   }, [saving, focusAfterFailure, setFocus]);
 
+  // Each choice's number: a check still running when another file is chosen is ignored.
+  const latestChoice = useRef(0);
+  const choosePhoto = async (file: File) => {
+    const choice = (latestChoice.current += 1);
+    const checked = await photoSchema.safeParseAsync(file);
+    if (choice !== latestChoice.current) return;
+    if (!checked.success) {
+      setError('photo', { type: 'choice', message: checked.error.issues[0]?.message });
+      return;
+    }
+    clearErrors('photo');
+    setValue('photo', file, { shouldDirty: true });
+    onFieldChange?.();
+  };
+  const photoBox = useRef<HTMLButtonElement | null>(null);
+  const clearPhoto = () => {
+    latestChoice.current += 1;
+    clearErrors('photo');
+    setValue('photo', undefined, { shouldDirty: true });
+    onFieldChange?.();
+    photoBox.current?.focus();
+  };
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // Nothing changed: the button is unavailable, and Enter in a field submits nothing either (#127).
     if (submitting.current || saving || !isDirty) return;
     submitting.current = true;
+    // A refused choice's message goes when the save runs; a check still running is ignored.
+    latestChoice.current += 1;
+    clearErrors('photo');
     const done = () => {
       submitting.current = false;
     };
@@ -168,18 +206,35 @@ export function ProfileForm({ profile, onSave, saving, formError, updated = fals
             />
           )}
         />
-        <div className={styles.actions}>
-          <FormError>{formError}</FormError>
-          <FormSuccess>{updated ? 'Profile updated' : undefined}</FormSuccess>
-          <div className={styles.button}>
-            <ButtonPrimary ref={updateButton} type="submit" loading={saving} aria-disabled={!isDirty || undefined}>
-              Save changes
-            </ButtonPrimary>
-          </div>
-        </div>
       </div>
       <div className={styles.picture}>
-        <ProfilePhotoUpload />
+        <Controller
+          control={control}
+          name="photo"
+          render={({ field }) => (
+            <ProfilePhotoUpload
+              ref={(element) => {
+                photoBox.current = element;
+                field.ref(element);
+              }}
+              storedUrl={profile.photoUpdatedAt ? photoUrl(profile.photoUpdatedAt) : undefined}
+              chosen={field.value}
+              error={errors.photo?.message}
+              saving={saving}
+              onChoose={(file) => void choosePhoto(file)}
+              onClear={clearPhoto}
+            />
+          )}
+        />
+      </div>
+      <div className={styles.actions}>
+        <FormError>{formError}</FormError>
+        <FormSuccess>{updated ? 'Profile updated' : undefined}</FormSuccess>
+        <div className={styles.button}>
+          <ButtonPrimary ref={updateButton} type="submit" loading={saving} aria-disabled={!isDirty || undefined}>
+            Save changes
+          </ButtonPrimary>
+        </div>
       </div>
     </form>
   );

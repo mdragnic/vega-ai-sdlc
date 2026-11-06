@@ -16,6 +16,10 @@ export interface GoogleConfig {
 export interface AppConfig {
   nodeEnv: NodeEnv;
   databaseFile: string;
+  /**
+   * The profile photos (#76): `backend/data/uploads`, or `backend/data/uploads-test` with NODE_ENV=test, so the e2e run
+   * never mixes its photos with development's (task 029).
+   */
   uploadsDir: string;
   /** Where the clock starts with NODE_ENV=test. */
   testNow: string;
@@ -66,7 +70,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   return {
     nodeEnv,
     databaseFile: join(dataDir, nodeEnv === 'test' ? 'finebank.test.sqlite' : 'finebank.sqlite'),
-    uploadsDir: join(dataDir, 'uploads'),
+    uploadsDir: join(dataDir, nodeEnv === 'test' ? 'uploads-test' : 'uploads'),
     testNow,
     scryptCost: nodeEnv === 'test' ? 2 ** 14 : 2 ** 17,
     google: readGoogleConfig(env),

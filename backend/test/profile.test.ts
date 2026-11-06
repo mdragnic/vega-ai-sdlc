@@ -1,22 +1,15 @@
 import { existsSync, readdirSync } from 'node:fs';
 
 import type { INestApplication } from '@nestjs/common';
-import {
-  errorResponseSchema,
-  profileContract,
-  profileMessages,
-  profileSchema,
-  writeGuardMessages,
-} from '@finebank/shared';
+import { errorResponseSchema, profileContract, profileMessages, writeGuardMessages } from '@finebank/shared';
 import request, { type Response, type Test } from 'supertest';
 import { DataSource } from 'typeorm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { readConfig } from '../src/config/config.js';
 import { User } from '../src/users/user.entity.js';
 import { cookieFor, login, me, signUp } from './helpers/auth.js';
 import { registeredRoutes } from './helpers/routes.js';
-import { createTestApp } from './helpers/test-app.js';
+import { createTestApp, uploadsFolderOf } from './helpers/test-app.js';
 
 // The path comes from the contract, so a route declared anywhere else would not answer it.
 const profilePath = `/api${profileContract.get.path}`;
@@ -48,10 +41,13 @@ const whereOf = (sql: string) => /\bWHERE\b(.*?)(\bORDER BY\b|\bLIMIT\b|\bRETURN
 /** The shared error shape with no field errors, as multer's, the 415's and the guard's answers are. */
 const plainError = (response: Response) => errorResponseSchema.strict().parse(response.body);
 
-/** The files under the uploads folder, so a test sees that nothing was written there. */
-function uploadedFiles(): string[] {
-  const { uploadsDir } = readConfig({ NODE_ENV: 'test' });
-  return existsSync(uploadsDir) ? readdirSync(uploadsDir, { recursive: true }).map(String).toSorted() : [];
+/**
+ * The files under the app's uploads folder, so a test sees that nothing was written there. Changed by task 029 (#128 c):
+ * each test app has a folder of its own (`createTestApp`), no longer the shared `backend/data/uploads`.
+ */
+function uploadedFiles(app: INestApplication): string[] {
+  const folder = uploadsFolderOf(app);
+  return existsSync(folder) ? readdirSync(folder, { recursive: true }).map(String).toSorted() : [];
 }
 
 interface UserRow {
@@ -155,6 +151,7 @@ describe('the profile API', () => {
 
   // T4: AC3, AC11, the read: exactly the five keys of the session user, a new user with +1 and no number.
   describe('GET /api/profile', () => {
+    // Changed by task 029 (#128 c): exactly the five keys for a user without a photo (`photoUpdatedAt` only with one).
     it('answers the session user’s five fields, as signed up: +1 and no number', async () => {
       const response = await server().get(profilePath).set('Cookie', cookieFor(token));
 
@@ -166,9 +163,13 @@ describe('the profile API', () => {
         phoneCountryCode: '+1',
         phoneNumber: '',
       });
-      expect(Object.keys(JSON.parse(response.text) as object).toSorted()).toEqual(
-        Object.keys(profileSchema.shape).toSorted(),
-      );
+      expect(Object.keys(JSON.parse(response.text) as object).toSorted()).toEqual([
+        'email',
+        'fullName',
+        'phoneCountryCode',
+        'phoneNumber',
+        'username',
+      ]);
     });
 
     it('answers the other user only their own profile', async () => {
@@ -190,9 +191,11 @@ describe('the profile API', () => {
       expect(response.text).not.toContain('Tanzir');
     });
 
-    it('registers exactly the read and the write of /api/profile', () => {
+    // Task 029: the photo's read added to the list (an addition, as the route lists elsewhere).
+    it('registers exactly the read and the write of /api/profile, and the photo’s read', () => {
       expect(registeredRoutes(app).filter((route) => route.includes('/profile'))).toEqual([
         'GET /api/profile',
+        'GET /api/profile/photo',
         'PATCH /api/profile',
       ]);
     });
@@ -370,8 +373,9 @@ describe('the profile API', () => {
     const textPart = (name: string, value: string) =>
       `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
 
+    // Changed by task 029 (#128 c): "a photo file part" left this list; a photo is now accepted or refused under `photo`
+    // (profile-photo.test.ts).
     const cases: [string, () => Test][] = [
-      ['a photo file part', () => patch(validParts).attach('photo', Buffer.from([0xff, 0xd8, 0xff]), 'me.jpg')],
       ['a file part named x', () => patch(validParts).attach('x', Buffer.from('hello'), 'x.txt')],
       ['11 parts', () => patch({ ...validParts, a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7' })],
       ['a field value of 2 KB', () => patch({ ...validParts, fullName: 'a'.repeat(2048) })],
@@ -385,14 +389,14 @@ describe('the profile API', () => {
 
     it.each(cases)('answers 400 in the shared shape to %s, storing and writing nothing', async (_case, send) => {
       const before = await users();
-      const files = uploadedFiles();
+      const files = uploadedFiles(app);
 
       const response = await send();
 
       expect(response.status).toBe(400);
       expect(plainError(response).message).toBeTruthy();
       expect(await users()).toEqual(before);
-      expect(uploadedFiles()).toEqual(files);
+      expect(uploadedFiles(app)).toEqual(files);
     });
 
     it.each<[string, (req: Test) => Test]>([
@@ -574,8 +578,9 @@ describe('the profile API', () => {
       expect(await users()).toEqual(before);
     });
 
+    // Changed by task 029 (#128 c): the file part named `x`, as `photo` is now the one file part the stage accepts.
     it('answers a file part with an invalid field with multer’s 400, before the schema', async () => {
-      const response = await patch({ ...validParts, fullName: '' }).attach('photo', Buffer.from('x'), 'x.png');
+      const response = await patch({ ...validParts, fullName: '' }).attach('x', Buffer.from('x'), 'x.png');
 
       expect(response.status).toBe(400);
       expect(plainError(response).fieldErrors).toBeUndefined();

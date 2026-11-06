@@ -80,6 +80,8 @@ describe('Cache-Control on /api', () => {
         // Task 028: the profile read and its multipart write.
         shared.profileContract.get,
         shared.profileContract.update,
+        // Task 029: the photo's read, a file, no-store like every /api answer.
+        shared.profileContract.photo,
       ]),
     );
     expect(registeredRoutes(app)).toEqual(expectedRoutes);

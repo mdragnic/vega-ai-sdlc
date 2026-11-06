@@ -23,7 +23,7 @@ export class AuthModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AuthModule,
-      imports: [UsersModule, DemoModule],
+      imports: [UsersModule.forRoot(config), DemoModule],
       controllers: [AuthController, GoogleAuthController, ...(config.nodeEnv === 'test' ? [FakeGoogleController] : [])],
       providers: [
         AuthService,

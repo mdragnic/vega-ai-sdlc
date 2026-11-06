@@ -10,6 +10,7 @@ export * from './error.js';
 export * from './expenses.js';
 export * from './money.js';
 export * from './profile.js';
+export * from './profile-photo.js';
 export * from './saving-summary.js';
 export * from './savings-goal.js';
 export * from './statistics.js';

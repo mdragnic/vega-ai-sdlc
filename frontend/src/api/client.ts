@@ -123,6 +123,8 @@ async function send<Res extends z.ZodType>(
   args: unknown[],
   extraHeaders: Record<string, string>,
 ): Promise<z.output<Res>> {
+  // A file's bytes are for an `<img>`'s address, built from the entry's path (task 029), never read as JSON here.
+  if (entry.responseEncoding === 'file') throw new TypeError('A file response is not read through the API client');
   const rest: unknown[] = [...args];
   const params = entry.params ? rest.shift() : undefined;
   const body = entry.request ? rest.shift() : undefined;
@@ -141,7 +143,7 @@ async function send<Res extends z.ZodType>(
   const init: RequestInit = { method: entry.method, headers, credentials: 'same-origin' };
   if (entry.request && entry.encoding === 'multipart') {
     // No Content-Type of its own: the browser sets `multipart/form-data` with the body's boundary.
-    init.body = multipartBody(body);
+    init.body = multipartBody(body, entry.filePart);
   } else if (entry.request) {
     headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(body);
@@ -159,17 +161,28 @@ async function send<Res extends z.ZodType>(
   return entry.response.parse(json);
 }
 
+/** The file name every file part is sent with: the user's own file name stays in the browser (task 029). */
+const FILE_PART_NAME = 'photo';
+
 /**
- * A multipart entry's body (task 028, #76): each key of the body object one text part, in the object's order. Every
- * value of such a body is a string (the profile's four fields); anything else is refused before anything is sent.
+ * A multipart entry's body (task 028, #76): each key of the body object one part, in the object's order. The entry's
+ * `filePart` (task 029), when its value is a `Blob`, is a file part named `photo`, and absent (`undefined`) no part,
+ * so a body without it is task 028's four text parts exactly; every other value is a string. Anything else is refused
+ * before anything is sent.
  */
-function multipartBody(body: unknown): FormData {
+function multipartBody(body: unknown, filePart: string | undefined): FormData {
   if (typeof body !== 'object' || body === null)
     throw new TypeError('A multipart body must be an object of text parts');
   const form = new FormData();
   for (const [name, value] of Object.entries(body)) {
-    if (typeof value !== 'string') throw new TypeError(`The multipart part ${name} must be text`);
-    form.append(name, value);
+    if (name === filePart) {
+      if (value === undefined) continue;
+      if (!(value instanceof Blob)) throw new TypeError(`The multipart part ${name} must be a file`);
+      form.append(name, value, FILE_PART_NAME);
+    } else {
+      if (typeof value !== 'string') throw new TypeError(`The multipart part ${name} must be text`);
+      form.append(name, value);
+    }
   }
   return form;
 }

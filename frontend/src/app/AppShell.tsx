@@ -2,6 +2,7 @@ import { firstName } from '@finebank/shared';
 import { Outlet, ScrollRestoration, useMatches } from 'react-router';
 
 import { useToday } from '../api/calendar';
+import { photoUrl } from '../api/profile';
 import { useLogout, useSession } from '../api/session';
 import { AppLayout, Header, NavBar } from '../components';
 import type { NavSection } from '../components/NavMenu/NavMenu';
@@ -18,9 +19,9 @@ const logoutFailedMessage = "Couldn't log out. Please try again.";
 
 /**
  * Layout route around every app page (104 to 112), inside `RequireAuth`: the sidebar and the header for the
- * signed-in user, with the page below. It stays mounted while the user moves between pages. Another page
- * opens at the top; Back and Forward restore the position (#100 d). The page remounts when the signed-in user
- * changes.
+ * signed-in user (the sidebar avatar the session user's photo, task 029, or the initials), with the page below. It
+ * stays mounted while the user moves between pages. Another page opens at the top; Back and Forward restore the
+ * position (#100 d). The page remounts when the signed-in user changes.
  */
 export function AppShell() {
   const session = useSession();
@@ -32,7 +33,7 @@ export function AppShell() {
 
   // RequireAuth renders the shell for a signed-in user only.
   if (session.status !== 'signedIn' || !handle) return null;
-  const { fullName } = session.user;
+  const { fullName, photoUpdatedAt } = session.user;
 
   return (
     <div className={styles.shell}>
@@ -41,6 +42,7 @@ export function AppShell() {
           <NavBar
             activeSection={handle.section}
             fullName={fullName}
+            photoUrl={photoUpdatedAt ? photoUrl(photoUpdatedAt) : undefined}
             onLogout={logout.logOut}
             logoutPending={logout.pending}
             logoutError={logout.failed ? logoutFailedMessage : undefined}

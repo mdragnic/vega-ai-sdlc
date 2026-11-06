@@ -85,3 +85,26 @@ describe('currentUserSchema', () => {
     expect(currentUserSchema.parse(user)).toEqual(user);
   });
 });
+
+// Task 029 T2: the photo's update time, present only when a photo is stored (#76): an ISO instant in UTC (#74).
+describe('currentUserSchema photoUpdatedAt', () => {
+  const user = { fullName: 'Tanzir Rahman', email: 'tanzir@example.com', username: 'tanzir' };
+
+  it('accepts a user without a photo, with no such key', () => {
+    expect(currentUserSchema.parse(user)).toEqual(user);
+  });
+
+  it.each(['2026-10-22T10:00:00.000Z', '2026-10-22T10:00:00Z'])('accepts %j unchanged', (photoUpdatedAt) => {
+    expect(currentUserSchema.parse({ ...user, photoUpdatedAt })).toEqual({ ...user, photoUpdatedAt });
+  });
+
+  it.each([
+    ['local time', '2026-10-22T10:00:00'],
+    ['an offset', '2026-10-22T12:00:00+02:00'],
+    ['a date only', '2026-10-22'],
+    ['a number', 1_792_921_656_294],
+    ['null', null],
+  ])('rejects %s', (_case, photoUpdatedAt) => {
+    expect(currentUserSchema.safeParse({ ...user, photoUpdatedAt }).success).toBe(false);
+  });
+});

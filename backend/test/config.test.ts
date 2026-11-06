@@ -26,6 +26,13 @@ describe('readConfig', () => {
     expect(config.databaseFile).toBe(join(dataDir, 'finebank.test.sqlite'));
   });
 
+  // Task 029: the e2e run's photos in a folder of their own, emptied with the test database.
+  it('uses the uploads-test folder with NODE_ENV=test, and uploads otherwise', () => {
+    expect(readConfig({ NODE_ENV: 'test' }).uploadsDir).toBe(join(dataDir, 'uploads-test'));
+    expect(readConfig({ NODE_ENV: 'production' }).uploadsDir).toBe(join(dataDir, 'uploads'));
+    expect(readConfig({}).uploadsDir).toBe(join(dataDir, 'uploads'));
+  });
+
   it('defaults to development when NODE_ENV is missing', () => {
     expect(readConfig({}).nodeEnv).toBe('development');
   });

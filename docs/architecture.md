@@ -1,6 +1,6 @@
 # Architecture
 
-Finebank is a personal finance dashboard: a React single-page app, a NestJS API and an SQLite database in one npm workspace repo. Local only, no deployment. This document describes the system as built through task 028; the profile photo (task 029) and the Security tab (task 030) are not built yet. Every rule here links to the decision (`#N`, `docs/decisions.md`) that set it, and the decision wins where the two differ.
+Finebank is a personal finance dashboard: a React single-page app, a NestJS API and an SQLite database in one npm workspace repo. Local only, no deployment. This document describes the system as built through task 029; the Security tab (task 030) is not built yet. Every rule here links to the decision (`#N`, `docs/decisions.md`) that set it, and the decision wins where the two differ.
 
 A task that changes a module boundary, an endpoint, a guard, a table or a rule in this file updates this file in the same commit.
 
@@ -48,7 +48,7 @@ A production-like mode is out of scope. If it is ever added, the API must serve 
 | Folder | What it holds |
 |--------|---------------|
 | `shared/` | `@finebank/shared`: the API contract (`src/contract/`, Zod schemas, one file per resource), validation rules, money, date and percent formatting (`src/format/`), chart rules (`src/chart/`: axis ticks, goal progress), route paths |
-| `backend/` | NestJS API. One module per area: `auth`, `users`, `accounts`, `bank-data`, `transactions`, `bills`, `statistics`, `expenses`, `goals`, `calendar`, `demo`. Shared pieces in `common/` (clock, time zone, error filter). `database/` holds the data source and migrations |
+| `backend/` | NestJS API. One module per area: `auth`, `users`, `accounts`, `bank-data`, `transactions`, `bills`, `statistics`, `expenses`, `goals`, `calendar`, `demo`. Shared pieces in `common/` (clock, time zone, error filter). `database/` holds the data source and migrations. `data/` (gitignored) holds the SQLite files and the profile photos: `data/uploads/` in development, `data/uploads-test/` with `NODE_ENV=test` (the e2e run, emptied with its database); each backend test app gets a temporary folder of its own, removed when it closes (task 029) |
 | `frontend/` | React SPA. `app/` (providers, routes, pages, shell), `api/` (one query module per resource and the typed client), `components/` (one folder per component, named from `docs/figma/components.md`), `styles/` (`tokens.css` from `docs/figma/tokens.md`) |
 | `e2e/` | Playwright tests on the real stack, fixed clock and time zone |
 | `docs/` | Spec, decisions, Figma exports and tokens, metrics, this file |
@@ -57,7 +57,8 @@ A production-like mode is out of scope. If it is ever added, the API must serve 
 
 REST and JSON under `/api` (#74). Each endpoint exists once, as a contract entry in `shared/src/contract/`: method, path, request and response Zod schemas, and its body's encoding. Types come from `z.infer`; there is no code generation.
 
-- **One multipart endpoint:** `PATCH /profile` ("Save changes", #76, #127) takes `multipart/form-data`, each field a text part (`encoding: 'multipart'` on its entry, read by the client and the backend). Any other encoding answers 415. Until task 029 it takes no file part: one answers 400. Task 029 adds the optional `photo` part.
+- **One multipart endpoint:** `PATCH /profile` ("Save changes", #76, #127) takes `multipart/form-data`, each field a text part (`encoding: 'multipart'` on its entry, read by the client and the backend), and since task 029 one optional file part, `photo` (`filePart: 'photo'` on the entry), sent under the fixed file name `photo`. Any other encoding answers 415. The request schema checks the text parts and the photo together, the photo by the shared `photoSchema` (#74).
+- **One file answer:** `GET /profile/photo` answers the stored photo's bytes with their stored type, not JSON (`responseEncoding: 'file'` on its entry): the frontend puts its address, the contract's path with `?v=<photoUpdatedAt>`, in an `<img>` and never reads it through the client (task 029). The profile and the session user carry `photoUpdatedAt` only when a photo is stored.
 - The backend passes the shared schemas to Nest's `schema` option, validated by a global `StandardSchemaValidationPipe`. Unknown keys are dropped, so a request cannot set a field the contract does not name.
 - The frontend calls the API only through the typed client in `frontend/src/api/client.ts`, which takes a contract entry. Forms use the same schemas through `zodResolver`, so the form and the API check the same rules.
 - **Money** is always integer cents with a currency: `{ "cents": 2505600, "currency": "USD" }`. Every amount is calculated in the backend; the frontend only formats it (#11, #96).
@@ -73,7 +74,7 @@ Every `/api` request passes these stages in this order. The order is part of the
 2. **CSRF check:** a cross-site write answers 403 before anything else runs.
 3. **Session guard:** no valid session answers 401, except `@Public()` routes (auth, test clock).
 4. **Write guard:** for any method other than GET, HEAD and OPTIONS, a missing or invalid `X-Expected-User` answers 400, another user's answers 409.
-5. **Multipart body (one route, `PATCH /profile`):** an interceptor, so only after the guards: another encoding answers 415; multer reads the text parts through `NoFilesInterceptor` with tight limits (no file, at most 10 parts and fields, 1 KB per value, 100-byte names), and a file part, a limit or a malformed body answers 400. Nothing of the body is read before the guards (task 028).
+5. **Multipart body (one route, `PATCH /profile`):** an interceptor, so only after the guards: another encoding answers 415; multer reads the text parts and the one file part `photo` through `FileInterceptor` with tight limits (one file of at most 2,097,152 bytes held in memory, at most 10 parts and fields, 1 KB per value, 100-byte names). A photo past 2 MB answers the photo rule's 400 under `photo`; a file under another name, a second file, another limit or a malformed body answers 400. The file goes into the body as a `Blob` for the schema. Nothing of the body is read before the guards, and nothing reaches the disk before every check (tasks 028, 029).
 6. **Validation:** the shared schema validates the request and drops unknown keys (400 with field errors); the time zone header is parsed (400 when missing or invalid).
 7. **Handler:** the user comes only from the session; ownership and the read or write are one query.
 8. **Exception filter:** wraps all of the above and answers in the shared error shape.
@@ -91,7 +92,7 @@ The contract entries in `shared/src/contract/` are the source of truth. This tab
 | Statistics | `GET /statistics/weekly-comparison` |
 | Expenses | `GET /expenses/breakdown`, `GET /expenses/monthly-comparison` |
 | Goals | `GET /savings-goals/current`, `GET /savings-goals/months`, `GET /savings-goals?month=`, `PUT /savings-goals`, `GET /category-limits`, `PUT /category-limits`, `GET /saving-summary?month=` |
-| Profile | `GET /profile`, `PATCH /profile` (multipart) |
+| Profile | `GET /profile`, `PATCH /profile` (multipart, the optional `photo` file part), `GET /profile/photo` (a file) |
 | Calendar | `GET /calendar/today` |
 | Test only | `GET` and `PUT /test/clock`, registered only with `NODE_ENV=test` |
 
@@ -116,7 +117,8 @@ erDiagram
   USER ||--o{ CATEGORY_LIMIT : "sets, one per category"
 ```
 
-- `USER` holds the email (unique, read-only, #33), the full name, the username (unique) and the password hash, and since task 028 the phone: `phone_country_code` (default `+1`, a `CHECK` on `+` and 1 to 3 digits) and `phone_number` (digits only, empty for none, a `CHECK` of at most 15 digits).
+- `USER` holds the email (unique, read-only, #33), the full name, the username (unique) and the password hash, and since task 028 the phone: `phone_country_code` (default `+1`, a `CHECK` on `+` and 1 to 3 digits) and `phone_number` (digits only, empty for none, a `CHECK` of at most 15 digits). Since task 029 the photo (#76): `photo_path` (the file's name in the uploads folder only, never a path), `photo_mime_type` and `photo_updated_at` (the `Clock`'s time), all null without a photo; `CHECK`s keep all three set or all null, and the name a lowercase UUID v4 with `.jpg` for `image/jpeg` or `.png` for `image/png`, nothing else.
+- **The photo file and its row stay consistent** (`UsersService.updateProfile`, the folder only through `PhotoStore`): (1) every check passes first; (2) the file is written under a new `randomUUID()` name, never over an existing file (a disk error: the partial file removed, the row unchanged, 500); (3) one `UPDATE users` with the text and photo columns, its `WHERE` the session user's ID and the photo name read just before it; when another save changed the row in between it touches nothing, and the name is read again and the update repeated, at most 5 times, then a 500 (two saves at once: the last wins, no file left); a failed update (the username taken, a database error) removes the new file and keeps the old file and row; (4) only after the row is stored, the replaced file is removed, and a failure there is logged and keeps the 200.
 - Every row belongs to one user, directly or through its account. No query reads across users.
 - `ACCOUNT` and `TRANSACTION` sit behind the bank data boundary below; the other tables belong to the app.
 - Sessions store only the hash of the token. An expired session is deleted when it is next read; sessions never read again stay in the table (accepted, local only).
@@ -152,7 +154,8 @@ Profile, sessions, bills, savings goals and category limits are the app's own ta
 | Logging | Unexpected errors are logged with their message and stack only, never query parameters or row values, so emails, names and password hashes never reach a log (task 007 review) |
 | Google sign-in | Authorization code flow with PKCE and a state cookie (`finebank_google_signin`), `email_verified` required; the user is matched by lowercased email. A takeover of an existing password account removes the password and ends its sessions (#104). A fake Google client is used with `NODE_ENV=test` (#75, #102) |
 | Redirects | `returnTo` accepts relative in-app paths only (one shared rule for the frontend and the backend) |
-| Uploads (task 029) | Planned per #76 and #128: in memory, 2 MB, type checked from the content, random file names, stored as uploaded (metadata such as EXIF location kept, #128 b), served only to its owner with `nosniff`. **Condition (#128):** if photos are ever shown to other users, metadata stripping must be added first |
+| Dev server files | The Vite dev server never serves `backend/data/` (the SQLite files and the photos): `server.fs.deny` in `frontend/vite.config.ts` adds `**/backend/data/**` to Vite's own entries, kept as they are (task 029) |
+| Uploads (task 029) | The profile photo, #76 and #128 as built: parsed only after the guards; held in memory, at most 2,097,152 bytes; JPEG or PNG by its first bytes only (the shared `photoSchema`; a file whose bytes cannot be read is refused as an empty one is), never the file name or the declared type, which are never stored or logged; stored as uploaded (metadata such as EXIF location kept, #128 b) under a server-made `<uuid>.jpg` or `.png`, the column's `CHECK` on that shape and the store resolving only that shape inside the uploads folder. `GET /profile/photo` serves only the session user's photo (no parameter, `?v=` ignored) with its stored `Content-Type`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cross-Origin-Resource-Policy: same-origin`, so a polyglot is never read as a page, runs nothing when opened directly and loads on no other site; one 404 body without a photo or with its file missing. **Condition (#128):** if photos are ever shown to other users, metadata stripping must be added first |
 
 ## Time and time zones
 
@@ -170,6 +173,9 @@ Profile, sessions, bills, savings goals and category limits are the app's own ta
 | Expired sessions are cleaned up only when read | A few stale rows locally; no privacy impact, the tokens are hashed |
 | E2E tests run one at a time | One backend and one test clock are shared by every test |
 | Every sign-up copies about 3,500 rows | One transaction, well under a second locally |
+| A process that dies between a photo's file write and its row update, or a failed removal of a replaced photo, leaves an unused file in the uploads folder (task 029) | No row names it and nothing serves it; no sweep is built |
+| The photo is fetched again on every page load (`no-store` on every `/api` answer, task 017) | At most 2 MB, local; `?v=` changes the address after a save so a mounted `<img>` asks again |
+| A stored photo keeps its metadata (EXIF location included, #128 b) | It is served only to its owner; stripping comes first if photos are ever shown to others |
 
 ## Frontend
 

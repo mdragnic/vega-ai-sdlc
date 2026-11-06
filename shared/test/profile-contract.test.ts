@@ -154,18 +154,73 @@ describe('profileSchema', () => {
     expect(profileSchema.parse(profile)).toEqual(profile);
   });
 
-  it('has exactly the five keys', () => {
+  // Changed by task 029 (#128 c): the five fields, and `photoUpdatedAt` only when a photo is stored.
+  it('has the five keys without a photo and six with one', () => {
+    const withoutPhoto = { ...stored, phoneNumber: '' };
+    const withPhoto = { ...withoutPhoto, photoUpdatedAt: '2026-10-22T10:00:00.000Z' };
+
     expect(Object.keys(profileSchema.shape).toSorted()).toEqual([
+      'email',
+      'fullName',
+      'phoneCountryCode',
+      'phoneNumber',
+      'photoUpdatedAt',
+      'username',
+    ]);
+    expect(Object.keys(profileSchema.parse(withoutPhoto)).toSorted()).toEqual([
       'email',
       'fullName',
       'phoneCountryCode',
       'phoneNumber',
       'username',
     ]);
+    expect(profileSchema.parse(withPhoto)).toEqual(withPhoto);
+    expect(profileSchema.safeParse({ ...withoutPhoto, photoUpdatedAt: '2026-10-22 10:00' }).success).toBe(false);
   });
 });
 
-// Task 028 T1: the two endpoints exist once in the contract (#74), the update multipart (#76).
+// Task 029 T2: the request's optional photo, by the shared photo rule (#74, #76); without it, task 028's request.
+/** A PNG's signature and a byte, named .jpg: the rule reads only the first bytes. */
+const png = () => new File([Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0])], 'x.jpg');
+
+describe('profileUpdateRequestSchema photo', () => {
+  it('gives the photo with its detected type next to the four fields', async () => {
+    const photo = png();
+
+    expect(await profileUpdateRequestSchema.parseAsync({ ...valid, photo })).toEqual({
+      ...valid,
+      photo: { file: photo, mimeType: 'image/png' },
+    });
+  });
+
+  it('leaves the photo out when none is sent', async () => {
+    expect(await profileUpdateRequestSchema.parseAsync(valid)).toEqual(valid);
+    expect('photo' in (await profileUpdateRequestSchema.parseAsync(valid))).toBe(false);
+  });
+
+  it.each<[string, unknown]>([
+    ['a string', 'data:image/png;base64,iVBORw0KGgo='],
+    ['two values (a text part and a file part)', ['x', png()]],
+    ['two files', [png(), png()]],
+    ['a file that is not an image', new File(['hello'], 'x.png', { type: 'image/png' })],
+  ])('fails under photo for %s, with the rule’s text', async (_case, photo) => {
+    const result = await profileUpdateRequestSchema.safeParseAsync({ ...valid, photo });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => [issue.path.join('.'), issue.message])).toEqual([
+      ['photo', 'Photo must be a JPG or PNG file'],
+    ]);
+  });
+
+  it('answers every failing field at once, the photo with the text fields', async () => {
+    const result = await profileUpdateRequestSchema.safeParseAsync({ ...valid, username: 'Ab', photo: 'x' });
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.')).toSorted()).toEqual(['photo', 'username']);
+  });
+});
+
+// Task 028 T1: the two endpoints exist once in the contract (#74), the update multipart (#76). Task 029 T2: the update's
+// one file part, `photo`, and the photo's read, a file, not JSON.
 describe('profileContract', () => {
   it('declares the read and the multipart update of /profile', () => {
     expect(profileContract.get).toMatchObject({ method: 'GET', path: '/profile', request: undefined });
@@ -174,5 +229,22 @@ describe('profileContract', () => {
     expect(profileContract.update.request).toBe(profileUpdateRequestSchema);
     expect(profileContract.update.response).toBe(profileSchema);
     expect('encoding' in profileContract.get).toBe(false);
+  });
+
+  it('names the update’s one file part photo', () => {
+    expect(profileContract.update.filePart).toBe('photo');
+    expect('filePart' in profileContract.get).toBe(false);
+  });
+
+  it('declares GET /profile/photo with no body, no query, no parameters, answering a file', () => {
+    expect(profileContract.photo).toMatchObject({
+      method: 'GET',
+      path: '/profile/photo',
+      request: undefined,
+      responseEncoding: 'file',
+    });
+    expect('query' in profileContract.photo).toBe(false);
+    expect('params' in profileContract.photo).toBe(false);
+    expect('responseEncoding' in profileContract.get).toBe(false);
   });
 });

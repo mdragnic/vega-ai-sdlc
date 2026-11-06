@@ -20,6 +20,7 @@ import { FixedClock } from '../src/common/clock/fixed-clock.js';
 import { cookieFor, newUser, signUp } from './helpers/auth.js';
 import { CapturingLogger } from './helpers/capturing-logger.js';
 import { financeRows, userIdOf } from './helpers/finance.js';
+import { png } from './helpers/images.js';
 import { contractEntries, registeredRoutes } from './helpers/routes.js';
 import { createTestApp } from './helpers/test-app.js';
 
@@ -110,7 +111,7 @@ describe('the write guard (#119)', () => {
       }),
       stored: () => db.query('SELECT id, bank_name, branch_name, account_type FROM accounts ORDER BY id'),
     },
-    // Task 028: the profile write, multipart (#76).
+    // Task 028: the profile write, multipart (#76). Task 029 T12: with a photo, its file part.
     [keyOf(profileContract.update)]: {
       send: (marker) => ({
         path: `/api${profileContract.update.path}`,
@@ -119,17 +120,24 @@ describe('the write guard (#119)', () => {
           username: 'guarded.user',
           phoneCountryCode: '+1',
           phoneNumber: `${marker}`,
+          photo: png(),
         },
       }),
       stored: () =>
-        db.query('SELECT id, email, full_name, username, phone_country_code, phone_number FROM users ORDER BY id'),
+        db.query(
+          `SELECT id, email, full_name, username, phone_country_code, phone_number, photo_path, photo_mime_type,
+           photo_updated_at FROM users ORDER BY id`,
+        ),
     },
   };
 
   /** Every row a guarded write could change. */
   const everything = async () => Promise.all(Object.values(writes).map((write) => write.stored()));
 
-  /** A guarded write in its entry's encoding: JSON, or each body key a text part (task 028, `encoding: 'multipart'`). */
+  /**
+   * A guarded write in its entry's encoding: JSON, or each body key a text part (task 028, `encoding: 'multipart'`), the
+   * entry's file part a file (task 029).
+   */
   const send = (key: string, marker: number, expectedUser: string | null) => {
     const { path, body } = writes[key]!.send(marker);
     const method = key.split(' ')[0]!.toLowerCase() as 'put' | 'patch';
@@ -137,7 +145,9 @@ describe('the write guard (#119)', () => {
     if (expectedUser !== null) req = req.set('X-Expected-User', expectedUser);
     const entry = guardedEntries.find((candidate) => keyOf(candidate) === key);
     if (entry?.encoding !== 'multipart') return req.send(body);
-    for (const [name, value] of Object.entries(body)) req = req.field(name, String(value));
+    for (const [name, value] of Object.entries(body)) {
+      req = Buffer.isBuffer(value) ? req.attach(name, value, 'photo') : req.field(name, String(value));
+    }
     return req;
   };
 
@@ -284,12 +294,13 @@ describe('the stale tab (#110, #119)', () => {
 
     // Task 027: the limit save.
     const limit = await fromStaleTab('put', '/api/category-limits').send({ category: 'food', limit: usd(9_999_900) });
-    // Task 028 T11: the profile write, multipart.
+    // Task 028 T11: the profile write, multipart. Task 029 T12: with a photo, refused before its body is read.
     const profile = await fromStaleTab('patch', '/api/profile')
       .field('fullName', 'Stale Name')
       .field('username', 'stale.name')
       .field('phoneCountryCode', '+44')
-      .field('phoneNumber', '123');
+      .field('phoneNumber', '123')
+      .attach('photo', png(), 'photo');
 
     expect(goal.status).toBe(409);
     expect(account.status).toBe(409);
