@@ -195,6 +195,51 @@ describe('Dropdown', () => {
     expect(screen.getByRole('option', { name: 'Savings' })).toHaveFocus();
   });
 
+  // Task 028 AC5: an option's typeahead text, so the country codes (`+880`) are found by their digits.
+  it('moves the highlight to the option whose typeahead text starts with what is typed', async () => {
+    const codes = ['+1', '+7', '+81', '+86', '+880', '+886'].map((code) => ({
+      value: code,
+      label: code,
+      textValue: code.slice(1),
+    }));
+    render(<Dropdown variant="inline" options={codes} value="+1" onValueChange={() => undefined} aria-label="Code" />);
+    const user = userEvent.setup();
+    screen.getByRole('combobox', { name: 'Code' }).focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('option', { name: '+1' })).toHaveFocus();
+
+    await user.keyboard('880');
+
+    expect(screen.getByRole('option', { name: '+880' })).toHaveFocus();
+  });
+
+  // Task 028 (code review): a form links a field error to the trigger and focuses it through its ref.
+  it('gives the trigger its description, its invalid state and its element to the ref', () => {
+    let attached: HTMLButtonElement | null = null;
+    render(
+      <>
+        <p id="code-error">Choose a country code</p>
+        <Dropdown
+          variant="inline"
+          options={accountTypes}
+          value="checking"
+          onValueChange={() => undefined}
+          aria-label="Code"
+          aria-describedby="code-error"
+          aria-invalid
+          triggerRef={(node) => {
+            attached = node;
+          }}
+        />
+      </>,
+    );
+    const trigger = screen.getByRole('combobox', { name: 'Code' });
+
+    expect(trigger).toHaveAccessibleDescription('Choose a country code');
+    expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(attached).toBe(trigger);
+  });
+
   // The value reaches a form through `name`, like the other fields.
   it('submits its value with a form under its name', () => {
     render(

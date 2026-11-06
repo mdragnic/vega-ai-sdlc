@@ -1,0 +1,68 @@
+/* Figma `Settings Input` (54:2202) in 111: 88 high, the label's 24 line, 8, the 56 value box. */
+.field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* "Full name", "Email", "Username", "Phone Number": Medium 16/24 in Secondary (PNG 111, #525256). */
+.label {
+  margin-bottom: var(--space-form-label-gap);
+  color: var(--color-secondary);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-24);
+}
+
+/* The value box: the value 24 in from the label and centred in the 56 height, Regular 16/24 in Gray/02 (PNG 111,
+   #878787), as 104.1's popup inputs. Borderless as drawn; the read-only Email keeps that look (#127 a). */
+.control {
+  display: flex;
+  align-items: center;
+  height: var(--size-settings-input-height);
+  padding: 0 var(--space-settings-input-padding-x);
+  color: var(--color-gray-02);
+  font: var(--font-regular-16-24);
+  cursor: text;
+}
+
+/* The caret, and on an editable field the border below (#127 a). */
+.input {
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+/* Not designed: the read-only Email has no caret, so keyboard focus shows the #87 ring around its value box; none after
+   a pointer press (data-pointer-focus), which Chrome would otherwise ring. */
+.control:has(.readOnly:focus-visible:not([data-pointer-focus])) {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* #127 a: an editable field in the app's bordered Input look (101, Login, and 106 edit mode): its 1px border and radius,
+   the darker border while the field has focus (#63), the red border while an error shows, also with focus (#87 b). The
+   padding leaves room for the border, so the value stays 24 in from the box's outer edge as in 111. Focus anywhere in
+   the box counts, so the phone row (the country code and the number in one box) darkens for either, and while its list
+   is open. */
+.bordered {
+  padding: 0 calc(var(--space-settings-input-padding-x) - var(--border-width-input));
+  border: var(--border-width-input) solid var(--color-input-border);
+  border-radius: var(--radius-input);
+}
+
+.bordered:focus-within,
+.bordered:has([data-state='open']) {
+  border-color: var(--color-input-active);
+}
+
+.bordered.invalid,
+.bordered.invalid:focus-within {
+  border-color: var(--color-special-red);
+}

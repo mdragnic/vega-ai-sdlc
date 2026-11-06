@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -5,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { MenuTab } from '../../src/components';
 import { menuTabId } from '../../src/components/MenuTab/MenuTab';
+import menuTabStyles from '../../src/components/MenuTab/MenuTab.module.css';
 
 type Direction = 'all' | 'income' | 'expense';
 
@@ -164,5 +168,45 @@ describe('MenuTab', () => {
     await user.keyboard('{ArrowLeft}');
 
     expect(onChange.mock.calls).toEqual([['expense']]);
+  });
+});
+
+// Task 028: 111's tabs differ from 104's (40 high, 12 padding, 32 apart, Gray/03 inactive): the `settings` variant of
+// the one tab component, with the same keyboard model.
+describe('MenuTab settings variant', () => {
+  const settingsTabs = [
+    { value: 'account', label: 'Account' },
+    { value: 'security', label: 'Security' },
+  ] as const;
+
+  it('takes the settings look and keeps one tab stop and the arrow keys', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(value: string) => void>();
+    render(
+      <MenuTab
+        variant="settings"
+        label="Settings"
+        tabs={settingsTabs}
+        value="account"
+        panelId="settings-panel"
+        onChange={onChange}
+      />,
+    );
+
+    const tablist = screen.getByRole('tablist', { name: 'Settings' });
+    expect(tablist).toHaveClass(menuTabStyles.settings!);
+    expect(screen.getByRole('tab', { name: 'Account' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('tab', { name: 'Security' })).toHaveAttribute('tabindex', '-1');
+    screen.getByRole('tab', { name: 'Account' }).focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('security');
+  });
+
+  it('has its rules in the stylesheet (the CSS module stub names any class)', () => {
+    const css = readFileSync(resolve(import.meta.dirname, '../../src/components/MenuTab/MenuTab.module.css'), 'utf8');
+
+    expect(css).toMatch(/\.settings\s*\{/);
+    expect(css).toMatch(/\.settings \.tab\s*\{/);
   });
 });

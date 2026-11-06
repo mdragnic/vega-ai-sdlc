@@ -17,6 +17,9 @@ import {
   goalMessages,
   goalProgress,
   type Money,
+  type Profile,
+  profileMessages,
+  profileUpdateRequestSchema,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
   type SavingSummaryResponse,
@@ -1719,14 +1722,132 @@ export const monthlyComparison = {
 };
 
 /**
+ * The signed-in user's profile as `GET /api/profile` answers it for a new user (task 028, demo-data.md Profile): the
+ * sign-up name and email, the generated username, `+1` and no number.
+ */
+export const demoProfile: Profile = { ...signedInUser, phoneCountryCode: '+1', phoneNumber: '' };
+
+const profilePath = '*/api/profile';
+const profileFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+
+/** `GET /api/profile` answers: the demo profile (or `body`), pending, failing, and failing 4 times then the demo. */
+export const profile = {
+  answers: (body: Profile = demoProfile) => http.get(profilePath, () => HttpResponse.json(body)),
+  pending: () =>
+    http.get(profilePath, async () => {
+      await delay('infinite');
+      return HttpResponse.json(demoProfile);
+    }),
+  fails: () => http.get(profilePath, profileFailure),
+  /** Fails the first load and its 3 retries, then answers the demo profile (Retry). */
+  failsThenAnswers: () => {
+    let tries = 0;
+    return http.get(profilePath, () => {
+      tries += 1;
+      return tries <= 4 ? profileFailure() : HttpResponse.json(demoProfile);
+    });
+  },
+};
+
+/** One `PATCH /api/profile` as the backend received it: its multipart parts in order, its content type, its header. */
+export type ProfileWrite = { parts: [string, string][]; contentType: string | null; expectedUser: string | null };
+
+/** The parts of a multipart request, in order, each a text value (a file part shows as `file <its name>`). */
+async function partsOf(request: Request): Promise<[string, string][]> {
+  return [...(await request.formData())].map(([name, value]) => [
+    name,
+    typeof value === 'string' ? value : `file ${value.name}`,
+  ]);
+}
+
+/** The backend's 400 for a body that breaks the shared rules: `{ message, fieldErrors }`, one message per field. */
+function validationFailed(issues: { path: PropertyKey[]; message: string }[]) {
+  const fieldErrors: Record<string, string> = {};
+  for (const { path, message } of issues) fieldErrors[String(path[0])] ??= message;
+  return HttpResponse.json({ message: 'Validation failed', fieldErrors } satisfies ErrorResponse, { status: 400 });
+}
+
+/**
+ * A backend's profile for one test (task 028), as the real one behaves: `GET /api/profile` answers the stored profile,
+ * `GET /api/auth/me` its three session keys; `PATCH /api/profile` records each request, refuses one without
+ * `X-Expected-User` with the guard's 400, checks the parts with the shared schema (400 with field errors), refuses
+ * `taken` usernames with the 409 under Username, then stores the four fields and answers the stored profile.
+ */
+export function profileBackend(initial: Profile = demoProfile, { taken = [] as string[] } = {}) {
+  let stored = initial;
+  const writes: ProfileWrite[] = [];
+  const handlers = [
+    http.get(profilePath, () => HttpResponse.json(stored)),
+    http.get('*/api/auth/me', () =>
+      HttpResponse.json({ fullName: stored.fullName, email: stored.email, username: stored.username }),
+    ),
+    http.patch(profilePath, async ({ request }) => {
+      const expectedUser = request.headers.get(EXPECTED_USER_HEADER);
+      const parts = await partsOf(request);
+      writes.push({ parts, contentType: request.headers.get('Content-Type'), expectedUser });
+      if (!expectedUser) return expectedUserMissing();
+      const parsed = profileUpdateRequestSchema.safeParse(Object.fromEntries(parts));
+      if (!parsed.success) return validationFailed(parsed.error.issues);
+      if (taken.includes(parsed.data.username)) return usernameTakenResponse();
+      stored = { ...stored, ...parsed.data };
+      return HttpResponse.json(stored);
+    }),
+  ];
+  return { handlers, writes, stored: () => stored };
+}
+
+/** The 409 of a username another user has (#62), as the backend answers it. */
+const usernameTakenResponse = () =>
+  HttpResponse.json(
+    {
+      message: profileMessages.usernameTaken,
+      fieldErrors: { username: profileMessages.usernameTaken },
+    } satisfies ErrorResponse,
+    { status: 409 },
+  );
+
+/** `PATCH /api/profile` answers (task 028). */
+export const updateProfile = {
+  /** Held until `release`, then answered with `answer` (the demo profile by default). */
+  held: (answer: Profile = demoProfile) => {
+    const { promise: released, resolve: release } = Promise.withResolvers<void>();
+    const writes: ProfileWrite[] = [];
+    const handler = http.patch(profilePath, async ({ request }) => {
+      writes.push({
+        parts: await partsOf(request),
+        contentType: request.headers.get('Content-Type'),
+        expectedUser: request.headers.get(EXPECTED_USER_HEADER),
+      });
+      await released;
+      return HttpResponse.json(answer);
+    });
+    return { handler, release, writes };
+  },
+  fails: () => http.patch(profilePath, profileFailure),
+  networkError: () => http.patch(profilePath, () => HttpResponse.error()),
+  /** A 400 with these field errors, as the backend answers a body the form would not send. */
+  fieldErrors: (fieldErrors: Record<string, string>) =>
+    http.patch(profilePath, () =>
+      HttpResponse.json({ message: 'Validation failed', fieldErrors } satisfies ErrorResponse, { status: 400 }),
+    ),
+  /** A 4xx with a message of its own and no field errors (#97 a). */
+  clientError: (message: string) =>
+    http.patch(profilePath, () => HttpResponse.json({ message } satisfies ErrorResponse, { status: 415 })),
+  usernameTaken: () => http.patch(profilePath, usernameTakenResponse),
+  /** The write guard's 409: another user is signed in (#119). */
+  otherUser: () => http.patch(profilePath, () => HttpResponse.json(otherUserSignedIn, { status: 409 })),
+};
+
+/**
  * The answers every app test starts with (`setupServer(...signedInDefaults())`), so a test that opens Overview has
  * its accounts, its goal, its bills, its recent transactions, its weekly comparison and its expenses breakdown without
  * asking, one that opens Transactions has its pages, one that opens a demo account's Account Details has its details
- * and history, one that opens Expenses has its monthly comparison and the same expenses breakdown, and one that opens
- * Goals has its months, each month's goal, each month's Saving Summary and the category limits (task 027): the demo data
- * of each. A test's own `server.use` comes first.
+ * and history, one that opens Expenses has its monthly comparison and the same expenses breakdown, one that opens
+ * Goals has its months, each month's goal, each month's Saving Summary and the category limits (task 027), and one that
+ * opens Settings has the profile (task 028): the demo data of each. A test's own `server.use` comes first.
  */
 export const signedInDefaults = () => [
+  profile.answers(),
   accounts.answers(),
   savingsGoal.answers(),
   savingsGoalMonths.answers(),

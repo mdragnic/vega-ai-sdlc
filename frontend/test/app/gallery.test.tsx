@@ -1,5 +1,5 @@
 import { axisTicks, formatCompactMoney } from '@finebank/shared';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -19,9 +19,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/**
+ * The gallery rendered to its end: inside `act`, React finishes the lazy route's render (a transition it would
+ * otherwise slice) before the heading is looked up, so no timeout races a long render under load (task 028).
+ */
 async function renderGallery() {
   const router = createMemoryRouter(routes, { initialEntries: ['/dev/components'] });
-  render(<AppProviders router={router} />);
+  await act(async () => {
+    render(<AppProviders router={router} />);
+  });
   return screen.findByRole('heading', { level: 1, name: 'Component gallery' });
 }
 
@@ -55,8 +61,16 @@ describe('component gallery', () => {
 
     await renderGallery();
 
+    // One scan of the page for its regions, each found by its heading's text, then its accessible name checked: a
+    // getByRole per component scanned the whole gallery each time, past the test's time under load (task 028).
+    const regionsByName = Map.groupBy(
+      screen.getAllByRole('region'),
+      (region) => document.getElementById(region.getAttribute('aria-labelledby') ?? '')?.textContent,
+    );
     for (const name of Object.keys(components)) {
-      expect(screen.getByRole('region', { name })).toBeInTheDocument();
+      // Exactly one region of that name, as getByRole demanded.
+      expect(regionsByName.get(name)).toHaveLength(1);
+      expect(regionsByName.get(name)?.[0]).toHaveAccessibleName(name);
     }
     expect(consoleError).not.toHaveBeenCalled();
   });
@@ -85,6 +99,63 @@ describe('component gallery', () => {
   });
 
   // Task 003 Scope: the app shell sections.
+  // Task 028 T23: 111's parts and their undesigned states.
+  it('shows the Settings parts in every listed state', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+
+    expect(
+      within(figure('MenuTab', 'Settings: Account active (111)')).getByRole('tab', { name: 'Account' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    expect(within(figure('SettingsInput', 'Filled (111)')).getByRole('textbox', { name: 'Full name' })).toHaveValue(
+      'Tanzir Rahman',
+    );
+    expect(
+      within(figure('SettingsInput', 'Read-only, like Email')).getByRole('textbox', { name: 'Email' }),
+    ).toHaveAttribute('readonly');
+    expect(
+      within(figure('SettingsInput', 'Field error, no border')).getByRole('textbox', { name: 'Username' }),
+    ).toHaveAccessibleDescription('Username must be at least 3 characters');
+    expect(
+      within(figure('SettingsPhoneInput', 'Like 111: +880 and the number')).getByRole('combobox', {
+        name: 'Country code',
+      }),
+    ).toHaveTextContent('+880');
+    expect(
+      within(figure('SettingsPhoneInput', 'Like 111: +880 and the number')).getByRole('textbox', {
+        name: 'Phone Number',
+      }),
+    ).toHaveValue('5154758868');
+    expect(figure('ProfilePhotoUpload', 'Empty, visual only (111)')).toHaveTextContent('Your Profile Picture');
+    expect(within(screen.getByRole('region', { name: 'FormSuccess' })).getByRole('status')).toHaveTextContent(
+      'Profile updated',
+    );
+
+    const prefilled = figure('ProfileForm', 'Prefilled (111)');
+    expect(within(prefilled).getByRole('textbox', { name: 'Username' })).toHaveValue('tanzir.rahman');
+    // #127: unavailable until a field changes.
+    expect(within(prefilled).getByRole('button', { name: 'Save changes' })).toHaveAttribute('aria-disabled', 'true');
+    const invalid = figure('ProfileForm', 'Field errors: Save changes checks the shared rule (after a change)');
+    await user.type(within(invalid).getByRole('textbox', { name: 'Phone Number' }), '9');
+    await user.click(within(invalid).getByRole('button', { name: 'Save changes' }));
+    expect(await within(invalid).findByText('Name is required')).toBeInTheDocument();
+    expect(within(invalid).getByText('Phone Number can only contain digits')).toBeInTheDocument();
+    expect(within(figure('ProfileForm', 'Saving')).getByRole('button', { name: 'Save changes' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+    expect(within(figure('ProfileForm', 'The server error above the button')).getByRole('alert')).toHaveTextContent(
+      'Something went wrong.',
+    );
+    expect(within(figure('ProfileForm', '"Profile updated"')).getByRole('status')).toHaveTextContent('Profile updated');
+    expect(
+      within(figure('ProfileForm', 'A 100-character name, on one line in its field')).getByRole('textbox', {
+        name: 'Full name',
+      }),
+    ).toHaveValue('Ana Marija '.repeat(10).slice(0, 100));
+    expect(figure('ProfileFormSkeleton', 'Loading')).toBeInTheDocument();
+  });
+
   it('shows the app shell parts in every listed state', async () => {
     await renderGallery();
 

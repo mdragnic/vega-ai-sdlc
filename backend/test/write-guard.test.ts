@@ -6,6 +6,7 @@ import {
   authContract,
   categoryLimitsContract,
   type ContractEntry,
+  profileContract,
   savingsGoalsContract,
   testClockContract,
   writeGuardMessages,
@@ -85,7 +86,7 @@ describe('the write guard (#119)', () => {
    */
   const writes: Record<
     string,
-    { send: (marker: number) => { path: string; body: object }; stored: () => Promise<unknown> }
+    { send: (marker: number) => { path: string; body: Record<string, unknown> }; stored: () => Promise<unknown> }
   > = {
     [keyOf(savingsGoalsContract.save)]: {
       send: (marker) => ({
@@ -109,17 +110,35 @@ describe('the write guard (#119)', () => {
       }),
       stored: () => db.query('SELECT id, bank_name, branch_name, account_type FROM accounts ORDER BY id'),
     },
+    // Task 028: the profile write, multipart (#76).
+    [keyOf(profileContract.update)]: {
+      send: (marker) => ({
+        path: `/api${profileContract.update.path}`,
+        body: {
+          fullName: `Guarded ${marker}`,
+          username: 'guarded.user',
+          phoneCountryCode: '+1',
+          phoneNumber: `${marker}`,
+        },
+      }),
+      stored: () =>
+        db.query('SELECT id, email, full_name, username, phone_country_code, phone_number FROM users ORDER BY id'),
+    },
   };
 
   /** Every row a guarded write could change. */
   const everything = async () => Promise.all(Object.values(writes).map((write) => write.stored()));
 
+  /** A guarded write in its entry's encoding: JSON, or each body key a text part (task 028, `encoding: 'multipart'`). */
   const send = (key: string, marker: number, expectedUser: string | null) => {
     const { path, body } = writes[key]!.send(marker);
     const method = key.split(' ')[0]!.toLowerCase() as 'put' | 'patch';
     let req = request(app.getHttpServer())[method](path).set('Cookie', cookieFor(token)).set('X-Time-Zone', BELGRADE);
     if (expectedUser !== null) req = req.set('X-Expected-User', expectedUser);
-    return req.send(body);
+    const entry = guardedEntries.find((candidate) => keyOf(candidate) === key);
+    if (entry?.encoding !== 'multipart') return req.send(body);
+    for (const [name, value] of Object.entries(body)) req = req.field(name, String(value));
+    return req;
   };
 
   // T7: AC11, one guard in the session guard covers every write behind it, with nothing per route.
@@ -134,7 +153,12 @@ describe('the write guard (#119)', () => {
 
     expect(guarded).toEqual(expected);
     expect(guarded).toEqual(
-      expect.arrayContaining(['PUT /api/savings-goals', 'PATCH /api/accounts/:accountId', 'PUT /api/category-limits']),
+      expect.arrayContaining([
+        'PUT /api/savings-goals',
+        'PATCH /api/accounts/:accountId',
+        'PUT /api/category-limits',
+        'PATCH /api/profile',
+      ]),
     );
     // A new write needs a valid request below, so it is checked like these.
     expect(Object.keys(writes).toSorted()).toEqual(guardedEntries.map(keyOf).toSorted());
@@ -228,7 +252,7 @@ describe('the stale tab (#110, #119)', () => {
     await app.close();
   });
 
-  it('refuses the goal PUT, the account PATCH and the limit PUT sent with B’s cookie and A’s email, storing nothing', async () => {
+  it('refuses the goal PUT, the account PATCH, the limit PUT and the profile PATCH sent with B’s cookie and A’s email, storing nothing', async () => {
     const a = await signUp(app);
     const aId = (await userIdOf(db, a.user.email))!;
     const aChecking = Number((await financeRows(db, aId)).accounts[1]!.id);
@@ -238,7 +262,8 @@ describe('the stale tab (#110, #119)', () => {
     );
     const b = await signUp(app);
     const bId = (await userIdOf(db, b.user.email))!;
-    const before = { a: await financeRows(db, aId), b: await financeRows(db, bId) };
+    const usersRows = () => db.query('SELECT * FROM users ORDER BY id');
+    const before = { a: await financeRows(db, aId), b: await financeRows(db, bId), users: await usersRows() };
     const agent = request(app.getHttpServer());
     const fromStaleTab = (method: 'put' | 'patch', path: string) =>
       agent[method](path)
@@ -259,6 +284,12 @@ describe('the stale tab (#110, #119)', () => {
 
     // Task 027: the limit save.
     const limit = await fromStaleTab('put', '/api/category-limits').send({ category: 'food', limit: usd(9_999_900) });
+    // Task 028 T11: the profile write, multipart.
+    const profile = await fromStaleTab('patch', '/api/profile')
+      .field('fullName', 'Stale Name')
+      .field('username', 'stale.name')
+      .field('phoneCountryCode', '+44')
+      .field('phoneNumber', '123');
 
     expect(goal.status).toBe(409);
     expect(account.status).toBe(409);
@@ -266,7 +297,9 @@ describe('the stale tab (#110, #119)', () => {
     expect(goal.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
     expect(account.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
     expect(limit.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
-    expect({ a: await financeRows(db, aId), b: await financeRows(db, bId) }).toEqual(before);
+    expect(profile.status).toBe(409);
+    expect(profile.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
+    expect({ a: await financeRows(db, aId), b: await financeRows(db, bId), users: await usersRows() }).toEqual(before);
   });
 });
 

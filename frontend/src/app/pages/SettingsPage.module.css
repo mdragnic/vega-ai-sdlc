@@ -1,0 +1,16 @@
+/* 111 draws the Settings card's corners rounder than every other card: 16, where `Card` keeps 8 (Marko at the task 028
+   gate). The class is doubled so this rule outweighs `Card`'s own whatever order the two stylesheets load in. */
+.card.card {
+  border-radius: var(--radius-settings-card);
+}
+
+/* 111's card insets: the tabs 40 under its top, everything 32 from its sides, 48 under the button ("Update Profile" in
+   111, "Save changes" by #127). The card fills the content area at any width (#94). */
+.content {
+  padding: var(--space-settings-padding-top) var(--space-settings-padding-x) var(--space-settings-padding-bottom);
+}
+
+/* The first field 32 under the tabs' underline. */
+.panel {
+  margin-top: var(--space-settings-tabs-gap);
+}

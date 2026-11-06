@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { ContractEntry } from './entry.js';
 import { moneySchema } from './money.js';
+import { nameSchema } from './name-rule.js';
 
 /** Account Type, in the order of #26: the Edit Details select and the stored value. */
 export const accountTypeSchema = z.enum(['credit-card', 'checking', 'savings', 'investment', 'loan']);
@@ -27,33 +28,7 @@ export const accountMessages = {
   accountTypeInvalid: 'Choose an Account Type',
 } as const;
 
-/** The most characters of a name (#26), counted in code points (#120 b1). */
-const MAX_NAME_CODE_POINTS = 100;
-
-/** Nothing visible: only whitespace, control (Cc) and format (Cf) characters, such as a zero-width space (#120 b3). */
-const invisibleOnly = /^[\p{White_Space}\p{Cc}\p{Cf}]*$/u;
-
-/** A control character (Cc), such as a tab or a line break (#120 b3). */
-const controlCharacter = /\p{Cc}/u;
-
-/**
- * The one rule of a Bank Name and a Branch Name (#26, #120 b), for the form, the API and the responses (#74): the text
- * trimmed at both ends with JavaScript's `trim()` (#120 b2), then, one message per field, its first failing rule
- * (#95 a): nothing visible left is "required" (#120 b3); a control character anywhere is refused (#120 b3); more than
- * 100 code points is too long (#120 b1: code points, so the form and the API count alike in every runtime, the size is
- * bounded, and SQLite's `length()` counts the same). The output is the trimmed text, with no Unicode normalisation.
- */
-const nameSchema = (messages: { required: string; control: string; max: string }) =>
-  z
-    .string({ error: messages.required })
-    .trim()
-    .refine((text) => !invisibleOnly.test(text), { error: messages.required, abort: true })
-    .refine((text) => !controlCharacter.test(text), { error: messages.control, abort: true })
-    // The spread counts code points on purpose: the decided unit (#120 b1), not graphemes.
-    // oxlint-disable-next-line typescript/no-misused-spread
-    .refine((text) => [...text].length <= MAX_NAME_CODE_POINTS, { error: messages.max });
-
-/** The Bank Name (#26, #120 b). Shown on a Balances card (#57), edited on Account Details. */
+/** The Bank Name (#26, #120 b), for the form, the API and the responses (#74). Shown on a Balances card (#57). */
 export const bankNameSchema = nameSchema({
   required: accountMessages.bankNameRequired,
   control: accountMessages.bankNameControl,

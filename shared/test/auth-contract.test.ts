@@ -29,13 +29,24 @@ function fieldMessages(schema: z.ZodType, value: unknown): Record<string, string
   return fields;
 }
 
-// T1: Name is trimmed, then required and at most 100 characters (#15, #95 a, c).
+/** A letter beyond the BMP: one code point, two UTF-16 code units. */
+const doubleStruck = '\u{1D538}';
+
+// T1: Name is trimmed, then required and at most 100 characters (#15, #95 a, c); task 028 T1: #126 a, #120 b's rule:
+// nothing visible left is required, a control character is refused, the length counted in code points.
 describe('fullNameSchema', () => {
   it.each([
     ['empty', '', 'Name is required'],
     ['only spaces', '   ', 'Name is required'],
     ['missing', undefined, 'Name is required'],
     ['101 characters after trimming', ` ${'a'.repeat(101)} `, 'Name must be at most 100 characters'],
+    // Task 028 T1 (#126 a).
+    ['a space and an ideographic space', ' \u3000', 'Name is required'],
+    ['only a zero-width space', '\u200B', 'Name is required'],
+    ['only soft hyphens', '\u00AD\u00AD', 'Name is required'],
+    ['a tab inside', 'A\tB', 'Name cannot contain tabs or line breaks'],
+    ['a line break inside', 'A\nB', 'Name cannot contain tabs or line breaks'],
+    ['101 letters beyond the BMP', doubleStruck.repeat(101), 'Name must be at most 100 characters'],
   ])('rejects %s with only %j', (_case, value, message) => {
     expect(messages(fullNameSchema, value)).toEqual([message]);
   });
@@ -46,6 +57,16 @@ describe('fullNameSchema', () => {
 
   it('trims both ends and keeps inner spaces as typed', () => {
     expect(fullNameSchema.parse('  Tanzir   Rahman \t')).toBe('Tanzir   Rahman');
+  });
+
+  // Task 028 T1 (#126 a): code points, so 100 letters beyond the BMP (200 UTF-16 code units) pass.
+  it.each([
+    ['a demo name', 'Tanzir Rahman', 'Tanzir Rahman'],
+    ['spaces around it', '  Tanzir Rahman  ', 'Tanzir Rahman'],
+    ['letters with a caron and a stroke', 'Šabac Đorđević', 'Šabac Đorđević'],
+    ['100 letters beyond the BMP', doubleStruck.repeat(100), doubleStruck.repeat(100)],
+  ])('accepts %s, the output trimmed', (_case, value, output) => {
+    expect(fullNameSchema.parse(value)).toBe(output);
   });
 });
 
@@ -109,6 +130,25 @@ describe('signUpRequestSchema', () => {
       email: ['Enter a valid email address'],
       password: ['Password must be at least 8 characters'],
     });
+  });
+
+  // Task 028 T12 (#126 a): sign up's request applies the same Full name rule.
+  it.each([
+    ['a tab', 'Tanzir\tRahman', 'Name cannot contain tabs or line breaks'],
+    ['only a zero-width space', '\u200B', 'Name is required'],
+    ['101 letters', 'a'.repeat(101), 'Name must be at most 100 characters'],
+  ])('refuses a Full name with %s', (_case, fullName, message) => {
+    expect(fieldMessages(signUpRequestSchema, { fullName, email: 'tanzir@example.com', password: 'abcdef12' })).toEqual(
+      { fullName: [message] },
+    );
+  });
+
+  it('accepts 100 letters beyond the BMP as the Full name', () => {
+    const fullName = doubleStruck.repeat(100);
+
+    expect(signUpRequestSchema.parse({ fullName, email: 'tanzir@example.com', password: 'abcdef12' }).fullName).toBe(
+      fullName,
+    );
   });
 
   it('gives the required messages for an empty body', () => {

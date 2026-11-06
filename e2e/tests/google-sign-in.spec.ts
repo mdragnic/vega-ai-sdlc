@@ -249,3 +249,25 @@ test.describe('the Google button keeps its place', () => {
     });
   }
 });
+
+// Task 028 T31: AC18, a new Google user's name is made to pass the Full name rule (#126 a): control characters
+// removed, cut at 100 code points.
+test('gives new Google users whose profile name holds a tab or 120 letters beyond the BMP a name that passes the rule', async ({
+  page,
+}) => {
+  const tab = String.fromCharCode(9);
+  const doubleStruck = String.fromCodePoint(0x1d538);
+  for (const [profileName, stored] of [
+    [`Sam${tab}Signup`, 'SamSignup'],
+    [doubleStruck.repeat(120), doubleStruck.repeat(100)],
+  ] as const) {
+    await page.context().clearCookies();
+    await page.goto('/sign-up');
+    await googleButton(page).click();
+    await googleSignIn(page, { name: profileName, email: newGoogleEmail() });
+
+    await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);
+    expect(await signedInUser(page)).toMatchObject({ fullName: stored });
+    await expect(navBar(page).getByText(stored, { exact: true })).toBeVisible();
+  }
+});

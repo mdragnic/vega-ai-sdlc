@@ -1,0 +1,39 @@
+/* 111's two columns as shares of the card's content (#94): the fields' 540, 144, the picture column's 356 at 1440, so
+   the fields grow with the card and the picture column stays at 65.8% of its width. */
+.form {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--size-settings-column-fields)) minmax(0, var(--size-settings-column-gap))
+    minmax(0, var(--size-settings-column-picture));
+  align-items: start;
+}
+
+/* The four fields 16 apart (`SettingsInput` 88 high, 104 apart in 111), "Save changes" (#127) 40 under the last. */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-settings-field-gap);
+  min-width: 0;
+}
+
+.actions {
+  margin-top: calc(var(--space-settings-button-gap) - var(--space-settings-field-gap));
+}
+
+/* A message above the button, 16 over it, as 101's form rows (#6, #97 a); none takes no room. */
+.actions > p,
+.actions > [role='status'] > p {
+  margin-bottom: var(--space-form-small-gap);
+}
+
+/* `ButtonPrimary` takes its parent's width: 192x48 as drawn. */
+.button {
+  width: var(--size-update-profile-width);
+}
+
+/* The picture column from the third grid column, on the first label's line. */
+.picture {
+  grid-row: 1;
+  grid-column: 3;
+  min-width: 0;
+}

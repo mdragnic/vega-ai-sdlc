@@ -3,6 +3,7 @@ import {
   authContract,
   type ContractEntry,
   type ErrorResponse,
+  profileContract,
   savingsGoalsContract,
   transactionsContract,
 } from '@finebank/shared';
@@ -387,6 +388,14 @@ describe('apiRequest with path parameters', () => {
 /** A session user as the session query holds it. */
 const sessionUser = { fullName: 'A User', email: 'a@x.com', username: 'auser' };
 
+/** A valid profile request: the four editable fields, as the form sends them (task 028). */
+const profileBody = {
+  fullName: 'Ana Marija Petrović',
+  username: 'ana.petrovic',
+  phoneCountryCode: '+381',
+  phoneNumber: '',
+} as const;
+
 /** A query client whose session query holds `user` (`undefined`: still checking; `null`: signed out). */
 function clientWithSession(user: typeof sessionUser | null | undefined) {
   const queryClient = createQueryClient();
@@ -448,6 +457,39 @@ describe('sendWrite', () => {
         zone: 'Europe/Belgrade',
       },
     ]);
+  });
+
+  // Task 028 T13: AC7, an entry with `encoding: 'multipart'` (#76) sends each body key as a text part, with the header.
+  it('sends the profile PATCH as multipart/form-data with exactly the four text parts and the header', async () => {
+    const parts: [string, FormDataEntryValue][] = [];
+    let contentType: string | null = null;
+    server.use(
+      http.patch('*/api/profile', async ({ request }) => {
+        contentType = request.headers.get('Content-Type');
+        await record(request);
+        for (const entry of await request.formData()) parts.push(entry);
+        return HttpResponse.json({ ...profileBody, email: 'a@x.com' });
+      }),
+    );
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    const profile = await sendWrite(clientWithSession(sessionUser), profileContract.update, profileBody);
+
+    expect(profile).toEqual({ ...profileBody, email: 'a@x.com' });
+    expect(parts).toEqual([
+      ['fullName', 'Ana Marija Petrović'],
+      ['username', 'ana.petrovic'],
+      ['phoneCountryCode', '+381'],
+      ['phoneNumber', ''],
+    ]);
+    expect(contentType).toMatch(/^multipart\/form-data; boundary=/);
+    expect(received.map(({ method, path, expectedUser }) => [method, path, expectedUser])).toEqual([
+      ['PATCH', '/api/profile', 'a@x.com'],
+    ]);
+    // The browser sets the type with its boundary: the client sets none of its own.
+    const init = fetchSpy.mock.calls[0]![1]!;
+    expect(new Headers(init.headers).has('Content-Type')).toBe(false);
+    expect(init.body).toBeInstanceOf(FormData);
   });
 
   it('sends the goal PUT with the header', async () => {

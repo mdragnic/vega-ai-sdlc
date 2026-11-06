@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ContractEntry } from './entry.js';
+import { nameSchema } from './name-rule.js';
 import { currentUserSchema } from './user.js';
 
 // Each field gives one message, its first failing rule (#95 a): every check but the last aborts.
@@ -9,11 +10,17 @@ import { currentUserSchema } from './user.js';
 const requiredString = (message: string) =>
   z.string({ error: (issue) => (issue.input === undefined ? message : undefined) });
 
-/** Full Name: trimmed at both ends, then required and at most 100 characters (#15, #95). */
-export const fullNameSchema = requiredString('Name is required')
-  .trim()
-  .min(1, { error: 'Name is required', abort: true })
-  .max(100, { error: 'Name must be at most 100 characters' });
+/**
+ * Full Name (#15, #33, #95) on the one name rule (#120 b, #126 a): trimmed at both ends; nothing visible left "Name is
+ * required"; a control character "Name cannot contain tabs or line breaks"; more than 100 code points "Name must be at
+ * most 100 characters". For requests only (sign up's, Settings', task 012's Google name made to pass it): no response
+ * schema uses it, so a stored name that breaks it still shows (#126 a's condition).
+ */
+export const fullNameSchema = nameSchema({
+  required: 'Name is required',
+  control: 'Name cannot contain tabs or line breaks',
+  max: 'Name must be at most 100 characters',
+});
 
 /** Email: trimmed at both ends, then required and a valid format, then lowercased (#14, #15, #95). */
 export const emailSchema = requiredString('Email is required')

@@ -15,7 +15,8 @@ type ButtonPrimaryProps = Omit<ComponentPropsWithRef<'button'>, 'type' | 'classN
 
 /**
  * Figma `Button/primary` (402:5239). Active=Yes is the teal default; Active=No, the gray variant in the
- * component export, is the disabled look, also while loading. The width comes from the parent.
+ * component export, is the disabled look, also while loading. The width comes from the parent. `aria-disabled`
+ * gives the same look without the spinner, as "Save changes" before any change (#127): focusable, its clicks cancelled.
  */
 export function ButtonPrimary({
   type = 'button',
@@ -23,18 +24,20 @@ export function ButtonPrimary({
   loading = false,
   onClick,
   children,
+  'aria-disabled': ariaDisabled,
   ...button
 }: ButtonPrimaryProps) {
+  const unavailable = loading || ariaDisabled === true || ariaDisabled === 'true';
   return (
     <button
       {...button}
       type={type === 'submit' ? 'submit' : 'button'}
       className={styles.button}
       disabled={disabled}
-      aria-disabled={loading || undefined}
+      aria-disabled={unavailable || undefined}
       aria-busy={loading || undefined}
       onClick={(event) => {
-        if (loading) {
+        if (unavailable) {
           event.preventDefault();
           return;
         }

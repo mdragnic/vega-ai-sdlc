@@ -277,3 +277,30 @@ test('links Login, Sign up and Forgot Password both ways without a page load', a
   }
   await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
 });
+
+// Task 028 T31: AC18, Sign up's Name field applies the one Full name rule (#126 a): a tab, an invisible-only name and
+// 101 code points refused with the shared texts, 100 letters beyond the BMP accepted.
+test('applies the Full name rule of Settings to the Name field', async ({ page }) => {
+  const tab = String.fromCharCode(9);
+  const zeroWidthSpace = String.fromCharCode(0x200b);
+  const doubleStruck = String.fromCodePoint(0x1d538);
+  await page.goto('/sign-up');
+
+  for (const [name, message] of [
+    [`Tanzir${tab}Rahman`, 'Name cannot contain tabs or line breaks'],
+    [zeroWidthSpace, 'Name is required'],
+    [doubleStruck.repeat(101), 'Name must be at most 100 characters'],
+  ] as const) {
+    await fillForm(page, name, `${randomUUID()}@example.com`, 'abcdef12');
+    await signUpButton(page).click();
+    await expect(nameField(page)).toHaveAccessibleDescription(message);
+    await expect(page).toHaveURL(/\/sign-up$/);
+  }
+
+  const email = `${randomUUID()}@example.com`;
+  await fillForm(page, doubleStruck.repeat(100), email, 'abcdef12');
+  await signUpButton(page).click();
+  await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);
+  const me = await page.request.get('/api/auth/me');
+  expect(((await me.json()) as { fullName: string }).fullName).toBe(doubleStruck.repeat(100));
+});

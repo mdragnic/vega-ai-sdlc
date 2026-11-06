@@ -14,6 +14,7 @@ import {
   type ExpensesBreakdownResponse,
   type Money,
   type MonthlyComparisonResponse,
+  type Profile as ProfileData,
   type RecentTransactionRow,
   type RecentTransactionsResponse,
   type SavingSummaryDay,
@@ -69,6 +70,7 @@ import {
   ExpensesLineItem,
   FieldError,
   FormError,
+  FormSuccess,
   GoalItem,
   GoalItemList,
   GoalItemSkeleton,
@@ -86,6 +88,9 @@ import {
   OverviewExpensesBreakdownSkeleton,
   PopupInputSmall,
   Profile,
+  ProfileForm,
+  ProfileFormSkeleton,
+  ProfilePhotoUpload,
   RecentTransaction,
   RecentTransactionItem,
   RecentTransactionSkeleton,
@@ -97,6 +102,8 @@ import {
   SavingsGoalSkeleton,
   SavingsGoalSummary,
   Section,
+  SettingsInput,
+  SettingsPhoneInput,
   Skeleton,
   SliderOption,
   Spinner,
@@ -216,6 +223,62 @@ function TabsExample({ id, value, interactive = false }: { id: string; value: Di
       <p id={id} role="tabpanel" aria-labelledby={menuTabId(id, shown)} className={styles.panelText}>
         {directionText[shown]}
       </p>
+    </Card>
+  );
+}
+
+const settingsTabs = [
+  { value: 'account', label: 'Account' },
+  { value: 'security', label: 'Security' },
+] as const;
+
+/** 111's tabs: the `settings` look of `MenuTab` (task 028), Account selected. */
+function SettingsTabsExample() {
+  return (
+    <Card>
+      <MenuTab
+        variant="settings"
+        label="Settings"
+        tabs={settingsTabs}
+        value="account"
+        panelId="tabs-settings"
+        onChange={keepSelection}
+      />
+      <p id="tabs-settings" role="tabpanel" aria-labelledby={menuTabId('tabs-settings', 'account')} />
+    </Card>
+  );
+}
+
+/** 111's profile (Tanzir Rahman, the number digits only as stored, #126 c). */
+const sampleProfile: ProfileData = {
+  fullName: 'Tanzir Rahman',
+  email: 'tanzir.rahman@email.com',
+  username: 'tanzir.rahman',
+  phoneCountryCode: '+880',
+  phoneNumber: '5154758868',
+};
+
+/** The Account tab's form on a white card with 111's insets; a save here only ends (no request). */
+function ProfileFormExample({
+  profile = sampleProfile,
+  saving = false,
+  formError,
+  updated = false,
+}: {
+  profile?: ProfileData;
+  saving?: boolean;
+  formError?: string;
+  updated?: boolean;
+}) {
+  return (
+    <Card>
+      <ProfileForm
+        profile={profile}
+        saving={saving}
+        formError={formError}
+        updated={updated}
+        onSave={(_request, { onSettled }) => onSettled()}
+      />
     </Card>
   );
 }
@@ -1719,6 +1782,90 @@ export function ComponentGallery() {
         </Example>
       </GallerySection>
 
+      <GallerySection name="FormSuccess">
+        <Example name="Message (#52, not designed)">
+          <FormSuccess>Profile updated</FormSuccess>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SettingsInput">
+        <Example name="Filled (111)">
+          <Card>
+            <SettingsInput label="Full name" defaultValue="Tanzir Rahman" />
+          </Card>
+        </Example>
+        <Example name="Read-only, like Email">
+          <Card>
+            <SettingsInput label="Email" readOnly value="tanzir.rahman@email.com" />
+          </Card>
+        </Example>
+        <Example name="Field error, no border">
+          <Card>
+            <SettingsInput label="Username" defaultValue="ta" error="Username must be at least 3 characters" />
+          </Card>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="SettingsPhoneInput">
+        <Example name="Like 111: +880 and the number">
+          <Card>
+            <SettingsPhoneInput countryCode="+880" onCountryCodeChange={keepSelection} defaultValue="5154758868" />
+          </Card>
+        </Example>
+        <Example name="A new user: +1 and no number">
+          <Card>
+            <SettingsPhoneInput countryCode="+1" onCountryCodeChange={keepSelection} defaultValue="" />
+          </Card>
+        </Example>
+        <Example name="Field error">
+          <Card>
+            <SettingsPhoneInput
+              countryCode="+1"
+              onCountryCodeChange={keepSelection}
+              defaultValue="064a123"
+              numberError="Phone Number can only contain digits"
+            />
+          </Card>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ProfilePhotoUpload">
+        <Example name="Empty, visual only (111)">
+          <Card>
+            <ProfilePhotoUpload />
+          </Card>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ProfileForm" wide>
+        <Example name="Prefilled (111)">
+          <ProfileFormExample />
+        </Example>
+        <Example name="Field errors: Save changes checks the shared rule (after a change)">
+          <ProfileFormExample profile={{ ...sampleProfile, fullName: '   ', username: 'Ta', phoneNumber: '064a123' }} />
+        </Example>
+        <Example name="Saving">
+          <ProfileFormExample saving />
+        </Example>
+        <Example name="The server error above the button">
+          <ProfileFormExample formError="Something went wrong." />
+        </Example>
+        <Example name={'"Profile updated"'}>
+          <ProfileFormExample updated />
+        </Example>
+        <Example name="A 100-character name, on one line in its field">
+          <ProfileFormExample profile={{ ...sampleProfile, fullName: 'Ana Marija '.repeat(10).slice(0, 100) }} />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ProfileFormSkeleton" wide>
+        <Example name="Loading">
+          <Card>
+            <ProfileFormSkeleton />
+          </Card>
+        </Example>
+      </GallerySection>
+
       <GallerySection name="Spinner">
         <Example name="Default">
           <Spinner />
@@ -1919,6 +2066,9 @@ export function ComponentGallery() {
         </Example>
         <Example name="Interactive">
           <TabsExample id="tabs-interactive" value="all" interactive />
+        </Example>
+        <Example name="Settings: Account active (111)">
+          <SettingsTabsExample />
         </Example>
       </GallerySection>
 

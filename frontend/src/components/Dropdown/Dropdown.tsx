@@ -1,10 +1,14 @@
 import { Select } from 'radix-ui';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ArrowDown2, DownArrow24 } from '../../assets/icons';
 import styles from './Dropdown.module.css';
 
-export type DropdownOption = { value: string; label: string };
+/**
+ * One option: its value, its label, and the text typing matches (typeahead), the label by default; the country codes
+ * are found by their digits, `880` for `+880` (task 028).
+ */
+export type DropdownOption = { value: string; label: string; textValue?: string };
 
 type DropdownProps = {
   /** In display order. Each value is a non-empty string. */
@@ -26,6 +30,12 @@ type DropdownProps = {
    * stays the same; the trigger is a disabled button, out of the Tab order.
    */
   disabled?: boolean;
+  /** Called with the trigger, for a form that focuses its first field with an error (react-hook-form's `field.ref`). */
+  triggerRef?: (trigger: HTMLButtonElement | null) => void;
+  /** The id of the message that describes the trigger, such as its field error (task 028). */
+  'aria-describedby'?: string;
+  /** Set while the field has an error (task 028). */
+  'aria-invalid'?: boolean;
 } & (
   | { 'aria-label': string; 'aria-labelledby'?: never; id?: never }
   | { 'aria-labelledby': string; 'aria-label'?: never; id?: never }
@@ -39,7 +49,18 @@ type DropdownProps = {
  * has one look for all (#90 a) and opens below the trigger, flipping above when there is no room, and scrolls when
  * it is long.
  */
-export function Dropdown({ options, value, onValueChange, variant, name, disabled, ...label }: DropdownProps) {
+export function Dropdown({
+  options,
+  value,
+  onValueChange,
+  variant,
+  name,
+  disabled,
+  triggerRef,
+  'aria-describedby': describedBy,
+  'aria-invalid': invalid,
+  ...label
+}: DropdownProps) {
   // Radix moves focus by script, and Chrome then shows the focus ring on the trigger even after a mouse
   // choice. The ring is for the keyboard only (#87), so it is hidden when focus comes back after a pointer:
   // a choice in the list or a press outside it, which closes it.
@@ -47,6 +68,14 @@ export function Dropdown({ options, value, onValueChange, variant, name, disable
   const [pointerFocus, setPointerFocus] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const triggerId = 'id' in label ? label.id : undefined;
+  // The trigger kept here and given to the screen's ref too.
+  const attachTrigger = useCallback(
+    (node: HTMLButtonElement | null) => {
+      trigger.current = node;
+      triggerRef?.(node);
+    },
+    [triggerRef],
+  );
 
   // A click on a visible `<label for>` focuses the trigger, as a label does for a native select, and opens nothing: the
   // label's own activation, which would forward a click that Radix takes for a touch and opens the list on, is
@@ -78,7 +107,9 @@ export function Dropdown({ options, value, onValueChange, variant, name, disable
     <Select.Root value={value} onValueChange={onValueChange} name={name} disabled={disabled}>
       <Select.Trigger
         {...label}
-        ref={trigger}
+        ref={attachTrigger}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
         className={`${styles.trigger} ${styles[variant]}`}
         data-pointer-focus={pointerFocus || undefined}
         onPointerDown={notePointer}
@@ -119,7 +150,12 @@ export function Dropdown({ options, value, onValueChange, variant, name, disable
         >
           <Select.Viewport className={styles.viewport}>
             {options.map((option) => (
-              <Select.Item key={option.value} value={option.value} className={styles.option}>
+              <Select.Item
+                key={option.value}
+                value={option.value}
+                textValue={option.textValue}
+                className={styles.option}
+              >
                 <Select.ItemText>{option.label}</Select.ItemText>
               </Select.Item>
             ))}

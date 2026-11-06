@@ -32,6 +32,8 @@ const codeNames = [
   'IconEyeOff',
   // Not in the Figma export: the Lucide `check` (see LICENSE-lucide.txt), for the RemindMe check mark (task 002, #66).
   'IconCheck',
+  // Not in the Figma export: the Lucide `image-plus` (see LICENSE-lucide.txt), for the 111 upload box (task 028).
+  'ImagePlus',
   'Food',
   'LogoutIcon',
   'Gamepad2',

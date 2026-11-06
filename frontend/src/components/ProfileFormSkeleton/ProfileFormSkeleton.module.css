@@ -1,0 +1,34 @@
+/* Not designed (#6): existing and task 028 tokens only, on the form's grid and boxes (ProfileForm, SettingsInput,
+   ProfilePhotoUpload), so the skeleton is as high as the form and nothing moves when the profile arrives. */
+
+/* A label's 24 line, its placeholder centred in it as the text. */
+.line {
+  display: flex;
+  align-items: center;
+  height: var(--line-height-24);
+}
+
+/* About as wide as a label in Medium 16, as high as its letters. */
+.label {
+  width: var(--size-amount-box-width-lg);
+  height: var(--font-size-16);
+}
+
+/* About as wide as a value in Regular 16, as high as its letters. */
+.value {
+  width: var(--size-edit-details-width);
+  max-width: 100%;
+  height: var(--font-size-16);
+}
+
+/* In the place of "Save changes", 192x48. */
+.button {
+  width: var(--size-update-profile-width);
+  height: var(--size-button-height);
+}
+
+/* In the place of the upload box. */
+.box {
+  width: var(--size-profile-photo-box-width);
+  height: var(--size-profile-photo-box-height);
+}

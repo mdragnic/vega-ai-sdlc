@@ -107,7 +107,7 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
     if (path === '/overview') await expect(header(page).getByText('Hello Tanzir')).toBeVisible();
     // Overview holds its six sections (task 013), Balances its one with the cards' logos (task 019), Transactions its
     // one (task 020), Account Details its two (task 021), Bills its one with the billers' logos (task 023), Expenses its
-    // two (task 024) and Goals its two (task 025); Settings is empty until its tasks.
+    // two (task 024) and Goals its two (task 025); Settings its card with the tabs "Settings" and no section (task 028).
     await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText(pageSections);
     if (path === '/balances') {
       await expect(page.getByRole('main').getByRole('img')).toHaveCount(2);
@@ -120,7 +120,9 @@ test('opens every app path in the shell for the signed-in user', async ({ page }
         await expect(page.getByRole('main').getByRole('img', { name })).toHaveCount(2);
       }
     }
-    if (pageSections.length === 0) await expect(page.getByRole('main')).toBeEmpty();
+    if (route.startsWith('/settings')) {
+      await expect(page.getByRole('main').getByRole('tablist', { name: 'Settings' })).toBeVisible();
+    }
   }
 });
 

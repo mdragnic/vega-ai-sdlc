@@ -1,0 +1,11 @@
+/* 111: "+880", the separator, then the number, each 4 apart (measured about 6; #65's grid). */
+.row {
+  gap: var(--space-phone-separator-gap);
+}
+
+/* `IconSeparator` (402:5296) at its 12x24 size, in the value's Gray/02, as 111 draws it. */
+.separator {
+  flex-shrink: 0;
+  width: var(--size-icon-separator-width);
+  height: var(--size-icon);
+}

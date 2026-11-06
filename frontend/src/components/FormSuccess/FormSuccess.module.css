@@ -1,0 +1,7 @@
+/* Not designed (#52): FormError's Regular 14/20 in Secondary, 7.8:1 on white (Special/Green is 2.9:1). The screen
+   places it above its submit button. */
+.success {
+  margin: 0;
+  color: var(--color-secondary);
+  font: var(--font-regular-14-20);
+}

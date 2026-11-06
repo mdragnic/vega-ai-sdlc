@@ -221,8 +221,11 @@ type UserWrite<
   entry: ContractEntry<Req, Res, Search, Params>;
   /** The entry's arguments for the mutation's variables: its path parameters, its body, then its query. */
   args: (variables: Variables) => RequestArgs<Req, Search, Params>;
-  /** Runs only when the answer comes in the session the write started in. */
-  onSuccess: (response: z.output<Res>, variables: Variables) => void;
+  /**
+   * Runs only when the answer comes in the session the write started in. A promise it returns is awaited, so the write
+   * counts as done only after it (task 028: the session user set after a session check is cancelled).
+   */
+  onSuccess: (response: z.output<Res>, variables: Variables) => void | Promise<void>;
 };
 
 /**
@@ -246,8 +249,8 @@ export function useUserWrite<
     gcTime: 0,
     onMutate: () => ({ epoch: sessionEpoch(queryClient) }),
     onSuccess: (response, variables, started) => {
-      if (started.epoch !== sessionEpoch(queryClient)) return;
-      onSuccess(response, variables);
+      if (started.epoch !== sessionEpoch(queryClient)) return undefined;
+      return onSuccess(response, variables);
     },
   });
 }

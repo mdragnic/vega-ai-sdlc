@@ -1,0 +1,45 @@
+Task 028 manual checks, 2026-11-06 (Validation step 6). Playwright MCP, headed Chromium on Windows with classic
+scrollbars (the page 1425 wide in a 1440 window, #101), Europe/Belgrade, a fresh context. The development backend on the
+real clock and Vite: first `npm run dev`, then for check 5 run separately (`npm run dev -w backend`, `npm run dev -w
+frontend`) so the backend alone could be stopped. No Figma calls.
+
+1. Signed up through the form (/sign-up, "Tanzir Rahman", a new email): Overview, then "View profile": /settings/account
+   with the sign-up name, the email, the generated username (the email's part before @), +1 and an empty number. The
+   country code by mouse: +44 chosen. By keyboard: Down opened the list on +44, End moved to +998 (in view at the
+   list's end), Enter chose it. Full name "Ana Marija Petrović", a new username, the number "64 123-4567", "Update
+   Profile": one PATCH and no other request; "Profile updated"; the number field showing 641234567; the sidebar
+   "Ana Marija Petrović" and "AP" at once. The sidebar's Overview: "Hello Ana", with no GET /api/auth/me or GET
+   /api/profile sent. A reload of Settings: the stored values (+998, 641234567) (manual-saved-1440.png).
+
+2. The tabs. A click on Security: /settings/security, Security selected and focused, no ring (mouse). Left: back on
+   Account with the ring (keyboard), "Typed Across Tabs" still in Full name. End then Home pressed back to back: FOUND A
+   RACE on the first run: the page ended on /settings/security with Security selected and focus on the Account tab
+   (Home was compared against the selection before End's navigation had rendered: React Router commits a navigation in
+   a transition). Fixed (navigate with flushSync, test first: a unit test dispatching the two keys outside `act`, red,
+   then green; T26 in e2e gained the same keys). Re-checked after the fix: End then Home ends on /settings/account,
+   Account selected and focused. Back after the tab changes left Settings for /overview.
+
+3. The errors. An empty Full name and "Ana" as the username, "Update Profile": "Name is required" under Full name,
+   "Username can only contain lowercase letters, numbers, dots and underscores" under Username, focus on Full name, no
+   PATCH (manual-errors.png). Another user's username (that user signed up in a separate context) and the number typed
+   "64 123 4567": the PATCH answered 409, "This username is already taken" under Username with focus there, no message
+   under the number (spaces are allowed and removed, #126 c), the other user's profile unchanged. With a new username
+   the save went through and the number showed 641234567.
+
+4. Two tabs of one browser. Tab B saved "Saved In Tab B"; tab A, brought back: its sidebar showed "Saved In Tab B"
+   after its session check, its form keeping what it showed. Note: Playwright keeps every page of a context visible and
+   focused, so bringing a tab to the front fires no visibilitychange (both pages stayed "visible" with focus, measured);
+   the event a real tab switch fires was dispatched, as the e2e tests do. Then tab B logged out and signed up "Ada
+   Lovelace"; tab A, "Typed For The Old User", "Update Profile": PATCH 409, "Another user is signed in. Nothing was
+   saved." above the button, then the session check found Ada: the sidebar and the form showed Ada Lovelace
+   (manual-two-tabs.png).
+
+5. The backend stopped (its `npm run dev -w backend` task and the orphaned process on port 3000 ended), "Typed While
+   Down" in Full name, "Update Profile": one PATCH (Vite's 502), "Something went wrong." above the button, the typed
+   name kept, focus on "Update Profile", no retry (manual-backend-down-save.png). The backend started again, "Update
+   Profile": 200, "Profile updated", the sidebar "Typed While Down", no message above the button.
+
+6. Resized to 1280x1024, 1920x1080 and back to 1440x1024: the page 1265, 1905 and 1425 wide (the classic scrollbar's
+   15 px), the document as wide as the page (no sideways scroll), the card from x 304 filling the content area (929,
+   1569 and 1089 wide), the fields and the picture column in their shares, the box and the button at their sizes, nothing
+   cut (manual-1280.png, manual-1920.png).

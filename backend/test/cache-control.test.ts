@@ -77,6 +77,9 @@ describe('Cache-Control on /api', () => {
         shared.savingSummaryContract.summary,
         // Task 022: the account write and, below, its empty-segment form.
         shared.accountsContract.updateDetails,
+        // Task 028: the profile read and its multipart write.
+        shared.profileContract.get,
+        shared.profileContract.update,
       ]),
     );
     expect(registeredRoutes(app)).toEqual(expectedRoutes);

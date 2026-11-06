@@ -13,6 +13,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { GoalsPage } from './pages/GoalsPage';
 import { LoginPage } from './pages/LoginPage';
 import { OverviewPage } from './pages/OverviewPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 
@@ -63,7 +64,8 @@ const scrollFixtureRoutes: RouteObject[] =
 
 /**
  * Every app page needs a session (#3) and opens in the shell, with its sidebar section (Account Details is
- * Balances, #47) and the greeting on Overview only (#10). The screens fill their content from task 013 on.
+ * Balances, #47) and the greeting on Overview only (#10). The screens fill their content from task 013 on; Settings from
+ * task 028.
  */
 const appPages: { path: string; handle: ShellHandle; element?: ReactNode }[] = [
   { path: paths.overview, handle: { section: 'overview', greeting: true }, element: <OverviewPage /> },
@@ -73,8 +75,9 @@ const appPages: { path: string; handle: ShellHandle; element?: ReactNode }[] = [
   { path: paths.bills, handle: { section: 'bills' }, element: <BillsPage /> },
   { path: paths.expenses, handle: { section: 'expenses' }, element: <ExpensesPage /> },
   { path: paths.goals, handle: { section: 'goals' }, element: <GoalsPage /> },
-  { path: paths.settingsAccount, handle: { section: 'settings' } },
-  { path: paths.settingsSecurity, handle: { section: 'settings' } },
+  // One page for both tabs, kept mounted across them (task 028): the same element type at the same place.
+  { path: paths.settingsAccount, handle: { section: 'settings' }, element: <SettingsPage /> },
+  { path: paths.settingsSecurity, handle: { section: 'settings' }, element: <SettingsPage /> },
 ];
 
 /** Route table for React Router data mode. Screens are added by later tasks. */

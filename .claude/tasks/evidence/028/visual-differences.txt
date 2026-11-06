@@ -1,0 +1,116 @@
+Task 028 visual check, 2026-11-06 (Validation step 5). Playwright MCP, a fresh context at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed clock
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`), the Vite dev server. Signed up as "Tanzir Rahman"
+with tanzir.rahman@email.com (the generated username tanzir.rahman), then +880 chosen and the number typed as 111 shows
+it, "51547 58868", and saved (stored and shown 5154758868, #126 c); the page reloaded so nothing is focused and no
+message shows, as 111. Compared with docs/figma/111. Settings.png (the Account tab; 112 is the Security tab, task 030)
+at 2x pixels by a Node PNG reader (built-ins only, session scratchpad, deleted at the end): the same regions measured
+on the PNG and on the screenshot, halved. No Figma calls.
+
+Re-checked at the gate (Marko: the Settings card follows 111's radius 16): settings-111-1440-2x.png re-taken the same
+way after the change; the card's box and its four corners measured again on it (below), nothing else changed by it.
+
+Re-checked at the gate after #127 (Marko, 2026-11-06: the editable fields in the app's bordered Input look, the button
+"Save changes", unavailable until a field changes): settings-111-1440-2x.png and every screenshot below re-taken the
+same way on a fresh database (signed up, +880 and "51547 58868" saved, reloaded: nothing focused, the button at rest),
+then measured again against 111. All of them now show the 16 px card corners and #127's look.
+
+settings-111-1440-2x.png against 111
+- Same, measured (2x pixels, the PNG's then the screenshot's):
+  - The card: x 608 to 2815, y 208 to 1503 on both (304 to 1408 by 104 to 752 at 1x), its shadow falling off alike.
+  - The card's corners (re-checked after Marko's request at the gate: the Settings card takes 111's radius 16,
+    `--radius-settings-card`, the shared `Card` keeping 8): the first white pixel of every second row from the card's
+    top, top-left x 634 628 624 621 618 616 615 613 612 611 610 610 609 609 608 against 111's 634 628 624 621 618 616
+    615 613 612 611 610 609 609 609 608; top-right x 2788 to 2815 the same on both but one row (2813 against 2814);
+    bottom-left x 638 629 624 621 619 617 615 613 612 611 610 610 609 609 609 against 636 628 624 621 619 617 615 613
+    612 611 610 610 609 609 608 (the bottom row anti-aliased under the shadow). Within a pixel at 2x on every row.
+  - The tabs' text line: ink rows y 299 to 330 on both; the teal underline y 364 to 367 on both, from x 672; "Account"
+    in Primary and "Security" in Gray/03 on both.
+  - The four labels (Medium 16, Secondary #525256): ink from x 674 on both, their rows 444/445, 651/652, 860/861 and
+    1068/1069 (within half a pixel at 1x); "Your Profile Picture" (Medium 16, Gray/01 #666666) from x 2041 on both, its
+    row y 443 to 468 on both.
+  - The values (Regular 16, Gray/02 #878787): from x 721/720, rows y 540 to 564, 748 to 777 and 956 to 980 on both.
+  - "+880" from x 723/722 to 800/799, the phone row's ink y 1157/1158 to 1195/1193.
+  - The button's box ("Save changes" here, "Update Profile" in 111, #127): x 672 to 1055, y 1312 to 1407 on both (336
+    to 528 by 656 to 704 at 1x, 192x48), the card ending 48 under it on both.
+  - With #127's borders: the four labels and the values on the same pixels as before the change (the values from x
+    721, 720, 720 and 723 against 111's 721, 721, 721 and 723; the value rows the same), the boxes 540x56 at x 336 as
+    before (DOM: 336, 248 / 352 / 456 / 560, 540x56), so the border sits inside 111's box and moves nothing.
+  - The upload box's icon and text in place: the icon's ink 71 to 72 px square on both (x 2154 to 2224 against 2153 to
+    2224), "Upload your / photo" on two lines in Gray/03 Regular 12, centred under "Your Profile Picture".
+- Different, measured:
+  1. The phone number shows digits only, "5154758868", where 111 draws "51547 58868": #126 c as answered (spaces and
+     hyphens removed, the stored and shown value digits only, no grouping).
+  2. The separator is 2.5 px left of 111's (its line x 818 to 821 against 823 to 826 at 2x) and the number starts 4 px
+     left (x 842 against 850): the gaps on each side of the separator are the 4 px grid's 4 (`--space-phone-separator-gap`),
+     where 111 measures about 5.5 and 6.5 (#65; tokens.md).
+  3. The Account tab is 89 wide against 88 (the underline x 672 to 849 against 672 to 847 at 2x), so "Security" sits
+     about 1.5 px right (ink from x 939 against 936): the tab is Inter Semibold's 65.0 advance plus 12 on each side;
+     111's tab measures 88. Both tab labels are Semibold, as 111's ink widths show (65 px for "Account": Semibold 65.4,
+     Bold 66.1 in Chromium), not 104's Bold active tab (MenuTab `settings`).
+  4. The upload box is 144x132 against about 142x131 (x 2044 to 2331 and y 544 to 807 against 2047 to 2330 and 544 to
+     805 at 2x): the measures on the 4 px grid (#65), the box centred under its label as in 111. Its icon and text sit
+     1 to 1.5 px lower (the icon ink from y 595 against 592, the text from 702 against 700), its content centred in the
+     132 height.
+  5. The upload box's dashes are the browser's own for a 1 px dashed border (about 3 px dashes), where 111 draws longer
+     dashes (about 6.5 px with 3.5 px gaps); the corner radius 4 against about 5.
+  6. The upload icon is Lucide's `image-plus` (no export of 111's glyph, Figma budget 0): a closed sun and a slope to
+     the bottom-left corner, where 111 draws an open circle for the sun and a wave across the frame's lower half, with
+     rounder corners; both frames open at the top right where the plus sits.
+  7. (Resolved at the gate.) The card's corners were 8 where 111 draws 16; the Settings card now takes
+     `--radius-settings-card` 16 (the corners measured above match), the shared `Card` keeping 8 (Bills' card 8,
+     e2e T30).
+  8. The page background is #F3F3F3 against 111's #F4F5F7, and the card's shadow is neutral gray where 111's is
+     slightly blue: the app shell's background as earlier screens (not changed here).
+  9. The header shows "22 Oct, 2026" (the fixed clock, task 011's format) where 111 shows "May 19, 2023"; the sidebar's
+     avatar shows the initials "TR" (#38: no photo before task 029) where 111 shows a photo.
+  10. Glyphs are about 1 px narrower in Chromium's Inter in places ("Your Profile Picture" ink to x 2332 against 2335,
+     "Upload your" from x 2119 against 2122), as on earlier screens.
+- Decided differences (#127, Marko at the gate, 2026-11-06), measured:
+  11. Full name, Username and Phone Number (the country code, the divider and the number in one box) have the app's
+     Input border: 1 px #D0D5DD (`--color-input-border`) on all four edges of each box (x 672 and 1751; y 496 and 607,
+     912 and 1023, 1120 and 1231 at 2x, two pixels deep each, then white inside), rounded by `--radius-input` 8 (the
+     corner pixel white), where 111 draws no border (white at the same pixels). Email stays borderless and gray, as 111
+     (white at the same pixels on both). With focus the border is #4B5768 (`--color-input-active`, state-focus-*,
+     state-changed), with an error #E73D1C (`--color-special-red`, also focused; state-field-errors).
+  12. The button reads "Save changes" where 111 reads "Update Profile", and while nothing has changed it is unavailable
+     (`aria-disabled`): fill #E4E7EB (`--color-button-secondary`) with its label in `--color-input-active`, where 111
+     draws teal #299D91 with white text; label ink x 756 to 971. After the first change it is teal with white text as
+     111's button (state-changed-2x.png), and unavailable again after a save (state-profile-updated-2x.png).
+
+Undesigned states (evidence for Marko), all at 1440x1024, 2x:
+- state-skeleton-2x.png: the profile read held; the tabs and the card show, the skeleton in the form's shape (four
+  label and value lines, the picture column's label line and box, the button's block). The card is 1104x648 with the
+  skeleton and with the form (measured): nothing moves when the profile arrives.
+- state-error-2x.png: the read failing on the request and its 3 retries; "Something went wrong." and Retry under the
+  tabs. After Retry (the read answering) focus was on the DataState root, then the form showed (#114).
+- state-changed-2x.png (#127): " Jr" typed at the end of Full name: its box in the darker focus border with the caret,
+  "Save changes" available (teal, `aria-disabled` absent, measured).
+- state-field-errors-2x.png: the form's own rules (an empty name, "Tanzir", a letter in the number), after a change:
+  the three boxes' red border (#127 a; Full name focused and red, measured: the three borders rgb(231, 61, 28)), each
+  message under its box from the box's left edge (x 336, measured, as Login's), in Special/Red Regular 14/20; the
+  username message on one line inside the fields' column.
+- state-server-field-errors-2x.png: a 400 with every field's message after a change (the country code's "Choose a
+  country code" only a direct request can cause), each under its box, the phone box red; the phone row's two messages
+  one under the other.
+- state-saving-2x.png: the PATCH held; "Save changes" in the loading pattern (the gray disabled look, the spinner).
+- state-profile-updated-2x.png: "Profile updated" (Regular 14/20, Secondary) 16 above the button; after the save the
+  button unavailable again with focus on it (measured: `aria-disabled` "true", the focused element "Save changes"), no
+  ring after a mouse click.
+- state-server-error-2x.png: a 500 on the save; "Something went wrong." above the button in Special/Red; the button
+  still available (measured), so pressing it sends again.
+- state-country-code-list-2x.png: the list opened by Enter with +880 selected; the phone box keeps the darker border
+  while the list is open (measured rgb(75, 87, 104)); the trigger near the window's bottom, so the shared list flips
+  above it (#90 a) and scrolls, +880 in view at its end.
+- state-focus-tab-2x.png, state-focus-full-name-2x.png, state-focus-email-2x.png, state-focus-country-code-2x.png,
+  state-focus-button-2x.png: keyboard focus by Tab from the search field, in the order of AC16 (the Account tab, Full
+  name, Email, Username, Country code, the number, Save changes, measured). The tab, Email's value box, the country
+  code and the button show the #87 ring; Full name shows the caret and the darker border (#127 a); the country code's
+  focus darkens the whole phone box; "Save changes" is unavailable (nothing changed) and keeps its ring. Chromium
+  selects a read-only field's text when Tab focuses it (its own behaviour, kept).
+- state-security-tab-2x.png: Security selected, its panel empty until task 030 (the card 40 + 40 + 32 + 48 high).
+- settings-1280x1024-2x.png and settings-1920x1080-2x.png: the card fills the content area, the fields' and the
+  picture column's shares kept (the bordered boxes 457 and 789 wide, measured), the box and the button at their
+  sizes, nothing cut or overlapping.
+- state-long-name-2x.png: a 100-code-point Full name (99 letters and spaces, then a letter beyond the BMP) on one line,
+  scrolling inside its field.

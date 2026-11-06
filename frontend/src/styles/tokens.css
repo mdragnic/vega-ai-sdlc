@@ -205,6 +205,18 @@
   --space-goal-item-tile-gap: 16px;
   --space-goal-item-text-gap: 4px;
   --space-goal-item-wrap-gap: 16px;
+  --space-settings-padding-top: 40px;
+  --space-settings-padding-x: 32px;
+  --space-settings-padding-bottom: 48px;
+  --space-settings-tab-padding-x: 12px;
+  --space-settings-tab-gap: 32px;
+  --space-settings-tabs-gap: 32px;
+  --space-settings-field-gap: 16px;
+  --space-settings-input-padding-x: 24px;
+  --space-settings-button-gap: 40px;
+  --space-phone-separator-gap: 4px;
+  --space-profile-photo-gap: 32px;
+  --space-profile-photo-icon-gap: 12px;
 
   /* Size */
   --size-sidebar-width: 280px;
@@ -304,6 +316,16 @@
   --size-saving-summary-chart-height: 216px;
   --size-saving-summary-axis-width: 72px;
   --size-saving-summary-point: 8px;
+  --size-settings-tab-height: 40px;
+  --size-settings-input-height: 56px;
+  --size-settings-column-fields: 540fr;
+  --size-settings-column-gap: 144fr;
+  --size-settings-column-picture: 356fr;
+  --size-icon-separator-width: 12px;
+  --size-update-profile-width: 192px;
+  --size-profile-photo-box-width: 144px;
+  --size-profile-photo-box-height: 132px;
+  --size-profile-photo-icon: 40px;
 
   /* Radius */
   --radius-input: 8px;
@@ -321,6 +343,8 @@
   --radius-dropdown: 4px;
   --radius-chart-legend-swatch: 2px;
   --radius-circle: 50%;
+  --radius-settings-card: 16px;
+  --radius-profile-photo-box: 4px;
 
   /* Border */
   --border-width-input: 1px;
@@ -331,6 +355,7 @@
   --border-width-focus-ring: 2px;
   --border-width-saving-summary-line: 2px;
   --border-width-saving-summary-dashed-line: 2px;
+  --border-width-profile-photo-box: 1px;
 
   /* Shadow */
   --shadow-card: 0 20px 24px rgb(76 103 100 / 10%);

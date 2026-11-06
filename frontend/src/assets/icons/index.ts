@@ -27,6 +27,9 @@ export { default as IconCheck } from './IconCheck.svg?react';
 export { default as IconEye } from './IconEye.svg?react';
 export { default as IconEyeOff } from './IconEyeOff.svg?react';
 export { default as IconSeparator } from './IconSeparator.svg?react';
+// Lucide `image-plus`, copied as a file: the 111 upload box's icon is not in the Figma export, and the Figma budget is 0
+// (task 028). Lucide's own icon, under its ISC notice in LICENSE-lucide.txt, unchanged.
+export { default as ImagePlus } from './ImagePlus.svg?react';
 export { default as LeftArrow } from './LeftArrow.svg?react';
 export { default as LogoutIcon } from './LogoutIcon.svg?react';
 export { default as MdiAchievementAward } from './MdiAchievementAward.svg?react';

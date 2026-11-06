@@ -1,0 +1,49 @@
+/* The column hugs its label; the box is centred under it (PNG 111: both centred on x 2188 at 2x). Visual only until
+   task 029: the default cursor everywhere in it. */
+.photo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-profile-photo-gap);
+  cursor: default;
+  user-select: none;
+}
+
+/* "Your Profile Picture": Medium 16/24 in Gray/01 (PNG 111, #666666), on the first label's line. */
+.label {
+  margin: 0;
+  color: var(--color-gray-01);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* The dashed Gray/03 box, its icon and text centred (111: the icon 22 under its top, the text 24 above its end). */
+.box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-profile-photo-icon-gap);
+  width: var(--size-profile-photo-box-width);
+  height: var(--size-profile-photo-box-height);
+  border: var(--border-width-profile-photo-box) dashed var(--color-gray-03);
+  border-radius: var(--radius-profile-photo-box);
+}
+
+/* Lucide's `image-plus` in Gray/02 (PNG 111, #878787), its ink about 36 px as 111's glyph. */
+.icon {
+  flex-shrink: 0;
+  width: var(--size-profile-photo-icon);
+  height: var(--size-profile-photo-icon);
+  color: var(--color-gray-02);
+}
+
+/* "Upload your / photo": Regular 12/16 in Gray/03 (PNG 111, #9F9F9F), centred, two lines as drawn. */
+.text {
+  margin: 0;
+  color: var(--color-gray-03);
+  font: var(--font-regular-12-16);
+  text-align: center;
+}

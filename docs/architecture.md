@@ -1,6 +1,6 @@
 # Architecture
 
-Finebank is a personal finance dashboard: a React single-page app, a NestJS API and an SQLite database in one npm workspace repo. Local only, no deployment. This document describes the system as built through task 027; Settings (tasks 028 to 030) is not built yet. Every rule here links to the decision (`#N`, `docs/decisions.md`) that set it, and the decision wins where the two differ.
+Finebank is a personal finance dashboard: a React single-page app, a NestJS API and an SQLite database in one npm workspace repo. Local only, no deployment. This document describes the system as built through task 028; the profile photo (task 029) and the Security tab (task 030) are not built yet. Every rule here links to the decision (`#N`, `docs/decisions.md`) that set it, and the decision wins where the two differ.
 
 A task that changes a module boundary, an endpoint, a guard, a table or a rule in this file updates this file in the same commit.
 
@@ -55,8 +55,9 @@ A production-like mode is out of scope. If it is ever added, the API must serve 
 
 ## The API contract
 
-REST and JSON under `/api` (#74). Each endpoint exists once, as a contract entry in `shared/src/contract/`: method, path, request and response Zod schemas. Types come from `z.infer`; there is no code generation.
+REST and JSON under `/api` (#74). Each endpoint exists once, as a contract entry in `shared/src/contract/`: method, path, request and response Zod schemas, and its body's encoding. Types come from `z.infer`; there is no code generation.
 
+- **One multipart endpoint:** `PATCH /profile` ("Save changes", #76, #127) takes `multipart/form-data`, each field a text part (`encoding: 'multipart'` on its entry, read by the client and the backend). Any other encoding answers 415. Until task 029 it takes no file part: one answers 400. Task 029 adds the optional `photo` part.
 - The backend passes the shared schemas to Nest's `schema` option, validated by a global `StandardSchemaValidationPipe`. Unknown keys are dropped, so a request cannot set a field the contract does not name.
 - The frontend calls the API only through the typed client in `frontend/src/api/client.ts`, which takes a contract entry. Forms use the same schemas through `zodResolver`, so the form and the API check the same rules.
 - **Money** is always integer cents with a currency: `{ "cents": 2505600, "currency": "USD" }`. Every amount is calculated in the backend; the frontend only formats it (#11, #96).
@@ -72,9 +73,10 @@ Every `/api` request passes these stages in this order. The order is part of the
 2. **CSRF check:** a cross-site write answers 403 before anything else runs.
 3. **Session guard:** no valid session answers 401, except `@Public()` routes (auth, test clock).
 4. **Write guard:** for any method other than GET, HEAD and OPTIONS, a missing or invalid `X-Expected-User` answers 400, another user's answers 409.
-5. **Validation:** the shared schema validates the request and drops unknown keys (400 with field errors); the time zone header is parsed (400 when missing or invalid).
-6. **Handler:** the user comes only from the session; ownership and the read or write are one query.
-7. **Exception filter:** wraps all of the above and answers in the shared error shape.
+5. **Multipart body (one route, `PATCH /profile`):** an interceptor, so only after the guards: another encoding answers 415; multer reads the text parts through `NoFilesInterceptor` with tight limits (no file, at most 10 parts and fields, 1 KB per value, 100-byte names), and a file part, a limit or a malformed body answers 400. Nothing of the body is read before the guards (task 028).
+6. **Validation:** the shared schema validates the request and drops unknown keys (400 with field errors); the time zone header is parsed (400 when missing or invalid).
+7. **Handler:** the user comes only from the session; ownership and the read or write are one query.
+8. **Exception filter:** wraps all of the above and answers in the shared error shape.
 
 ### Endpoints
 
@@ -89,6 +91,7 @@ The contract entries in `shared/src/contract/` are the source of truth. This tab
 | Statistics | `GET /statistics/weekly-comparison` |
 | Expenses | `GET /expenses/breakdown`, `GET /expenses/monthly-comparison` |
 | Goals | `GET /savings-goals/current`, `GET /savings-goals/months`, `GET /savings-goals?month=`, `PUT /savings-goals`, `GET /category-limits`, `PUT /category-limits`, `GET /saving-summary?month=` |
+| Profile | `GET /profile`, `PATCH /profile` (multipart) |
 | Calendar | `GET /calendar/today` |
 | Test only | `GET` and `PUT /test/clock`, registered only with `NODE_ENV=test` |
 
@@ -99,6 +102,7 @@ SQLite through better-sqlite3 and TypeORM (#79). Schema changes only through mig
 - **Money columns are `integer` cents**, never decimal or float, with `CHECK` constraints where a rule allows no negative value (goal target above 0, category limit above 0).
 - **"Nothing" is no row**, never a NULL amount (#85).
 - **One row per subject** is held by unique constraints: one savings goal per user and month, one limit per user and category. Writes are single-statement upserts on those keys.
+- **A username is unique** by the `users.username` unique index: a profile save is one `UPDATE` of the session user's row, and the index's refusal is the 409 "This username is already taken", never a read before the write (#62, task 028).
 
 ### Data model
 
@@ -112,6 +116,7 @@ erDiagram
   USER ||--o{ CATEGORY_LIMIT : "sets, one per category"
 ```
 
+- `USER` holds the email (unique, read-only, #33), the full name, the username (unique) and the password hash, and since task 028 the phone: `phone_country_code` (default `+1`, a `CHECK` on `+` and 1 to 3 digits) and `phone_number` (digits only, empty for none, a `CHECK` of at most 15 digits).
 - Every row belongs to one user, directly or through its account. No query reads across users.
 - `ACCOUNT` and `TRANSACTION` sit behind the bank data boundary below; the other tables belong to the app.
 - Sessions store only the hash of the token. An expired session is deleted when it is next read; sessions never read again stay in the table (accepted, local only).

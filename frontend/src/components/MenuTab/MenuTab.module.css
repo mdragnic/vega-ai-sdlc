@@ -43,3 +43,25 @@
   outline: var(--border-width-focus-ring) solid var(--color-primary);
   outline-offset: var(--space-focus-ring-offset);
 }
+
+/* 111 and 112 (task 028): the Account and Security tabs, 32 apart, each 40 high (the 24 line, 14, the 2px underline) with
+   12 to each side; the inactive tab in Gray/03, the Active one teal with the underline and Semibold, not Bold (PNG 111:
+   "Account" 65 px of ink, Inter Semibold 65.4, Bold 66.1), so the tab is as wide as its Semibold label. */
+.settings {
+  gap: var(--space-settings-tab-gap);
+}
+
+.settings .tab {
+  height: var(--size-settings-tab-height);
+  padding: 0 var(--space-settings-tab-padding-x);
+  color: var(--color-gray-03);
+}
+
+.settings .active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semi-bold);
+}
+
+.settings .reserve {
+  font-weight: var(--font-weight-semi-bold);
+}

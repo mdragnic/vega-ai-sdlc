@@ -111,7 +111,7 @@ const overviewSections = [
 
 /**
  * The sections of the screens built so far (Overview, task 013; Balances, task 019; Transactions, task 020; Account
- * Details, task 021; Bills, task 023; Expenses, task 024; Goals, task 025); Settings is empty.
+ * Details, task 021; Bills, task 023; Expenses, task 024; Goals, task 025); Settings has no section (task 028).
  */
 const builtSections: Partial<Record<(typeof appPaths)[number], string[]>> = {
   '/overview': overviewSections,
@@ -145,14 +145,15 @@ describe('the shell on each app path', () => {
     expect(screen.queryByText(/Hello/)?.textContent ?? null).toBe(path === '/overview' ? 'Hello Tanzir' : null);
     // Overview holds its six sections (task 013), Balances its one (task 019), Transactions its one (task 020), Account
     // Details its two (task 021), Bills its one (task 023), Expenses its two (task 024) and Goals its two (task 025);
-    // Settings is empty until its tasks.
+    // Settings its card with the tabs "Settings", no section title (task 028).
     const main = screen.getByRole('main');
     expect(
       within(main)
         .queryAllByRole('region')
         .map((region) => within(region).getByRole('heading', { level: 2 }).textContent),
     ).toEqual(sections);
-    expect(main.childNodes.length === 0).toBe(sections.length === 0);
+    expect(main.childNodes.length).toBeGreaterThan(0);
+    expect(within(main).queryByRole('tablist', { name: 'Settings' }) !== null).toBe(path.startsWith('/settings'));
     expect(url()).toBe(path);
   });
 

@@ -10,6 +10,11 @@ type MenuTabProps<T extends string> = {
   onChange: (value: T) => void;
   /** The id of the tabpanel the widget renders; every tab controls it. */
   panelId: string;
+  /**
+   * `default` the All / Revenue / Expenses tabs of 104 and 107; `settings` the Account / Security tabs of 111 and 112:
+   * 40 high, 12 to each side, 32 apart, the inactive tab in Gray/03, the Active one Semibold (task 028).
+   */
+  variant?: 'default' | 'settings';
 };
 
 /** The id of the tab for `value`, so the widget's tabpanel can be labelled by the selected tab. */
@@ -20,9 +25,17 @@ export function menuTabId(panelId: string, value: string): string {
 /**
  * Figma frame `Menu Tab` (66:4755): the All / Revenue / Expenses tabs of 104 and 107. The selected tab has
  * the designed Active style, whichever it is (#19). An ARIA tablist with one tab stop: Left and Right
- * (wrapping), Home and End move the selection and activate the tab.
+ * (wrapping), Home and End move the selection and activate the tab. The `settings` variant is 111's look of the same
+ * tabs (task 028).
  */
-export function MenuTab<T extends string>({ label, tabs, value, onChange, panelId }: MenuTabProps<T>) {
+export function MenuTab<T extends string>({
+  label,
+  tabs,
+  value,
+  onChange,
+  panelId,
+  variant = 'default',
+}: MenuTabProps<T>) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = tabs.findIndex((tab) => tab.value === value);
   // The tab stop: the selected tab, or the first one if the value matches none.
@@ -49,7 +62,12 @@ export function MenuTab<T extends string>({ label, tabs, value, onChange, panelI
   }
 
   return (
-    <div role="tablist" aria-label={label} className={styles.tablist} onKeyDown={onKeyDown}>
+    <div
+      role="tablist"
+      aria-label={label}
+      className={variant === 'settings' ? `${styles.tablist} ${styles.settings}` : styles.tablist}
+      onKeyDown={onKeyDown}
+    >
       {tabs.map((tab, index) => {
         const active = index === selectedIndex;
         return (

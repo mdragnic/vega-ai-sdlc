@@ -57,7 +57,7 @@ One user type, no roles. Every signed-in user sees only their own data (decision
    - A monthly spending limit per expense category with "Adjust" (decisions #32)
    - Adjust popups (decisions #31)
 10. **Settings** (111, 112):
-    - Account tab: full name, email (read-only), username (editable, decisions #62), phone with a country code dropdown (decisions #43, #60), profile picture upload showing the current photo (decisions #44), Update Profile with a "Profile updated" message (decisions #33, #52)
+    - Account tab: full name, email (read-only), username (editable, decisions #62), phone with a country code dropdown (decisions #43, #60), profile picture upload showing the current photo (decisions #44), the editable fields in the bordered input look, "Save changes" disabled until a field changes, with a "Profile updated" message (decisions #33, #52, #127)
     - Security tab: old, new and retype password, phone (read-only), Update Password. The password section is hidden for Google-only users (decisions #2, #34)
 
 ## Screen flow
@@ -184,7 +184,7 @@ Things a real product needs that Figma does not show, and how the decisions hand
   - Empty-field placeholders: fields without placeholder text in the design stay without one (decisions #63)
 - **Session**: route protection, post-login and post-logout destinations, and no logout confirmation (decisions #3). Session length: on Login it follows "Keep me signed in" (decisions #14); after sign up and after Google sign-in (on Login or Sign up) it is 30 days (decisions #63).
 - **Data states**: the shared pattern (decisions #6).
-- **Feedback**: server errors above the submit button (decisions #6). "Password updated" after Update Password (decisions #34). After popup Save the page shows the new values (decisions #18, #31); after Edit Details Save the page returns to view mode (decisions #26). "Profile updated" after Update Profile, the same pattern (decisions #52). Remove is visual only (decisions #23).
+- **Feedback**: server errors above the submit button (decisions #6). "Password updated" after Update Password (decisions #34). After popup Save the page shows the new values (decisions #18, #31); after Edit Details Save the page returns to view mode (decisions #26). "Profile updated" after Save changes on the Account tab, the same pattern (decisions #52, #127). Remove is visual only (decisions #23).
 - **Accounts**: Add Accounts, Edit Accounts and Remove are visual only (decisions #22, #23). Edit Details edits in place (decisions #26).
 - **Header**: search (decisions #7) and notifications (decisions #8) are visual only. "View profile" opens Settings and the three-dot icon is visual only (decisions #9).
 - **Dropdowns**: "Weekly Comparison" and "Monthly Comparison" have no other options (decisions #20, #29). Each Goals period selector is one control per card, keeping its own Figma style, showing the selected month (`Mar, 2026`); it opens one list of months, newest first, from the current month back to the user's earliest data, and future months are not listed. This replaces the month and year pick lists of decisions #30, with the same behavior. Open dropdown lists are not designed: the shared Dropdown component draws them (decisions #60).
@@ -196,7 +196,7 @@ Things a real product needs that Figma does not show, and how the decisions hand
 - **Responsive**: none, desktop only (decisions #4).
 - **Charts (Goals)**: Saving Summary shows the dashed "Same period last month" line: daily savings on the same days of the month before the selected month, where a day's saving is Complete income minus Complete expenses (decisions #42, #59). Y-axis per the chart rules above, extending below $0 with the same step size when a day is negative (decisions #68); when no day is above $0 but not all are $0, the top label is $0 and the steps go downward (decisions #72). X-axis labels in short day format `01 May` (decisions #11, #20, #42, #55, #59).
 - **Settings**: the country code dropdown lists all countries, each option showing only the code (`+880`), default +1 for a new user (decisions #43). Username is editable, with an inline error "This username is already taken" when it is not unique (decisions #33, #62).
-- **Time zone**: no setting is designed; the browser's time zone is used (decisions #54). The upload box shows the current photo when one is uploaded, otherwise it is empty as designed; a newly chosen file is not previewed, and the photo and sidebar avatar update after "Update Profile" saves (decisions #44).
+- **Time zone**: no setting is designed; the browser's time zone is used (decisions #54). The upload box shows the current photo when one is uploaded, otherwise it is empty as designed; a newly chosen file is not previewed, and the photo and sidebar avatar update after "Save changes" saves (decisions #44, #127).
 - **Other**: no not-found page. Unknown URLs go to Overview, or to Login when signed out; an Account Details URL for an account that does not exist or belongs to another user redirects to Balances, and another user's data is never returned or shown (decisions #39). Without a profile photo, the avatar is a circle with the user's initials, using design tokens; the demo dataset has no photo (decisions #38).
 
 ## Assumptions

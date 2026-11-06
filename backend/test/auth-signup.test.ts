@@ -73,6 +73,14 @@ describe('POST /api/auth/signup', () => {
     ['an empty name', { fullName: '' }, { fullName: 'Name is required' }],
     ['a name of only spaces', { fullName: '    ' }, { fullName: 'Name is required' }],
     ['a name of 101 characters', { fullName: 'a'.repeat(101) }, { fullName: 'Name must be at most 100 characters' }],
+    // Task 028 T12 (#126 a): the Full name rule, shared with Settings.
+    ['a name with a tab', { fullName: 'Tanzir\tRahman' }, { fullName: 'Name cannot contain tabs or line breaks' }],
+    ['a name of only a zero-width space', { fullName: '\u200B' }, { fullName: 'Name is required' }],
+    [
+      'a name of 101 letters beyond the BMP',
+      { fullName: '\u{1D538}'.repeat(101) },
+      { fullName: 'Name must be at most 100 characters' },
+    ],
     ['an empty email', { email: '' }, { email: 'Email is required' }],
     ['a malformed email', { email: 'tanzir@example' }, { email: 'Enter a valid email address' }],
     ['an empty password', { password: '' }, { password: 'Password is required' }],
@@ -118,6 +126,14 @@ describe('POST /api/auth/signup', () => {
 
   it('accepts a password of Unicode letters and a digit', async () => {
     expect((await post(newUser({ password: 'ššššššš1' }))).status).toBe(201);
+  });
+
+  // Task 028 T12 (#126 a): 100 code points beyond the BMP (200 UTF-16 code units) are a valid name.
+  it('accepts and stores a name of 100 letters beyond the BMP', async () => {
+    const fullName = '\u{1D538}'.repeat(100);
+
+    expect((await post(newUser({ fullName }))).status).toBe(201);
+    expect((await users())[0]!.full_name).toBe(fullName);
   });
 
   // AC2: name and email are stored trimmed, the email in lowercase; the password as typed.

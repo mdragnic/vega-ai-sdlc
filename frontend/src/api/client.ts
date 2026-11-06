@@ -139,7 +139,10 @@ async function send<Res extends z.ZodType>(
     'X-Time-Zone': browserTimeZone(),
   };
   const init: RequestInit = { method: entry.method, headers, credentials: 'same-origin' };
-  if (entry.request) {
+  if (entry.request && entry.encoding === 'multipart') {
+    // No Content-Type of its own: the browser sets `multipart/form-data` with the body's boundary.
+    init.body = multipartBody(body);
+  } else if (entry.request) {
     headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(body);
   }
@@ -154,6 +157,21 @@ async function send<Res extends z.ZodType>(
       : new ApiError(response.status, { message: `Request failed with status ${response.status}` }, false);
   }
   return entry.response.parse(json);
+}
+
+/**
+ * A multipart entry's body (task 028, #76): each key of the body object one text part, in the object's order. Every
+ * value of such a body is a string (the profile's four fields); anything else is refused before anything is sent.
+ */
+function multipartBody(body: unknown): FormData {
+  if (typeof body !== 'object' || body === null)
+    throw new TypeError('A multipart body must be an object of text parts');
+  const form = new FormData();
+  for (const [name, value] of Object.entries(body)) {
+    if (typeof value !== 'string') throw new TypeError(`The multipart part ${name} must be text`);
+    form.append(name, value);
+  }
+  return form;
 }
 
 async function readJson(response: Response): Promise<unknown> {

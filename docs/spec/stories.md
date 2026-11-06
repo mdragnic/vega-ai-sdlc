@@ -579,28 +579,28 @@ Open questions: none
 
 Acceptance criteria:
 1. Given I open Settings, when it renders, then "Settings" is the active sidebar item and a card shows the tabs "Account" and "Security". "Account" is active (teal text and underline).
-2. Given the Account tab is active, then it shows these labelled fields as inputs styled as designed, with no borders (decisions #33):
+2. Given the Account tab is active, then it shows these labelled fields as inputs: the editable ones in the app's bordered input look (its border, its focus border, its error border), Email borderless and gray as read-only (decisions #33, #127):
    - "Full name" (sample "Tanzir Rahman"), editable
    - "Email" (sample "tanzir.rahman@email.com"), read-only, as it is the login identity and links Google sign-in (decisions #33)
    - "Username" (sample "tanzir.rahman"), editable (decisions #33, #62)
    - "Phone Number", editable: a country code dropdown styled as designed and a number, separated by a vertical divider (sample "+880" and "51547 58868") (decisions #33)
 3. Given the Account tab is active, then "Your Profile Picture" shows a dashed upload box with an image icon and the text "Upload your photo".
-4. Given the Account tab is active, then an "Update Profile" primary button shows below the fields.
+4. Given the Account tab is active, then a "Save changes" primary button shows below the fields, disabled (focus kept) until a field differs from the stored value (decisions #127).
 5. Given I click "Security", then the Security tab opens (US-19).
 6. Given I click the upload box, then a file picker opens to choose a photo (decisions #33).
-7. Given I changed a field, when I click "Update Profile", then the changes are saved to the backend and the short message "Profile updated" shows above the button, the same pattern as on the Security tab (decisions #33, #34, #52).
-8. Given a field breaks its rule, when I click "Update Profile", then nothing is saved and the error shows inline under that field. Rules: Full name required, max 100 characters; Username 3 to 30 characters, only lowercase letters, numbers, dot and underscore; Phone Number optional, digits only; photo JPG or PNG, max 2 MB, no cropping (decisions #6, #33, #62).
-9. Given I clicked "Update Profile", while saving, then the button is disabled and shows a spinner. If the server fails, its error shows above the button (decisions #6).
+7. Given I changed a field, then "Save changes" enables; when I click it, then the changes are saved to the backend, the short message "Profile updated" shows above the button, the same pattern as on the Security tab, and the button is disabled again until the next change. Given I change the values back to the stored ones, then it is disabled again (decisions #33, #34, #52, #127).
+8. Given a field breaks its rule, when I click "Save changes", then nothing is saved and the error shows inline under that field. Rules: Full name required, max 100 characters; Username 3 to 30 characters, only lowercase letters, numbers, dot and underscore; Phone Number optional, digits only; photo JPG or PNG, max 2 MB, no cropping (decisions #6, #33, #62).
+9. Given I clicked "Save changes", while saving, then the button is disabled and shows a spinner. If the server fails, its error shows above the button (decisions #6).
 10. Given I saved a new photo, then it is stored in the backend and replaces the avatar in the sidebar profile block, which shows my initials until I upload a photo (US-04) (decisions #33, #38).
 11. Given I open the country code dropdown, then it lists the codes of all countries from the standard international list, each option showing only the code, as designed (sample "+880"). A new user's default is +1 (decisions #43). The open list is drawn by the shared Dropdown component (decisions #60).
 12. Given I have uploaded a photo, then the upload box shows my current photo. Given I have not, then it is empty as designed (decisions #38, #44).
-13. Given I chose a new file in the upload box, then no preview of it shows. The photo in the upload box and the sidebar avatar update only after "Update Profile" saves (decisions #33, #44).
-14. Given I enter a username that another user already has, when I click "Update Profile", then nothing is saved and "This username is already taken" shows inline under Username (decisions #62).
+13. Given I chose a new file in the upload box, then no preview of it shows. The photo in the upload box and the sidebar avatar update only after "Save changes" saves; a newly chosen photo counts as a change (decisions #33, #44, #127).
+14. Given I enter a username that another user already has, when I click "Save changes", then nothing is saved and "This username is already taken" shows inline under Username (decisions #62).
 15. Given I saved a new Full name, then the Overview greeting uses its first word and the sidebar initials use the first letter of its first and last word (US-04) (decisions #62).
 
 States:
 - Designed: Account tab with filled values; empty upload box
-- Missing from design: field focus style (none, fields styled as designed, decisions #33); validation and upload errors, username already taken (decisions #6, #33, #62); saving (decisions #6); the current photo in the upload box (shown, decisions #44) and a preview of a newly chosen file (none, decisions #44); avatar when no photo is uploaded (initials, decisions #38); country code options and default (all countries, default +1, shared Dropdown, decisions #43, #60); success feedback ("Profile updated", decisions #52)
+- Missing from design: field focus style (the app's input focus border on the editable fields, decisions #127); the button before any change (disabled, decisions #127); validation and upload errors, username already taken (decisions #6, #33, #62); saving (decisions #6); the current photo in the upload box (shown, decisions #44) and a preview of a newly chosen file (none, decisions #44); avatar when no photo is uploaded (initials, decisions #38); country code options and default (all countries, default +1, shared Dropdown, decisions #43, #60); success feedback ("Profile updated", decisions #52)
 
 Out of scope: changing Email (decisions #33). Photo cropping (decisions #33). A preview of a newly chosen photo before saving (decisions #44).
 Assumptions: none

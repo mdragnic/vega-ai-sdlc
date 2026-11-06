@@ -224,6 +224,18 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--space-goal-item-tile-gap` | `16px` | measured: PNG 110, a category card's tile (x 656 to 736 at 2x, Housing) to the name's ink (from x 770, about 2 px of side bearing), 34 px, halved 17, less the bearing, 16. Added in task 027 |
 | `--space-goal-item-text-gap` | `4px` | measured: PNG 110, the name's line box (Regular 16/24, y 1098 to 1146 at 2x, Housing) to the amount's (Exbold 18/24, y 1154 to 1202), 8 px, halved: the two lines 52 high, centred on the 104 card. Added in task 027 |
 | `--space-goal-item-wrap-gap` | `16px` | decision #108 b: not measured, 110 leaves 74 px or more at 2x (Transportation's text to its "Adjust"), the value of `--space-goals-wrap-gap`. The least space between a category card's text and "Adjust"; where they do not fit with it, "Adjust" moves under the text, right-aligned, this far below. Added in task 027 |
+| `--space-settings-padding-top` | `40px` | measured: PNG 111, the Settings card's top (y 208) to the tabs' 48 px line box (y 288; "Account" ink from y 299), 80 px, halved. Added in task 028 |
+| `--space-settings-padding-x` | `32px` | measured: PNG 111, the card's left edge (x 608) to the "Account" underline, the labels and "Update Profile" (x 672), 64 px, halved; the same at the right end (the content 1040 wide in the 1104 card). Added in task 028 |
+| `--space-settings-padding-bottom` | `48px` | measured: PNG 111, "Update Profile"'s bottom (y 1408) to the card's end (y 1504), 96 px, halved. Added in task 028 |
+| `--space-settings-tab-padding-x` | `12px` | measured: PNG 111, the "Account" underline x 672 to 847 and its ink x 695 to 824: 23 px each side, less about 1 px of side bearing, halved 11, on the 4 px grid 12 (104's tabs: 8). Added in task 028 |
+| `--space-settings-tab-gap` | `32px` | measured: PNG 111, the "Account" tab's end (x 848) to "Security"'s ink (x 936) less its 24 px padding and 1 px of bearing, 63 px, halved 31.5, rounded (104's tabs: 20). Added in task 028 |
+| `--space-settings-tabs-gap` | `32px` | measured: PNG 111, the underline's bottom (y 368) to the "Full name" label's 48 px line box (y 432; its ink from y 444), 64 px, halved. Added in task 028 |
+| `--space-settings-field-gap` | `16px` | measured: PNG 111, the labels' line boxes every 208 px (y 432, 640, 848, 1056), a field 176 (the label's 48, 16, the 112 value box), 32 between, halved: `SettingsInput` 88 high, 104 apart. Added in task 028 |
+| `--space-settings-input-padding-x` | `24px` | measured: PNG 111, the labels (x 672) to their values' ink (x 721, about 1 px of side bearing), 48 px, halved, as `--space-popup-input-padding-x` in 104.1. Added in task 028 |
+| `--space-settings-button-gap` | `40px` | measured: PNG 111, the Phone Number value box's end (y 1232: its 48 px line box y 1152 to 1200 centred in the 112 box from y 1120) to "Update Profile" (y 1312), 80 px, halved. Added in task 028 |
+| `--space-phone-separator-gap` | `4px` | measured: PNG 111, "+880" (ink to x 800, its advance about x 801) to the separator's 24 px box (its 4 px line x 823 to 826 in the middle: x 812 to 836), 11 px, and the box's end to "51547" (ink from x 850, about 1 px of bearing), 13 px; halved 5.5 and 6.5, on the 4 px grid 4 (the nearer of 4 and 8 to their 6; the number about 3 px left of 111). Added in task 028 |
+| `--space-profile-photo-gap` | `32px` | measured: PNG 111, "Your Profile Picture"'s 48 px line box end (y 480; its ink y 443 to 468) to the upload box (y 544), 64 px, halved. Added in task 028 |
+| `--space-profile-photo-icon-gap` | `12px` | measured: PNG 111, the upload icon's ink end (y 663, its 80 px box to about y 668) to the "Upload your" 32 px line box (its ink from y 700, about 7 px under the line top), about 25 px, halved 12.5, rounded. Added in task 028 |
 
 ## Size
 
@@ -326,6 +338,16 @@ Every app text style uses Inter with letter spacing 0. The styles combine one si
 | `--size-saving-summary-chart-height` | `216px` | measured: PNG 110, the Saving Summary chart from the header row's end (y 408: the card top 304, 40 and 64) to the x labels' descent (the card's 24 bottom inset above its end at y 887; the labels' ink y 809 to 835), 432 px, halved. One height for the chart, its skeleton, its empty message and its error state; the chart draws inside it from named constants (#92, #113 a). Added in task 026 |
 | `--size-saving-summary-axis-width` | `72px` | measured: PNG 110, the card content's left edge (x 1440) to the teal line's start (x 1583, its round end from about x 1584), 144 px, halved: the y labels' column, the plot from its end. Added in task 026 |
 | `--size-saving-summary-point` | `8px` | not designed (task 026): a lone point of the Saving Summary's line (the 1st, the only day so far, 1 Nov in Belgrade at midnight) drawn as a dot this wide, the stroke of a zero-length path with a round cap; the line's own 2 px cap was a barely visible speck at 1440. dataviz's end dot, 8 px at least. Added in task 026 |
+| `--size-settings-tab-height` | `40px` | measured: PNG 111, the tabs' 48 px line box top (y 288) to the underline's end (y 368), 80 px, halved: the 24 line, 14, the 2 px underline (104's tabs: 32). Added in task 028 |
+| `--size-settings-input-height` | `56px` | measured: PNG 111, `SettingsInput` (Figma 540x88): the label's 48 px line box, 16, then the value's 48 px line box centred in a 112 px box (y 496 to 608 for Full name), halved: 24, 8, 56, as `--size-popup-input-height`, with no border (#33). Added in task 028 |
+| `--size-settings-column-fields` | `540fr` | Figma `SettingsInput` (`54:2202`), 540 wide (`docs/figma/components.md`); PNG 111, the content from x 672 to 2752 (1040 at 1x), the fields' column 540 of it. A share of the content's width, so the fields grow with the card (#94). Added in task 028 |
+| `--size-settings-column-gap` | `144fr` | measured: PNG 111, the fields' end (x 672 + 1080 = 1752) to "Your Profile Picture" (ink from x 2041, about 1 px of bearing: x 2040), 288 px, halved. Added in task 028 |
+| `--size-settings-column-picture` | `356fr` | measured: PNG 111, "Your Profile Picture" (x 2040) to the content's end (x 2752), 712 px, halved: the picture column from 65.8% of the content's width (#94). Added in task 028 |
+| `--size-icon-separator-width` | `12px` | Figma `Icon/separator` (402:5296), 12x24 (`docs/figma/components.md`); its height is `--size-icon`. PNG 111, its 4 px line x 823 to 826 between the country code and the number. Added in task 028 |
+| `--size-update-profile-width` | `192px` | measured: PNG 111, "Update Profile" x 672 to 1055, 384 px, halved. Added in task 028 |
+| `--size-profile-photo-box-width` | `144px` | measured: PNG 111, the dashed upload box x 2047 to 2330 (its 2 px borders included), 284 px, halved 142, rounded 144; centred under "Your Profile Picture" (its ink x 2041 to 2335, the same centre). Added in task 028 |
+| `--size-profile-photo-box-height` | `132px` | measured: PNG 111, the upload box y 544 to 805, 262 px, halved 131, rounded. Added in task 028 |
+| `--size-profile-photo-icon` | `40px` | measured: PNG 111, the upload icon's ink x 2153 to 2224 and y 592 to 663, 72 px, halved 36; Lucide's `image-plus` draws 21 of its 24 px box (the stroke included), so its box is 41, rounded 40. Added in task 028 |
 
 ## Radius
 
@@ -348,6 +370,8 @@ Each corner was fitted as a circle to the edge curve (PNG pixels, fit error unde
 | `--radius-dropdown` | `4px` | measured: PNG 110, Savings Goal period box corners: the straight border starts 7 px from the corner on both sides, radius about 7 to 8 px, halved and rounded. Added in task 005 |
 | `--radius-chart-legend-swatch` | `2px` | measured: PNG 104 and 109, legend swatch corners: the straight top edge starts 4 px in (x 2392 in 2388 to 2419), radius 4 px, halved. Kept under 4px, off the grid (#92 b). Added in task 006 |
 | `--radius-circle` | `50%` | measured: PNG 104, the round arrow's white disc (x 1184 to 1231, y 552 to 599) and the Previous / Next dots are circles. Added in task 013 |
+| `--radius-settings-card` | `16px` | measured: PNG 111, the Settings card's top-left corner: the first white pixel of each row from the card's top (y 208) at x 634, 628, 624, 621, 618, 616, 615, 613, 612, 611, 610, 609 and 609 every 2 rows to y 232, with the straight left edge at x 608 below: a circle of radius 32 fits each row within a pixel (26 in at the top row, the anti-aliased edge, 13 six rows down, 7 twelve down, 1 twenty-four down), halved 16. Rounder than every other card (`--radius-card`, 8 on 104): the Settings card only (Marko at the task 028 gate). Added in task 028 |
+| `--radius-profile-photo-box` | `4px` | measured: PNG 111, the upload box's top-left corner: the dashed border bends from x 2058 on its top edge (y 544) to y 553 on its left edge (x 2047), radius about 10 px, halved 5, rounded 4. Added in task 028 |
 
 ## Border
 
@@ -363,6 +387,7 @@ Halved, not rounded.
 | `--border-width-focus-ring` | `2px` | decision #87: not measured, keyboard focus is not designed. Width of the `:focus-visible` outline. Added in task 002 |
 | `--border-width-saving-summary-line` | `2px` | measured: PNG 110, the Saving Summary teal line, 4 px of full cover across a flat stretch (x 2300 and 2500 as the line slopes, about 4.9 and 7.3), halved. Added in task 026 |
 | `--border-width-saving-summary-dashed-line` | `2px` | measured: PNG 110, the dashed Gray/05 line, its cover summed down a dash (x 2028 to 2062, y 582 to 594), 4.0 px, halved. Added in task 026 |
+| `--border-width-profile-photo-box` | `1px` | measured: PNG 111, the upload box's dashed Gray/03 border, x 2047 to 2048 on its left edge, 2 px, halved. CSS draws its dashes (about 13 px with 7 px gaps at 2x in 111) in the browser's own pattern. Added in task 028 |
 
 ## Shadow
 

@@ -117,6 +117,35 @@ describe('ButtonPrimary', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
+  // Task 028, #127: "Save changes" is unavailable until a field changes: aria-disabled (the disabled look, focus kept,
+  // as task 022's buttons), with no spinner; a click and Enter in a field of its form submit nothing.
+  it('with aria-disabled keeps focus, shows no spinner and submits nothing by a click or Enter', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn<() => void>();
+    const onSubmit = vi.fn<(event: FormEvent<HTMLFormElement>) => void>((event) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <input aria-label="Full name" />
+        <ButtonPrimary type="submit" aria-disabled onClick={onClick}>
+          Save changes
+        </ButtonPrimary>
+      </form>,
+    );
+    const button = screen.getByRole('button', { name: 'Save changes' });
+
+    await user.click(button);
+    await user.type(screen.getByRole('textbox', { name: 'Full name' }), 'a{Enter}');
+
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toHaveAttribute('aria-busy');
+    expect(within(button).queryByTestId('spinner')).toBeNull();
+    expect(onClick).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+    button.focus();
+    expect(button).toHaveFocus();
+  });
+
   it('is natively disabled with disabled, also while loading', () => {
     render(
       <ButtonPrimary disabled loading>

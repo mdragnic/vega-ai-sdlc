@@ -15,7 +15,8 @@ export type ParamsSchema = z.ZodType<Record<string, string | number>, Record<str
  * One API endpoint (#74). `path` is relative to `/api`, so backend routes and the frontend client both read it from
  * here. `request` is the body schema, absent when the endpoint takes no body. `query` is the object schema of the URL
  * query, absent when the endpoint takes none (task 020). `params` is the object schema of the path's parameters, each
- * named `:name` in `path` (the syntax of Nest and React Router), absent when the path has none (task 021).
+ * named `:name` in `path` (the syntax of Nest and React Router), absent when the path has none (task 021). `encoding` is
+ * the body's encoding: absent, JSON; `multipart`, `multipart/form-data` with each body key a text part (task 028, #76).
  */
 export interface ContractEntry<
   TRequest extends z.ZodType | undefined = z.ZodType | undefined,
@@ -29,4 +30,5 @@ export interface ContractEntry<
   readonly response: TResponse;
   readonly query?: TQuery;
   readonly params?: TParams;
+  readonly encoding?: 'multipart';
 }
