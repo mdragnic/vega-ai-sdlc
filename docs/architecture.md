@@ -152,7 +152,7 @@ Profile, sessions, bills, savings goals and category limits are the app's own ta
 | Logging | Unexpected errors are logged with their message and stack only, never query parameters or row values, so emails, names and password hashes never reach a log (task 007 review) |
 | Google sign-in | Authorization code flow with PKCE and a state cookie (`finebank_google_signin`), `email_verified` required; the user is matched by lowercased email. A takeover of an existing password account removes the password and ends its sessions (#104). A fake Google client is used with `NODE_ENV=test` (#75, #102) |
 | Redirects | `returnTo` accepts relative in-app paths only (one shared rule for the frontend and the backend) |
-| Uploads (task 029) | Planned per #76: in memory, 2 MB, type checked from the content, random file names, served only to its owner with `nosniff` |
+| Uploads (task 029) | Planned per #76 and #128: in memory, 2 MB, type checked from the content, random file names, stored as uploaded (metadata such as EXIF location kept, #128 b), served only to its owner with `nosniff`. **Condition (#128):** if photos are ever shown to other users, metadata stripping must be added first |
 
 ## Time and time zones
 

@@ -594,15 +594,15 @@ Acceptance criteria:
 10. Given I saved a new photo, then it is stored in the backend and replaces the avatar in the sidebar profile block, which shows my initials until I upload a photo (US-04) (decisions #33, #38).
 11. Given I open the country code dropdown, then it lists the codes of all countries from the standard international list, each option showing only the code, as designed (sample "+880"). A new user's default is +1 (decisions #43). The open list is drawn by the shared Dropdown component (decisions #60).
 12. Given I have uploaded a photo, then the upload box shows my current photo. Given I have not, then it is empty as designed (decisions #38, #44).
-13. Given I chose a new file in the upload box, then no preview of it shows. The photo in the upload box and the sidebar avatar update only after "Save changes" saves; a newly chosen photo counts as a change (decisions #33, #44, #127).
+13. Given I chose a new file in the upload box, then the box shows a preview of it, marked "Not saved", with a "Clear" text button that drops the choice and returns the box to the stored photo or empty; nothing is sent until "Save changes". The stored photo and the sidebar avatar update only after "Save changes" saves; a newly chosen photo counts as a change (decisions #33, #44, #127, #128).
 14. Given I enter a username that another user already has, when I click "Save changes", then nothing is saved and "This username is already taken" shows inline under Username (decisions #62).
 15. Given I saved a new Full name, then the Overview greeting uses its first word and the sidebar initials use the first letter of its first and last word (US-04) (decisions #62).
 
 States:
 - Designed: Account tab with filled values; empty upload box
-- Missing from design: field focus style (the app's input focus border on the editable fields, decisions #127); the button before any change (disabled, decisions #127); validation and upload errors, username already taken (decisions #6, #33, #62); saving (decisions #6); the current photo in the upload box (shown, decisions #44) and a preview of a newly chosen file (none, decisions #44); avatar when no photo is uploaded (initials, decisions #38); country code options and default (all countries, default +1, shared Dropdown, decisions #43, #60); success feedback ("Profile updated", decisions #52)
+- Missing from design: field focus style (the app's input focus border on the editable fields, decisions #127); the button before any change (disabled, decisions #127); validation and upload errors, username already taken (decisions #6, #33, #62); saving (decisions #6); the current photo in the upload box (shown, decisions #44) and a preview of a newly chosen file (shown, with "Not saved" and "Clear", decisions #44, #128); avatar when no photo is uploaded (initials, decisions #38); country code options and default (all countries, default +1, shared Dropdown, decisions #43, #60); success feedback ("Profile updated", decisions #52)
 
-Out of scope: changing Email (decisions #33). Photo cropping (decisions #33). A preview of a newly chosen photo before saving (decisions #44).
+Out of scope: changing Email (decisions #33). Photo cropping (decisions #33). Removing photo metadata (decisions #128).
 Assumptions: none
 Open questions: none
 
