@@ -3,7 +3,7 @@
 Status values: todo | in-progress | awaiting-human | done | blocked
 `/next-task` picks the first task that is `todo` and whose dependencies are all `done`.
 
-Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 030; the rest are outline rows, detailed by `/next-task` when picked. Every page is full width (#94): the screen tasks from 013 apply it to their card grids.
+Order: foundation, shared display rules, shared components (used on 2+ screens), backend foundations (auth, sessions, demo seeding per #78), then one vertical slice per screen or widget. Screen tasks reuse the shared components and never rebuild them. Detailed so far: 000 to 031. Every page is full width (#94): the screen tasks from 013 apply it to their card grids.
 
 | Task | Title | Covers | Gate | Depends on | Status |
 |------|-------|--------|------|------------|--------|
