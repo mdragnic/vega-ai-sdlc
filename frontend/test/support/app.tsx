@@ -17,6 +17,8 @@ import {
   goalMessages,
   goalProgress,
   type Money,
+  passwordChangeRequestSchema,
+  passwordMessages,
   type Profile,
   profileMessages,
   profileUpdateRequestSchema,
@@ -1724,9 +1726,12 @@ export const monthlyComparison = {
 
 /**
  * The signed-in user's profile as `GET /api/profile` answers it for a new user (task 028, demo-data.md Profile): the
- * sign-up name and email, the generated username, `+1` and no number.
+ * sign-up name and email, the generated username, `+1` and no number; a password (task 030, #2).
  */
-export const demoProfile: Profile = { ...signedInUser, phoneCountryCode: '+1', phoneNumber: '' };
+export const demoProfile: Profile = { ...signedInUser, phoneCountryCode: '+1', phoneNumber: '', hasPassword: true };
+
+/** A user who signed up with Google only (#2, #104): no password, so the Security tab shows the phone alone (task 030). */
+export const googleOnlyProfile: Profile = { ...demoProfile, hasPassword: false };
 
 const profilePath = '*/api/profile';
 const profileFailure = () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -1857,6 +1862,76 @@ export const updateProfile = {
   usernameTaken: () => http.patch(profilePath, usernameTakenResponse),
   /** The write guard's 409: another user is signed in (#119). */
   otherUser: () => http.patch(profilePath, () => HttpResponse.json(otherUserSignedIn, { status: 409 })),
+};
+
+const passwordPath = '*/api/auth/password';
+
+/** One `PUT /api/auth/password` as the backend received it: its raw body, its content type and its header (task 030). */
+export type PasswordWrite = { body: string; contentType: string | null; expectedUser: string | null };
+
+async function passwordWriteOf(request: Request): Promise<PasswordWrite> {
+  return {
+    body: await request.text(),
+    contentType: request.headers.get('Content-Type'),
+    expectedUser: request.headers.get(EXPECTED_USER_HEADER),
+  };
+}
+
+/** The backend's answer to a current password that does not match (#34), exactly as it sends it. */
+export const wrongCurrentPassword: ErrorResponse = {
+  message: passwordMessages.currentIncorrect,
+  fieldErrors: { currentPassword: passwordMessages.currentIncorrect },
+};
+
+/**
+ * A backend holding the user's current password (task 030), as the real one behaves: each `PUT /api/auth/password` is
+ * recorded; one without `X-Expected-User` gets the guard's 400; the body is checked with the shared request schema (400
+ * with field errors); a current password that does not match gets the wrong-password 400; otherwise the new one becomes
+ * the current one and the answer is 204 with no body.
+ */
+export function passwordBackend(initial = 'old-pass1') {
+  let current = initial;
+  const writes: PasswordWrite[] = [];
+  const handler = http.put(passwordPath, async ({ request }) => {
+    const write = await passwordWriteOf(request);
+    writes.push(write);
+    if (!write.expectedUser) return expectedUserMissing();
+    const parsed = passwordChangeRequestSchema.safeParse(JSON.parse(write.body));
+    if (!parsed.success) return validationFailed(parsed.error.issues);
+    if (parsed.data.currentPassword !== current) return HttpResponse.json(wrongCurrentPassword, { status: 400 });
+    current = parsed.data.newPassword;
+    return new HttpResponse(null, { status: 204 });
+  });
+  return { handler, writes, current: () => current };
+}
+
+/** `PUT /api/auth/password` answers (task 030). */
+export const changePassword = {
+  /** Held until `release`, then 204. */
+  held: () => {
+    const { promise: released, resolve: release } = Promise.withResolvers<void>();
+    const writes: PasswordWrite[] = [];
+    const handler = http.put(passwordPath, async ({ request }) => {
+      writes.push(await passwordWriteOf(request));
+      await released;
+      return new HttpResponse(null, { status: 204 });
+    });
+    return { handler, release, writes };
+  },
+  fails: () => http.put(passwordPath, () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })),
+  networkError: () => http.put(passwordPath, () => HttpResponse.error()),
+  /** A 400 with these field errors, as the backend answers a body the form would not send. */
+  fieldErrors: (fieldErrors: Record<string, string>) =>
+    http.put(passwordPath, () =>
+      HttpResponse.json({ message: 'Validation failed', fieldErrors } satisfies ErrorResponse, { status: 400 }),
+    ),
+  /** A 4xx with a message of its own and no field errors (#97 a). */
+  clientError: (message: string) =>
+    http.put(passwordPath, () => HttpResponse.json({ message } satisfies ErrorResponse, { status: 415 })),
+  /** The write guard's 409: another user is signed in (#119). */
+  otherUser: () => http.put(passwordPath, () => HttpResponse.json(otherUserSignedIn, { status: 409 })),
+  /** The session ended: the guard's 401. */
+  unauthorized: () => http.put(passwordPath, () => HttpResponse.json(authenticationRequired, { status: 401 })),
 };
 
 /**

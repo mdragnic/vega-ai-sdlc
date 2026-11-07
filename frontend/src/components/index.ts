@@ -54,6 +54,8 @@ export { NavBar } from './NavBar/NavBar';
 export { NavMenu, type NavSection } from './NavMenu/NavMenu';
 export { OverviewExpensesBreakdown } from './OverviewExpensesBreakdown/OverviewExpensesBreakdown';
 export { OverviewExpensesBreakdownSkeleton } from './OverviewExpensesBreakdownSkeleton/OverviewExpensesBreakdownSkeleton';
+export { PasswordForm, type PasswordSaveHandlers } from './PasswordForm/PasswordForm';
+export { PasswordFormSkeleton } from './PasswordFormSkeleton/PasswordFormSkeleton';
 export { Popup } from './Popup/Popup';
 export { PopupInputSmall } from './PopupInputSmall/PopupInputSmall';
 export { Profile } from './Profile/Profile';

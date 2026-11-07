@@ -39,8 +39,31 @@ async function renderGallery() {
   return screen.findByRole('heading', { level: 1, name: 'Component gallery' });
 }
 
-const figure = (region: string, name: string) =>
-  within(screen.getByRole('region', { name: region })).getByRole('figure', { name });
+/**
+ * A gallery section by its heading's text: a DOM lookup, not a role scan of the whole gallery, which every call repeated
+ * and which grew past the tests' time under load as the gallery grew (task 028's first test, task 030 here). The first
+ * test checks that each section is a region named by its heading.
+ */
+function regionOf(name: string): HTMLElement {
+  const heading = [...document.querySelectorAll('section > h2')].find((element) => element.textContent === name);
+  const section = heading?.closest('section');
+  if (!section) throw new Error(`No gallery section named ${name}`);
+  return section;
+}
+
+const figure = (region: string, name: string) => within(regionOf(region)).getByRole('figure', { name });
+
+/**
+ * The open list's options, found in the list itself: a role scan of the whole gallery per list grew past the test's
+ * time under load as the gallery grew (task 030).
+ */
+function openOptions() {
+  const listbox = document.querySelector<HTMLElement>('[role="listbox"]');
+  if (!listbox) throw new Error('No open list');
+  return within(listbox)
+    .getAllByRole('option')
+    .map((option) => option.textContent);
+}
 
 const amountField = (name: string) => within(figure('PopupInputSmall', name)).getByRole('textbox');
 const chartState = (name: string) => figure('ComparisonBarChart', name);
@@ -181,6 +204,56 @@ describe('component gallery', () => {
       }),
     ).toHaveValue('Ana Marija '.repeat(10).slice(0, 100));
     expect(figure('ProfileFormSkeleton', 'Loading')).toBeInTheDocument();
+  });
+
+  // Task 030 T19: 112's parts and their undesigned states.
+  it('shows the Security parts in every listed state', async () => {
+    const user = userEvent.setup();
+    await renderGallery();
+    const masked = (example: string, label: string) => within(figure('SettingsInput', example)).getByLabelText(label);
+
+    expect(masked('Masked, empty (112, task 030)', 'Old Password')).toHaveAttribute('type', 'password');
+    expect(masked('Masked, empty (112, task 030)', 'Old Password')).toHaveValue('');
+    expect(masked('Masked, twelve characters (112)', 'New Password')).toHaveValue('Secret pass1');
+    expect(masked('Masked, field error (not designed)', 'Retype Password')).toHaveAccessibleDescription(
+      'Passwords do not match',
+    );
+    const readOnlyPhone = figure(
+      'SettingsPhoneInput',
+      "Read-only, like 112; alone, a Google-only user's Security tab (task 030, #2)",
+    );
+    expect(within(readOnlyPhone).getByRole('textbox', { name: 'Country code' })).toHaveValue('+880');
+    expect(within(readOnlyPhone).getByRole('textbox', { name: 'Phone Number' })).toHaveAttribute('readonly');
+    expect(within(readOnlyPhone).queryByRole('button')).toBeNull();
+    expect(
+      within(figure('SettingsPhoneInput', 'Read-only, no number stored')).getByRole('textbox', {
+        name: 'Phone Number',
+      }),
+    ).toHaveValue('');
+
+    const empty = figure('PasswordForm', 'Empty, Update Password unavailable (112)');
+    expect(within(empty).getByRole('button', { name: 'Update Password' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(empty).getByRole('textbox', { name: 'Phone Number' })).toHaveValue('5154758868');
+    const invalid = figure(
+      'PasswordForm',
+      'Field errors: type, then Update Password checks the shared rules (not designed)',
+    );
+    await user.type(within(invalid).getByLabelText('New Password'), 'abc');
+    await user.click(within(invalid).getByRole('button', { name: 'Update Password' }));
+    expect(await within(invalid).findByText('Password must be at least 8 characters')).toBeInTheDocument();
+    expect(within(invalid).getByText('Password is required')).toBeInTheDocument();
+    expect(within(invalid).getByText('Passwords do not match')).toBeInTheDocument();
+    expect(within(figure('PasswordForm', 'Saving (not designed)')).getByRole('button')).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+    expect(
+      within(figure('PasswordForm', 'The server error above the button (not designed)')).getByRole('alert'),
+    ).toHaveTextContent('Something went wrong.');
+    expect(within(figure('PasswordForm', '"Password updated" (not designed)')).getByRole('status')).toHaveTextContent(
+      'Password updated',
+    );
+    expect(figure('PasswordFormSkeleton', 'Loading')).toBeInTheDocument();
   });
 
   it('shows the app shell parts in every listed state', async () => {
@@ -326,27 +399,21 @@ describe('component gallery', () => {
     expect(dropdownTrigger('input, Account Type (#26, not designed)')).toHaveTextContent('Checking');
 
     await user.click(dropdownTrigger('box, like 110 Savings Goal'));
-    const months = screen.getAllByRole('option').map((option) => option.textContent);
+    const months = openOptions();
     expect(months.slice(0, 3)).toEqual(['Oct, 2026', 'Sep, 2026', 'Aug, 2026']);
     expect(months).toContain('Mar, 2026');
     await user.keyboard('{Escape}');
 
     await user.click(dropdownTrigger('inline, like 111 country code'));
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['+1', '+44', '+880']);
+    expect(openOptions()).toEqual(['+1', '+44', '+880']);
     await user.keyboard('{Escape}');
 
     await user.click(dropdownTrigger('input, Account Type (#26, not designed)'));
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'Credit Card',
-      'Checking',
-      'Savings',
-      'Investment',
-      'Loan',
-    ]);
+    expect(openOptions()).toEqual(['Credit Card', 'Checking', 'Savings', 'Investment', 'Loan']);
     await user.keyboard('{Escape}');
 
     await user.click(dropdownTrigger('60 months'));
-    const long = screen.getAllByRole('option').map((option) => option.textContent);
+    const long = openOptions();
     expect(long).toHaveLength(60);
     expect([long[0], long[59]]).toEqual(['Oct, 2026', 'Nov, 2021']);
   });

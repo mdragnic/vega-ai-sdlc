@@ -108,14 +108,22 @@ export class UsersService {
   }
 
   /**
-   * The user's profile, the Account tab's five fields as stored (#33) and `photoUpdatedAt` with a stored photo (#76),
-   * read by the session user's ID only (#39).
+   * The user's profile, the Account tab's five fields as stored (#33), `photoUpdatedAt` with a stored photo (#76) and
+   * `hasPassword`, false for a Google-only user (#2, task 030), read by the session user's ID only (#39). The hash
+   * itself never leaves this method.
    */
   async profile(id: number): Promise<Profile> {
-    const { fullName, email, username, phoneCountryCode, phoneNumber, photoUpdatedAt } = await this.dataSource
-      .getRepository(User)
-      .findOneByOrFail({ id });
-    return { fullName, email, username, phoneCountryCode, phoneNumber, ...photoTimeOf(photoUpdatedAt) };
+    const { fullName, email, username, phoneCountryCode, phoneNumber, passwordHash, photoUpdatedAt } =
+      await this.dataSource.getRepository(User).findOneByOrFail({ id });
+    return {
+      fullName,
+      email,
+      username,
+      phoneCountryCode,
+      phoneNumber,
+      hasPassword: passwordHash !== null,
+      ...photoTimeOf(photoUpdatedAt),
+    };
   }
 
   /**

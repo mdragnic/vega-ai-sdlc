@@ -17,7 +17,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { FAKE_GOOGLE_AUTHORIZE_PATH } from '../src/auth/google/fake-google-client.js';
 import { FixedClock } from '../src/common/clock/fixed-clock.js';
-import { cookieFor, newUser, signUp } from './helpers/auth.js';
+import { cookieFor, login as logIn, newUser, signUp } from './helpers/auth.js';
 import { CapturingLogger } from './helpers/capturing-logger.js';
 import { financeRows, userIdOf } from './helpers/finance.js';
 import { png } from './helpers/images.js';
@@ -38,7 +38,11 @@ const publicWrites = [
   'PUT /api/test/clock',
 ];
 
-const publicEntries: ContractEntry[] = [...Object.values(authContract), ...Object.values(testClockContract)];
+/** Changed by task 030: the password change is the session user's write, so it is guarded; the other auth entries are not. */
+const publicEntries: ContractEntry[] = [
+  ...Object.values(authContract).filter((entry) => entry !== authContract.changePassword),
+  ...Object.values(testClockContract),
+];
 
 /** The contract's writes behind the session guard: every entry that is not a GET, outside auth and the test clock. */
 const guardedEntries = contractEntries.filter((entry) => entry.method !== 'GET' && !publicEntries.includes(entry));
@@ -56,6 +60,9 @@ describe('the write guard (#119)', () => {
   let token: string;
   let email: string;
   let checkingId: number;
+  let userId: number;
+  /** The requester's hash as signed up: each test starts from it, so the password change knows the current one. */
+  let signUpHash: string;
   /** The other user, signed up first. */
   let otherEmail: string;
 
@@ -67,8 +74,12 @@ describe('the write guard (#119)', () => {
     const signedUp = await signUp(app);
     token = signedUp.token;
     email = signedUp.user.email;
-    const userId = (await userIdOf(db, email))!;
+    userId = (await userIdOf(db, email))!;
     checkingId = Number((await financeRows(db, userId)).accounts[1]!.id);
+    [{ password_hash: signUpHash }] = await db.query<[{ password_hash: string }]>(
+      'SELECT password_hash FROM users WHERE id = ?',
+      [userId],
+    );
   });
 
   afterAll(async () => {
@@ -77,8 +88,9 @@ describe('the write guard (#119)', () => {
 
   const server = () => request(app.getHttpServer());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app.get(FixedClock).set(new Date(FIXED_NOW));
+    await db.query('UPDATE users SET password_hash = ? WHERE id = ?', [signUpHash, userId]);
   });
 
   /**
@@ -87,7 +99,14 @@ describe('the write guard (#119)', () => {
    */
   const writes: Record<
     string,
-    { send: (marker: number) => { path: string; body: Record<string, unknown> }; stored: () => Promise<unknown> }
+    {
+      send: (marker: number) => { path: string; body: Record<string, unknown> };
+      stored: () => Promise<unknown>;
+      /** The status of an accepted write: 200 unless given. */
+      accepted?: number;
+      /** Whether the write of `marker` is stored: the marker in `stored()` unless given. */
+      holds?: (marker: number) => Promise<boolean>;
+    }
   > = {
     [keyOf(savingsGoalsContract.save)]: {
       send: (marker) => ({
@@ -110,6 +129,16 @@ describe('the write guard (#119)', () => {
         body: { bankName: `Guarded ${marker}`, branchName: 'Branch', accountType: 'savings' },
       }),
       stored: () => db.query('SELECT id, bank_name, branch_name, account_type FROM accounts ORDER BY id'),
+    },
+    // Task 030: the password change, JSON, 204; the new password holds when it logs in.
+    [keyOf(authContract.changePassword)]: {
+      send: (marker) => ({
+        path: `/api${authContract.changePassword.path}`,
+        body: { currentPassword: 'abcdef12', newPassword: `newpass${marker}` },
+      }),
+      stored: () => db.query('SELECT id, password_hash FROM users ORDER BY id'),
+      accepted: 204,
+      holds: async (marker) => (await logIn(app, { email, password: `newpass${marker}` })).status === 200,
     },
     // Task 028: the profile write, multipart (#76). Task 029 T12: with a photo, its file part.
     [keyOf(profileContract.update)]: {
@@ -168,6 +197,8 @@ describe('the write guard (#119)', () => {
         'PATCH /api/accounts/:accountId',
         'PUT /api/category-limits',
         'PATCH /api/profile',
+        // Task 030.
+        'PUT /api/auth/password',
       ]),
     );
     // A new write needs a valid request below, so it is checked like these.
@@ -201,15 +232,18 @@ describe('the write guard (#119)', () => {
     it.each([
       ['the session user’s email', (value: string) => value],
       ['the session user’s email in another case, with spaces', (value: string) => ` ${value.toUpperCase()} `],
-    ])('answers 200 with %s and stores the write', async (_case, header) => {
+    ])('answers its success with %s and stores the write', async (_case, header) => {
       const before = await everything();
       const marker = 300_000 + Math.floor(Math.random() * 1000);
+      const write = writes[key]!;
+      const holds =
+        write.holds ?? (async (stored: number) => JSON.stringify(await write.stored()).includes(String(stored)));
 
       const response = await send(key, marker, header(email));
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(write.accepted ?? 200);
       expect(await everything()).not.toEqual(before);
-      expect(JSON.stringify(await writes[key]!.stored())).toContain(String(marker));
+      expect(await holds(marker)).toBe(true);
     });
   });
 
@@ -262,7 +296,7 @@ describe('the stale tab (#110, #119)', () => {
     await app.close();
   });
 
-  it('refuses the goal PUT, the account PATCH, the limit PUT and the profile PATCH sent with B’s cookie and A’s email, storing nothing', async () => {
+  it('refuses the goal PUT, the account PATCH, the limit PUT, the profile PATCH and the password PUT sent with B’s cookie and A’s email, storing nothing', async () => {
     const a = await signUp(app);
     const aId = (await userIdOf(db, a.user.email))!;
     const aChecking = Number((await financeRows(db, aId)).accounts[1]!.id);
@@ -273,7 +307,13 @@ describe('the stale tab (#110, #119)', () => {
     const b = await signUp(app);
     const bId = (await userIdOf(db, b.user.email))!;
     const usersRows = () => db.query('SELECT * FROM users ORDER BY id');
-    const before = { a: await financeRows(db, aId), b: await financeRows(db, bId), users: await usersRows() };
+    const sessionRows = () => db.query('SELECT * FROM sessions ORDER BY id');
+    const before = {
+      a: await financeRows(db, aId),
+      b: await financeRows(db, bId),
+      users: await usersRows(),
+      sessions: await sessionRows(),
+    };
     const agent = request(app.getHttpServer());
     const fromStaleTab = (method: 'put' | 'patch', path: string) =>
       agent[method](path)
@@ -308,9 +348,24 @@ describe('the stale tab (#110, #119)', () => {
     expect(goal.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
     expect(account.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
     expect(limit.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
+    // Task 030 (AC17): the password change, refused before the body is read: no hash changed, no session deleted.
+    const password = await fromStaleTab('put', '/api/auth/password').send({
+      currentPassword: 'abcdef12',
+      newPassword: 'stale-pass1',
+    });
+
     expect(profile.status).toBe(409);
     expect(profile.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
-    expect({ a: await financeRows(db, aId), b: await financeRows(db, bId), users: await usersRows() }).toEqual(before);
+    expect(password.status).toBe(409);
+    expect(password.body).toEqual({ message: 'Another user is signed in. Nothing was saved.' });
+    expect({
+      a: await financeRows(db, aId),
+      b: await financeRows(db, bId),
+      users: await usersRows(),
+      sessions: await sessionRows(),
+    }).toEqual(before);
+    expect((await logIn(app, { email: a.user.email, password: 'abcdef12' })).status).toBe(200);
+    expect((await logIn(app, { email: b.user.email, password: 'abcdef12' })).status).toBe(200);
   });
 });
 

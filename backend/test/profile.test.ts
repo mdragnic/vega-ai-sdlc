@@ -152,7 +152,8 @@ describe('the profile API', () => {
   // T4: AC3, AC11, the read: exactly the five keys of the session user, a new user with +1 and no number.
   describe('GET /api/profile', () => {
     // Changed by task 029 (#128 c): exactly the five keys for a user without a photo (`photoUpdatedAt` only with one).
-    it('answers the session user’s five fields, as signed up: +1 and no number', async () => {
+    // Task 030 (T10): and `hasPassword`, true for a user who signed up with a password (#2).
+    it('answers the session user’s five fields and hasPassword, as signed up: +1 and no number', async () => {
       const response = await server().get(profilePath).set('Cookie', cookieFor(token));
 
       expect(response.status).toBe(200);
@@ -162,10 +163,12 @@ describe('the profile API', () => {
         username,
         phoneCountryCode: '+1',
         phoneNumber: '',
+        hasPassword: true,
       });
       expect(Object.keys(JSON.parse(response.text) as object).toSorted()).toEqual([
         'email',
         'fullName',
+        'hasPassword',
         'phoneCountryCode',
         'phoneNumber',
         'username',
@@ -181,7 +184,36 @@ describe('the profile API', () => {
         username: 'other.person',
         phoneCountryCode: '+44',
         phoneNumber: '2071234567',
+        hasPassword: true,
       });
+    });
+
+    // Task 030 T10: a Google-only user (#2, #104) has no password: `hasPassword` false, the other keys as before.
+    it('answers hasPassword false for a user without a password, and true again once one is stored', async () => {
+      const [{ password_hash: stored }] = await db.query<[{ password_hash: string }]>(
+        'SELECT password_hash FROM users WHERE id = ?',
+        [userId],
+      );
+      await db.query('UPDATE users SET password_hash = NULL WHERE id = ?', [userId]);
+      try {
+        const googleOnly = await server().get(profilePath).set('Cookie', cookieFor(token));
+        const saved = await patch(validParts);
+
+        expect(JSON.parse(googleOnly.text)).toEqual({
+          fullName: 'Tanzir Rahman',
+          email,
+          username,
+          phoneCountryCode: '+1',
+          phoneNumber: '',
+          hasPassword: false,
+        });
+        expect(saved.status).toBe(200);
+        expect(JSON.parse(saved.text)).toEqual({ ...validParts, email, hasPassword: false });
+      } finally {
+        await db.query('UPDATE users SET password_hash = ? WHERE id = ?', [stored, userId]);
+      }
+      const withPassword = await server().get(profilePath).set('Cookie', cookieFor(token));
+      expect(JSON.parse(withPassword.text)).toMatchObject({ hasPassword: true });
     });
 
     it('answers 401 without a session', async () => {
@@ -227,6 +259,7 @@ describe('the profile API', () => {
         username: 'new.name',
         phoneCountryCode: '+880',
         phoneNumber: '5154758868',
+        hasPassword: true,
       });
       const before = usersBefore.find((row) => row.id === userId)!;
       expect(await rowOf(userId)).toEqual({
@@ -248,7 +281,7 @@ describe('the profile API', () => {
       const profile = await server().get(profilePath).set('Cookie', cookieFor(token));
       const session = await me(app, token);
 
-      expect(profile.body).toEqual({ ...validParts, email });
+      expect(profile.body).toEqual({ ...validParts, email, hasPassword: true });
       expect(session.body).toEqual({ fullName: validParts.fullName, email, username: validParts.username });
     });
 

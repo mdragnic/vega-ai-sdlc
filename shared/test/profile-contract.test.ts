@@ -140,9 +140,16 @@ describe('profileUpdateRequestSchema', () => {
   });
 });
 
-// Task 028 T1 (#126 a's condition): the profile response shows any stored name; its keys are the five fields.
+// Task 028 T1 (#126 a's condition): the profile response shows any stored name; its keys are the five fields. Task 030
+// T1: and `hasPassword` (#2).
 describe('profileSchema', () => {
-  const stored = { fullName: 'Tanzir Rahman', email: 'tanzir@example.com', username: 'tanzir', phoneCountryCode: '+1' };
+  const stored = {
+    fullName: 'Tanzir Rahman',
+    email: 'tanzir@example.com',
+    username: 'tanzir',
+    phoneCountryCode: '+1',
+    hasPassword: true,
+  };
 
   it.each([
     ['a tab', 'A\tB'],
@@ -154,14 +161,16 @@ describe('profileSchema', () => {
     expect(profileSchema.parse(profile)).toEqual(profile);
   });
 
-  // Changed by task 029 (#128 c): the five fields, and `photoUpdatedAt` only when a photo is stored.
-  it('has the five keys without a photo and six with one', () => {
+  // Changed by task 029 (#128 c): the five fields, and `photoUpdatedAt` only when a photo is stored. Task 030: and
+  // `hasPassword`.
+  it('has the six keys without a photo and seven with one', () => {
     const withoutPhoto = { ...stored, phoneNumber: '' };
     const withPhoto = { ...withoutPhoto, photoUpdatedAt: '2026-10-22T10:00:00.000Z' };
 
     expect(Object.keys(profileSchema.shape).toSorted()).toEqual([
       'email',
       'fullName',
+      'hasPassword',
       'phoneCountryCode',
       'phoneNumber',
       'photoUpdatedAt',
@@ -170,12 +179,27 @@ describe('profileSchema', () => {
     expect(Object.keys(profileSchema.parse(withoutPhoto)).toSorted()).toEqual([
       'email',
       'fullName',
+      'hasPassword',
       'phoneCountryCode',
       'phoneNumber',
       'username',
     ]);
     expect(profileSchema.parse(withPhoto)).toEqual(withPhoto);
     expect(profileSchema.safeParse({ ...withoutPhoto, photoUpdatedAt: '2026-10-22 10:00' }).success).toBe(false);
+  });
+
+  // Task 030 T1 (#2): whether the user has a password, so the Security tab knows to show its section.
+  it.each([true, false])('gives hasPassword %s as it is', (hasPassword) => {
+    expect(profileSchema.parse({ ...stored, phoneNumber: '', hasPassword }).hasPassword).toBe(hasPassword);
+  });
+
+  it.each([
+    ['missing', undefined],
+    ['a string', 'true'],
+    ['a number', 1],
+    ['null', null],
+  ])('refuses hasPassword %s', (_case, hasPassword) => {
+    expect(fieldMessages(profileSchema, { ...stored, phoneNumber: '', hasPassword })).toHaveProperty(['hasPassword']);
   });
 });
 

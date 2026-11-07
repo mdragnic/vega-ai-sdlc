@@ -1,0 +1,28 @@
+Task 030 manual browser checks, 2026-11-07 (Validation step 6). Playwright MCP's Chromium on Windows, new contexts at
+1440x1024 in Europe/Belgrade, the backend on the fixed test clock (NODE_ENV=test, so the fake Google page exists) and the
+Vite dev server, as task 029's checks. Every check passed.
+
+1. Change the password: signed up as tanzir.rahman@email.com; Settings, Security; Old, New and Retype typed; "Update
+   Password": "Password updated", the fields cleared, still on /settings/security with the sidebar unchanged; the page's
+   own session answered 200 on a refocus (a real visibilitychange); Logout; Login with the old password: "Email or
+   password is incorrect"; with the new one: Overview. (Also done twice more below.)
+2. The errors (screenshots in visual-differences.txt's state list): a short New Password ("Password must be at least 8
+   characters"), a mismatch ("Passwords do not match"), New equal to Old ("New password must be different from the old
+   password"), a wrong Old Password ("Current password is incorrect" after the 400), each under its field, the border
+   red, nothing sent for the first three.
+3. Two browser contexts of one user: B logged in with the current password and opened Overview; A changed the password
+   ("Password updated"); A refocused: its session check 200, still on Security; B refocused: its session check 401, and
+   B opened /login?returnTo=%2Foverview with no message (#129 a, #3). manual-other-browser-signed-out.png.
+4. A Google-only user through the fake Google page ("Gina Google", gina.google@example.com): Settings, Security showed
+   the read-only phone alone (+1, no number), no password field and no button in the panel.
+   manual-google-only-real-user-2x.png.
+5. The backend stopped during a save (the API process on port 3000 ended, the Vite proxy failing): "Something went
+   wrong." above the button, the three typed values kept, focus on the button (manual-backend-down-save.png). The backend
+   started again on the same database (node dist/main.js, no reset): "Update Password" pressed again: "Password updated",
+   the alert gone, and a login with the new password answered 200.
+6. Resized to 1280x1024 and 1920x1080 and back to 1440x1024: no horizontal scroll at any width (the document as wide as
+   the window), the card ending 32 inside the window's right edge (1248, 1888, 1408).
+
+Found while checking: the first try of check 3 dispatched visibilitychange without `bubbles: true`, which never reaches
+the window listener the app's focus manager uses, so B did not check; B's session already answered 401 to a direct
+request. Redone with the event as the e2e tests send it; not an app defect.

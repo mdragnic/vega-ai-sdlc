@@ -1,0 +1,60 @@
+Task 030 visual check, 2026-11-07 (Validation step 5). Playwright MCP, fresh contexts at 1440x1024, device scale 2,
+scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend on the fixed clock
+2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`, a fresh test database), the Vite dev server.
+Signed up as "Tanzir Rahman" with tanzir.rahman@email.com, then username tanzir.rahman, +880 and "51547 58868" saved on
+the Account tab (stored and shown 5154758868, #126 c), as tasks 028 and 029; then Settings, Security with twelve
+characters typed in each password field and focus taken off. Compared with docs/figma/112. Settings.png at 2x pixels by
+a Node PNG reader (built-ins only, session scratchpad, deleted at the end). No Figma calls.
+
+settings-112-1440-2x.png against 112 (2x pixels)
+- The card, the tabs and the underline: the underline's teal rows y 364 to 367 on both, x 912 to 1087 in 112 and 914
+  to 1091 here (task 028's measure: Semibold "Security" a px or two wider); "Update Password" the same teal block on both,
+  x 672 to 1055, y 1312 to 1407 (192x48 at 1x, y 656 at 1x); the card 648 high, ending 48 under the button (as 111).
+- The four labels on the same ink rows: Old Password y 444 to 468, New Password 653 to 676, Retype Password 861 to 886,
+  Phone Number 1069 to 1092 on both; left edge x 674 (673 for "Old Password" here); right edges within 1 to 3 px
+  (Medium 16 at the browser's rendering).
+- The password values: 12 glyphs on both, starting x 722 (112) / 723 (here); the mask colour exactly Gray/03 #9F9F9F on
+  both (the darkest pixel 159,159,159).
+- The phone row: "+880" x 723 to 800 (112) / 722 to 799 (here); the rest as task 028's difference 2 below.
+
+Differences
+1. The mask glyph: 112 draws twelve "*" (ink rows y 541 to 553 at 2x, ending x 909); Chromium masks with "•" (ink rows
+   550 to 559, ending x 932: the bullets sit on the value's middle and advance wider). Expected (the task file).
+2. The three password fields have the app's bordered Input look, #D0D5DD on all four edges with the Input radius,
+   where 112 draws no border: #127 a, decided (Marko, task 028 gate; INDEX row 030).
+3. The phone number shows digits only, "5154758868", where 112 draws "51547 58868": #126 c as answered (expected).
+4. The separator is 2.5 px left of 112's (its line x 818 to 821 against 823 to 826 at 2x) and the number starts 4 px
+   left (x 842 against 850). Task 028's difference 2, unchanged: the read-only row lands on exactly the same pixels as
+   the Account tab's editable row (measured on evidence/029/settings-111-1440-2x.png: separator 818 to 821, number from
+   842; 111 and 112 draw the row identically).
+5. The date: "22 Oct, 2026" (the fixed clock, #84) where 112 shows "May 19, 2023" (#12, expected).
+6. The sidebar avatar: the initials "TR" (no photo saved, #38) where 112 draws a photo (expected).
+
+Undesigned states (evidence for Marko; tokens only, existing patterns, nothing measured against a design)
+- state-empty-unavailable-2x.png: the tab as it opens: three empty bordered fields, the read-only phone, "Update
+  Password" unavailable (the disabled look, #E4E7EB, as "Save changes" at rest, #127 b).
+- state-skeleton-2x.png: the profile held: a label line and a value line in each of the four fields' places and a block
+  in the button's place, on the form's grid; the card as high as with the form (e2e T27 measures it).
+- state-error-2x.png: the profile failing: "Something went wrong." and Retry in the panel, the tabs and the card kept.
+- state-field-errors-2x.png: Old Password empty, New Password "abc", Retype "abd": "Password is required", "Password must
+  be at least 8 characters" and "Passwords do not match", each under its field, the three borders red, focus on Old
+  Password.
+- state-same-as-old-2x.png: New Password equal to Old Password: "New password must be different from the old password"
+  under New Password.
+- state-wrong-old-password-2x.png: after the backend's 400: "Current password is incorrect" under Old Password, its
+  border red, the typed values kept.
+- state-saving-2x.png: the PUT held: "Update Password" in its loading pattern (the disabled look and the spinner), the
+  fields read-only, their look unchanged.
+- state-server-error-2x.png: a 500: "Something went wrong." above the button (#97 a), the values kept.
+- state-password-updated-2x.png: "Password updated" above the button (FormSuccess, Regular 14 in Secondary, as "Profile
+  updated"), the three fields cleared, the button unavailable again.
+- state-focus-country-code-2x.png and state-focus-phone-number-2x.png: keyboard focus on the read-only code and number:
+  the #87 teal ring around each input; Chromium selects an input's text when Tab lands on it (as on the Account tab's
+  read-only Email). No ring after a mouse press (e2e T26).
+- state-focus-button-unavailable-2x.png: keyboard focus on "Update Password" while unavailable: the #87 ring.
+- state-focus-password-field-2x.png: keyboard focus on a password field: the caret and the Input's darker border
+  (#127 a), no ring.
+- state-google-only-2x.png: a Google-only user (#2): the read-only phone alone in the first field's place, no password
+  field and no button; the card ends 48 under the phone row (248 high at 1x).
+- settings-112-1280-2x.png and settings-112-1920-2x.png: the same parts at 1280x1024 and 1920x1080: the card fills the
+  content area, the fields keep 540 of 1040 of its width, the button keeps 192x48 (e2e T27 measures every edge).

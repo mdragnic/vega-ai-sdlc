@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DataSource, type EntityManager } from 'typeorm';
+import { DataSource, type EntityManager, Not } from 'typeorm';
 
 import { CLOCK, type Clock } from '../common/clock/clock.js';
 import { SESSION_LIFETIME_SECONDS } from './session-cookie.js';
@@ -43,6 +43,14 @@ export class SessionsService {
   /** Ends every session of the user, through the caller's transaction. */
   async deleteAllOf(manager: EntityManager, userId: number): Promise<void> {
     await manager.delete(Session, { userId });
+  }
+
+  /**
+   * Ends every session of the user but the one of `keptToken`, through the caller's transaction: a password change keeps
+   * the browser that made it signed in and signs every other one out (#34, #129 a).
+   */
+  async deleteOthersOf(manager: EntityManager, userId: number, keptToken: string): Promise<void> {
+    await manager.delete(Session, { userId, tokenHash: Not(hashToken(keptToken)) });
   }
 }
 

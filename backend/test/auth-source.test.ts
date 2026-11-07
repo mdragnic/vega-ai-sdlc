@@ -73,3 +73,80 @@ describe('Google sign-in sources', () => {
     expect(ownRules.some((pattern) => pattern.test(code))).toBe(true);
   });
 });
+
+/** The body of a method: from its signature to the first line that closes it at its own indentation. */
+function methodBody(code: string, name: string): string {
+  const lines = code.split('\n');
+  const first = lines.findIndex(
+    (line) => /^ {2}(async )?\w+\(/.test(line) && line.trimStart().replace('async ', '').startsWith(`${name}(`),
+  );
+  if (first === -1) return '';
+  const last = lines.findIndex((line, index) => index > first && line === '  }');
+  return lines.slice(first, last === -1 ? undefined : last + 1).join('\n');
+}
+
+/** A log call: Nest's `Logger`, a `logger` field, or the console. */
+const logCall = /\blogger\b|\bLogger\b|\bconsole\./;
+
+/** Every `update(User, criteria, values)` call of a file's code: its criteria and values as written. */
+const userUpdatesOf = (code: string) =>
+  [...code.matchAll(/\.update\(\s*User,\s*(\{[^}]*\}),\s*(\{[^}]*\})\s*\)/g)].map(([, criteria, values]) => ({
+    criteria: criteria!.replace(/\s+/g, ' '),
+    values: values!.replace(/\s+/g, ' '),
+  }));
+
+// Task 030 T18: AC18, a password hash is set for a change only in AuthService.changePassword, by one update keyed on the
+// session user's ID and the verified hash; nothing in the change's path logs.
+describe('the password change in backend/src', () => {
+  const rel = (file: string) => relative(srcDir, file).replaceAll('\\', '/');
+  const files = sourceFiles(srcDir).filter((file) => !rel(file).startsWith('database/migrations/'));
+
+  it('sets a hash only in AuthService.changePassword, keyed on the ID and the verified hash', () => {
+    const setting = files.flatMap((file) =>
+      userUpdatesOf(codeOf(file))
+        .filter(({ values }) => /\bpasswordHash\b/.test(values) && !/passwordHash: null/.test(values))
+        .map((update) => ({ file: rel(file), ...update })),
+    );
+
+    expect(setting).toEqual([
+      {
+        file: 'auth/auth.service.ts',
+        criteria: '{ id: userId, passwordHash: verifiedHash }',
+        values: '{ passwordHash }',
+      },
+    ]);
+    expect(methodBody(codeOf(join(srcDir, 'auth/auth.service.ts')), 'changePassword')).toMatch(
+      /manager\.update\(User, \{ id: userId, passwordHash: verifiedHash \}, \{ passwordHash \}\)/,
+    );
+  });
+
+  it('writes no password_hash in raw SQL', () => {
+    const offenders = files.filter((file) => /password_hash/.test(codeOf(file))).map(rel);
+
+    // The entity's column name only.
+    expect(offenders).toEqual(['users/user.entity.ts']);
+  });
+
+  it('logs nothing in the handler or the service method', () => {
+    const controller = methodBody(codeOf(join(srcDir, 'auth/auth.controller.ts')), 'changePassword');
+    const service = methodBody(codeOf(join(srcDir, 'auth/auth.service.ts')), 'changePassword');
+
+    expect(controller).toContain('this.auth.changePassword(');
+    expect(service).toContain('this.passwords.verify(');
+    for (const body of [controller, service]) expect(body).not.toMatch(logCall);
+  });
+
+  // Each detector flags its own case (code review: one assertion per detector).
+  it('reads an update keyed on the ID only as such, not as the compare and set', () => {
+    expect(userUpdatesOf('await manager.update(User, { id: userId }, { passwordHash });')).toEqual([
+      { criteria: '{ id: userId }', values: '{ passwordHash }' },
+    ]);
+  });
+
+  it.each(['this.logger.warn(body);', "new Logger('AuthController').warn(text);", 'console.log(body);'])(
+    'flags the log call %s',
+    (code) => {
+      expect(code).toMatch(logCall);
+    },
+  );
+});

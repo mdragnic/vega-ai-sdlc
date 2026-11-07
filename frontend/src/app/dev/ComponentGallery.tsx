@@ -87,6 +87,8 @@ import {
   NavMenu,
   OverviewExpensesBreakdown,
   OverviewExpensesBreakdownSkeleton,
+  PasswordForm,
+  PasswordFormSkeleton,
   PopupInputSmall,
   Profile,
   ProfileForm,
@@ -277,7 +279,32 @@ const sampleProfile: ProfileData = {
   username: 'tanzir.rahman',
   phoneCountryCode: '+880',
   phoneNumber: '5154758868',
+  hasPassword: true,
 };
+
+/** 112's Security form on a white card, with 111's phone; a save here only ends (no request). */
+function PasswordFormExample({
+  saving = false,
+  formError,
+  updated = false,
+}: {
+  saving?: boolean;
+  formError?: string;
+  updated?: boolean;
+}) {
+  return (
+    <Card>
+      <PasswordForm
+        phoneCountryCode={sampleProfile.phoneCountryCode}
+        phoneNumber={sampleProfile.phoneNumber}
+        saving={saving}
+        formError={formError}
+        updated={updated}
+        onSave={(_request, { onSettled }) => onSettled()}
+      />
+    </Card>
+  );
+}
 
 /** The Account tab's form on a white card with 111's insets; a save here only ends (no request). */
 function ProfileFormExample({
@@ -1825,6 +1852,27 @@ export function ComponentGallery() {
             <SettingsInput label="Username" defaultValue="ta" error="Username must be at least 3 characters" />
           </Card>
         </Example>
+        <Example name="Masked, empty (112, task 030)">
+          <Card>
+            <SettingsInput label="Old Password" type="password" autoComplete="off" />
+          </Card>
+        </Example>
+        <Example name="Masked, twelve characters (112)">
+          <Card>
+            <SettingsInput label="New Password" type="password" autoComplete="off" defaultValue="Secret pass1" />
+          </Card>
+        </Example>
+        <Example name="Masked, field error (not designed)">
+          <Card>
+            <SettingsInput
+              label="Retype Password"
+              type="password"
+              autoComplete="off"
+              defaultValue="Secret pass2"
+              error="Passwords do not match"
+            />
+          </Card>
+        </Example>
       </GallerySection>
 
       <GallerySection name="SettingsPhoneInput">
@@ -1846,6 +1894,16 @@ export function ComponentGallery() {
               defaultValue="064a123"
               numberError="Phone Number can only contain digits"
             />
+          </Card>
+        </Example>
+        <Example name="Read-only, like 112; alone, a Google-only user's Security tab (task 030, #2)">
+          <Card>
+            <SettingsPhoneInput readOnly countryCode="+880" value="5154758868" />
+          </Card>
+        </Example>
+        <Example name="Read-only, no number stored">
+          <Card>
+            <SettingsPhoneInput readOnly countryCode="+1" value="" />
           </Card>
         </Example>
       </GallerySection>
@@ -1913,6 +1971,32 @@ export function ComponentGallery() {
         <Example name="Loading">
           <Card>
             <ProfileFormSkeleton />
+          </Card>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="PasswordForm" wide>
+        <Example name="Empty, Update Password unavailable (112)">
+          <PasswordFormExample />
+        </Example>
+        <Example name="Field errors: type, then Update Password checks the shared rules (not designed)">
+          <PasswordFormExample />
+        </Example>
+        <Example name="Saving (not designed)">
+          <PasswordFormExample saving />
+        </Example>
+        <Example name="The server error above the button (not designed)">
+          <PasswordFormExample formError="Something went wrong." />
+        </Example>
+        <Example name={'"Password updated" (not designed)'}>
+          <PasswordFormExample updated />
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="PasswordFormSkeleton" wide>
+        <Example name="Loading">
+          <Card>
+            <PasswordFormSkeleton />
           </Card>
         </Example>
       </GallerySection>

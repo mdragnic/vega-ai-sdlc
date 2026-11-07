@@ -82,6 +82,8 @@ describe('Cache-Control on /api', () => {
         shared.profileContract.update,
         // Task 029: the photo's read, a file, no-store like every /api answer.
         shared.profileContract.photo,
+        // Task 030: the password change.
+        shared.authContract.changePassword,
       ]),
     );
     expect(registeredRoutes(app)).toEqual(expectedRoutes);

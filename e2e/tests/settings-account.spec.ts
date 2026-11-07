@@ -395,8 +395,9 @@ test('refuses cross-site, unguarded, other-user, JSON and file requests, and tak
   const withEmail = await patch(own, { multipart: { ...valid, email: b.email } });
 
   expect(withEmail.status()).toBe(200);
-  expect(await withEmail.json()).toEqual({ ...valid, email: a.email });
-  expect(await profileOf(page.request, a)).toEqual({ ...valid, email: a.email });
+  // Task 030: the profile also answers `hasPassword` (#2).
+  expect(await withEmail.json()).toEqual({ ...valid, email: a.email, hasPassword: true });
+  expect(await profileOf(page.request, a)).toEqual({ ...valid, email: a.email, hasPassword: true });
   expect(await profileOf(request, b)).toEqual(bBefore);
 });
 

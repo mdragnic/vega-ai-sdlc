@@ -1,6 +1,6 @@
 # Architecture
 
-Finebank is a personal finance dashboard: a React single-page app, a NestJS API and an SQLite database in one npm workspace repo. Local only, no deployment. This document describes the system as built through task 029; the Security tab (task 030) is not built yet. Every rule here links to the decision (`#N`, `docs/decisions.md`) that set it, and the decision wins where the two differ.
+Finebank is a personal finance dashboard: a React single-page app, a NestJS API and an SQLite database in one npm workspace repo. Local only, no deployment. This document describes the system as built through task 030. Every rule here links to the decision (`#N`, `docs/decisions.md`) that set it, and the decision wins where the two differ.
 
 A task that changes a module boundary, an endpoint, a guard, a table or a rule in this file updates this file in the same commit.
 
@@ -58,7 +58,7 @@ A production-like mode is out of scope. If it is ever added, the API must serve 
 REST and JSON under `/api` (#74). Each endpoint exists once, as a contract entry in `shared/src/contract/`: method, path, request and response Zod schemas, and its body's encoding. Types come from `z.infer`; there is no code generation.
 
 - **One multipart endpoint:** `PATCH /profile` ("Save changes", #76, #127) takes `multipart/form-data`, each field a text part (`encoding: 'multipart'` on its entry, read by the client and the backend), and since task 029 one optional file part, `photo` (`filePart: 'photo'` on the entry), sent under the fixed file name `photo`. Any other encoding answers 415. The request schema checks the text parts and the photo together, the photo by the shared `photoSchema` (#74).
-- **One file answer:** `GET /profile/photo` answers the stored photo's bytes with their stored type, not JSON (`responseEncoding: 'file'` on its entry): the frontend puts its address, the contract's path with `?v=<photoUpdatedAt>`, in an `<img>` and never reads it through the client (task 029). The profile and the session user carry `photoUpdatedAt` only when a photo is stored.
+- **One file answer:** `GET /profile/photo` answers the stored photo's bytes with their stored type, not JSON (`responseEncoding: 'file'` on its entry): the frontend puts its address, the contract's path with `?v=<photoUpdatedAt>`, in an `<img>` and never reads it through the client (task 029). The profile and the session user carry `photoUpdatedAt` only when a photo is stored. The profile also carries `hasPassword` (task 030): false for a Google-only user (#2), whose Security tab shows the phone alone.
 - The backend passes the shared schemas to Nest's `schema` option, validated by a global `StandardSchemaValidationPipe`. Unknown keys are dropped, so a request cannot set a field the contract does not name.
 - The frontend calls the API only through the typed client in `frontend/src/api/client.ts`, which takes a contract entry. Forms use the same schemas through `zodResolver`, so the form and the API check the same rules.
 - **Money** is always integer cents with a currency: `{ "cents": 2505600, "currency": "USD" }`. Every amount is calculated in the backend; the frontend only formats it (#11, #96).
@@ -85,7 +85,7 @@ The contract entries in `shared/src/contract/` are the source of truth. This tab
 
 | Area | Endpoints |
 |------|-----------|
-| Auth | `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /auth/google`, `GET /auth/google/callback` |
+| Auth | `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /auth/google`, `GET /auth/google/callback`, `PUT /auth/password` (JSON `{ currentPassword, newPassword }`, 204 with no body; behind the session guard and the write guard, task 030) |
 | Accounts | `GET /accounts`, `GET /accounts/:accountId`, `PATCH /accounts/:accountId`, `GET /accounts/:accountId/transactions` |
 | Transactions | `GET /transactions/recent`, `GET /transactions?tab=&cursor=` |
 | Bills | `GET /bills/upcoming` |
@@ -143,8 +143,8 @@ Profile, sessions, bills, savings goals and category limits are the app's own ta
 
 | Concern | How it is handled |
 |---------|-------------------|
-| Passwords | scrypt from `node:crypto`, cost stored with each hash; the hash is computed before the database transaction (#75) |
-| Sessions | A random 256-bit token in the `finebank_session` cookie (httpOnly, SameSite=Lax, Path=/api); the database stores only its SHA-256 hash. Fixed expiry: 30 days, or a browser-session cookie without "Keep me signed in" (#75) |
+| Passwords | scrypt from `node:crypto`, cost stored with each hash; the hash is computed before the database transaction (#75). The password change (task 030, #34): the user from the session only; the current password verified against the session user's stored hash outside any transaction (a Google-only user against the dummy hash, refused alike, #2), the new one hashed only after a match, also outside it; then one transaction: an `UPDATE` keyed on the user's ID and the hash just verified (compare and set, so a change or a Google takeover in between, #104, stores nothing and answers the wrong-password 400) and the delete of the user's other sessions (#129 a). The passwords are never logged, echoed in a body or an error, put in a query or stored but as the hash |
+| Sessions | A random 256-bit token in the `finebank_session` cookie (httpOnly, SameSite=Lax, Path=/api); the database stores only its SHA-256 hash. Fixed expiry: 30 days, or a browser-session cookie without "Keep me signed in" (#75). A password change keeps the current session (its row, token, cookie and expiry untouched) and deletes the user's other sessions in the transaction that stores the new hash: another browser is signed out at its next request (401, Login), with no message (#34, #129 a), as a Google takeover ends a user's sessions (#104) |
 | Who the user is | A global session guard protects every route except the `@Public()` auth and test routes. Handlers get the user only from the session (`@CurrentUser()`); no request parameter selects a user (#39, #46) |
 | CSRF | SameSite=Lax plus Nest's built-in CSRF protection (Fetch Metadata, Origin and Host fallback): a cross-site write gets 403 before any route runs (#75) |
 | Stale tabs | The write guard (#119): every write that is not GET, HEAD or OPTIONS carries `X-Expected-User`, the email of the user the tab shows. The guard parses it with the shared email rule and compares it with the session user's stored email: missing or invalid 400, another user 409, before anything is read or written. Deny by default, so a new write endpoint is covered without opting in. It relies on email being read-only (#33); if email ever becomes editable, the guard must compare a stable user ID instead |
@@ -176,6 +176,7 @@ Profile, sessions, bills, savings goals and category limits are the app's own ta
 | A process that dies between a photo's file write and its row update, or a failed removal of a replaced photo, leaves an unused file in the uploads folder (task 029) | No row names it and nothing serves it; no sweep is built |
 | The photo is fetched again on every page load (`no-store` on every `/api` answer, task 017) | At most 2 MB, local; `?v=` changes the address after a save so a mounted `<img>` asks again |
 | A stored photo keeps its metadata (EXIF location included, #128 b) | It is served only to its owner; stripping comes first if photos are ever shown to others |
+| No limit, lockout, delay or captcha on wrong passwords: login and the password change take any number of attempts (task 030) | Brute-force protection is out of scope for now (#14). Each attempt costs one scrypt verification (N = 2^17, about 128 MB); the change also needs a valid session, a same-site request and the user's email in `X-Expected-User`. A later protection must cover both |
 
 ## Frontend
 

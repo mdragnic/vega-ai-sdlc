@@ -39,6 +39,11 @@
   outline: none;
 }
 
+/* 112: the password fields' mask in Gray/03 (#9F9F9F), lighter than 111's values (task 030). */
+.input[type='password'] {
+  color: var(--color-gray-03);
+}
+
 /* Not designed: the read-only Email has no caret, so keyboard focus shows the #87 ring around its value box; none after
    a pointer press (data-pointer-focus), which Chrome would otherwise ring. */
 .control:has(.readOnly:focus-visible:not([data-pointer-focus])) {

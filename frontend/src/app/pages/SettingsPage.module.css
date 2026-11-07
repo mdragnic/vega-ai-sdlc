@@ -14,3 +14,13 @@
 .panel {
   margin-top: var(--space-settings-tabs-gap);
 }
+
+/* A Google-only user's Security tab (task 030, #2): the read-only phone alone in the first field's place, as wide as the
+   fields' column of the Account tab's grid (`ProfileForm`'s three shares), so it lines up with 111 and 112. The card
+   ends 48 under it (its bottom padding). */
+.phoneOnly {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--size-settings-column-fields)) minmax(0, var(--size-settings-column-gap))
+    minmax(0, var(--size-settings-column-picture));
+}

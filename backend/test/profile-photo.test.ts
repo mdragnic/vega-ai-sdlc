@@ -223,7 +223,13 @@ describe('a photo saved with the profile', () => {
     const response = await patch({ bytes: upload });
 
     expect(response.status).toBe(200);
-    expect(JSON.parse(response.text)).toEqual({ ...validParts, email: ctx.email, photoUpdatedAt: FIXED_NOW });
+    // Task 030: and `hasPassword` (#2).
+    expect(JSON.parse(response.text)).toEqual({
+      ...validParts,
+      email: ctx.email,
+      hasPassword: true,
+      photoUpdatedAt: FIXED_NOW,
+    });
     const row = await rowOf(ctx.userId);
     expect(row.photo_path).toMatch(storedName);
     expect(row.photo_path).toMatch(/\.png$/);
@@ -286,6 +292,7 @@ describe('a photo saved with the profile', () => {
       username: validParts.username,
       phoneCountryCode: '+381',
       phoneNumber: '641234567',
+      hasPassword: true,
       photoUpdatedAt: LATER,
     });
     expect(JSON.parse(session.text)).toEqual({
@@ -327,6 +334,7 @@ describe('a photo saved with the profile', () => {
     expect(Object.keys(JSON.parse(profile.text) as object).toSorted()).toEqual([
       'email',
       'fullName',
+      'hasPassword',
       'phoneCountryCode',
       'phoneNumber',
       'username',

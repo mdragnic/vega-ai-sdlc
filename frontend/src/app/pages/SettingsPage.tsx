@@ -2,9 +2,20 @@ import { useId } from 'react';
 import { matchPath, useLocation, useNavigate } from 'react-router';
 
 import { formErrorFor } from '../../api/client';
+import { useChangePassword } from '../../api/password';
 import { useProfile, useUpdateProfile } from '../../api/profile';
-import { Card, DataState, MenuTab, ProfileForm, ProfileFormSkeleton } from '../../components';
+import {
+  Card,
+  DataState,
+  MenuTab,
+  PasswordForm,
+  PasswordFormSkeleton,
+  ProfileForm,
+  ProfileFormSkeleton,
+  SettingsPhoneInput,
+} from '../../components';
 import { menuTabId } from '../../components/MenuTab/MenuTab';
+import { passwordFieldNames } from '../../components/PasswordForm/PasswordForm';
 import { profileFieldNames } from '../../components/ProfileForm/ProfileForm';
 import { paths } from '../../routes/paths';
 import styles from './SettingsPage.module.css';
@@ -24,8 +35,8 @@ const tabPaths: Record<SettingsTab, string> = { account: paths.settingsAccount, 
  * tabs "Account" and "Security" (`MenuTab` `settings`, US-18 criteria 1 and 5). Each tab is a URL: opening either
  * selects it, and selecting a tab replaces the URL (no history entry: Back leaves Settings). Both routes render this one
  * page, which stays mounted across them, and both panels' contents stay mounted, the other one `hidden`, so focus stays
- * on the tab and what was typed on Account survives a visit to Security. The Security panel is empty until task 030
- * (as #105 a).
+ * on the tab and what was typed on one tab survives a visit to the other; leaving Settings unmounts both, so typed
+ * passwords go with it (task 030).
  */
 export function SettingsPage() {
   const { pathname } = useLocation();
@@ -50,8 +61,9 @@ export function SettingsPage() {
           <div hidden={tab !== 'account'}>
             <AccountPanel />
           </div>
-          {/* The Security tab's content comes with task 030. */}
-          <div hidden={tab !== 'security'} />
+          <div hidden={tab !== 'security'}>
+            <SecurityPanel />
+          </div>
         </div>
       </div>
     </Card>
@@ -86,6 +98,47 @@ function AccountPanel() {
           }}
         />
       )}
+    </DataState>
+  );
+}
+
+/**
+ * The Security tab (US-19, task 030) under its own `DataState` over the same profile query as the Account tab, so one
+ * request serves both panels and both show one answer (#6, #89, #114): a skeleton in 112's shape while it loads, the
+ * error state with Retry; no empty state. A user with a password (`hasPassword`) gets the password form with the
+ * read-only phone; a Google-only user (#2, #104) the read-only phone alone, in the first field's place, and no button.
+ * A refetch never changes what is typed. "Update Password" changes the password through `useChangePassword`; the last
+ * attempt's error stays until the next one starts, and "Password updated" until a field changes, the next press or the
+ * page is left (#34).
+ */
+function SecurityPanel() {
+  const profile = useProfile();
+  const change = useChangePassword();
+
+  return (
+    <DataState query={profile} skeleton={<PasswordFormSkeleton />}>
+      {({ hasPassword, phoneCountryCode, phoneNumber }) =>
+        hasPassword ? (
+          <PasswordForm
+            phoneCountryCode={phoneCountryCode}
+            phoneNumber={phoneNumber}
+            saving={change.isPending}
+            formError={change.isError ? formErrorFor(change.error, passwordFieldNames) : undefined}
+            updated={change.isSuccess}
+            onFieldChange={() => {
+              if (change.isSuccess) change.reset();
+            }}
+            onSave={(request, { onSuccess, onError, onSettled }) => {
+              change.reset();
+              change.mutate(request, { onSuccess, onError, onSettled });
+            }}
+          />
+        ) : (
+          <div className={styles.phoneOnly}>
+            <SettingsPhoneInput readOnly countryCode={phoneCountryCode} value={phoneNumber} />
+          </div>
+        )
+      }
     </DataState>
   );
 }

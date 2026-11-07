@@ -469,14 +469,14 @@ describe('sendWrite', () => {
         contentType = request.headers.get('Content-Type');
         await record(request);
         for (const entry of await request.formData()) parts.push(entry);
-        return HttpResponse.json({ ...profileBody, email: 'a@x.com' });
+        return HttpResponse.json({ ...profileBody, email: 'a@x.com', hasPassword: true });
       }),
     );
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     const profile = await sendWrite(clientWithSession(sessionUser), profileContract.update, profileBody);
 
-    expect(profile).toEqual({ ...profileBody, email: 'a@x.com' });
+    expect(profile).toEqual({ ...profileBody, email: 'a@x.com', hasPassword: true });
     expect(parts).toEqual([
       ['fullName', 'Ana Marija Petrović'],
       ['username', 'ana.petrovic'],
@@ -506,7 +506,12 @@ describe('sendWrite', () => {
           for (const part of await readMultipart(request)) {
             parts.push([part.name, 'value' in part ? part.value : part.file]);
           }
-          return HttpResponse.json({ ...profileBody, email: 'a@x.com', photoUpdatedAt: '2026-10-22T10:00:00.000Z' });
+          return HttpResponse.json({
+            ...profileBody,
+            email: 'a@x.com',
+            hasPassword: true,
+            photoUpdatedAt: '2026-10-22T10:00:00.000Z',
+          });
         }),
       );
 

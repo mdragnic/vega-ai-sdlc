@@ -45,12 +45,14 @@ export type ProfileUpdateRequest = z.infer<typeof profileUpdateRequestSchema>;
 
 /**
  * The signed-in user's profile, the Account tab's fields: the session user's keys (`photoUpdatedAt` only with a stored
- * photo, task 029) and the phone's two, as stored. Its `fullName` is any stored string (#126 a's condition). Unknown
- * keys are dropped.
+ * photo, task 029) and the phone's two, as stored. Its `fullName` is any stored string (#126 a's condition). And
+ * `hasPassword` (task 030): false for a Google-only user, whose Security tab shows the phone alone (#2, #34, #104).
+ * Unknown keys are dropped.
  */
 export const profileSchema = currentUserSchema.extend({
   phoneCountryCode: z.string(),
   phoneNumber: z.string(),
+  hasPassword: z.boolean(),
 });
 
 export type Profile = z.infer<typeof profileSchema>;

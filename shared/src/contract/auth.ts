@@ -44,8 +44,11 @@ export const newPasswordSchema = requiredString('Password is required')
   .max(128, passwordMax)
   .regex(/^(?=.*\p{L})(?=.*[0-9])/su, { error: 'Password must contain at least one letter and one number' });
 
-/** The login password: only required and the maximum, the sign up rules do not apply (#14, #95). */
-const loginPasswordSchema = requiredString('Password is required')
+/**
+ * A password the user already has, as login takes it: only required and the maximum, the sign up rules do not apply
+ * (#14, #95). Login's password and the Security tab's Old Password (task 030, #129 b).
+ */
+export const currentPasswordSchema = requiredString('Password is required')
   .min(1, { error: 'Password is required', abort: true })
   .max(128, passwordMax);
 
@@ -59,11 +62,80 @@ export type SignUpRequest = z.infer<typeof signUpRequestSchema>;
 
 export const loginRequestSchema = z.object({
   email: emailSchema,
-  password: loginPasswordSchema,
+  password: currentPasswordSchema,
   keepSignedIn: z.boolean(),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+/** The Security tab's texts beyond the shared password ones (#34, #129 b). */
+export const passwordMessages = {
+  /** The server's answer to a current password that does not match (#34), under Old Password. */
+  currentIncorrect: 'Current password is incorrect',
+  /** A new password equal to the current one as typed (#34, #129 b), under New Password. */
+  sameAsCurrent: 'New password must be different from the old password',
+  /** Retype Password unlike New Password, also empty while New Password is not (#34, #129 b). */
+  mismatch: 'Passwords do not match',
+} as const;
+
+/** The change's two passwords, each by its own rule: login's for the current one, sign up's for the new one (#15, #95). */
+const passwordChangeFields = z.object({
+  currentPassword: currentPasswordSchema,
+  newPassword: newPasswordSchema,
+});
+
+/**
+ * The new password differs from the current one, compared exactly as typed (#34, #95 c), its message under New Password.
+ * It runs only when New Password passed its own rules, so each field keeps one message, its first failing rule (#95 a).
+ * The refinement's input may still be anything when another key failed, so `when` checks its shape first.
+ */
+const isDifferentFromCurrent = ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+  newPassword !== currentPassword;
+
+const differentFromCurrent = {
+  error: passwordMessages.sameAsCurrent,
+  path: ['newPassword'],
+  when: ({ value }: { value: unknown }) =>
+    typeof value === 'object' &&
+    value !== null &&
+    'currentPassword' in value &&
+    'newPassword' in value &&
+    typeof value.currentPassword === 'string' &&
+    newPasswordSchema.safeParse(value.newPassword).success,
+};
+
+/**
+ * `PUT /auth/password` (task 030, #34): the current password by login's rule, the new one by sign up's, then the new one
+ * different from the current one. Passwords are never trimmed or changed (#95 c). Unknown keys are dropped, so nothing
+ * in the body names a user or reaches the backend's logic: the user is the session's (#39).
+ */
+export const passwordChangeRequestSchema = passwordChangeFields.refine(isDifferentFromCurrent, differentFromCurrent);
+
+export type PasswordChangeRequest = z.infer<typeof passwordChangeRequestSchema>;
+
+/**
+ * Retype Password equal to New Password as typed, "Passwords do not match", also when it is empty and New Password is not;
+ * nothing when both are empty (#129 b). New Password is compared whatever its own rules say, so its message and this one
+ * show together. Its own object: Zod skips an object's refinements once one of its fields stopped at an `abort`, as New
+ * Password's rules do.
+ */
+const retypeMatches = z
+  .object({ newPassword: z.unknown(), retypePassword: z.string() })
+  .refine(({ newPassword, retypePassword }) => retypePassword === newPassword, {
+    error: passwordMessages.mismatch,
+    path: ['retypePassword'],
+  });
+
+/**
+ * The Security tab's form (task 030): the request's rules and the retype's, each side checked on its own and every
+ * message given, one per field (#95 a). The retype is the form's only rule of its own: it is never sent.
+ */
+export const passwordChangeFormSchema = z.intersection(
+  passwordChangeFields.extend({ retypePassword: z.string() }).refine(isDifferentFromCurrent, differentFromCurrent),
+  retypeMatches,
+);
+
+export type PasswordChangeForm = z.infer<typeof passwordChangeFormSchema>;
 
 /** The texts the server sends, which the Login and Sign up screens show (#14, #15, #81). */
 export const authMessages = {
@@ -86,12 +158,20 @@ export const googleSignIn = {
 } as const;
 
 /**
- * Sign up (201), login (200), logout (204, no body) and the signed-in user (200). Sign up and
- * login set the session cookie, logout clears it (#3, #14, #15, #75).
+ * Sign up (201), login (200), logout (204, no body), the signed-in user (200) and the password change (204, no body,
+ * task 030). Sign up and login set the session cookie, logout clears it (#3, #14, #15, #75); the password change sets
+ * none: the current session stays and the user's other sessions end (#34, #129 a). The change is the session user's own
+ * (#39), so unlike the other writes here it is behind the session guard and its write guard (#119).
  */
 export const authContract = {
   signUp: { method: 'POST', path: '/auth/signup', request: signUpRequestSchema, response: currentUserSchema },
   login: { method: 'POST', path: '/auth/login', request: loginRequestSchema, response: currentUserSchema },
   logout: { method: 'POST', path: '/auth/logout', request: undefined, response: z.undefined() },
   me: { method: 'GET', path: '/auth/me', request: undefined, response: currentUserSchema },
+  changePassword: {
+    method: 'PUT',
+    path: '/auth/password',
+    request: passwordChangeRequestSchema,
+    response: z.undefined(),
+  },
 } as const satisfies Record<string, ContractEntry>;

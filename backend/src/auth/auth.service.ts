@@ -1,5 +1,12 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { authMessages, type CurrentUser, type LoginRequest, type SignUpRequest } from '@finebank/shared';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  authMessages,
+  type CurrentUser,
+  type LoginRequest,
+  type PasswordChangeRequest,
+  passwordMessages,
+  type SignUpRequest,
+} from '@finebank/shared';
 import { DataSource, type EntityManager } from 'typeorm';
 
 import { DemoSeeder } from '../demo/demo-seeder.js';
@@ -73,6 +80,35 @@ export class AuthService {
     });
   }
 
+  /**
+   * The session user's password change (task 030, #34). The user is the session's only (#39); the passwords reach only
+   * scrypt and nothing here logs (#75). The stored hash is read by the user's ID and the current password verified
+   * against it outside any transaction, as login: a user without a password (#2) is checked against the dummy hash and
+   * refused alike. Only after a match is the new password hashed, also outside any transaction (as sign up), so a wrong
+   * one costs one scrypt run. Then one transaction: the `UPDATE` keyed on the user's ID and the hash just verified, a
+   * compare and set, so when the hash changed meanwhile (another change, a Google takeover, #104) nothing is stored and
+   * the answer is the wrong-password 400, as what was typed is no longer the current password; and every other session
+   * of the user deleted, the presented one kept (#129 a).
+   */
+  async changePassword(
+    userId: number,
+    presentedToken: string,
+    { currentPassword, newPassword }: PasswordChangeRequest,
+  ): Promise<void> {
+    const user = await this.dataSource
+      .getRepository(User)
+      .findOne({ select: { id: true, passwordHash: true }, where: { id: userId } });
+    const verifiedHash = user?.passwordHash ?? null;
+    const valid = await this.passwords.verify(currentPassword, verifiedHash);
+    if (!valid || verifiedHash === null) throw wrongCurrentPassword();
+    const passwordHash = await this.passwords.hash(newPassword);
+    await this.dataSource.transaction(async (manager) => {
+      const { affected } = await manager.update(User, { id: userId, passwordHash: verifiedHash }, { passwordHash });
+      if (affected !== 1) throw wrongCurrentPassword();
+      await this.sessions.deleteOthersOf(manager, userId, presentedToken);
+    });
+  }
+
   /** Ends the presented session, if any (#3). */
   async logout(presentedToken: string | undefined): Promise<void> {
     if (presentedToken !== undefined) {
@@ -89,3 +125,10 @@ export class AuthService {
     return { user: toCurrentUser(user), token };
   }
 }
+
+/** A current password that does not match (#34): the message under Old Password, in the shared error shape (#74). */
+const wrongCurrentPassword = () =>
+  new BadRequestException({
+    message: passwordMessages.currentIncorrect,
+    fieldErrors: { currentPassword: passwordMessages.currentIncorrect },
+  });

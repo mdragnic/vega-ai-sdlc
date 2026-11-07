@@ -174,8 +174,9 @@ describe('Settings, Account tab', () => {
     expect(screen.getByRole('group', { name: 'Phone Number' })).toContainElement(countryCode());
     expect(screen.getByRole('group', { name: 'Phone Number' })).toContainElement(phoneNumber());
     // No placeholder where none is designed (#63). Task 029: the photo's hidden file input is a fifth input, so the four
-    // fields are counted without it; every input is still checked for a placeholder.
-    const inputs = screen.getByRole('tabpanel').querySelectorAll('input');
+    // fields are counted without it; every input is still checked for a placeholder. Task 030: the Account form's inputs,
+    // as the hidden Security panel now holds its own.
+    const inputs = fullName().closest('form')!.querySelectorAll('input');
     expect([...inputs].filter((input) => input.type !== 'file')).toHaveLength(4);
     expect([...inputs].filter((input) => input.type === 'file')).toHaveLength(1);
     for (const input of inputs) expect(input).not.toHaveAttribute('placeholder');
@@ -221,12 +222,14 @@ describe('the Settings tabs', () => {
     expect(router.state.historyAction).toBe('REPLACE');
     expect(tab('Security')).toHaveAttribute('aria-selected', 'true');
     expect(tab('Security')).toHaveFocus();
-    // The Security panel is empty until task 030; the form is mounted but hidden.
+    // The Account form is mounted but hidden. Changed by task 030: the Security panel was empty; it now shows the Security
+    // tab (its own tests in settings-security.test.tsx): the read-only phone's two inputs and "Update Password".
     expect(screen.queryByRole('textbox', { name: 'Full name' })).toBeNull();
     const panel = screen.getByRole('tabpanel');
     expect(panel).toHaveAccessibleName('Security');
-    expect(within(panel).queryAllByRole('textbox')).toEqual([]);
-    expect(within(panel).queryByRole('button')).toBeNull();
+    await waitFor(() => expect(within(panel).getByLabelText('Old Password')).toBeVisible());
+    expect(within(panel).getAllByRole('textbox')).toHaveLength(2);
+    expect(within(panel).getByRole('button', { name: 'Update Password' })).toBeVisible();
 
     await user.click(tab('Account'));
 
@@ -485,6 +488,8 @@ describe('Save changes', () => {
     username: 'ana.petrovic',
     phoneCountryCode: '+880',
     phoneNumber: '5154758868',
+    // Task 030: the profile answers whether the user has a password (#2).
+    hasPassword: true,
   };
 
   it('sends one PATCH of four text parts with the header, holds the form while it runs, then shows the result', async () => {
@@ -680,7 +685,12 @@ describe('a failed save', () => {
         return HttpResponse.json(sessionUser);
       }),
       http.get('*/api/profile', () =>
-        HttpResponse.json({ ...sessionUser, phoneCountryCode: '+1', phoneNumber: '' } satisfies Profile),
+        HttpResponse.json({
+          ...sessionUser,
+          phoneCountryCode: '+1',
+          phoneNumber: '',
+          hasPassword: true,
+        } satisfies Profile),
       ),
       http.patch('*/api/profile', () => {
         sessionUser = other;
@@ -830,7 +840,10 @@ describe('the Account panel’s states', () => {
     const { user } = await openSettings('/settings/account', profile.failsThenAnswers());
 
     const retry = await screen.findByRole('button', { name: 'Retry' }, { timeout: 10_000 });
-    expect(screen.getByText('Something went wrong.')).toBeInTheDocument();
+    // Task 030: the hidden Security panel shows the same error state (one profile query for both): the visible one.
+    expect(
+      screen.getAllByText('Something went wrong.').filter((element) => element.closest('[hidden]') === null),
+    ).toHaveLength(1);
     expect(tablist()).toBeInTheDocument();
     await user.click(retry);
 
@@ -894,7 +907,9 @@ describe('a stored Full name that breaks the rule', () => {
       server.use(
         today.answers(),
         http.get('*/api/auth/me', () => HttpResponse.json(storedUser)),
-        http.get('*/api/profile', () => HttpResponse.json({ ...storedUser, phoneCountryCode: '+1', phoneNumber: '' })),
+        http.get('*/api/profile', () =>
+          HttpResponse.json({ ...storedUser, phoneCountryCode: '+1', phoneNumber: '', hasPassword: true }),
+        ),
       );
       const { user } = renderApp('/overview', probedRoutes, { strict: true });
       // The name, and for a one-character name its initial too.
