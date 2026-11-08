@@ -49,14 +49,19 @@ async function openBalances(...handlers: Parameters<typeof server.use>) {
 const balances = () => screen.getByRole('region', { name: 'Balances' });
 /** Waits until the page shows its list of accounts. */
 const list = () => within(balances()).findByRole('list');
-/** The account cards: the list items assistive technology reads (the Add Accounts cell is hidden from it). */
-const cards = async () => within(await list()).getAllByRole('listitem');
-/** Every cell of the grid, the hidden Add Accounts cell too. */
+/** The account cards: the list items with a heading (the Add Accounts cell is a list item too, #133). */
+const cards = async () =>
+  within(await list())
+    .getAllByRole('listitem')
+    .filter((item) => within(item).queryByRole('heading', { level: 3 }) !== null);
+/** Every cell of the grid, the Add Accounts cell too. */
 const cells = async () => [...(await list()).children];
 const cardOf = async (type: string) =>
   (await cards()).find((card) => within(card).queryByRole('heading', { level: 3, name: type }) !== null)!;
 const detailsOf = async (type: string) => within(await cardOf(type)).getByRole('link', { name: 'Details' });
 const detailsLinks = () => within(balances()).getAllByRole('link', { name: 'Details' });
+/** The buttons named `text`, which do nothing (#22, #23, #133). */
+const controls = (text: string) => within(balances()).getAllByRole('button', { name: text });
 
 const sidebar = () => screen.getByRole('navigation', { name: 'Main' });
 const currentLinks = () =>
@@ -95,7 +100,7 @@ const firstLoginReadOut = [
   ['Savings', 'Brac Bank Ltd.', 'Account Number', '**** **** **** 4421', 'Total amount', '$27,356.80'],
   ['Investment', 'AB Bank Ltd', 'Account Number', '**** **** **** 6652', 'Total amount', '$29,503.00'],
   ['Loan', 'City Bank Ltd.', 'Account Number', '**** **** **** 9083', 'Total amount', '$19,013.21'],
-].map((card) => [...card, 'Details']);
+].map((card) => [...card, 'Remove', 'Details']);
 
 /** The type and the Bank Name of each card, which describe its "Details" (AC10). */
 const descriptions = [
@@ -235,42 +240,68 @@ describe('the Details links', () => {
   });
 });
 
-// T9: AC5, "Remove", "Add Accounts" and "Edit Accounts" are visual only (#22, #23).
-describe('the visual-only parts', () => {
-  it.each(['Remove', 'Add Accounts', 'Edit Accounts'])('does nothing on a click on "%s"', async (text) => {
+// T9: AC5, "Remove", "Add Accounts" and "Edit Accounts" do nothing (#22, #23). Task 032 T11 (#133): they are buttons
+// shown disabled and described as "Not available", where task 019 drew them as hidden text with no Tab stop.
+describe('the controls that do nothing', () => {
+  it.each(['Remove', 'Add Accounts', 'Edit Accounts'])('does nothing on a click on "%s"; focus on it', async (text) => {
     const { user, url } = await openBalances();
     await list();
-    const target = within(balances()).getAllByText(text)[0]!;
-    const focused = document.activeElement;
+    const target = controls(text)[0]!;
     const sent = requests.length;
 
     await user.click(target);
 
     expect(url()).toBe('/balances');
-    expect(document.activeElement).toBe(focused);
+    expect(target).toHaveFocus();
+    expect(requests).toHaveLength(sent);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect((await cards()).map(readOut)).toEqual(firstLoginReadOut);
+  });
+
+  it.each(['Remove', 'Add Accounts', 'Edit Accounts'])('does nothing on Enter or Space on "%s"', async (text) => {
+    const { user, url } = await openBalances();
+    await list();
+    const target = controls(text)[0]!;
+    target.focus();
+    const sent = requests.length;
+
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+
+    expect(url()).toBe('/balances');
+    expect(target).toHaveFocus();
     expect(requests).toHaveLength(sent);
     expect(screen.queryByRole('dialog')).toBeNull();
     expect((await cards()).map(readOut)).toEqual(firstLoginReadOut);
   });
 
   it.each(['Remove', 'Add Accounts', 'Edit Accounts'])(
-    'gives "%s" no role, no Tab stop, and hides it from assistive technology',
+    'makes "%s" a button shown disabled, described as "Not available", a Tab stop seen by assistive technology',
     async (text) => {
       await openBalances();
       await list();
 
-      for (const element of within(balances()).getAllByText(text)) {
-        expect(element.closest('a, button, input, [role], [tabindex], [onclick]')).toBeNull();
-        expect(element.closest('[aria-hidden="true"]')).not.toBeNull();
+      for (const control of controls(text)) {
+        expect(control).toHaveAttribute('type', 'button');
+        expect(control).toHaveAttribute('aria-disabled', 'true');
+        expect(control).not.toBeDisabled();
+        expect(control.tabIndex).toBe(0);
+        expect(control).toHaveAccessibleDescription('Not available');
+        expect(control).not.toHaveAttribute('title');
+        expect(control.closest('[aria-hidden="true"], [inert]')).toBeNull();
       }
     },
   );
 
-  it('has no button in the page, and no link but the five "Details"', async () => {
+  it('has seven buttons, a "Remove" on each card, then "Add Accounts" and "Edit Accounts", and the five "Details" links', async () => {
     await openBalances();
     await list();
 
-    expect(within(balances()).queryAllByRole('button', { hidden: true })).toEqual([]);
+    expect(
+      within(balances())
+        .getAllByRole('button', { hidden: true })
+        .map((button) => button.textContent),
+    ).toEqual([...Array.from({ length: 5 }, () => 'Remove'), 'Add Accounts', 'Edit Accounts']);
     expect(
       within(balances())
         .getAllByRole('link', { hidden: true })
@@ -291,6 +322,8 @@ describe('the grid', () => {
     const all = await cells();
     expect(all).toHaveLength(cellCount);
     expect(await cards()).toHaveLength(cellCount - 1);
+    // Every cell is a list item assistive technology reads, the Add Accounts cell too (#133).
+    expect(within(await list()).getAllByRole('listitem')).toHaveLength(cellCount);
     expect(within(all.at(-1) as HTMLElement).getByText('Add Accounts')).toBeInTheDocument();
   });
 
@@ -327,23 +360,30 @@ describe('the Balances Tab order', () => {
     }
   });
 
-  it('tabs from the search field through the five "Details" in card order and out; Shift+Tab goes back', async () => {
+  // Task 032 (#133): each card's "Remove" before its "Details", then "Add Accounts" and "Edit Accounts".
+  it('tabs from the search field through each card’s "Remove" and "Details", "Add Accounts", "Edit Accounts" and out; Shift+Tab goes back', async () => {
     const { user } = await openBalances();
     await list();
     const main = screen.getByRole('main');
-    const links = detailsLinks();
+    const removes = within(balances()).getAllByRole('button', { name: 'Remove' });
+    const stops = [
+      ...detailsLinks().flatMap((link, index) => [removes[index]!, link]),
+      within(balances()).getByRole('button', { name: 'Add Accounts' }),
+      within(balances()).getByRole('button', { name: 'Edit Accounts' }),
+    ];
+    expect(stops).toHaveLength(12);
 
     search().focus();
-    for (const link of links) {
+    for (const stop of stops) {
       await user.tab();
-      expect(link).toHaveFocus();
+      expect(stop).toHaveFocus();
     }
     await user.tab();
     expect(main.contains(document.activeElement)).toBe(false);
 
-    for (const link of links.toReversed()) {
+    for (const stop of stops.toReversed()) {
       await user.tab({ shift: true });
-      expect(link).toHaveFocus();
+      expect(stop).toHaveFocus();
     }
     await user.tab({ shift: true });
     expect(search()).toHaveFocus();
@@ -378,7 +418,8 @@ describe('the Balances states', () => {
     expect(within(balances()).queryByRole('alert')).toBeNull();
   });
 
-  it('keeps focus in the region on a keyboard Retry, never the page body, and Tab goes on to the first "Details"', async () => {
+  // Task 032 (#133): the first Tab stop in the cards is the first card's "Remove", before its "Details".
+  it('keeps focus in the region on a keyboard Retry, never the page body, and Tab goes on to the first "Remove"', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const { user } = await openBalances(accounts.failsThenAnswers());
     await vi.advanceTimersByTimeAsync(30_000);
@@ -389,6 +430,8 @@ describe('the Balances states', () => {
     expect(await list()).toBeInTheDocument();
     expect(dataStateRootIn(balances())).toHaveFocus();
     expect(document.activeElement).not.toBe(document.body);
+    await user.tab();
+    expect(within(await cardOf('Credit Card')).getByRole('button', { name: 'Remove' })).toHaveFocus();
     await user.tab();
     expect(await detailsOf('Credit Card')).toHaveFocus();
   });

@@ -57,6 +57,7 @@ export { Logout } from './Logout/Logout';
 export { MenuTab } from './MenuTab/MenuTab';
 export { NavBar } from './NavBar/NavBar';
 export { NavMenu, type NavSection } from './NavMenu/NavMenu';
+export { NotAvailableTooltip } from './NotAvailableTooltip/NotAvailableTooltip';
 export { OverviewExpensesBreakdown } from './OverviewExpensesBreakdown/OverviewExpensesBreakdown';
 export { OverviewExpensesBreakdownSkeleton } from './OverviewExpensesBreakdownSkeleton/OverviewExpensesBreakdownSkeleton';
 export { PasswordForm, type PasswordSaveHandlers } from './PasswordForm/PasswordForm';

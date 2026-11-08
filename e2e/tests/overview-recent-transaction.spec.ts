@@ -2,7 +2,16 @@ import type { Locator, Page, Route } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, signUp, tokenColor, waitForRecentTransactions, within2 } from '../helpers';
+import {
+  box,
+  computed,
+  expectRing,
+  expectSignedColours,
+  signUp,
+  tokenColor,
+  waitForRecentTransactions,
+  within2,
+} from '../helpers';
 
 const region = (page: Page, name: string) => page.getByRole('main').getByRole('region', { name });
 const recent = (page: Page) => region(page, 'Recent Transaction');
@@ -571,4 +580,24 @@ test('wraps a 120-character item and shop and $1,000,000,000.00 at 1440x1024 wit
   await tab(page, 'Revenue').click();
   await expect(panel(page).getByText('No transactions yet')).toBeVisible();
   expect(await gridBoxes(page)).toEqual(grid);
+});
+
+// Task 032 T7: AC5. Income in green and expenses in red, by the direction as sent, on every tab (#132, #134 a).
+test('shows income amounts in green and expense amounts in red on every tab', async ({ page }) => {
+  await openOverview(page);
+  const amounts = rows(page).locator('time').locator('xpath=preceding-sibling::p[1]');
+  const seen: Record<string, { income: number; expense: number }> = {};
+
+  for (const name of ['All', 'Revenue', 'Expenses'] as const) {
+    await tab(page, name).click();
+    await expect(tab(page, name)).toHaveAttribute('aria-selected', 'true');
+    await expect(rows(page)).toHaveCount(5);
+    seen[name] = await expectSignedColours(amounts, name);
+  }
+
+  expect(seen).toEqual({
+    All: { income: 0, expense: 5 },
+    Revenue: { income: 5, expense: 0 },
+    Expenses: { income: 0, expense: 5 },
+  });
 });

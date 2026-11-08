@@ -26,6 +26,8 @@
   --color-logout-bg: #262626;
   --color-divider-light: #F6F6F6;
   --color-auth-muted: #999DA3;
+  --color-income: #3A8553;
+  --color-expense: #DD3817;
 
   /* Typography */
   --font-family-inter: 'Inter Variable', 'Inter', sans-serif;

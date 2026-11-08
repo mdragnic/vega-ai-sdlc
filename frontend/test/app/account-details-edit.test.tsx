@@ -66,6 +66,7 @@ const branchName = () => within(detailsRegion()).getByRole('textbox', { name: 'B
 const accountType = () => within(detailsRegion()).getByRole('combobox', { name: 'Account Type' });
 const saveButton = () => within(detailsRegion()).getByRole('button', { name: 'Save' });
 const cancelButton = () => within(detailsRegion()).getByRole('button', { name: 'Cancel' });
+const removeButton = () => within(detailsRegion()).getByRole('button', { name: 'Remove' });
 const loadMore = () => within(historyRegion()).getByRole('button', { name: 'Load More' });
 const search = () => screen.getByRole('searchbox', { name: 'Search' });
 const patches = () => sent.filter((request) => request.startsWith('PATCH '));
@@ -142,18 +143,19 @@ function recordAddedText() {
 
 // T12: AC1, AC2 and AC16, "Edit Details" and edit mode (#26, #60, #87).
 describe('"Edit Details"', () => {
-  it('is a button between the search field and "Load More" in the Tab order; "Remove" stays visual only', async () => {
+  // Task 032 (#133, #134 c): "Remove" after it is a button shown disabled, where it was hidden visual-only text.
+  it('is a button between the search field and "Remove", then "Load More", in the Tab order; "Remove" shown disabled', async () => {
     const { user } = await openAccount();
 
     search().focus();
     await user.tab();
     expect(editButton()).toHaveFocus();
     await user.tab();
+    expect(removeButton()).toHaveFocus();
+    await user.tab();
     expect(loadMore()).toHaveFocus();
-    const remove = within(detailsRegion()).getByText('Remove');
-    expect(remove.closest('[aria-hidden="true"]')).not.toBeNull();
-    expect(remove.closest('[inert]')).not.toBeNull();
-    expect(screen.queryByRole('button', { name: 'Remove', hidden: true })).toBeNull();
+    expect(removeButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(removeButton()).toHaveAccessibleDescription('Not available');
   });
 
   it('opens edit mode on a click: the fields prefilled and named by their labels, focus in Bank Name, no request', async () => {
@@ -173,9 +175,11 @@ describe('"Edit Details"', () => {
     expect(saveButton()).toHaveAttribute('type', 'submit');
     expect(cancelButton()).toBeInTheDocument();
     expect(queryEditButton()).toBeNull();
-    const remove = within(detailsRegion()).getByText('Remove');
-    expect(remove.closest('[aria-hidden="true"]')).not.toBeNull();
-    expect(remove.closest('[inert]')).not.toBeNull();
+    // Task 032 (#134 c): in edit mode too, "Remove" is a button shown disabled, where it was hidden and inert.
+    expect(removeButton()).toHaveAttribute('type', 'button');
+    expect(removeButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(removeButton()).toHaveAccessibleDescription('Not available');
+    expect(removeButton().closest('[aria-hidden="true"], [inert]')).toBeNull();
     expect(sent.slice(before)).toEqual([]);
   });
 
@@ -237,14 +241,33 @@ describe('"Edit Details"', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
-  it('tabs Bank Name, Account Type, Branch Name, Save, Cancel, then "Load More"', async () => {
+  // Task 032 (#134 c): "Remove" after Cancel.
+  it('tabs Bank Name, Account Type, Branch Name, Save, Cancel, "Remove", then "Load More"', async () => {
     const { user } = await openAccount();
     await edit(user);
 
-    for (const next of [accountType, branchName, saveButton, cancelButton, loadMore]) {
+    for (const next of [accountType, branchName, saveButton, cancelButton, removeButton, loadMore]) {
       await user.tab();
       expect(next()).toHaveFocus();
     }
+  });
+
+  it('does nothing on a click, Enter or Space on "Remove" in edit mode: the form kept, focus on it', async () => {
+    const { user, url } = await openAccount();
+    await edit(user);
+    await user.clear(bankName());
+    await user.type(bankName(), 'Typed Bank');
+    const before = sent.length;
+
+    await user.click(removeButton());
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+
+    expect(url()).toBe('/balances/2');
+    expect(removeButton()).toHaveFocus();
+    expect(bankName()).toHaveValue('Typed Bank');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent.slice(before)).toEqual([]);
   });
 });
 
@@ -588,6 +611,28 @@ describe('Cancel and Escape', () => {
 
     await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
     await waitFor(() => expect(accountType()).toHaveFocus());
+    expect(bankName()).toHaveValue('Discarded Bank');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(editButton()).toHaveFocus());
+    expect(readOut()).toEqual(checkingReadOut);
+  });
+
+  // Task 032 code review: "Remove" shows "Not available" while it has keyboard focus (#133, #134 c). Escape hides only
+  // that text, as with the list open: the typing is kept until a second Escape.
+  it('hides only "Not available" on Escape with focus on "Remove"; a second Escape discards', async () => {
+    const { user } = await openAccount();
+    await edit(user);
+    await replaceText(user, bankName(), 'Discarded Bank');
+    for (const next of [accountType, branchName, saveButton, cancelButton, removeButton]) {
+      await user.tab();
+      expect(next()).toHaveFocus();
+    }
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Not available');
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+    expect(removeButton()).toHaveFocus();
     expect(bankName()).toHaveValue('Discarded Bank');
     await user.keyboard('{Escape}');
     await waitFor(() => expect(editButton()).toHaveFocus());

@@ -64,12 +64,12 @@
 }
 
 /* 106 "Remove": Gray/01, Medium 14/20 (by ink density: the build's ink is 0.87 of 106's at Medium, the ratio of the texts
-   whose weight both share, 0.75 at Regular and 1.00 at Semibold; task 021 Log). Visual only (#23): the default cursor. */
+   whose weight both share, 0.75 at Regular and 1.00 at Semibold; task 021 Log). A button shown disabled (#133, #134 c),
+   its look as drawn, with the default cursor and the ring of `disabledTextButton`. */
 .remove {
   color: var(--color-gray-01);
   font-family: var(--font-family-inter);
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-20);
-  cursor: default;
 }

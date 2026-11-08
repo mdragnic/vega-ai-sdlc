@@ -1,0 +1,20 @@
+/* Not designed (#133): existing tokens only. The app's dark sidebar pair, Default Black with white text, in the type,
+   padding and radius of a Dropdown option and the shadow of the Dropdown list, so the two floating layers match. It
+   sits above the control, or under it, as far from it as the Dropdown list from its trigger. */
+.tooltip {
+  padding: var(--space-tab-padding-x) var(--space-input-padding-x);
+  border-radius: var(--radius-button);
+  background-color: var(--color-default-black);
+  box-shadow: var(--shadow-card);
+  color: var(--color-white);
+  font: var(--font-regular-14-20);
+  white-space: nowrap;
+}
+
+.tooltip[data-side='top'] {
+  margin-bottom: var(--space-form-label-gap);
+}
+
+.tooltip[data-side='bottom'] {
+  margin-top: var(--space-form-label-gap);
+}

@@ -2,7 +2,7 @@ import type { APIRequestContext, Locator, Page, Request, Route } from '@playwrig
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, signUp, tokenColor } from '../helpers';
+import { box, computed, expectRing, expectSignedColours, signUp, tokenColor } from '../helpers';
 
 const main = (page: Page) => page.getByRole('main');
 const detailsRegion = (page: Page) => main(page).getByRole('region', { name: 'Account Details' });
@@ -368,27 +368,40 @@ test('opens Balances for another user’s, an unknown and a malformed ID, showin
   }
 });
 
-// T27: AC3, AC15 and AC16, the keyboard and the visual-only parts (#23, #26, #87, #117 a, #118 a).
-// Task 022: "Edit Details" is a button and a Tab stop between the search field and "Load More"; "Remove" keeps every
-// visual-only check (#23).
-test('tabs from the search field to "Edit Details" and "Load More" with the ring, then out; Remove does nothing', async ({
+// T27: AC3, AC15 and AC16, the keyboard and the parts that do nothing (#23, #26, #87, #117 a, #118 a).
+// Task 022: "Edit Details" is a button and a Tab stop between the search field and "Load More". Task 032 T13 (#133,
+// #134 c): "Remove" is a button shown disabled after it, described as "Not available", where it was inert text; a
+// click on it still does nothing.
+test('tabs from the search field to "Edit Details", "Remove" and "Load More" with the ring, then out; Remove does nothing', async ({
   page,
 }) => {
   await openAccount(page);
   const editDetails = detailsCard(page).getByRole('button', { name: 'Edit Details' });
+  const remove = detailsCard(page).getByRole('button', { name: 'Remove' });
   await expect(main(page).getByRole('link')).toHaveCount(0);
-  await expect(main(page).getByRole('button')).toHaveText(['Edit Details', 'Load More']);
+  await expect(main(page).getByRole('button')).toHaveText(['Edit Details', 'Remove', 'Load More']);
+  await expect(remove).toHaveAttribute('aria-disabled', 'true');
+  await expect(remove).toHaveAccessibleDescription('Not available');
 
   await search(page).focus();
   await page.keyboard.press('Tab');
   await expect(editDetails).toBeFocused();
   await expectRing(page, editDetails);
   await page.keyboard.press('Tab');
+  await expect(remove).toBeFocused();
+  await expectRing(page, remove);
+  await expect(page.getByRole('tooltip')).toHaveText('Not available');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+  await expect(remove).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(loadMore(page)).toBeFocused();
   await expectRing(page, loadMore(page));
   await page.keyboard.press('Tab');
   expect(await main(page).evaluate((element) => element.contains(document.activeElement))).toBe(false);
   await loadMore(page).focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(remove).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(editDetails).toBeFocused();
   await page.keyboard.press('Shift+Tab');
@@ -415,16 +428,25 @@ test('tabs from the search field to "Edit Details" and "Load More" with the ring
   expect(await clickedRow.evaluate((node) => node.matches(':focus-visible'))).toBe(false);
   expect(await computed(clickedRow, 'outline-style')).toBe('none');
 
-  // The visual-only part and a row: nothing happens, no pointer.
+  // "Remove" and a row: nothing happens, no pointer; a click focuses "Remove" with no ring, "Not available" on hover.
   const url = page.url();
   const sent = recordAccountRequests(page);
-  for (const text of ['Remove']) {
-    const element = detailsCard(page).getByText(text, { exact: true });
-    expect(await computed(element, 'cursor')).toBe('default');
-    expect(await element.evaluate((node) => node.closest('[inert]') !== null)).toBe(true);
-    const { x, y, width, height } = await box(element);
-    await page.mouse.click(x + width / 2, y + height / 2);
-  }
+  const color = await computed(remove, 'color');
+  expect(await computed(remove, 'cursor')).toBe('default');
+  expect(color).toBe(await tokenColor(page, '--color-gray-01'));
+  expect(await remove.evaluate((node) => node.closest('[inert], [aria-hidden="true"]'))).toBeNull();
+  // Load More moved focus down the page: "Remove" back in view before the pointer goes to it.
+  await remove.scrollIntoViewIfNeeded();
+  const { x, y, width, height } = await box(remove);
+  await page.mouse.move(x + width / 2, y + height / 2);
+  await expect(page.getByRole('tooltip')).toHaveText('Not available');
+  expect(await computed(remove, 'color')).toBe(color);
+  await page.mouse.click(x + width / 2, y + height / 2);
+  await expect(remove).toBeFocused();
+  expect(await remove.evaluate((node) => node.matches(':focus-visible'))).toBe(false);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press(' ');
+  await expect(remove).toBeFocused();
   await bodyRows(page).first().click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(page.url()).toBe(url);
@@ -780,3 +802,20 @@ for (const [width, height] of [
     });
   }
 }
+
+// Task 032 T7: AC5. Income in green and expenses in red in the history, by the direction as sent, the rows "Load More"
+// adds included (#132, #134 a).
+test('shows income amounts in green and expense amounts in red in the history, the rows "Load More" adds included', async ({
+  page,
+}) => {
+  await openAccount(page);
+  await expect(bodyRows(page)).toHaveCount(10);
+  await loadMore(page).click();
+  await expect(bodyRows(page)).toHaveCount(20);
+
+  const seen = await expectSignedColours(bodyRows(page).locator('td:last-child'), 'Checking history');
+
+  expect(seen.income).toBeGreaterThan(0);
+  expect(seen.expense).toBeGreaterThan(0);
+  expect(seen.income + seen.expense).toBe(20);
+});

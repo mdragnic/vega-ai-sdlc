@@ -10,10 +10,13 @@ const balances = (page: Page) => page.getByRole('main').getByRole('region', { na
 /** The section's content: the grid, the skeleton row, or the white card of the error and empty states. */
 const content = (page: Page) => balances(page).locator(':scope > div').last();
 const grid = (page: Page) => balances(page).getByRole('list');
-/** Every cell of the grid, the hidden Add Accounts cell too. */
+/** Every cell of the grid, the Add Accounts cell too. */
 const cells = (page: Page) => grid(page).locator(':scope > li');
-/** The account cards, as assistive technology lists them. */
-const cards = (page: Page) => grid(page).getByRole('listitem');
+/** The account cards: the list items with a heading (the Add Accounts cell is a list item too, #133). */
+const cards = (page: Page) =>
+  grid(page)
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('heading', { level: 3 }) });
 const details = (page: Page) => balances(page).getByRole('link', { name: 'Details' });
 const search = (page: Page) => page.getByRole('searchbox', { name: 'Search' });
 const totalBalance = (page: Page) => page.getByRole('main').getByRole('region', { name: 'Total Balance' });
@@ -205,72 +208,179 @@ test('opens /balances/<id> from each "Details" with no page load, Balances activ
   expect(loads).toBe(0);
 });
 
-// T17: AC5, "Remove", "Add Accounts" and "Edit Accounts" are drawn and do nothing (#22, #23).
-test('does nothing on "Remove", "Add Accounts" and "Edit Accounts": no request, no dialog, no focus, no pointer', async ({
+const tooltip = (page: Page) => page.getByRole('tooltip');
+const addAccounts = (page: Page) => balances(page).getByRole('button', { name: 'Add Accounts', exact: true });
+const editAccounts = (page: Page) => balances(page).getByRole('button', { name: 'Edit Accounts', exact: true });
+const removes = (page: Page) => balances(page).getByRole('button', { name: 'Remove', exact: true });
+
+/**
+ * "Not available" shows next to the control, centred on it (task 032, #133): 8 above "Add Accounts", 8 under "Edit
+ * Accounts" and each "Remove", where above would cover "Add Accounts" or the card's "Total amount". It covers no other
+ * control or text on the page.
+ */
+async function expectNotAvailableNextTo(page: Page, control: Locator) {
+  await expect(tooltip(page)).toHaveCount(1);
+  await expect(tooltip(page)).toBeVisible();
+  await expect(tooltip(page)).toHaveText('Not available');
+  const tip = await box(tooltip(page));
+  const target = await box(control);
+  const name = await control.textContent();
+  if (name === 'Add Accounts') within2(tip.y + tip.height, target.y - 8, 'the tooltip 8 above "Add Accounts"');
+  else within2(tip.y, target.y + target.height + 8, `the tooltip 8 under "${name}"`);
+  within2(tip.x + tip.width / 2, target.x + target.width / 2, 'the tooltip centred on the control');
+  for (const other of await balances(page).locator('h2, h3, p, dt, dd, img, button, a').all()) {
+    expect(overlaps(tip, await box(other)), `the tooltip over "${await other.textContent()}"`).toBe(false);
+  }
+}
+
+// T17: AC5, "Remove", "Add Accounts" and "Edit Accounts" do nothing (#22, #23). Task 032 T13 (#133): they are buttons
+// shown disabled and described as "Not available", where task 019 drew them as text with no focus, hidden from
+// assistive technology; "nothing happens" holds as before.
+test('does nothing on "Remove", "Add Accounts" and "Edit Accounts": no request or dialog, focus on it, "Not available" on hover', async ({
   page,
 }) => {
   await openBalances(page);
   const requests: string[] = [];
   page.on('request', (sent) => requests.push(sent.url()));
   const before = await balances(page).innerHTML();
-  const targets = [
-    cards(page).first().getByText('Remove', { exact: true }),
-    balances(page).getByText('Add Accounts', { exact: true }),
-    balances(page).getByText('Edit Accounts', { exact: true }),
-  ];
+  const targets = [removes(page).first(), addAccounts(page), editAccounts(page)];
 
   for (const target of targets) {
+    await expect(target).toHaveAttribute('aria-disabled', 'true');
+    await expect(target).toHaveAttribute('type', 'button');
+    await expect(target).toHaveAccessibleDescription('Not available');
+    expect(await target.getAttribute('title')).toBeNull();
+    expect(await target.evaluate((node) => node.closest('[aria-hidden="true"], [inert]'))).toBeNull();
+    expect(await computed(target, 'cursor')).toBe('default');
     const color = await computed(target, 'color');
     const background = await computed(target, 'background-color');
-    expect(await computed(target, 'cursor')).toBe('default');
+
+    // Hover: the text shows; it stays while the pointer moves onto it, and goes when the pointer leaves (WCAG 1.4.13).
     await target.hover();
+    await expectNotAvailableNextTo(page, target);
     expect(await computed(target, 'color')).toBe(color);
     expect(await computed(target, 'background-color')).toBe(background);
-    await target.click();
+    const tip = await box(tooltip(page));
+    await page.mouse.move(tip.x + tip.width / 2, tip.y + tip.height / 2, { steps: 5 });
+    await expect(tooltip(page)).toBeVisible();
+    await page.mouse.move(5, 600, { steps: 5 });
+    await expect(tooltip(page)).toHaveCount(0);
+
+    // A click, Enter and Space: nothing happens, focus on the control, the text kept while the pointer is on it.
+    await target.hover();
+    await expectNotAvailableNextTo(page, target);
+    // A real click at its centre: Playwright's click() waits for an aria-disabled button to become enabled.
+    const { x, y, width, height } = await box(target);
+    await page.mouse.click(x + width / 2, y + height / 2);
+    await expect(target).toBeFocused();
+    await expect(tooltip(page)).toBeVisible();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(' ');
     await expect(page).toHaveURL(`${FRONTEND_URL}/balances`);
-    expect(await isBodyFocused(page)).toBe(true);
+    await expect(target).toBeFocused();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    expect(
-      await target.evaluate((node) => node.closest('a, button, [tabindex], [role]') === null && node.tabIndex === -1),
-    ).toBe(true);
-    expect(await target.evaluate((node) => node.closest('[aria-hidden="true"]') !== null)).toBe(true);
+
+    // Escape hides it, focus kept.
+    await page.keyboard.press('Escape');
+    await expect(tooltip(page)).toHaveCount(0);
+    await expect(target).toBeFocused();
+    await page.mouse.move(5, 600);
+    await page.mouse.click(140, 600);
+    expect(await isBodyFocused(page)).toBe(true);
   }
-  // Give a request a moment to start, if a click had sent one.
+  // Give a request a moment to start, if a click or a key had sent one.
   await page.waitForTimeout(300);
   expect(requests.filter((url) => url.includes('/api/'))).toEqual([]);
   expect(await balances(page).innerHTML()).toBe(before);
-  await expect(balances(page).getByRole('button')).toHaveCount(0);
+  await expect(balances(page).getByRole('button')).toHaveText([
+    ...Array.from({ length: 5 }, () => 'Remove'),
+    'Add Accounts',
+    'Edit Accounts',
+  ]);
 });
 
-// T17: AC10, the keyboard: the search field, the five "Details" in card order, then out; the ring with the keyboard
-// only (#87).
-test('tabs from the search field through the five "Details" with the ring and out; Shift+Tab goes back', async ({
+// Task 032 T13: AC12, the disabled look (#133): Add Accounts in ButtonPrimary's Active=No colours at 208x48, Remove gray
+// instead of teal, Edit Accounts as drawn; each in its designed type.
+test('draws "Add Accounts" in the disabled primary look, "Remove" and "Edit Accounts" in Gray/03', async ({ page }) => {
+  await openBalances(page);
+  const gray03 = await tokenColor(page, '--color-gray-03');
+
+  expect(await computed(addAccounts(page), 'background-color')).toBe(
+    await tokenColor(page, '--color-button-secondary'),
+  );
+  expect(await computed(addAccounts(page), 'color')).toBe(await tokenColor(page, '--color-input-active'));
+  expect(await box(addAccounts(page))).toMatchObject({ width: 208, height: 48 });
+  for (const remove of await removes(page).all()) {
+    expect(await computed(remove, 'color')).toBe(gray03);
+    expect(await computed(remove, 'font-size')).toBe('16px');
+    expect(await computed(remove, 'font-weight')).toBe('400');
+    expect(await computed(remove, 'line-height')).toBe('24px');
+  }
+  expect(await computed(editAccounts(page), 'color')).toBe(gray03);
+  expect(await computed(editAccounts(page), 'font-weight')).toBe('500');
+});
+
+// T17: AC10, the keyboard: the search field, then each card's "Remove" and "Details" in card order, "Add Accounts" and
+// "Edit Accounts", then out; the ring with the keyboard only (#87). Task 032 T13 (#133): the seven new stops, each with
+// "Not available" shown while it has keyboard focus.
+test('tabs from the search field through each card’s "Remove" and "Details", "Add Accounts" and "Edit Accounts", with the ring, and out', async ({
   page,
 }) => {
   await openBalances(page);
   const links = await details(page).all();
+  const removeButtons = await removes(page).all();
   const descriptions = firstLogin.map((card) => `${card.type} ${card.bankName}`);
+  const unavailable = [...removeButtons, addAccounts(page), editAccounts(page)];
+  const stops = [
+    ...links.flatMap((link, index) => [removeButtons[index]!, link]),
+    addAccounts(page),
+    editAccounts(page),
+  ];
+  expect(stops).toHaveLength(12);
 
   await search(page).focus();
-  for (const [index, link] of links.entries()) {
+  for (const stop of stops) {
     await page.keyboard.press('Tab');
-    await expect(link).toBeFocused();
-    await expect(link).toHaveAccessibleName('Details');
-    await expect(link).toHaveAccessibleDescription(descriptions[index]!);
-    await expectRing(page, link);
+    await expect(stop).toBeFocused();
+    await expectRing(page, stop);
+    const index = links.indexOf(stop);
+    if (index >= 0) {
+      await expect(stop).toHaveAccessibleName('Details');
+      await expect(stop).toHaveAccessibleDescription(descriptions[index]!);
+      await expect(tooltip(page)).toHaveCount(0);
+    } else {
+      await expect(stop).toHaveAccessibleDescription('Not available');
+      await expectNotAvailableNextTo(page, stop);
+    }
   }
   await page.keyboard.press('Tab');
   expect(await mainHasFocus(page)).toBe(false);
+  await expect(tooltip(page)).toHaveCount(0);
 
-  for (const link of links.toReversed()) {
+  for (const stop of stops.toReversed()) {
     await page.keyboard.press('Shift+Tab');
-    await expect(link).toBeFocused();
-    await expectRing(page, link);
+    await expect(stop).toBeFocused();
+    await expectRing(page, stop);
   }
   await page.keyboard.press('Shift+Tab');
   await expect(search(page)).toBeFocused();
 
-  await expectNoRingOnMouseFocus(page, links[1]!);
+  // With keyboard focus the text stays when the pointer comes and goes; Escape hides it, focus kept; Tab moves it on.
+  await search(page).focus();
+  for (let step = 0; step < 11; step += 1) await page.keyboard.press('Tab');
+  await expect(addAccounts(page)).toBeFocused();
+  await expectNotAvailableNextTo(page, addAccounts(page));
+  await addAccounts(page).hover();
+  await page.mouse.move(5, 600, { steps: 5 });
+  await expectNotAvailableNextTo(page, addAccounts(page));
+  await page.keyboard.press('Escape');
+  await expect(tooltip(page)).toHaveCount(0);
+  await expect(addAccounts(page)).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(editAccounts(page)).toBeFocused();
+  await expectNotAvailableNextTo(page, editAccounts(page));
+
+  for (const control of [unavailable[0]!, links[1]!]) await expectNoRingOnMouseFocus(page, control);
 });
 
 /** The right edge of the page: the window less a classic scrollbar's gutter (#101). */
@@ -432,7 +542,7 @@ async function expectPageLayout(page: Page, cardCount = 5) {
   }
   // The Add Accounts group: the 208x48 button and "Edit Accounts" 16 under it, centred both ways.
   const cell = await box(all.at(-1)!);
-  const button = await box(cells(page).last().getByText('Add Accounts', { exact: true }));
+  const button = await box(cells(page).last().getByRole('button', { name: 'Add Accounts', exact: true }));
   const edit = await box(cells(page).last().getByText('Edit Accounts', { exact: true }));
   expect(button).toMatchObject({ width: 208, height: 48 });
   near(button.x + button.width / 2, cell.x + cell.width / 2, 'Add Accounts centre x');
@@ -565,7 +675,7 @@ test('keeps the Add Accounts group centred in a cell stretched by a long Bank Na
   await expectRowStretched(page, [3, 4], loan.card.height);
   const cell = await box(cells(page).last());
   near(cell.height, loan.card.height, 'Add Accounts cell height');
-  const button = await box(cells(page).last().getByText('Add Accounts', { exact: true }));
+  const button = await box(cells(page).last().getByRole('button', { name: 'Add Accounts', exact: true }));
   const edit = await box(cells(page).last().getByText('Edit Accounts', { exact: true }));
   near((button.y + edit.y + edit.height) / 2, cell.y + cell.height / 2, 'group centre y');
 });
@@ -687,6 +797,9 @@ test('shows three skeleton cards, then the error card, and after a keyboard Retr
   await expect(dataStateRoot(page)).toBeFocused();
   expect(await isBodyFocused(page)).toBe(false);
   await expectRing(page, dataStateRoot(page));
+  // Task 032 (#133): the first card's "Remove", then its "Details".
+  await page.keyboard.press('Tab');
+  await expect(removes(page).first()).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(details(page).first()).toBeFocused();
 });

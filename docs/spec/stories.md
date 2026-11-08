@@ -278,7 +278,7 @@ Acceptance criteria:
    - the icon of the transaction's category in a gray square. An income transaction has no category and shows the wallet icon. GTR 5 is in Entertainment and shows that icon, not Figma's gamepad: a known difference from Figma, not a visual defect (decisions #56)
    - the item name (sample "GTR 5")
    - the shop name below it (sample "Gadget & Gear")
-   - the amount on the right with its sign, `+` for income and `-` for expense (sample "+$160.00" or "-$160.00"), in the designed colour (decisions #19)
+   - the amount on the right with its sign, `+` for income and `-` for expense (sample "+$160.00" or "-$160.00"), income in green and expense in red (decisions #19, #132, #134 a)
    - the date below the amount, in the browser's time zone (sample "17 May, 2023") (decisions #11, #54)
 4. Given the list renders, then rows are separated by divider lines.
 5. Given I click "Revenue", then it becomes active and the list shows my latest 5 income transactions, newest first. Given I click "Expenses", then it becomes active and the list shows my latest 5 expense transactions, newest first. "All" shows both (decisions #19, #40).
@@ -362,11 +362,11 @@ Acceptance criteria:
    - a card-network logo (Mastercard or VISA), only when the account has a card network set (sample Mastercard, VISA) (decisions #24)
    - the masked account number in the format "**** **** **** 2598", with the label "Account Number" (decisions #25)
    - the account balance, calculated as on Overview (US-05, criterion 1) (sample "$25,000.00"), with the label "Total amount" (decisions #11, #57)
-   - a teal "Remove" text link
+   - a "Remove" text button, shown disabled in gray instead of the designed teal (decisions #133)
    - a teal "Details" button with a right chevron
-3. Given the grid renders, then the last cell, always after all account cards, shows an "Add Accounts" primary button and a gray "Edit Accounts" text link (decisions #24).
+3. Given the grid renders, then the last cell, always after all account cards, shows an "Add Accounts" primary button, shown disabled in the gray of a disabled primary button instead of the designed teal, and a gray "Edit Accounts" text button, shown disabled (decisions #24, #133).
 4. Given I click "Details" on a card, then the Account Details screen opens for that account (US-12) (decisions #50).
-5. Given I click "Remove", "Add Accounts" or "Edit Accounts", then nothing happens: they are visual only, with no forms or flows (decisions #22, #23).
+5. Given I click "Remove", "Add Accounts" or "Edit Accounts", or press Enter or Space on one, then nothing happens: there are no forms or flows (decisions #22, #23). Each is a button shown disabled, which keyboard users reach with Tab and which screen readers describe as "Not available"; "Not available" also shows next to it on mouse hover and on keyboard focus (decisions #133).
 
 States:
 - Designed: 5 accounts plus the add cell
@@ -391,15 +391,15 @@ Acceptance criteria:
    - "Balance", calculated as on Overview (US-05, criterion 1) (sample "$25,056.00") (decisions #57)
    - "Branch Name" (sample "Park Street Branch")
    - "Account Number", masked in the format "**** **** **** 2598" (decisions #25)
-3. Given the details card renders, then it shows an "Edit Details" primary button and a "Remove" text button.
+3. Given the details card renders, then it shows an "Edit Details" primary button and a "Remove" text button. "Remove" is shown disabled, its look as designed (decisions #133, #134 c).
 4. Given I click "Edit Details", then Bank Name, Branch Name and Account Type turn into inputs on the same page, using the existing input styles from the components page. All other fields, such as Balance and Account Number, stay read-only (decisions #26).
 5. Given I am editing, then Account Type is a select styled like an input, with the values Credit Card, Checking, Savings, Investment and Loan. Its open list is drawn by the shared Dropdown component (decisions #26, #60).
 6. Given I am editing, then "Edit Details" is replaced by "Save" and "Cancel", using the existing button components (decisions #26).
 7. Given Bank Name or Branch Name is empty or longer than 100 characters, when I click "Save", then nothing is saved and the error shows inline under that field (decisions #6, #26).
 8. Given the fields are valid, when I click "Save", then the change is stored in the backend and the page returns to view mode with the new values. While saving, "Save" is disabled and shows a spinner; if the server fails, its error shows above "Save" (decisions #6, #26).
 9. Given I am editing, when I click "Cancel", then my changes are discarded and the page returns to view mode (decisions #26).
-10. Given I click "Remove", then nothing happens: it is visual only (decisions #23).
-11. Given the "Transactions History" section renders, then a table shows this account's transactions, the same records as on Transactions (US-13), of any status, dated up to today, newest first, with the columns Date, Status, Transaction Type, Receipt and Amount (decisions #27, #53, #57). Dates use the browser's time zone (decisions #54). Amounts are bold, right-aligned and signed: `+` for income, `-` for expense (decisions #19). Sample row: "17 Apr, 2023", "Complete", "Credit", "8C52d5DKDJ5", "+$160.00".
+10. Given I click "Remove", or press Enter or Space on it, in view or edit mode, then nothing happens (decisions #23). It is a button shown disabled, which keyboard users reach with Tab and which screen readers describe as "Not available"; "Not available" also shows next to it on mouse hover and on keyboard focus (decisions #133, #134 c).
+11. Given the "Transactions History" section renders, then a table shows this account's transactions, the same records as on Transactions (US-13), of any status, dated up to today, newest first, with the columns Date, Status, Transaction Type, Receipt and Amount (decisions #27, #53, #57). Dates use the browser's time zone (decisions #54). Amounts are bold, right-aligned and signed: `+` for income, `-` for expense (decisions #19), income in green and expense in red (decisions #132, #134 a). Sample row: "17 Apr, 2023", "Complete", "Credit", "8C52d5DKDJ5", "+$160.00".
 12. Given a row renders, then Status is Complete, Pending or Failed; Transaction Type is Credit (income) or Debit (expense); and Receipt is a plain-text receipt ID, not a link or download (decisions #19, #27).
 13. Given the table renders, then it shows the first 10 rows, separated by divider lines, with a "Load More" primary button below the table (decisions #27).
 14. Given I click "Load More", then the next 10 rows are fetched from the backend and added to the table. While fetching, the button shows the loading pattern (decisions #6, #27).
@@ -426,7 +426,7 @@ Open questions: none
 Acceptance criteria:
 1. Given I open Transactions, when it renders, then the title "Recent Transaction" shows and "Transactions" is the active sidebar item.
 2. Given the screen renders, then the tabs "All", "Revenue" and "Expenses" show above the table. "All" is active (teal text and underline). An active "Revenue" or "Expenses" tab uses the same style (decisions #19).
-3. Given the table renders, then it shows the columns Items, Shop Name, Date, Payment Method and Amount. Each row has its category icon and item name in the first column. An income transaction has no category and shows the wallet icon; GTR 5 is in Entertainment and shows that icon, not Figma's gamepad, a known difference from Figma (decisions #56). Payment Method is the type of the account the transaction belongs to, so it follows an Account Type edit on Account Details (US-12) (decisions #57). Dates use the browser's time zone (decisions #54). The amount is bold, right-aligned and signed: `+` for income, `-` for expense (decisions #19). Sample row: "GTR 5", "Gadget & Gear", "17 May, 2023", "Credit Card", "$160.00" with its sign. Figma shows 7 rows.
+3. Given the table renders, then it shows the columns Items, Shop Name, Date, Payment Method and Amount. Each row has its category icon and item name in the first column. An income transaction has no category and shows the wallet icon; GTR 5 is in Entertainment and shows that icon, not Figma's gamepad, a known difference from Figma (decisions #56). Payment Method is the type of the account the transaction belongs to, so it follows an Account Type edit on Account Details (US-12) (decisions #57). Dates use the browser's time zone (decisions #54). The amount is bold, right-aligned and signed: `+` for income, `-` for expense (decisions #19), income in green and expense in red (decisions #132, #134 a). Sample row: "GTR 5", "Gadget & Gear", "17 May, 2023", "Credit Card", "$160.00" with its sign. Figma shows 7 rows.
 4. Given the table renders, then it shows the first 10 transactions of any status, dated up to today, newest first (decisions #27, #53, #57).
 5. Given I click "Revenue", then it becomes active and the table shows only income transactions. Given I click "Expenses", then it becomes active and the table shows only expense transactions. "All" shows both (decisions #19).
 6. Given I click "Load More", then the next 10 rows are fetched from the backend and added to the table. While fetching, the button shows the loading pattern (decisions #6, #27).

@@ -9,3 +9,13 @@
 :global(html):has(.shell) {
   scrollbar-gutter: stable;
 }
+
+/* While a popup or dropdown is open, Radix's scroll lock (`react-remove-scroll-bar`, in the Dialog behind `Popup` and
+   the Select behind `Dropdown`) hides the page's overflow and gives `body[data-scroll-locked]` a right margin of the
+   scrollbar's width, measured as it opens, to stand in for the scrollbar it hides. The stable gutter above keeps that
+   space already, so the margin took it twice: `body` lost 15 px and the page moved (task 032). On app pages the lock
+   adds no margin: nothing moves, and the scrollbar's thumb is hidden until it closes while its gutter stays (#100,
+   #101, #134 b). The library's rule is `!important` too, so this selector is the more specific one. */
+:global(html):has(.shell) :global(body[data-scroll-locked]) {
+  margin-right: 0 !important;
+}

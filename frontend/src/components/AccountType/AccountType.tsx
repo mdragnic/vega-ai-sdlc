@@ -3,8 +3,10 @@ import { useId } from 'react';
 
 import { cardNetworkLogos } from '../../assets/brand';
 import { accountDetailsPath } from '../../routes/paths';
+import disabledTextButton from '../../styles/disabledTextButton.module.css';
 import { Button } from '../Button/Button';
 import { Card } from '../Card/Card';
+import { NotAvailableTooltip } from '../NotAvailableTooltip/NotAvailableTooltip';
 import styles from './AccountType.module.css';
 
 type AccountTypeProps = {
@@ -15,9 +17,9 @@ type AccountTypeProps = {
 /**
  * Figma `Account Type` (410:5353), one account on Balances (105): the type, the Bank Name and the card network's logo
  * when it has one (#24) over the divider; the masked number and the balance, each with its label under it; "Remove",
- * visual only (#23), and "Details" to the account's Account Details (#50). Where the Bank Name and its logo do not
- * fit beside the type, they move under it, right-aligned, and the card grows (#106, #108 b, #111 a, #115 b). Shows
- * the account as sent.
+ * which does nothing (#23), a button shown disabled and described as "Not available" (#133), and "Details" to the
+ * account's Account Details (#50). Where the Bank Name and its logo do not fit beside the type, they move under it,
+ * right-aligned, and the card grows (#106, #108 b, #111 a, #115 b). Shows the account as sent.
  */
 export function AccountType({ account }: AccountTypeProps) {
   const typeId = useId();
@@ -49,9 +51,12 @@ export function AccountType({ account }: AccountTypeProps) {
         </div>
       </dl>
       <div className={styles.bottomRow}>
-        <span className={styles.remove} aria-hidden="true">
-          Remove
-        </span>
+        {/* Under it: above, the text would cover "Total amount". */}
+        <NotAvailableTooltip side="bottom">
+          <button type="button" aria-disabled="true" className={`${disabledTextButton.button} ${styles.remove}`}>
+            Remove
+          </button>
+        </NotAvailableTooltip>
         <Button to={accountDetailsPath(String(account.id))} aria-describedby={`${typeId} ${bankNameId}`}>
           Details
         </Button>

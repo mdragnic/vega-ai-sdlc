@@ -39,11 +39,11 @@
   text-align: center;
 }
 
-/* 106 "$160.00": Default Black, Semibold 16/24 (as 107, by the ink widths), for income and expenses alike (#19),
-   right-aligned at the table's end and on one line: its column grows where it must, the others give way. */
+/* 106 "$160.00": Semibold 16/24 (as 107, by the ink widths), right-aligned at the table's end and on one line: its
+   column grows where it must, the others give way. Its colour comes from the direction, green for income and red for
+   expenses (`styles/signedAmount.module.css`, #132), instead of 106's Default Black for both (#19). */
 .row > .amount {
   padding-right: 0;
-  color: var(--color-default-black);
   font-family: var(--font-family-inter);
   font-size: var(--font-size-16);
   font-weight: var(--font-weight-semi-bold);

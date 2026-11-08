@@ -1,0 +1,11 @@
+/* The colour of a signed transaction amount, by the row's direction as the backend sent it (#132): in Recent
+   Transaction (104), Transactions (107) and the Account Details history (106). Each item keeps its own font and
+   layout and sets no colour on the amount. Both tokens reach 4.5:1 on the white card (#134 a). The Expenses card
+   items are unsigned and keep their colour (#122 b). */
+.income {
+  color: var(--color-income);
+}
+
+.expense {
+  color: var(--color-expense);
+}

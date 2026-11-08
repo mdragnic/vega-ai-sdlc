@@ -2,7 +2,7 @@ import type { Locator, Page, Request, Route } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, signUp, tokenColor } from '../helpers';
+import { box, computed, expectRing, expectSignedColours, signUp, tokenColor } from '../helpers';
 
 const main = (page: Page) => page.getByRole('main');
 const section = (page: Page) => main(page).getByRole('region', { name: 'Recent Transaction' });
@@ -818,4 +818,30 @@ test('tabs from the search field to the tab, the panel and "Load More" with the 
   await bodyRows(page).first().click();
   expect(await panel(page).evaluate((node) => node.matches(':focus-visible'))).toBe(false);
   expect(await computed(panel(page), 'outline-style')).toBe('none');
+});
+
+// Task 032 T7: AC5. Income in green and expenses in red, by the direction as sent, on every tab and in the rows
+// "Load More" adds (#132, #134 a).
+test('shows income amounts in green and expense amounts in red on every tab, the rows "Load More" adds included', async ({
+  page,
+}) => {
+  await openTransactions(page);
+  const amounts = bodyRows(page).locator('td:last-child');
+  const seen: Record<string, { income: number; expense: number }> = {};
+
+  for (const name of ['All', 'Revenue', 'Expenses'] as const) {
+    await tab(page, name).click();
+    await waitForPanel(page);
+    await expect(bodyRows(page)).toHaveCount(10);
+    await loadMore(page).click();
+    await expect.poll(() => bodyRows(page).count()).toBeGreaterThan(10);
+    seen[name] = await expectSignedColours(amounts, name);
+  }
+
+  expect(seen.All!.income).toBeGreaterThan(0);
+  expect(seen.All!.expense).toBeGreaterThan(0);
+  expect(seen.Revenue!.expense).toBe(0);
+  expect(seen.Revenue!.income).toBeGreaterThan(10);
+  expect(seen.Expenses!.income).toBe(0);
+  expect(seen.Expenses!.expense).toBeGreaterThan(10);
 });

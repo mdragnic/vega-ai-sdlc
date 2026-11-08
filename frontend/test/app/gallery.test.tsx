@@ -671,13 +671,14 @@ describe('component gallery', () => {
         .getAllByRole('definition')
         .map((value) => value.textContent),
     ).toEqual(['AB Bank Ltd', 'Checking', '$33,362.48', 'Park Street Branch', '**** **** **** 7310']);
-    // Task 022: "Edit Details" is a button; "Remove" stays visual only (#23).
+    // Task 022: "Edit Details" is a button. Task 032 (#134 c): "Remove" is a button shown disabled, where it was hidden.
     expect(
       within(card)
         .getAllByRole('button')
         .map((button) => button.textContent),
-    ).toEqual(['Edit Details']);
-    expect(within(card).getByText('Remove').closest('[aria-hidden="true"]')).not.toBeNull();
+    ).toEqual(['Edit Details', 'Remove']);
+    expect(within(card).getByRole('button', { name: 'Remove' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(card).getByRole('button', { name: 'Remove' })).toHaveAccessibleDescription('Not available');
     expect(
       within(figure('AccountDetailsCard', 'The lowest balance the contract allows, on one line')).getByText(
         '-$90,071,992,547,409.91',
@@ -952,11 +953,19 @@ describe('component gallery', () => {
     expect(
       within(figure('Button', 'Details (105): a link to Account Details')).getByRole('link', { name: 'Details' }),
     ).toHaveAttribute('href', '/balances/1');
-    expect(figure('AddAccountsButtonBig', 'Add Accounts (105): visual only')).toHaveTextContent('Add Accounts');
-    const cell = figure('AddAccountsCell', 'The last Balances cell (105): visual only');
+    expect(figure('AddAccountsButtonBig', 'Add Accounts (105): shown disabled (#133)')).toHaveTextContent(
+      'Add Accounts',
+    );
+    // Task 032 (#133): two buttons shown disabled, where task 019 drew text hidden from assistive technology.
+    const cell = figure('AddAccountsCell', 'The last Balances cell (105): both controls shown disabled (#133)');
     expect(cell).toHaveTextContent('Add AccountsEdit Accounts');
-    expect(within(cell).queryAllByRole('button', { hidden: true })).toEqual([]);
-    expect(cell.querySelector('[aria-hidden="true"]')).toHaveTextContent('Add AccountsEdit Accounts');
+    const cellButtons = within(cell).getAllByRole('button');
+    expect(cellButtons.map((button) => button.textContent)).toEqual(['Add Accounts', 'Edit Accounts']);
+    for (const button of cellButtons) {
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+      expect(button).toHaveAccessibleDescription('Not available');
+    }
+    expect(cell.querySelector('[aria-hidden="true"]')).toBeNull();
     // Two lines in the header row, two per value, a "Remove" line and the "Details" block.
     expect(figure('AccountTypeSkeleton', 'Loading').querySelectorAll('span')).toHaveLength(8);
     const fetched = fetchSpy.mock.calls.map(([input]) =>
@@ -1008,7 +1017,7 @@ describe('component gallery', () => {
       within(prefilled)
         .getAllByRole('button')
         .map((button) => button.textContent),
-    ).toEqual(['Save', 'Cancel']);
+    ).toEqual(['Save', 'Cancel', 'Remove']);
     // The gallery opens with focus nowhere in the forms.
     expect(prefilled.contains(document.activeElement)).toBe(false);
 

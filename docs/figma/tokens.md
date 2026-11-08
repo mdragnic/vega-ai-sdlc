@@ -37,6 +37,8 @@ Names follow the Figma variable or style name in kebab-case. Measured tokens are
 | `--color-logout-bg` | `#262626` | measured: PNG 104 Logout button fill (y 1560 to 1655). Added in review |
 | `--color-divider-light` | `#F6F6F6` | measured: PNG 104 Expenses Breakdown cell dividers (vertical x 1850 to 1851 and 2330 to 2331, horizontal y 1766 to 1767). The Statistics chart grid lines are Gray/06 `#F3F3F3`. Added in review |
 | `--color-auth-muted` | `#999DA3` | measured: PNG 101 masked password dots (y 828 to 834), eye icon (x 1762 to 1805) and "or sign in with" text (y 1193 to 1219); PNG 102 and 103 email placeholder (y 796 to 826, 968 to 998); export `docs/figma/components/418-6433.png` typed text and icons of every Input with Active=No. Added in task 002 (decision #86) |
+| `--color-income` | `#3A8553` | Decisions #132 and #134 (a1): income amounts in Recent Transaction, Transactions and the Account Details history. The lightest shade of Special/Green `#4DAF6E` at its own hue and saturation that reaches 4.5:1 on white: 4.51:1. Added in task 032 |
+| `--color-expense` | `#DD3817` | Decisions #132 and #134 (a1): expense amounts in the same lists. The lightest shade of Special/Red `#E73D1C` at its own hue and saturation that reaches 4.5:1 on white: 4.51:1. Added in task 032 |
 
 ## Typography
 

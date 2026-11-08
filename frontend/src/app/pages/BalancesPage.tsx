@@ -32,8 +32,8 @@ export function BalancesPage() {
                   <AccountType account={account} />
                 </li>
               ))}
-              {/* Visual only (#22): hidden from assistive technology, so the list reads as the accounts. */}
-              <li className={styles.cell} aria-hidden="true">
+              {/* Its controls do nothing (#22): shown disabled and described as "Not available" (#133). */}
+              <li className={styles.cell}>
                 <AddAccountsCell />
               </li>
             </ul>

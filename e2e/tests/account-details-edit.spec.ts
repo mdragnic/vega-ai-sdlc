@@ -31,6 +31,7 @@ const branchName = (page: Page) => detailsRegion(page).getByRole('textbox', { na
 const accountType = (page: Page) => detailsCard(page).locator('button[role="combobox"]');
 const saveButton = (page: Page) => detailsRegion(page).getByRole('button', { name: 'Save' });
 const cancelButton = (page: Page) => detailsRegion(page).getByRole('button', { name: 'Cancel' });
+const removeButton = (page: Page) => detailsRegion(page).getByRole('button', { name: 'Remove' });
 const loadMore = (page: Page) => historyRegion(page).getByRole('button', { name: 'Load More' });
 const search = (page: Page) => page.getByRole('searchbox', { name: 'Search' });
 const sidebarLink = (page: Page, name: string) =>
@@ -311,8 +312,14 @@ test('works by keyboard: the Tab order, the select, Enter to save, Escape; the r
   await page.keyboard.press('Tab');
   await expect(cancelButton(page)).toBeFocused();
   await expectRing(page, cancelButton(page));
+  // Task 032 (#134 c): "Remove", shown disabled, then "Load More".
+  await page.keyboard.press('Tab');
+  await expect(removeButton(page)).toBeFocused();
+  await expectRing(page, removeButton(page));
+  await expect(page.getByRole('tooltip')).toHaveText('Not available');
   await page.keyboard.press('Tab');
   await expect(loadMore(page)).toBeFocused();
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
 
   // The select by keyboard: open, an arrow, Enter.
   await accountType(page).focus();

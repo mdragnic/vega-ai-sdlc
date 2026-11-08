@@ -64,10 +64,10 @@
   white-space: nowrap;
 }
 
-/* 104 "$160.00": Secondary, Semibold 16/24, for income and expenses alike (#19). */
+/* 104 "$160.00": Semibold 16/24. Its colour comes from the direction, green for income and red for expenses
+   (`styles/signedAmount.module.css`, #132), instead of 104's Secondary for both (#19). */
 .amount {
   margin: 0;
-  color: var(--color-secondary);
   font-family: var(--font-family-inter);
   font-size: var(--font-size-16);
   font-weight: var(--font-weight-semi-bold);

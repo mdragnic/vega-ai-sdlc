@@ -1,9 +1,18 @@
+import { ButtonPrimary } from '../ButtonPrimary/ButtonPrimary';
+import { NotAvailableTooltip } from '../NotAvailableTooltip/NotAvailableTooltip';
 import styles from './AddAccountsButtonBig.module.css';
 
 /**
- * Figma `Button Big` (410:5537), "Add Accounts" in the last Balances cell (105). Visual only (#22): drawn as designed,
- * but no button, no Tab stop, no pointer and nothing on a click. Its cell hides it from assistive technology.
+ * Figma `Button Big` (410:5537), "Add Accounts" in the last Balances cell (105). It does nothing (#22), so it is shown
+ * disabled (#133): `ButtonPrimary` with `aria-disabled`, its Active=No look in the designed 208x48, a Tab stop that
+ * keeps focus and cancels its clicks, described as "Not available" by `NotAvailableTooltip`.
  */
 export function AddAccountsButtonBig() {
-  return <span className={styles.button}>Add Accounts</span>;
+  return (
+    <div className={styles.button}>
+      <NotAvailableTooltip>
+        <ButtonPrimary aria-disabled>Add Accounts</ButtonPrimary>
+      </NotAvailableTooltip>
+    </div>
+  );
 }

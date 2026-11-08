@@ -1,0 +1,14 @@
+/* A control drawn as text that does nothing yet, shown disabled (#133, #134 c): Balances' "Edit Accounts" and each
+   card's "Remove", Account Details' "Remove". A button without the browser's box; each component keeps its own colour
+   and type. The default cursor, since a click does nothing; the teal ring on keyboard focus only (#87). */
+.button {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: default;
+}
+
+.button:focus-visible {
+  outline: var(--border-width-focus-ring) solid var(--color-primary);
+  outline-offset: var(--space-focus-ring-offset);
+}

@@ -169,3 +169,26 @@ export async function waitForRecentTransactions(page: Page): Promise<void> {
   await expect(panel).toBeVisible();
   await expect(panel.locator('[aria-busy="true"]')).toHaveCount(0);
 }
+
+/** The signed amount colours of #132 and #134 (a1): `--color-income` `#3A8553` and `--color-expense` `#DD3817`. */
+export const INCOME_COLOR = 'rgb(58, 133, 83)';
+export const EXPENSE_COLOR = 'rgb(221, 56, 23)';
+
+/**
+ * Every signed amount in `amounts` in its colour (task 032): green with a `+`, red with a `-` (#132). Returns how many
+ * of each it saw, so a test can require both.
+ */
+export async function expectSignedColours(amounts: Locator, where: string) {
+  const shown = await amounts.evaluateAll((elements) =>
+    elements.map((element) => ({ text: element.textContent ?? '', color: getComputedStyle(element).color })),
+  );
+  expect(shown.length, `${where}: amounts`).toBeGreaterThan(0);
+  for (const { text, color } of shown) {
+    expect(['+', '-'], `${where}: ${text} is signed`).toContain(text[0]);
+    expect(color, `${where}: ${text}`).toBe(text.startsWith('+') ? INCOME_COLOR : EXPENSE_COLOR);
+  }
+  return {
+    income: shown.filter(({ text }) => text.startsWith('+')).length,
+    expense: shown.filter(({ text }) => text.startsWith('-')).length,
+  };
+}

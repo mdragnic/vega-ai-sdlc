@@ -128,3 +128,36 @@ describe('design tokens', () => {
     expect(() => cssTokens(`${tokensCss}\n.extra {\n  color: red;\n}\n`)).toThrow(/exactly one :root rule/);
   });
 });
+
+/** WCAG 2 relative luminance of a `#RRGGBB` colour. */
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5]
+    .map((start) => Number.parseInt(hex.slice(start, start + 2), 16) / 255)
+    .map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+/** WCAG 2 contrast ratio of two `#RRGGBB` colours. */
+function contrast(first: string, second: string): number {
+  const [lighter, darker] = [luminance(first), luminance(second)].toSorted((a, b) => b - a);
+  return (lighter! + 0.05) / (darker! + 0.05);
+}
+
+// T8: task 032 AC6. Signed amounts are Semibold 16, not large text, so their colours need 4.5:1 on the white card
+// (#132). No existing green or red reached it, so #134 (a1) added these two tokens.
+describe('the signed amount colours', () => {
+  const tokens = new Map(cssTokens(tokensCss));
+
+  it.each(['--color-income', '--color-expense'])('%s reaches 4.5:1 on --color-white', (name) => {
+    const value = tokens.get(name);
+    expect(value).toMatch(/^#[0-9A-F]{6}$/);
+    expect(contrast(value!, tokens.get('--color-white')!)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('computes the ratio as WCAG 2 does', () => {
+    // Hand-checked: black on white is 21:1; Special/Red and Special/Green on white are 4.13:1 and 2.74:1 (#134 a).
+    expect(contrast('#000000', '#FFFFFF')).toBeCloseTo(21, 5);
+    expect(contrast('#FFFFFF', '#E73D1C')).toBeCloseTo(4.13, 2);
+    expect(contrast('#4DAF6E', '#FFFFFF')).toBeCloseTo(2.74, 2);
+  });
+});

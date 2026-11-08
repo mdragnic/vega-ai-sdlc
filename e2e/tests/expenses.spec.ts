@@ -1074,3 +1074,21 @@ test('exposes the control, the legend, the chart’s table and the six cards wit
   expect(tree).not.toContain('Compare to last month');
   expect(tree).not.toMatch(/\d%\*/);
 });
+
+// Task 032 T9: AC7. Only the signed transaction amounts changed colour (#132): the Expenses card line items stay
+// unsigned in their designed Secondary (#122 b).
+test('keeps the Expenses card line items unsigned, in Secondary', async ({ page }) => {
+  await openExpenses(page);
+  const amounts = cards(page).getByRole('listitem').locator(':scope > div > p:first-child');
+  const secondary = await tokenColor(page, '--color-secondary');
+
+  const shown = await amounts.evaluateAll((elements) =>
+    elements.map((element) => ({ text: element.textContent ?? '', color: getComputedStyle(element).color })),
+  );
+
+  expect(shown.length).toBeGreaterThan(0);
+  for (const { text, color } of shown) {
+    expect(text, 'unsigned').toMatch(/^\$/);
+    expect(color, text).toBe(secondary);
+  }
+});

@@ -11,6 +11,7 @@ import { type FormEvent, type KeyboardEvent, useId, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { serverFieldErrors } from '../../api/client';
+import disabledTextButton from '../../styles/disabledTextButton.module.css';
 import cardStyles from '../AccountDetailsCard/AccountDetailsCard.module.css';
 import { ButtonPrimary } from '../ButtonPrimary/ButtonPrimary';
 import { ButtonSecondary } from '../ButtonSecondary/ButtonSecondary';
@@ -18,6 +19,7 @@ import { Dropdown } from '../Dropdown/Dropdown';
 import { FieldError } from '../FieldError/FieldError';
 import { FormError } from '../FormError/FormError';
 import { Input } from '../Input/Input';
+import { NotAvailableTooltip } from '../NotAvailableTooltip/NotAvailableTooltip';
 import styles from './AccountDetailsForm.module.css';
 
 /** The fields a failed request's `fieldErrors` can point to in this form (#74). */
@@ -51,8 +53,8 @@ type AccountDetailsFormProps = {
  * 106 edit mode (#26), not designed (Code-only): the Account Details card's content as a form, on view mode's insets and
  * three columns. Bank Name and Branch Name are `Input`s and Account Type the `Dropdown` `input` variant under a visible
  * label, each in its column less the 32 kept free at its end; Balance and Account Number stay read-only as in view mode;
- * Save and Cancel take "Edit Details"' place and "Remove" stays visual only (#23). A react-hook-form form on the shared
- * `accountDetailsRequestSchema` (#74), as task 014's popup: one submit at a time; the rule's messages under their fields
+ * Save and Cancel take "Edit Details"' place and "Remove" is shown disabled as in view mode (#23, #133, #134 c). A
+ * react-hook-form form on the shared `accountDetailsRequestSchema` (#74), as task 014's popup: one submit at a time; the rule's messages under their fields
  * with the red border, focus on the first field with an error and nothing sent (#6, #87 b, #95 a, #120 b); the server's
  * field errors under their fields, other failures above the buttons, focus on Save (#97 a). With `autoFocus` it opens
  * with focus in Bank Name. The page owns the save and the focus after it.
@@ -171,10 +173,16 @@ export function AccountDetailsForm({
               Cancel
             </ButtonSecondary>
           </div>
-          {/* Visual only (#23), as in view mode. */}
-          <span className={`${cardStyles.remove} ${styles.remove}`} aria-hidden="true" inert>
-            Remove
-          </span>
+          {/* Does nothing (#23): shown disabled, as in view mode (#133, #134 c). */}
+          <NotAvailableTooltip>
+            <button
+              type="button"
+              aria-disabled="true"
+              className={`${disabledTextButton.button} ${cardStyles.remove} ${styles.remove}`}
+            >
+              Remove
+            </button>
+          </NotAvailableTooltip>
         </div>
       </div>
     </form>

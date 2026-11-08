@@ -87,6 +87,7 @@ import {
   MenuTab,
   NavBar,
   NavMenu,
+  NotAvailableTooltip,
   OverviewExpensesBreakdown,
   OverviewExpensesBreakdownSkeleton,
   PasswordForm,
@@ -2663,16 +2664,24 @@ export function ComponentGallery() {
       </GallerySection>
 
       <GallerySection name="AddAccountsButtonBig">
-        <Example name="Add Accounts (105): visual only">
+        <Example name="Add Accounts (105): shown disabled (#133)">
           <AddAccountsButtonBig />
         </Example>
       </GallerySection>
 
       <GallerySection name="AddAccountsCell" wide>
-        <Example name="The last Balances cell (105): visual only">
+        <Example name="The last Balances cell (105): both controls shown disabled (#133)">
           <div className={styles.sampleCard}>
             <AddAccountsCell />
           </div>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="NotAvailableTooltip">
+        <Example name="A control that does nothing (#133): point at it or Tab to it">
+          <NotAvailableTooltip>
+            <ButtonPrimary aria-disabled>Add Accounts</ButtonPrimary>
+          </NotAvailableTooltip>
         </Example>
       </GallerySection>
 

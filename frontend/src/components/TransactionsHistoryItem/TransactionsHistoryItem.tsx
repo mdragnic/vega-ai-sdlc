@@ -8,6 +8,7 @@ import {
 import type { Ref } from 'react';
 
 import { browserTimeZone } from '../../api/client';
+import signed from '../../styles/signedAmount.module.css';
 import styles from './TransactionsHistoryItem.module.css';
 
 type TransactionsHistoryItemProps = {
@@ -26,9 +27,10 @@ type TransactionsHistoryItemProps = {
 /**
  * One row of an account's Transactions History (106; no Figma component): the date in the browser's zone (#11, #54);
  * the status, every one listed (#57); the type, Credit or Debit from the direction (#27); the receipt as plain text,
- * no link or download (#27); the signed amount (#19). Each cell's text starts on the row's first line; the date and the
- * receipt wrap inside their columns and the row grows, the amount stays on one line (#106, #111 a, #115 b). Nothing in
- * the row is clickable and it has no hover style (not designed). Everything is formatted as sent (#11).
+ * no link or download (#27); the signed amount (#19), income in green and expenses in red by the direction as sent
+ * (#132). Each cell's text starts on the row's first line; the date and the receipt wrap inside their columns and the
+ * row grows, the amount stays on one line (#106, #111 a, #115 b). Nothing in the row is clickable and it has no hover
+ * style (not designed). Everything is formatted as sent (#11).
  */
 export function TransactionsHistoryItem({
   transaction,
@@ -48,7 +50,9 @@ export function TransactionsHistoryItem({
       <td className={styles.text}>{transactionStatusLabel(transaction.status)}</td>
       <td className={styles.text}>{transactionTypeLabel(transaction.direction)}</td>
       <td className={styles.text}>{transaction.receipt}</td>
-      <td className={styles.amount}>{formatSignedMoney(transaction.amount, transaction.direction)}</td>
+      <td className={`${styles.amount} ${transaction.direction === 'income' ? signed.income : signed.expense}`}>
+        {formatSignedMoney(transaction.amount, transaction.direction)}
+      </td>
     </tr>
   );
 }
