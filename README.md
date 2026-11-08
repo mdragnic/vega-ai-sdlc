@@ -20,7 +20,7 @@ The process, all inside this repo:
 | Planning | The work is split into small vertical slices with dependencies and gates | `.claude/tasks/INDEX.md` |
 | Build | One task per session: tests first, then code, then validation, security review and code review | `.claude/tasks/NNN-*.md` |
 | Gates | Logic-only tasks pass on green checks; anything visual, security-related or architectural stops for a human | the task's Human checkpoint |
-| Evidence and metrics | Screenshots, comparisons and review reports per task; time, human interventions and rework per task | `.claude/tasks/evidence/`, `docs/metrics.md` |
+| Evidence and metrics | Screenshots, comparisons and review reports per task; human interventions, rework loops, breaks, tests that passed by construction and review findings per task, Figma calls, and decisions raised per phase | `.claude/tasks/evidence/`, `docs/metrics.md` |
 
 Three rules run through everything:
 
@@ -32,7 +32,7 @@ Three rules run through everything:
 
 ## Status
 
-All screens are built: tasks 000 to 031 in `.claude/tasks/INDEX.md` (the foundation, shared components, backend auth, data model and seeding, the auth screens and app shell, every screen and widget of the spec, and a final task of follow-ups, documentation and a stability check). The architecture as built is in `docs/architecture.md`, the per-task metrics in `docs/metrics.md`.
+All screens are built: tasks 000 to 032 in `.claude/tasks/INDEX.md` (the foundation, shared components, backend auth, data model and seeding, the auth screens and app shell, every screen and widget of the spec, a final task of follow-ups, documentation and a stability check, and the fixes from the final review). The architecture as built is in `docs/architecture.md`, the per-task metrics in `docs/metrics.md`.
 
 ## Repository layout
 
