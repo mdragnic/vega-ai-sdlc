@@ -32,7 +32,7 @@ Three rules run through everything:
 
 ## Status
 
-Task progress is tracked in `.claude/tasks/INDEX.md`: the foundation, shared components, backend auth, data model and seeding, and the auth screens and app shell are done; the screen tasks follow.
+All screens are built: tasks 000 to 031 in `.claude/tasks/INDEX.md` (the foundation, shared components, backend auth, data model and seeding, the auth screens and app shell, every screen and widget of the spec, and a final task of follow-ups, documentation and a stability check). The architecture as built is in `docs/architecture.md`, the per-task metrics in `docs/metrics.md`.
 
 ## Repository layout
 

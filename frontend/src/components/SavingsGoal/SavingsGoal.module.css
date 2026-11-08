@@ -18,17 +18,7 @@
   border-bottom: var(--border-width-divider) solid var(--color-gray-06);
 }
 
-/* 110 "Savings Goal": Secondary, Semibold 16 by its ink (x 328.5 to 428, 99.5 wide; y 182 to 197 with the `g`; Semibold
-   18 is 110.5 wide in Chromium), on a 24 line centred in the row. */
-.title {
-  margin: 0;
-  color: var(--color-secondary);
-  font-family: var(--font-family-inter);
-  font-size: var(--font-size-16);
-  font-weight: var(--font-weight-semi-bold);
-  line-height: var(--line-height-24);
-  white-space: nowrap;
-}
+/* The title and the selector's placeholder are in `styles/cardHeader.module.css`, shared with Saving Summary. */
 
 /* The period box's 32px place, also while the months load or after they failed. */
 .selector {
@@ -39,10 +29,6 @@
 }
 
 /* Not designed: the period box's place while the months load, about as wide as `Oct, 2026` in it. */
-.selectorPlaceholder {
-  display: flex;
-}
-
 .selectorBlock {
   width: var(--size-amount-box-width-lg);
   height: var(--size-dropdown-box-height);

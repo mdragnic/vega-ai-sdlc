@@ -7,12 +7,14 @@ import {
   NotFoundException,
   Patch,
   StreamableFile,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { type Profile, profileContract, profileMessages, type ProfileUpdateRequest } from '@finebank/shared';
 
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { ProfileBodyInterceptor } from './profile-body.interceptor.js';
+import { ProfileGuardAnswerFilter } from './profile-guard-answer.filter.js';
 import { UsernameTakenError, UsersService } from './users.service.js';
 
 /** The one answer for no photo and for a photo whose file is missing (#76): nothing tells them apart. */
@@ -37,9 +39,11 @@ export class ProfileController {
    * Update Profile (#33, #76): 200 with the stored profile. The order is fixed: CSRF's 403 (the middleware), 401 signed
    * out and the write guard's 400 or 409 (the session guard, #119), then the multipart stage (415 for another encoding,
    * 400 for a file part, a limit or a malformed body), the shared schema's 400 with field errors (#74, #126), and 409
-   * under Username for a username another user has (#62).
+   * under Username for a username another user has (#62). A guard's 401 or 409 reads and drops the unread body first, up
+   * to the upload's size, so the answer reaches the browser through the dev server's proxy (#131).
    */
   @Patch(profileContract.update.path)
+  @UseFilters(ProfileGuardAnswerFilter)
   @UseInterceptors(ProfileBodyInterceptor)
   async update(
     @CurrentUser() userId: number,

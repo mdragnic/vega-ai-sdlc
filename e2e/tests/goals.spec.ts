@@ -2,7 +2,7 @@ import type { Locator, Page, Request, Route } from '@playwright/test';
 
 import { FRONTEND_URL, TIME_ZONE } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, signUp, tokenColor, type User } from '../helpers';
+import { afterQueuedTimers, box, computed, expectRing, signUp, tokenColor, type User } from '../helpers';
 
 const NEW_YORK = 'America/New_York';
 const main = (page: Page) => page.getByRole('main');
@@ -98,6 +98,9 @@ function goalPuts(page: Page): Request[] {
 async function openPopup(page: Page, month: string) {
   await adjustButton(page).click();
   await expect(page.getByRole('dialog', { name: `Adjust goal for ${month}` })).toBeVisible();
+  // Ready for a press outside it: Radix listens from a zero-delay timer queued before focus reaches the first field.
+  await expect(targetField(page)).toBeFocused();
+  await afterQueuedTimers(page);
 }
 
 /** Saves Target and Present in the open popup and waits for it to close. */
@@ -329,9 +332,10 @@ test('shows each broken rule, one request while saving and a 500; a PUT for Nov,
     await saveButton(page).click();
     const input = field === 'target' ? targetField(page) : presentField(page);
     await expect(input).toHaveAccessibleDescription(message);
-    // The form moves focus to the field with the error (react-hook-form, once more on a timer): typing before it has
-    // would land in that field.
+    // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in the other
+    // field before that timer has run would land in this one.
     await expect(input).toBeFocused();
+    await afterQueuedTimers(page);
   }
   expect(puts).toHaveLength(0);
 

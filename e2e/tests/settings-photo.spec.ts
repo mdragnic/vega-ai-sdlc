@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { APIRequestContext, Locator, Page, Request } from '@playwright/test';
 
+import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
 import { box, computed, expectRing, signUp, type User } from '../helpers';
 import { baselineJpeg, JPEG_COMMENT, padTo, png, polyglot, POLYGLOT_HTML, TRAILING_DATA, withExif } from '../images';
@@ -362,6 +363,56 @@ test('refuses photo saves that are cross-site, unguarded, another user’s, misn
   expect((await request.get('/api/profile/photo?v=anything')).headers()['content-type']).toBe('image/jpeg');
 });
 
+// Task 031, #131: a photo save a guard refuses before reading it, on the browser's path: the dev server's `/api` proxy,
+// which sends `Connection: close` to the backend. A photo just under the 2 MB limit gets the real answer every time,
+// never the proxy's 502 or a reset, so a stale tab still switches to the signed-in user and an ended session still
+// opens Login.
+test.describe('a near-2 MB photo save refused by a guard, through the dev server', () => {
+  const RUNS = 100;
+  const nearLimit = padTo(png(), 2_000_000);
+  const text = { fullName: 'Tanzir Rahman', username: 'tanzir', phoneCountryCode: '+1', phoneNumber: '' };
+
+  /** Each answer as `<status> <body>`, or the request's error, so a failure shows them all. */
+  async function answers(request: APIRequestContext, headers: Record<string, string>) {
+    const seen: string[] = [];
+    for (let run = 0; run < RUNS; run += 1) {
+      try {
+        const response = await request.patch('/api/profile', {
+          headers,
+          multipart: { ...text, photo: photoPart(nearLimit) },
+        });
+        seen.push(`${response.status()} ${await response.text()}`);
+      } catch (error) {
+        seen.push(`error ${(error as Error).message.split('\n')[0]}`);
+      }
+    }
+    return seen;
+  }
+
+  test('answers another user’s email with the 409 every time', async ({ page, request }) => {
+    await signUp(page.request);
+    const other = await signUp(request);
+
+    const seen = await answers(page.request, { 'X-Expected-User': other.email });
+
+    expect(
+      seen.filter((answer) => answer !== `409 {"message":"Another user is signed in. Nothing was saved."}`),
+    ).toEqual([]);
+    expect(seen).toHaveLength(RUNS);
+  });
+
+  test('answers a save without a session with the 401 every time', async ({ playwright, request }) => {
+    const user = await signUp(request);
+    const signedOut = await playwright.request.newContext({ baseURL: FRONTEND_URL });
+
+    const seen = await answers(signedOut, { 'X-Expected-User': user.email });
+    await signedOut.dispose();
+
+    expect(seen.filter((answer) => answer !== `401 {"message":"Authentication required"}`)).toEqual([]);
+    expect(seen).toHaveLength(RUNS);
+  });
+});
+
 const near = (actual: number, expected: number, what: string, tolerance = 1) =>
   expect(Math.abs(actual - expected), `${what}: ${actual} vs ${expected}`).toBeLessThanOrEqual(tolerance);
 type Box = { x: number; y: number; width: number; height: number };
@@ -444,9 +495,13 @@ test('keeps the box in its place at 1280, 1440 and 1920 with a photo, a preview 
 /** `backend/data/` as the dev server's `/@fs/` route names it: the absolute path, forward slashes. */
 const dataDir = fileURLToPath(new URL('../../backend/data/', import.meta.url)).replaceAll(String.fromCharCode(92), '/');
 
-/** A response holds none of `file`'s bytes: not its start, nor the start of its base64 (an inlined data URL). */
+/**
+ * A response holds none of `file`'s bytes: not its start, nor the start of its base64 (an inlined data URL). The base64
+ * start is the first 24 characters, which the first 18 bytes make exactly (3 bytes per 4 characters): encoding the whole
+ * file instead failed once the e2e database grew past 402,653,184 bytes, V8's longest string as base64 (task 031).
+ */
 const holdsNoneOf = (body: Buffer, file: Buffer) =>
-  !body.includes(file.subarray(0, 16)) && !body.toString('latin1').includes(file.toString('base64').slice(0, 24));
+  !body.includes(file.subarray(0, 16)) && !body.toString('latin1').includes(file.subarray(0, 18).toString('base64'));
 
 // Task 029 security review: the Vite dev server's `/@fs/` route serves files under the workspace; `backend/data/` (the
 // SQLite files and the photos) must never be among them: every way of reading a file answers 403 or 404 and none of

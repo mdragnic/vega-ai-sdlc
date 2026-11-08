@@ -2,7 +2,17 @@ import type { APIRequestContext, Locator, Page, Request } from '@playwright/test
 
 import { TIME_ZONE } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, control, expectRing, newUser, signUp, tokenColor, type User } from '../helpers';
+import {
+  afterQueuedTimers,
+  box,
+  computed,
+  control,
+  expectRing,
+  newUser,
+  signUp,
+  tokenColor,
+  type User,
+} from '../helpers';
 
 const ZONE_HEADERS = { 'X-Time-Zone': TIME_ZONE };
 
@@ -233,6 +243,9 @@ test('shows the rule’s messages under the fields with red borders, sends nothi
   expect(await computed(control(bankName(page)), 'border-top-color')).toBe(red);
   expect(await computed(control(branchName(page)), 'border-top-color')).toBe(red);
   await expect(bankName(page)).toBeFocused();
+  // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in another
+  // field before that timer has run would land in that one.
+  await afterQueuedTimers(page);
 
   // A pasted tab inside a valid name.
   await bankName(page).fill('AB\tBank');

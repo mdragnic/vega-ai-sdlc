@@ -1,0 +1,26 @@
+Task 031 manual checks, 2026-11-07 (Validation step 6). Playwright MCP, a fresh context at 1440x1024, Europe/Belgrade.
+The development backend on the real clock (today 7 Nov 2026 in Belgrade) and Vite, run separately (`npm run dev -w
+backend`, `npm run dev -w frontend`) so the backend alone could be stopped; a new user signed up through the API on the
+demo data. No Figma calls.
+
+1. Overview, Statistics: the control "Weekly Comparison", a combobox named "Statistics". By mouse: the list holds one
+   option, "Weekly Comparison", selected (manual-overview-list-mouse.png); Escape closed it and focus went back to the
+   control. By keyboard: focus on the control, Enter opened the list with focus on "Weekly Comparison" (the one option);
+   Escape closed it, focus back on the control with the ring (:focus-visible) (manual-overview-keyboard-closed.png).
+2. Expenses, Expenses Comparison: the same for "Monthly Comparison", a combobox named "Expenses Comparison": one option,
+   selected; Escape back to the control by mouse and by keyboard, the ring after the keyboard
+   (manual-expenses-list-mouse.png, manual-expenses-keyboard-closed.png).
+3. Goals: both selectors started on `Nov, 2026`. The Savings Goal selector set to `Sep, 2026`: one request,
+   `GET /api/savings-goals?month=2026-09`; the card showed $15,500.00 of $20,000.00 ($15.5k on the gauge); Saving
+   Summary stayed on `Nov, 2026`. The Saving Summary selector set to `Aug, 2026`: one request,
+   `GET /api/saving-summary?month=2026-08`; the table's first row `01 Aug $500.64 $539.28`; Savings Goal stayed on
+   `Sep, 2026` (manual-goals-months-picked.png).
+4. The backend stopped (this session's `nest start --watch` tree ended by PID; port 3000 free): `Jul, 2026` picked in
+   the Savings Goal selector showed the skeleton (aria-busy) under the divider (manual-backend-down-skeleton.png), then
+   after 7.5 s (the request and its 3 retries) "Something went wrong." and one Retry; the selector kept `Jul, 2026` and
+   Saving Summary kept `Aug, 2026` and its chart (manual-backend-down-error.png).
+5. The backend started again: Tab from the Savings Goal selector reached Retry, Enter loaded July 2026 ($14,000.00 of
+   $20,000.00, $14k), no alert left, and focus stayed inside the card on DataState's root (tabindex -1), not the page
+   body (manual-retry-loaded.png).
+6. Then both servers were stopped and their processes ended by PID (TaskStop left them running, as on earlier tasks);
+   only the Playwright MCP server's two node processes remained, ports 3000 and 5173 free.

@@ -2,7 +2,7 @@ import type { Locator, Page, Request, Route } from '@playwright/test';
 
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, signUp, tokenColor, type User } from '../helpers';
+import { afterQueuedTimers, box, computed, expectRing, signUp, tokenColor, type User } from '../helpers';
 
 const main = (page: Page) => page.getByRole('main');
 const region = (page: Page, name: string) => main(page).getByRole('region', { name, exact: true });
@@ -64,6 +64,9 @@ function limitPuts(page: Page): Request[] {
 async function openLimit(page: Page, name: string) {
   await adjustOf(page, name).click();
   await expect(page.getByRole('dialog', { name: `Adjust limit for ${name}` })).toBeVisible();
+  // Ready for a press outside it: Radix listens from a zero-delay timer queued before focus reaches the first field.
+  await expect(targetField(page)).toBeFocused();
+  await afterQueuedTimers(page);
 }
 
 /** Saves a limit in the open popup and waits for it to close. */

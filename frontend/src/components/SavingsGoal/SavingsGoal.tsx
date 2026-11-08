@@ -3,11 +3,13 @@ import { useId, useMemo, useState } from 'react';
 
 import { AdjustButton } from '../AdjustButton/AdjustButton';
 import { DataState, type DataStateQuery } from '../DataState/DataState';
+import { useGatedQuery } from '../DataState/useGatedQuery';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { SavingsGoalPopup } from '../SavingsGoalPopup/SavingsGoalPopup';
 import { SavingsGoalSkeleton } from '../SavingsGoalSkeleton/SavingsGoalSkeleton';
 import { SavingsGoalSummary } from '../SavingsGoalSummary/SavingsGoalSummary';
 import { Skeleton } from '../Skeleton/Skeleton';
+import cardHeader from '../../styles/cardHeader.module.css';
 import styles from './SavingsGoal.module.css';
 
 type SavingsGoalProps = {
@@ -29,32 +31,6 @@ type SavingsGoalProps = {
 type PopupState = { open: boolean; opened: number };
 
 /**
- * The months and the selected goal as one query for the `DataState` under the divider (#6): pending or failed while
- * the months have not loaded (Retry asks for them again), then the selected month's goal as it is. So the skeleton
- * shows while either loads, also after a month is picked, and the error state when either first load fails.
- */
-function useCardQuery(
-  months: DataStateQuery<SavingsGoalMonthsResponse>,
-  goal: DataStateQuery<SavingsGoalResponse>,
-): DataStateQuery<SavingsGoalResponse> {
-  const monthsLoaded = months.data !== undefined;
-  const { status: monthsStatus, fetchStatus: monthsFetchStatus, refetch: refetchMonths } = months;
-  const monthsQuery = useMemo<DataStateQuery<SavingsGoalResponse>>(
-    () => ({
-      status: monthsStatus === 'error' ? 'error' : 'pending',
-      data: undefined,
-      fetchStatus: monthsFetchStatus,
-      refetch: async () => {
-        const { status } = await refetchMonths();
-        return { status: status === 'error' ? 'error' : 'pending', data: undefined };
-      },
-    }),
-    [monthsStatus, monthsFetchStatus, refetchMonths],
-  );
-  return monthsLoaded ? goal : monthsQuery;
-}
-
-/**
  * The content of 110's Savings Goal card: the header row with "Savings Goal" and the month selector (task 005's
  * `Dropdown` `box`, named by the title, its options the months as sent, #30, #60); the divider; then the selected
  * month's `SavingsGoalSummary`, or "No goal for this month" (#58, #108 c), and "Adjust Goal", which opens popup 110.1 for
@@ -67,7 +43,7 @@ function useCardQuery(
 export function SavingsGoal({ months, selected, onSelect, onPopupOpenChange, goal }: SavingsGoalProps) {
   const titleId = useId();
   const [popup, setPopup] = useState<PopupState>({ open: false, opened: 0 });
-  const cardQuery = useCardQuery(months, goal);
+  const cardQuery = useGatedQuery(months, goal);
   const options = useMemo(
     () => (months.data?.months ?? []).map((month) => ({ value: month, label: formatMonthLabel(month) })),
     [months.data],
@@ -76,7 +52,7 @@ export function SavingsGoal({ months, selected, onSelect, onPopupOpenChange, goa
   return (
     <div className={styles.savingsGoal}>
       <div className={styles.header}>
-        <h3 id={titleId} className={styles.title}>
+        <h3 id={titleId} className={cardHeader.title}>
           Savings Goal
         </h3>
         <div className={styles.selector}>
@@ -90,7 +66,7 @@ export function SavingsGoal({ months, selected, onSelect, onPopupOpenChange, goa
             />
           ) : (
             months.status !== 'error' && (
-              <span aria-hidden="true" className={styles.selectorPlaceholder}>
+              <span aria-hidden="true" className={cardHeader.selectorPlaceholder}>
                 <Skeleton shape="block" className={styles.selectorBlock} />
               </span>
             )

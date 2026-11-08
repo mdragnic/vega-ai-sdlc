@@ -3,7 +3,17 @@ import { randomUUID } from 'node:crypto';
 import type { APIRequestContext, Locator, Page, Request } from '@playwright/test';
 
 import { expect, test } from '../fixtures';
-import { box, computed, expectRing, newUser, signUp, tokenColor, tokenComputed, type User } from '../helpers';
+import {
+  afterQueuedTimers,
+  box,
+  computed,
+  expectRing,
+  newUser,
+  signUp,
+  tokenColor,
+  tokenComputed,
+  type User,
+} from '../helpers';
 
 /** Built from char codes, so no escape sequence in this file can change them. */
 const TAB = String.fromCharCode(9);
@@ -243,6 +253,9 @@ test('shows each broken rule under its field with nothing sent, and a taken user
   await saveButton(page).click();
   await expect(field(page, 'Full name')).toHaveAccessibleDescription('Name cannot contain tabs or line breaks');
   expect(patches).toHaveLength(0);
+  // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in another
+  // field before that timer has run would land in that one.
+  await afterQueuedTimers(page);
 
   const secondBefore = (await (await page.request.get('/api/profile')).json()) as Record<string, string>;
   await field(page, 'Full name').fill('Ana Marija');

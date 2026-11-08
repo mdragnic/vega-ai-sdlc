@@ -23,7 +23,14 @@ const PHOTO_PART = profileContract.update.filePart;
  * 100-code-point name is at most 400 bytes) and 100 bytes per field name. A body past any of them is refused while it
  * is read. The photo is held in memory (multer's default storage): nothing reaches the disk before every check.
  */
-const limits = { files: 1, fileSize: MAX_PHOTO_BYTES, parts: 10, fields: 10, fieldSize: 1024, fieldNameSize: 100 };
+export const profileBodyLimits = {
+  files: 1,
+  fileSize: MAX_PHOTO_BYTES,
+  parts: 10,
+  fields: 10,
+  fieldSize: 1024,
+  fieldNameSize: 100,
+} as const;
 
 /** The answers of this stage, in the shared error shape (#74). Neither echoes anything of the request. */
 const messages = {
@@ -60,7 +67,7 @@ function putPhotoInBody(request: Request & { file?: UploadedPhoto }): void {
  */
 @Injectable()
 export class ProfileBodyInterceptor implements NestInterceptor {
-  private readonly photo = new (FileInterceptor(PHOTO_PART, { limits }))();
+  private readonly photo = new (FileInterceptor(PHOTO_PART, { limits: profileBodyLimits }))();
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest<Request & { file?: UploadedPhoto }>();

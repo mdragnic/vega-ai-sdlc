@@ -25,22 +25,9 @@
   min-height: var(--size-dropdown-box-height);
 }
 
-/* 110 "Saving Summary": the "Savings Goal" title's style, Secondary Semibold 16 on a 24 line, on its line. */
-.title {
-  margin: 0;
-  color: var(--color-secondary);
-  font-family: var(--font-family-inter);
-  font-size: var(--font-size-16);
-  font-weight: var(--font-weight-semi-bold);
-  line-height: var(--line-height-24);
-  white-space: nowrap;
-}
+/* The title ("Savings Goal"'s style) and the selector's placeholder are in `styles/cardHeader.module.css`. */
 
 /* Not designed: the period's place while the months load, about as wide as `Oct, 2026` and its chevron. */
-.selectorPlaceholder {
-  display: flex;
-}
-
 .selectorBlock {
   width: var(--size-date-box-width-lg);
   height: var(--line-height-16);

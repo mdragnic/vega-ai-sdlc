@@ -26,6 +26,11 @@ export { CategoryLimitPopup } from './CategoryLimitPopup/CategoryLimitPopup';
 export { ChartLegend } from './ChartLegend/ChartLegend';
 export { ComparisonBarChart } from './ComparisonBarChart/ComparisonBarChart';
 export { ComparisonBarChartSkeleton } from './ComparisonBarChartSkeleton/ComparisonBarChartSkeleton';
+export {
+  ComparisonChartCard,
+  type ComparisonChartCardProps,
+  type ComparisonChartDescription,
+} from './ComparisonChartCard/ComparisonChartCard';
 export { DataState, type DataStateQuery } from './DataState/DataState';
 export { DateBox } from './DateBox/DateBox';
 export { Dropdown, type DropdownOption } from './Dropdown/Dropdown';

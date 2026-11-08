@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures';
-import { collectErrors, computed, tokenColor, tokenComputed } from '../helpers';
+import { afterQueuedTimers, collectErrors, computed, tokenColor, tokenComputed } from '../helpers';
 
 const box = async (locator: Locator) => (await locator.boundingBox())!;
 const figure = (page: Page, region: string, name: string) =>
@@ -30,7 +30,7 @@ async function openPopup(page: Page, fields: 'two' | 'one') {
   await expect(dialog.getByRole('textbox').first()).toBeFocused();
   // Radix starts listening for presses outside one timer tick after opening, so the opening click cannot
   // close it. A person cannot click that fast; a test can, so it waits that tick.
-  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
+  await afterQueuedTimers(page);
   return dialog;
 }
 
@@ -521,6 +521,10 @@ test('keyboard focus shows the teal ring on X, Save and the triggers, a mouse pr
     expect(await ring(trigger)).toEqual(shown);
     await trigger.click();
     await expect(page.getByRole('listbox')).toBeVisible();
+    // Radix listens for a press outside the open list from a zero-delay timer queued as it opens, before it focuses the
+    // selected option: a press before that timer has run does nothing.
+    await expect(page.getByRole('option', { selected: true })).toBeFocused();
+    await afterQueuedTimers(page);
     await page.mouse.click(1380, 500);
     await expect(page.getByRole('listbox')).toBeHidden();
     await expect(trigger).toBeFocused();

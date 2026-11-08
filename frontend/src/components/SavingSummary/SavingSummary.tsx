@@ -3,10 +3,12 @@ import { useId, useMemo } from 'react';
 
 import { ChartLegend } from '../ChartLegend/ChartLegend';
 import { DataState, type DataStateQuery } from '../DataState/DataState';
+import { useGatedQuery } from '../DataState/useGatedQuery';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { SavingSummaryChart } from '../SavingSummaryChart/SavingSummaryChart';
 import { SavingSummaryChartSkeleton } from '../SavingSummaryChartSkeleton/SavingSummaryChartSkeleton';
 import { Skeleton } from '../Skeleton/Skeleton';
+import cardHeader from '../../styles/cardHeader.module.css';
 import styles from './SavingSummary.module.css';
 
 /** The hidden table's caption: what the chart shows, in the legend's words (#113 b). */
@@ -29,32 +31,6 @@ type SavingSummaryProps = {
 };
 
 /**
- * The months and the selected month's summary as one query for the chart's `DataState` (#6): pending or failed while
- * the months have not loaded (Retry asks for them again), then the summary as it is. So the skeleton shows while either
- * loads, also after a month is picked, and the error state when either first load fails.
- */
-function useCardQuery(
-  months: DataStateQuery<SavingsGoalMonthsResponse>,
-  summary: DataStateQuery<SavingSummaryResponse>,
-): DataStateQuery<SavingSummaryResponse> {
-  const monthsLoaded = months.data !== undefined;
-  const { status: monthsStatus, fetchStatus: monthsFetchStatus, refetch: refetchMonths } = months;
-  const monthsQuery = useMemo<DataStateQuery<SavingSummaryResponse>>(
-    () => ({
-      status: monthsStatus === 'error' ? 'error' : 'pending',
-      data: undefined,
-      fetchStatus: monthsFetchStatus,
-      refetch: async () => {
-        const { status } = await refetchMonths();
-        return { status: status === 'error' ? 'error' : 'pending', data: undefined };
-      },
-    }),
-    [monthsStatus, monthsFetchStatus, refetchMonths],
-  );
-  return monthsLoaded ? summary : monthsQuery;
-}
-
-/**
  * The content of 110's Saving Summary card (Figma `66:5829` is flattened, no component): the 32 high header row with
  * "Saving Summary" (`h3`), its `Dropdown` `plain` named by it (its options the months as sent, `formatMonthLabel`) and
  * the legend "This month" / "Same period last month" at the right, in every state; where the row does not fit, the
@@ -67,7 +43,7 @@ function useCardQuery(
  */
 export function SavingSummary({ months, selected, onSelect, summary }: SavingSummaryProps) {
   const titleId = useId();
-  const cardQuery = useCardQuery(months, summary);
+  const cardQuery = useGatedQuery(months, summary);
   const options = useMemo(
     () => (months.data?.months ?? []).map((month) => ({ value: month, label: formatMonthLabel(month) })),
     [months.data],
@@ -77,7 +53,7 @@ export function SavingSummary({ months, selected, onSelect, summary }: SavingSum
     <div className={styles.savingSummary}>
       <div className={styles.header}>
         <div className={styles.titleGroup}>
-          <h3 id={titleId} className={styles.title}>
+          <h3 id={titleId} className={cardHeader.title}>
             Saving Summary
           </h3>
           {selected !== undefined ? (
@@ -90,7 +66,7 @@ export function SavingSummary({ months, selected, onSelect, summary }: SavingSum
             />
           ) : (
             months.status !== 'error' && (
-              <span aria-hidden="true" className={styles.selectorPlaceholder}>
+              <span aria-hidden="true" className={cardHeader.selectorPlaceholder}>
                 <Skeleton shape="block" className={styles.selectorBlock} />
               </span>
             )

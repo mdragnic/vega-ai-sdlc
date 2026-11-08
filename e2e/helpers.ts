@@ -4,6 +4,21 @@ import { type APIRequestContext, type ConsoleMessage, expect, type Locator, type
 
 import { FRONTEND_URL } from './constants';
 
+/**
+ * Waits until the page has run the zero-delay timers it had queued when this is called (task 031). Two libraries finish
+ * a step in such a timer, after a state the test can see, and a test that acts before it races them:
+ * - react-hook-form, after a submit with a broken rule, focuses the first field with an error, then once more in
+ *   `setTimeout(_focusError)`, queued before the error shows: typing in another field before it lands in that field.
+ * - Radix's dismissable layer starts listening for a press outside a popup in a zero-delay timer queued as the popup
+ *   opens, before focus reaches its first field: a press on the dimmed area before it does nothing.
+ * A zero-delay timer set after theirs runs after them (timers with equal delays run in the order they were set; a
+ * browser lengthens only timers nested five deep, which neither these nor this one are), so this waits for exactly
+ * those steps, however long the page takes: it is not a delay.
+ */
+export async function afterQueuedTimers(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+}
+
 /** Console errors and uncaught page errors, collected from now on. */
 export function collectErrors(page: Page): string[] {
   const errors: string[] = [];

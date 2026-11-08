@@ -5,6 +5,7 @@ import type { APIRequestContext, Locator, Page, Request } from '@playwright/test
 import { FIXED_NOW, TIME_ZONE } from '../constants';
 import { expect, test } from '../fixtures';
 import {
+  afterQueuedTimers,
   box,
   computed,
   expectRing,
@@ -194,6 +195,9 @@ test('shows the rules’ messages with red borders and nothing sent, then the wr
   await expectBorder(page, valueBox(password(page, 'New Password')), '--color-special-red');
   await expectBorder(page, valueBox(password(page, 'Retype Password')), '--color-special-red');
   expect(puts).toHaveLength(0);
+  // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in another
+  // field before that timer has run would land in that one.
+  await afterQueuedTimers(page);
 
   await fill(page, user.password, user.password);
   await updateButton(page).click();
@@ -201,6 +205,9 @@ test('shows the rules’ messages with red borders and nothing sent, then the wr
     'New password must be different from the old password',
   );
   expect(puts).toHaveLength(0);
+  // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in another
+  // field before that timer has run would land in that one.
+  await afterQueuedTimers(page);
 
   await fill(page, 'wrong-pass1', 'newpass12');
   await updateButton(page).click();

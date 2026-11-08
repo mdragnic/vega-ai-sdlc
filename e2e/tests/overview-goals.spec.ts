@@ -3,6 +3,7 @@ import type { Locator, Page, Request, Route } from '@playwright/test';
 import { FRONTEND_URL, TIME_ZONE } from '../constants';
 import { expect, test } from '../fixtures';
 import {
+  afterQueuedTimers,
   box,
   computed,
   expectBillAmountsUnderText,
@@ -116,7 +117,9 @@ test('opens the popup over the content area, closes it each way, and saves a goa
   expect(panel.y).toBe(276);
   within2(panel.x + panel.width / 2, overlayBox.x + overlayBox.width / 2, 'panel center');
 
-  // The sidebar is blocked: a click there does nothing.
+  // The sidebar is blocked: a click there does nothing. Asked once Radix listens for presses outside the popup (from a
+  // zero-delay timer queued before focus reached the first field), so the click is one it would act on.
+  await afterQueuedTimers(page);
   await page.mouse.click(140, 300);
   await expect(dialog(page)).toBeVisible();
   await expect(page).toHaveURL(`${FRONTEND_URL}/overview`);
@@ -132,6 +135,9 @@ test('opens the popup over the content area, closes it each way, and saves a goa
     await expect(pencil(page)).toBeFocused();
     await pencil(page).click();
     await expect(targetField(page)).toHaveValue('20000');
+    // Ready for a press outside it, as above.
+    await expect(targetField(page)).toBeFocused();
+    await afterQueuedTimers(page);
   }
   expect(puts).toHaveLength(0);
 
@@ -188,6 +194,9 @@ test('rejects typed and pasted characters, and shows each broken rule under its 
     await expect(input).toHaveAttribute('aria-invalid', 'true');
     await expect(dialog(page).getByText(message)).toBeVisible();
     expect(await computed(input.locator('..'), 'border-top-color')).toBe(red);
+    // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in the other
+    // field before that timer has run would land in this one.
+    await afterQueuedTimers(page);
   }
   expect(puts).toHaveLength(0);
 });

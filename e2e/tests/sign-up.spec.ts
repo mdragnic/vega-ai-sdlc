@@ -5,6 +5,7 @@ import type { Locator, Page } from '@playwright/test';
 import { FRONTEND_URL } from '../constants';
 import { expect, test } from '../fixtures';
 import {
+  afterQueuedTimers,
   box,
   control,
   expectNoRingOnMouseFocus,
@@ -295,6 +296,9 @@ test('applies the Full name rule of Settings to the Name field', async ({ page }
     await signUpButton(page).click();
     await expect(nameField(page)).toHaveAccessibleDescription(message);
     await expect(page).toHaveURL(/\/sign-up$/);
+    // The form moves focus to the field with the error, then once more on a timer (react-hook-form): typing in another
+    // field before that timer has run would land in that one.
+    await afterQueuedTimers(page);
   }
 
   const email = `${randomUUID()}@example.com`;

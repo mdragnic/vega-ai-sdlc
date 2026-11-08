@@ -1,0 +1,40 @@
+Task 031 visual check, 2026-11-07 (Validation step 5). Playwright MCP, one capture script run in a fresh context at
+1440x1024, device scale 2, scrollbars hidden (*{scrollbar-width:none}), Europe/Belgrade, the page clock and the backend
+on the fixed clock 2026-10-22T10:00:00Z (NODE_ENV=test, `npm run start:e2e -w backend`, the clock through
+/api/test/clock), the Vite dev server, a new user on the demo data, screenshots with animations disabled. No Figma calls.
+
+Before and after parts 1 and 2, pixel for pixel (a Node PNG reader, built-ins only)
+- Captured: Overview, Expenses and Goals (each page, the Statistics region, the Expenses Comparison region, the Goals
+  row with Savings Goal and Saving Summary) and every example of the gallery's Statistics (demo week, this week all 0,
+  every value 0, loading, error), ExpensesComparison (demo year, every value 0, loading, error), SavingsGoal (demo, no
+  goal, months loading, goal loading, error) and SavingSummary (demo, every value $0, narrow, months loading, summary
+  loading, error) sections: 26 PNGs.
+- The method: captured twice on the base commit (5bd6574) before any change: 26 of 26 identical.
+- After parts 1 and 2 (ComparisonChartCard; useGatedQuery and cardHeader.module.css): 26 of 26 identical to the base
+  commit's. No pixel differs, so no difference to list or explain.
+- New, not compared (no before): gallery-comparison-chart-card-2x.png, the ComparisonChartCard section's one example
+  (#130 a), the card on a four-group sample of its own ("Quarterly Comparison", Q1 to Q4, no teal bar for Q4).
+
+overview-104-1440-2x.png, expenses-109-1440-2x.png, goals-110-1440-2x.png against docs/figma/104, 109 and 110
+- The pixels equal the base commit's, so the differences are the ones the earlier tasks listed and their gates
+  accepted, and no new one. Checked again by eye on these screenshots:
+  - 104 Statistics (task 017's list, with task 024's #122 a labels): the header row 8 lower (#93 a); the y labels $0 to
+    $400 against $0 to $250k and every bar's height (#55, #91); the weekday labels Mon to Sun against "17 Sun" to "23 Sat"
+    (#122 a) and the demo values (#12); no teal bar on Fri, Sat and Sun (#55); the card 260 against 258 and at y 549
+    under the grown top row (tasks 013 to 016); the legend 3 px further right and the chevron and control text under
+    1 px off (task 006's ChartLegend, the 12 gap token, Inter in Chromium).
+  - 109 Expenses Comparison (task 024's list): the header row 8 lower and the card 260 against 258 (#93 a), all below 2
+    lower; "This year" / "Last year" against "This Week" / "Last Week" (#29); the y labels $0 to $4k against $0 to
+    $250k, `Jul` against "July", the demo values, no teal bar for Nov and Dec (#12, #55, #91); the cards' values and
+    items (#12, #56, #61); the 48 tile, the 78 headers, the 1 px Chromium text offsets, the Gray/06 dividers and the
+    shadow over #F3F3F3 (task 024 items 5 to 8).
+  - 110 Savings Goal (task 025's list): everything under the divider 1 px lower (the 12 divider gap, the card 293);
+    "Adjust Goal" 140 against 142; `Oct, 2026` against "01 May ~ 31 May" (#60); the amounts and the gauge
+    ($16,250.00, $20,000.00, $16.2k) against $12,500, $20,000, "12K" (#11, #12, #18).
+  - 110 Saving Summary (task 026's list): the plot 7.5 px lower, on its ticks; the x labels on days 1, 5 ... 30 as
+    `01 Oct` to `30 Oct` against "May 01" to "May 30" (#84, #124 b); the y labels -$300 to $600 against $0 to $5000;
+    the demo line's shape and no teal line after the 22nd (#12, #55, #59); the legend 12 px further right and its gray
+    swatch Gray/05; `Oct, 2026` against "Mar 2022"; the 32 gap after the title.
+  - 110 category cards (task 027's list): "Adjust" 98 wide against 99; the 1 px offsets and narrower glyphs.
+  - Every screen: the header date `22 Oct, 2026` against "May 19, 2023" and the initials avatar "TR" against the photo
+    (task 011); Overview's other cards as tasks 013 to 018 listed them.

@@ -743,12 +743,14 @@ describe('the Expenses sources', () => {
 
   it('formats only through the shared formatters and takes the empty state from the backend’s null ticks', () => {
     const chart = source('components/ExpensesComparison/ExpensesComparison.tsx');
+    // Since task 031 the empty check and the chart are in the card shared with Statistics (#130 a).
+    const chartCard = source('components/ComparisonChartCard/ComparisonChartCard.tsx');
     const card = source('components/ExpensesBreakdown/ExpensesBreakdown.tsx');
     const item = source('components/ExpensesLineItem/ExpensesLineItem.tsx');
 
     expect(chart).toMatch(/\bformatMonthAxisLabel\(/);
-    expect(chart).toMatch(/\bticks === null\b/);
-    expect(chart).toMatch(/<ComparisonBarChart\b/);
+    expect(chartCard).toMatch(/\bticks === null\b/);
+    expect(chartCard).toMatch(/<ComparisonBarChart\b/);
     expect(card).toMatch(/\bformatMoney\(total\)/);
     expect(card).toMatch(/\bformatPercent\(/);
     expect(card).toMatch(/\bhyphenatedCategoryLabel\(/);

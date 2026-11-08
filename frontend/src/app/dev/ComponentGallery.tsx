@@ -59,6 +59,8 @@ import {
   ChartLegend,
   ComparisonBarChart,
   ComparisonBarChartSkeleton,
+  ComparisonChartCard,
+  type ComparisonChartDescription,
   DataState,
   DateBox,
   Dropdown,
@@ -1047,6 +1049,52 @@ function StatisticsExample({ name, answer }: { name: string; answer: WeeklyCompa
     <div className={styles.sampleWide}>
       <Card className={styles.statisticsCard}>
         <Statistics query={query} />
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * Task 031 (#130 a): `ComparisonChartCard` on a sample of its own, four groups, so its section shows that any response
+ * can be described; the Statistics and ExpensesComparison sections show its states. A gallery sample, not a screen.
+ */
+type SampleQuarters = { quarters: { label: string; lastYear: Money; thisYear: Money | null }[]; ticks: Money[] };
+
+const sampleQuarters: SampleQuarters = {
+  quarters: [
+    { label: 'Q1', lastYear: usd(21_000), thisYear: usd(18_400) },
+    { label: 'Q2', lastYear: usd(9_600), thisYear: usd(14_250) },
+    { label: 'Q3', lastYear: usd(30_000), thisYear: usd(26_500) },
+    { label: 'Q4', lastYear: usd(12_800), thisYear: null },
+  ],
+  ticks: [0, 10_000, 20_000, 30_000, 40_000].map(usd),
+};
+
+const quarterly: ComparisonChartDescription<SampleQuarters> = {
+  option: { value: 'quarterly', label: 'Quarterly Comparison' },
+  name: 'Quarterly sample',
+  legend: { current: 'This year', previous: 'Last year' },
+  groups: 4,
+  title: 'A sample per quarter, this year and last year',
+  emptyMessage: 'No sample values',
+  toChart: ({ quarters, ticks }) => ({
+    labels: quarters.map((quarter) => quarter.label),
+    previous: quarters.map((quarter) => quarter.lastYear),
+    current: quarters.map((quarter) => quarter.thisYear),
+    ticks,
+  }),
+};
+
+function ComparisonChartCardExample() {
+  const query = useQuery({
+    ...demoQuery,
+    queryKey: ['gallery', 'comparison-chart-card'],
+    queryFn: () => Promise.resolve(sampleQuarters),
+  });
+  return (
+    <div className={styles.sampleWide}>
+      <Card className={styles.statisticsCard}>
+        <ComparisonChartCard query={query} comparison={quarterly} />
       </Card>
     </div>
   );
@@ -3215,6 +3263,12 @@ export function ComponentGallery() {
             The pencil of a Goals card above opens it. It saves through the API, so Save works when signed in; on
             Overview it dims the content area of the app shell.
           </p>
+        </Example>
+      </GallerySection>
+
+      <GallerySection name="ComparisonChartCard" wide>
+        <Example name="A sample of its own: four groups (task 031)">
+          <ComparisonChartCardExample />
         </Example>
       </GallerySection>
     </div>

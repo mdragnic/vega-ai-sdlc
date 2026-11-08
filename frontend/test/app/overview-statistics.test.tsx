@@ -384,7 +384,12 @@ function sourceFiles(dir: string): string[] {
 // T16: AC5, AC11, the frontend maps the response into the chart's props and formats the labels; it calculates
 // nothing (#11, #55, #74).
 describe('the Statistics sources', () => {
-  const files = ['components/Statistics/Statistics.tsx', 'api/statistics.ts'];
+  // The card that draws the chart, shared with the Expenses chart since task 031 (#130 a).
+  const files = [
+    'components/Statistics/Statistics.tsx',
+    'components/ComparisonChartCard/ComparisonChartCard.tsx',
+    'api/statistics.ts',
+  ];
   const calculating =
     /\bcents\b|Math\.|\bDate\b|getTime|parseInt|parseFloat|Number\(|\.sort\(|\.toSorted\(|\.reduce\(|\.every\(|\.some\(|[-+*/]\s*\d|\d\s*[-+*/]/;
   const usesAxisTicks = /\baxisTicks\s*\(|import\s*\{[^}]*\baxisTicks\b[^}]*\}\s*from|\baxisTicks\s*[,}]/;
@@ -404,10 +409,12 @@ describe('the Statistics sources', () => {
 
   it('formats the labels with formatDayLabel and takes the empty state from the backend’s null ticks', () => {
     const statisticsSource = source('components/Statistics/Statistics.tsx');
+    // Since task 031 the empty check and the chart are in the shared card (#130 a).
+    const cardSource = source('components/ComparisonChartCard/ComparisonChartCard.tsx');
 
     expect(statisticsSource).toMatch(/\bformatDayLabel\(/);
-    expect(statisticsSource).toMatch(/\bticks === null\b/);
-    expect(statisticsSource).toMatch(/<ComparisonBarChart\b/);
+    expect(cardSource).toMatch(/\bticks === null\b/);
+    expect(cardSource).toMatch(/<ComparisonBarChart\b/);
   });
 
   it.each([

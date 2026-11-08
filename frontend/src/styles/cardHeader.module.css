@@ -1,0 +1,19 @@
+/* The header of 110's Savings Goal and Saving Summary cards, shared since task 031. Each card keeps its own row and
+   selector block, whose sizes differ. */
+
+/* 110 "Savings Goal" and "Saving Summary": Secondary, Semibold 16 by its ink ("Savings Goal" x 328.5 to 428, 99.5 wide;
+   y 182 to 197 with the `g`; Semibold 18 is 110.5 wide in Chromium), on a 24 line centred in the row. */
+.title {
+  margin: 0;
+  color: var(--color-secondary);
+  font-family: var(--font-family-inter);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semi-bold);
+  line-height: var(--line-height-24);
+  white-space: nowrap;
+}
+
+/* Not designed: the selector's place while the months load, a block about as wide as `Oct, 2026` in it. */
+.selectorPlaceholder {
+  display: flex;
+}
